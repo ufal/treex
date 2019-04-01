@@ -15,7 +15,7 @@ sub process_atree
     foreach my $node (@nodes)
     {
         $self->fix_morphology($node);
-        $self->classify_numerals($root);
+        $self->classify_numerals($node);
     }
     # Do not call syntactic fixes from the previous loop. First make sure that
     # all nodes have correct morphology, then do syntax (so that you can rely
@@ -45,7 +45,13 @@ sub fix_morphology
     my $deprel = $node->deprel();
     # In PDT, the word "přičemž" ("and/where/while") is tagged as SCONJ but attached as Adv (advmod).
     # Etymologically, it is a preposition fused with a pronoun ("při+čemž"). We will re-tag it as adverb.
-    if($lform eq 'přičemž')
+    # Similar cases: "zato" ("in exchange for what", literally "za+to" = "for+it").
+    # This one is typically grammaticalized as a coordinating conjunction, similar to "but".
+    # In some occurrences, we have "sice-zato", which is similar to paired cc "sice-ale".
+    # But that is not a problem, other adverbs have grammaticalized to conjunctions too.
+    # On the other hand, the following should stay SCONJ and the relation should change to mark:
+    # "jakoby" ("as if"), "dokud" ("while")
+    if($lform =~ m/^(přičemž|zato)$/)
     {
         $iset->set_hash({'pos' => 'adv', 'prontype' => 'rel'});
     }
