@@ -64,7 +64,7 @@ sub fix_morphology
 #------------------------------------------------------------------------------
 # Splits numeral types that have the same tag in the PDT tagset and the
 # Interset decoder cannot distinguish them because it does not see the word
-# forms.
+# forms. NOTE: We may want to move this function to Prague harmonization.
 #------------------------------------------------------------------------------
 sub classify_numerals
 {
@@ -111,16 +111,23 @@ sub fix_constructions
     my $node = shift;
     my $parent = $node->parent();
     my $deprel = $node->deprel();
-    # In "auch wenn", "wenn" is 'mark' or 'cc' and "auch" is wrongly attached as 'advmod' to "wenn".
-    if($node->deprel() =~ m/^advmod(:|$)/ && $parent->deprel() =~ m/^(cc|mark)(:|$)/)
+    # In PDT, the words "dokud" ("while") and "jakoby" ("as if") are sometimes
+    # attached as adverbial modifiers although they are conjunctions.
+    if($node->is_subordinator() && $deprel =~ m/^advmod(:|$)/ && scalar($node->children()) == 0)
     {
-        $parent = $parent->parent();
-        $node->set_parent($parent);
-    }
-    if($node->is_pronoun() && $node->deprel() eq 'advmod')
-    {
-        $deprel = 'obl';
+        $deprel = 'mark';
         $node->set_deprel($deprel);
+    }
+    # Czech "a to" ("viz.") is a multi-word conjunction. In PDT it is headed by
+    # "to", which is a demonstrative pronoun, not conjunction. Transform it and
+    # use the 'fixed' relation.
+    if(lc($node->form()) eq 'a' && lc($parent->form()) eq 'to' && $parent->ord() > $node->ord() && $parent->deprel() =~ m/^cc(:|$)/)
+    {
+        my $grandparent = $parent->parent();
+        $parent->set_parent($node);
+        $parent->set_deprel('fixed');
+        $node->set_parent($grandparent);
+        $node->set_deprel('cc');
     }
 }
 
