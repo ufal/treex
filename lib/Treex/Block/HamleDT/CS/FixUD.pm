@@ -121,8 +121,8 @@ sub fix_constructions
     # Czech "a to" ("viz.") is a multi-word conjunction. In PDT it is headed by
     # "to", which is a demonstrative pronoun, not conjunction. Transform it and
     # use the 'fixed' relation.
-    if(lc($node->form()) eq 'a' && $deprel =~ m/^cc(:|$)/ &&
-       lc($parent->form()) eq 'to' && $parent->deprel() =~ m/^cc(:|$)/ && $parent->ord() > $node->ord())
+    elsif(lc($node->form()) eq 'a' && $deprel =~ m/^cc(:|$)/ &&
+          lc($parent->form()) eq 'to' && $parent->deprel() =~ m/^cc(:|$)/ && $parent->ord() > $node->ord())
     {
         my $grandparent = $parent->parent();
         $node->set_parent($grandparent);
@@ -130,6 +130,15 @@ sub fix_constructions
         $parent->set_parent($node);
         $parent->set_deprel('fixed');
         $parent = $grandparent;
+    }
+    # Occasionally "a" and "to" are attached as siblings rather than one to the other.
+    elsif(lc($node->form()) eq 'a' && $deprel =~ m/^cc(:|$)/ &&
+          defined($node->get_right_neighbor()) &&
+          lc($node->get_right_neighbor()->form()) eq 'to' && $node->get_right_neighbor()->deprel() =~ m/^cc(:|$)/)
+    {
+        my $to = $node->get_right_neighbor();
+        $to->set_parent($node);
+        $to->set_deprel('fixed');
     }
 }
 
