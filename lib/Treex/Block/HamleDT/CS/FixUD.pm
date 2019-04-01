@@ -124,10 +124,11 @@ sub fix_constructions
     if(lc($node->form()) eq 'a' && lc($parent->form()) eq 'to' && $parent->ord() > $node->ord() && $parent->deprel() =~ m/^cc(:|$)/)
     {
         my $grandparent = $parent->parent();
-        $parent->set_parent($node);
-        $parent->set_deprel('fixed');
         $node->set_parent($grandparent);
         $node->set_deprel('cc');
+        $parent->set_parent($node);
+        $parent->set_deprel('fixed');
+        $parent = $grandparent;
     }
 }
 
