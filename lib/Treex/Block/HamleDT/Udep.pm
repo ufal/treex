@@ -80,8 +80,6 @@ sub process_atree {
     $self->dissolve_chains_of_auxiliaries($root);
     ###!!! The following method removes symptoms but we may want to find and remove the cause.
     $self->fix_multiple_subjects($root);
-    $self->fix_jak_znamo($root);
-    $self->classify_numerals($root);
     $self->relabel_subordinate_clauses($root);
     $self->check_ncsubjpass_when_auxpass($root);
     $self->raise_punctuation_from_coordinating_conjunction($root);
@@ -954,89 +952,6 @@ sub raise_punctuation_from_coordinating_conjunction
             {
                 $node->set_parent($parent->parent());
             }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# The two Czech words "jak známo" ("as known") are attached as ExD siblings in
-# the Prague style because there is missing copula. However, in UD the nominal
-# predicate "známo" is the head.
-#------------------------------------------------------------------------------
-sub fix_jak_znamo
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants({'ordered' => 1});
-    for(my $i = 0; $i<$#nodes; $i++)
-    {
-        my $n0 = $nodes[$i];
-        my $n1 = $nodes[$i+1];
-        if(defined($n0->form()) && lc($n0->form()) eq 'jak' &&
-           defined($n1->form()) && lc($n1->form()) eq 'známo' &&
-           $n0->parent() == $n1->parent())
-        {
-            $n0->set_parent($n1);
-            $n0->set_deprel('mark');
-            $n1->set_deprel('advcl') if(!defined($n1->deprel()) || $n1->deprel() eq 'dep');
-            # If the expression is delimited by commas, the commas should be attached to "známo".
-            if($i>0 && $nodes[$i-1]->parent() == $n1->parent() && defined($nodes[$i-1]->form()) && $nodes[$i-1]->form() =~ m/^[-,]$/)
-            {
-                $nodes[$i-1]->set_parent($n1);
-                $nodes[$i-1]->set_deprel('punct');
-            }
-            if($i+2<=$#nodes && $nodes[$i+2]->parent() == $n1->parent() && defined($nodes[$i+2]->form()) && $nodes[$i+2]->form() =~ m/^[-,]$/)
-            {
-                $nodes[$i+2]->set_parent($n1);
-                $nodes[$i+2]->set_deprel('punct');
-            }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Splits numeral types that have the same tag in the PDT tagset and the
-# Interset decoder cannot distinguish them because it does not see the word
-# forms.
-#------------------------------------------------------------------------------
-sub classify_numerals
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $iset = $node->iset();
-        # Separate multiplicative numerals (jednou, dvakrát, třikrát) and
-        # adverbial ordinal numerals (poprvé, podruhé, potřetí).
-        if($iset->numtype() eq 'mult')
-        {
-            # poprvé, podruhé, počtvrté, popáté, ..., popadesáté, posté
-            # potřetí, potisící
-            if($node->form() =~ m/^po.*[éí]$/i)
-            {
-                $iset->set('numtype', 'ord');
-            }
-        }
-        # Separate generic numerals
-        # for number of kinds (obojí, dvojí, trojí, čtverý, paterý) and
-        # for number of sets (oboje, dvoje, troje, čtvery, patery).
-        elsif($iset->numtype() eq 'gen')
-        {
-            if($iset->variant() eq '1')
-            {
-                $iset->set('numtype', 'sets');
-            }
-        }
-        # Separate agreeing adjectival indefinite numeral "nejeden" (lit. "not one" = "more than one")
-        # from indefinite/demonstrative adjectival ordinal numerals (několikátý, tolikátý).
-        elsif($node->is_adjective() && $iset->contains('numtype', 'ord') && $node->lemma() eq 'nejeden')
-        {
-            $iset->add('pos' => 'num', 'numtype' => 'card', 'prontype' => 'ind');
         }
     }
 }
