@@ -134,7 +134,7 @@ sub fix_constructions
     }
     # Sometimes "to" is already attached to "a", and we only change the relation type.
     elsif(lc($node->form()) eq 'to' && $deprel =~ m/^cc(:|$)/ &&
-          lc($parent->form()) eq 'a' && $parent->ord() = $node->ord()-1)
+          lc($parent->form()) eq 'a' && $parent->ord() == $node->ord()-1)
     {
         $deprel = 'fixed';
         $node->set_deprel($deprel);
