@@ -190,6 +190,13 @@ sub fix_constructions
         $parent->set_deprel('nsubj');
         $parent = $grandparent;
     }
+    # "rozuměj" (imperative of "understand") is a verb but attached as 'cc'.
+    # We will not keep the parallelism to "to jest" here. We will make it a parataxis.
+    elsif(lc($node->form()) eq 'rozuměj' && $deprel =~ m/^cc(:|$)/)
+    {
+        $deprel = 'parataxis';
+        $node->set_deprel($deprel);
+    }
 }
 
 
