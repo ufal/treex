@@ -141,6 +141,23 @@ sub fix_constructions
         $to->set_parent($node);
         $to->set_deprel('fixed');
     }
+    # "takové přání, jako je svatba" ("such a wish as (is) a wedding")
+    elsif($node->lemma() eq 'být' && $deprel =~ m/^cc(:|$)/ &&
+          defined($node->get_left_neighbor()) && lc($node->get_left_neighbor()->form()) eq 'jako' &&
+          $parent->ord() > $node->ord())
+    {
+        my $grandparent = $parent->parent();
+        # Besides "jako", there might be other left siblings (punctuation).
+        foreach my $sibling ($node->get_siblings({'preceding_only' => 1}))
+        {
+            $sibling->set_parent($node);
+        }
+        $node->set_parent($grandparent);
+        $node->set_deprel($grandparent->iset()->pos() =~ m/^(noun|num|sym)$/ ? 'acl' : 'advcl');
+        $parent->set_parent($node);
+        $parent->set_deprel('nsubj');
+        $parent = $grandparent;
+    }
 }
 
 
