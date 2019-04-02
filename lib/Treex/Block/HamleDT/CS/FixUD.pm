@@ -126,10 +126,18 @@ sub fix_constructions
     {
         my $grandparent = $parent->parent();
         $node->set_parent($grandparent);
-        $node->set_deprel('cc');
+        $deprel = 'cc';
+        $node->set_deprel($deprel);
         $parent->set_parent($node);
         $parent->set_deprel('fixed');
         $parent = $grandparent;
+    }
+    # Sometimes "to" is already attached to "a", and we only change the relation type.
+    elsif(lc($node->form()) eq 'to' && $deprel =~ m/^cc(:|$)/ &&
+          lc($parent->form()) eq 'a' && $parent->ord() = $node->ord()-1)
+    {
+        $deprel = 'fixed';
+        $node->set_deprel($deprel);
     }
     # Occasionally "a" and "to" are attached as siblings rather than one to the other.
     # Similar: "to jest/to je".
@@ -154,6 +162,7 @@ sub fix_constructions
         }
         $node->set_parent($grandparent);
         $node->set_deprel($grandparent->iset()->pos() =~ m/^(noun|num|sym)$/ ? 'acl' : 'advcl');
+        $deprel = $node->deprel();
         $parent->set_parent($node);
         $parent->set_deprel('nsubj');
         $parent = $grandparent;
