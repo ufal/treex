@@ -140,14 +140,30 @@ sub fix_constructions
         $node->set_deprel($deprel);
     }
     # Occasionally "a" and "to" are attached as siblings rather than one to the other.
-    # Similar: "to jest/to je".
+    # Similar: "to jest/to je/to znamená".
     elsif(lc($node->form()) =~ m/^(a|to)$/ && $deprel =~ m/^cc(:|$)/ &&
           defined($node->get_right_neighbor()) &&
-          lc($node->get_right_neighbor()->form()) =~ m/^(to|je(st)?)$/ && $node->get_right_neighbor()->deprel() =~ m/^cc(:|$)/)
+          lc($node->get_right_neighbor()->form()) =~ m/^(to|je(st)?|znamená)$/ && $node->get_right_neighbor()->deprel() =~ m/^cc(:|$)/)
     {
         my $to = $node->get_right_neighbor();
         $to->set_parent($node);
         $to->set_deprel('fixed');
+    }
+    # If "to jest" is abbreviated and tokenized as "t . j .", the above branch
+    # will not catch it.
+    elsif(lc($node->form()) eq 't' && $deprel =~ m/^cc(:|$)/ &&
+          scalar($node->get_siblings({'following_only' => 1})) >= 3 &&
+          lc($node->get_siblings({'following_only' => 1, 'ordered' => 1})[0]->form()) eq '.' &&
+          lc($node->get_siblings({'following_only' => 1, 'ordered' => 1})[1]->form()) eq 'j' &&
+          lc($node->get_siblings({'following_only' => 1, 'ordered' => 1})[2]->form()) eq '.')
+    {
+        my @rsiblings = $node->get_siblings({'following_only' => 1, 'ordered' => 1});
+        $rsiblings[0]->set_parent($node);
+        $rsiblings[0]->set_deprel('punct');
+        $rsiblings[2]->set_parent($rsiblings[1]);
+        $rsiblings[2]->set_deprel('punct');
+        $rsiblings[1]->set_parent($node);
+        $rsiblings[1]->set_deprel('fixed');
     }
     # "takové přání, jako je svatba" ("such a wish as (is) a wedding")
     elsif($node->lemma() eq 'být' && $deprel =~ m/^cc(:|$)/ &&
