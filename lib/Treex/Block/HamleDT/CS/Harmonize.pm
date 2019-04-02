@@ -631,6 +631,22 @@ sub fix_annotation_errors
             $subtree[6]->set_parent($subtree[8]);
             $subtree[7]->set_parent($subtree[8]);
         }
+        elsif($spanstring =~ m/^PMC Personal - und Management - Beratung$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Original annotation uses wrong deprels (AuxY for non-punctuation, should be Atr).
+            foreach my $node (@subtree)
+            {
+                unless($node->is_punctuation())
+                {
+                    $node->iset()->set('foreign' => 'yes');
+                    unless($node->form() =~ m/^Beratung$/i)
+                    {
+                        $node->set_deprel('Atr');
+                    }
+                }
+            }
+        }
     }
 }
 
