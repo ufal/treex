@@ -132,9 +132,10 @@ sub fix_constructions
         $parent = $grandparent;
     }
     # Occasionally "a" and "to" are attached as siblings rather than one to the other.
-    elsif(lc($node->form()) eq 'a' && $deprel =~ m/^cc(:|$)/ &&
+    # Similar: "to jest/to je".
+    elsif(lc($node->form()) =~ m/^(a|to)$/ && $deprel =~ m/^cc(:|$)/ &&
           defined($node->get_right_neighbor()) &&
-          lc($node->get_right_neighbor()->form()) eq 'to' && $node->get_right_neighbor()->deprel() =~ m/^cc(:|$)/)
+          lc($node->get_right_neighbor()->form()) =~ m/^(to|je(st)?)$/ && $node->get_right_neighbor()->deprel() =~ m/^cc(:|$)/)
     {
         my $to = $node->get_right_neighbor();
         $to->set_parent($node);
