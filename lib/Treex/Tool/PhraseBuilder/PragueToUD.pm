@@ -260,12 +260,6 @@ sub detect_counted_noun_in_genitive
             $phrase = $ntphrase;
             $phrase->set_deprel($deprel);
             $phrase->set_is_member($member);
-            ###!!! DEBUG
-            if($phrase->node()->form() eq 'útoků')
-            {
-                log_warn($phrase->as_string());
-            }
-            ###!!! END OF DEBUG
         }
     }
     return $phrase;
