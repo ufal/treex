@@ -55,6 +55,13 @@ sub fix_morphology
     {
         $iset->set_hash({'pos' => 'adv', 'prontype' => 'rel'});
     }
+    # If "to znamená" is abbreviated and tokenized as "tzn .", PDT tags it as
+    # a verb but analyzes it syntactically as a conjunction. We will re-tag it
+    # as a conjunction.
+    elsif($lform eq 'tzn' && $iset->is_verb())
+    {
+        $iset->set_hash({'pos' => 'conj', 'conjtype' => 'coor', 'abbr' => 'yes'});
+    }
     # Make sure that the UPOS tag still matches Interset features.
     $node->set_tag($node->iset()->get_upos());
 }
