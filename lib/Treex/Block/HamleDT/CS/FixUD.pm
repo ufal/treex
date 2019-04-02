@@ -160,9 +160,9 @@ sub fix_constructions
     # will not catch it.
     elsif(lc($node->form()) eq 't' && $deprel =~ m/^cc(:|$)/ &&
           scalar($node->get_siblings({'following_only' => 1})) >= 3 &&
-          lc($node->get_siblings({'following_only' => 1, 'ordered' => 1})[0]->form()) eq '.' &&
-          lc($node->get_siblings({'following_only' => 1, 'ordered' => 1})[1]->form()) eq 'j' &&
-          lc($node->get_siblings({'following_only' => 1, 'ordered' => 1})[2]->form()) eq '.')
+          lc(($node->get_siblings({'following_only' => 1, 'ordered' => 1}))[0]->form()) eq '.' &&
+          lc(($node->get_siblings({'following_only' => 1, 'ordered' => 1}))[1]->form()) eq 'j' &&
+          lc(($node->get_siblings({'following_only' => 1, 'ordered' => 1}))[2]->form()) eq '.')
     {
         my @rsiblings = $node->get_siblings({'following_only' => 1, 'ordered' => 1});
         $rsiblings[0]->set_parent($node);
