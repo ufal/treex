@@ -129,7 +129,7 @@ sub fix_constructions
     # "to", which is a demonstrative pronoun, not conjunction. Transform it and
     # use the 'fixed' relation.
     elsif(lc($node->form()) eq 'a' && $deprel =~ m/^cc(:|$)/ &&
-          lc($parent->form()) eq 'to' && $parent->deprel() =~ m/^cc(:|$)/ && $parent->ord() > $node->ord())
+          lc($parent->form()) eq 'to' && $parent->deprel() =~ m/^(cc|advmod|discourse)(:|$)/ && $parent->ord() > $node->ord())
     {
         my $grandparent = $parent->parent();
         $node->set_parent($grandparent);
@@ -137,14 +137,27 @@ sub fix_constructions
         $node->set_deprel($deprel);
         $parent->set_parent($node);
         $parent->set_deprel('fixed');
+        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
+        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
+        $parent->set_lemma('to');
+        $parent->set_tag('PART');
+        $parent->iset()->set_hash({'pos' => 'part'});
         $parent = $grandparent;
     }
     # Sometimes "to" is already attached to "a", and we only change the relation type.
-    elsif(lc($node->form()) eq 'to' && $deprel =~ m/^cc(:|$)/ &&
+    elsif(lc($node->form()) =~ m/^(to|sice)$/i && $deprel =~ m/^(cc|advmod|discourse)(:|$)/ &&
           lc($parent->form()) eq 'a' && $parent->ord() == $node->ord()-1)
     {
         $deprel = 'fixed';
         $node->set_deprel($deprel);
+        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
+        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
+        if(lc($node->form()) eq 'to')
+        {
+            $node->set_lemma('to');
+            $node->set_tag('PART');
+            $node->iset()->set_hash({'pos' => 'part'});
+        }
     }
     # "a tím i" ("and this way also")
     elsif(lc($node->form()) eq 'tím' && $deprel =~ m/^cc(:|$)/)
@@ -153,10 +166,23 @@ sub fix_constructions
         $node->set_deprel($deprel);
     }
     # Occasionally "a" and "to" are attached as siblings rather than one to the other.
-    # Similar: "to jest/to je/to znamená".
-    elsif(lc($node->form()) =~ m/^(a|to)$/ && $deprel =~ m/^cc(:|$)/ &&
+    elsif(lc($node->form()) =~ m/^(a)$/ && $deprel =~ m/^cc(:|$)/ &&
           defined($node->get_right_neighbor()) &&
-          lc($node->get_right_neighbor()->form()) =~ m/^(to|je(st)?|znamená)$/ && $node->get_right_neighbor()->deprel() =~ m/^cc(:|$)/)
+          lc($node->get_right_neighbor()->form()) =~ m/^(to)$/ && $node->get_right_neighbor()->deprel() =~ m/^(cc|advmod|discourse)(:|$)/)
+    {
+        my $to = $node->get_right_neighbor();
+        $to->set_parent($node);
+        $to->set_deprel('fixed');
+        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
+        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
+        $to->set_lemma('to');
+        $to->set_tag('PART');
+        $to->iset()->set_hash({'pos' => 'part'});
+    }
+    # Similar: "to jest/to je/to znamená".
+    elsif(lc($node->form()) =~ m/^(to)$/ && $deprel =~ m/^cc(:|$)/ &&
+          defined($node->get_right_neighbor()) &&
+          lc($node->get_right_neighbor()->form()) =~ m/^(je(st)?|znamená)$/ && $node->get_right_neighbor()->deprel() =~ m/^cc(:|$)/)
     {
         my $to = $node->get_right_neighbor();
         $to->set_parent($node);
@@ -166,11 +192,12 @@ sub fix_constructions
     # will not catch it.
     elsif(lc($node->form()) eq 't' && $deprel =~ m/^cc(:|$)/ &&
           scalar($node->get_siblings({'following_only' => 1})) >= 3 &&
-          lc(($node->get_siblings({'following_only' => 1, 'ordered' => 1}))[0]->form()) eq '.' &&
-          lc(($node->get_siblings({'following_only' => 1, 'ordered' => 1}))[1]->form()) eq 'j' &&
-          lc(($node->get_siblings({'following_only' => 1, 'ordered' => 1}))[2]->form()) eq '.')
+          # following_only implies ordered
+          lc(($node->get_siblings({'following_only' => 1}))[0]->form()) eq '.' &&
+          lc(($node->get_siblings({'following_only' => 1}))[1]->form()) eq 'j' &&
+          lc(($node->get_siblings({'following_only' => 1}))[2]->form()) eq '.')
     {
-        my @rsiblings = $node->get_siblings({'following_only' => 1, 'ordered' => 1});
+        my @rsiblings = $node->get_siblings({'following_only' => 1});
         $rsiblings[0]->set_parent($node);
         $rsiblings[0]->set_deprel('punct');
         $rsiblings[2]->set_parent($rsiblings[1]);
