@@ -146,6 +146,12 @@ sub fix_constructions
         $deprel = 'fixed';
         $node->set_deprel($deprel);
     }
+    # "a tím i" ("and this way also")
+    elsif(lc($node->form()) eq 'tím' && $deprel =~ m/^cc(:|$)/)
+    {
+        $deprel = 'obl';
+        $node->set_deprel($deprel);
+    }
     # Occasionally "a" and "to" are attached as siblings rather than one to the other.
     # Similar: "to jest/to je/to znamená".
     elsif(lc($node->form()) =~ m/^(a|to)$/ && $deprel =~ m/^cc(:|$)/ &&
