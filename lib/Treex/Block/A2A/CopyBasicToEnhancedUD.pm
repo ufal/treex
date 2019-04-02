@@ -42,17 +42,18 @@ sub add_enhanced_parent_of_coordination
     my $node = shift;
     if($node->deprel() =~ m/^conj(:|$)/)
     {
-        # Find the nearest non-conj ancestor.
+        # Find the nearest non-conj ancestor, i.e., the first conjunct.
         my $inode = $node->parent();
         while(defined($inode))
         {
             last if($inode->deprel() !~ m/^conj(:|$)/);
             $inode = $inode->parent();
         }
-        if(defined($inode) && defined($inode->parent()))
+        if(defined($inode) && defined($inode->parent()) && $inode->deprel() !~ m/^conj(:|$)/)
         {
             push(@{$node->wild()->{enhanced}}, [$inode->parent()->ord(), $inode->deprel()]);
             # The coordination may function as a shared dependent of other coordination.
+            # In that case, make me depend on every conjunct in the parent coordination.
             if($inode->is_shared_modifier())
             {
                 my @conjuncts = $self->recursively_collect_conjuncts($inode->parent());
@@ -78,14 +79,16 @@ sub add_enhanced_shared_dependent_of_coordination
     # Exclude shared "modifiers" whose deprel is 'cc'. They probably just help
     # delimit the coordination. (In nested coordination "A - B and C - D", the
     # conjunction 'and' would come out as a shared 'cc' dependent of 'C' and 'D'.)
-    if($node->is_shared_modifier() && $node->deprel() !~ m/^cc(:|$)/)
+    # Note: If the shared dependent itself is coordination, all conjuncts
+    # should have the flag is_shared_modifier. (At least I have now checked
+    # that there are nodes that have the flag and their deprel is 'conj'.
+    # Of course that is not a proof that it happens always when it should.)
+    # In that case, the parent is the first conjunct, and the effective parent
+    # lies one or more levels further up. However, we solve this in the
+    # function add_enhanced_parent_of_coordination(). Therefore, we do nothing
+    # for non-first conjuncts in coordinate shared dependents here.
+    if($node->is_shared_modifier() && $node->deprel() !~ m/^(cc|conj)(:|$)/)
     {
-        ###!!! I do not know whether all conjuncts in a coordinate shared dependent have the flag set!
-        if($node->deprel() =~ m/^conj(:|$)/)
-        {
-            log_warn('Shared dependent is also conjunct');
-            return;
-        }
         # Presumably the parent node is a head of coordination but better check it.
         if(defined($node->parent()))
         {
