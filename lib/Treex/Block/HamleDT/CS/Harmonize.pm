@@ -492,6 +492,11 @@ sub fix_annotation_errors
             last; ###!!! V těch třech větách, o kterých je řeč, stejně nevím o další chybě. Ale hlavně mi nějak nefunguje práce s polem @nodes po umazání těch dvou uzlů.
             # $i now points to the former decimal, now a merged number. No need to adjust $i; the number does not have to be considered for further error fixing.
         }
+        # One occurrence of "když" in PDT 3.0 has Adv instead of AuxC.
+        elsif($deprel eq 'Adv' && $node->is_subordinator() && any {$_->is_verb()} ($node->children()))
+        {
+            $node->set_deprel('AuxC');
+        }
         # Two occurrences of "se" in CAC 2.0 have AuxT instead of AuxP.
         elsif($deprel eq 'AuxT' && $node->is_adposition())
         {
