@@ -87,7 +87,7 @@ sub add_enhanced_shared_dependent_of_coordination
     # lies one or more levels further up. However, we solve this in the
     # function add_enhanced_parent_of_coordination(). Therefore, we do nothing
     # for non-first conjuncts in coordinate shared dependents here.
-    if($node->is_shared_modifier() && $node->deprel() !~ m/^(cc|conj)(:|$)/)
+    if($node->is_shared_modifier() && $node->deprel() !~ m/^(conj|cc|punct)(:|$)/)
     {
         # Presumably the parent node is a head of coordination but better check it.
         if(defined($node->parent()))
