@@ -156,6 +156,18 @@ sub fix_constructions
             $node->set_deprel($deprel);
         }
     }
+    # The expression "všeho všudy" ("altogether") functions as an adverb.
+    elsif(lc($node->form()) eq 'všeho' && $parent->ord() == $node->ord()+1 &&
+          lc($parent->form()) eq 'všudy')
+    {
+        my $grandparent = $parent->parent();
+        $deprel = $parent->deprel();
+        $node->set_parent($grandparent);
+        $node->set_deprel($deprel);
+        $parent->set_parent($node);
+        $parent->set_deprel('fixed');
+        $parent = $grandparent;
+    }
     # In PDT, the words "dokud" ("while") and "jakoby" ("as if") are sometimes
     # attached as adverbial modifiers although they are conjunctions.
     elsif($node->is_subordinator() && $deprel =~ m/^advmod(:|$)/ && scalar($node->children()) == 0)
