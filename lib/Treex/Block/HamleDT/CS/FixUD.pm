@@ -126,6 +126,23 @@ sub fix_constructions
         $deprel = 'amod';
         $node->set_deprel($deprel);
     }
+    # The abbreviation "aj" ("a jiné" = "and other") is tagged as an adjective
+    # but sometimes it is attached to the last conjunct as 'cc'. We should re-
+    # attach it as a conjunct. We may also consider splitting it as a multi-
+    # word token.
+    elsif(lc($node->form()) eq 'aj' && $node->is_adjective() && $deprel =~ m/^cc(:|$)/)
+    {
+        my $first_conjunct = $parent->deprel() =~ m/^conj(:|$)/ ? $parent->parent() : $parent;
+        # If it is the first conjunct, it lies on our left hand. If it does not,
+        # there is something weird and wrong.
+        if($first_conjunct->ord() < $node->ord())
+        {
+            $parent = $first_conjunct;
+            $deprel = 'conj';
+            $node->set_parent($parent);
+            $node->set_deprel($deprel);
+        }
+    }
     # In PDT, the words "dokud" ("while") and "jakoby" ("as if") are sometimes
     # attached as adverbial modifiers although they are conjunctions.
     elsif($node->is_subordinator() && $deprel =~ m/^advmod(:|$)/ && scalar($node->children()) == 0)
