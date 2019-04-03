@@ -287,6 +287,31 @@ sub fix_constructions
         $deprel = 'discourse';
         $node->set_deprel($deprel);
     }
+    # Sometimes a sequence of punctuation symbols (e.g., "***"), tokenized as
+    # one token per symbol, is analyzed as a constituent headed by one of the
+    # symbols. In UD, this should not happen unless the dependent symbols are
+    # brackets or quotation marks and the head symbol is enclosed by them.
+    elsif($node->is_punctuation() && $parent->is_punctuation())
+    {
+        unless($node->form() =~ m/^[\{\[\("']$/ && $parent->ord() == $node->ord()+1 ||
+               $node->form() =~ m/^['"\)\]\}]$/ && $parent->ord() == $node->ord()-1)
+        {
+            # Find the first ancestor that is not punctuation.
+            my $ancestor = $parent;
+            # We should never get to the root because we should first find an
+            # ancestor whose deprel is 'root'. But let's not rely on the data
+            # too much.
+            while(!$ancestor->is_root() && $ancestor->deprel() =~ m/^punct(:|$)/)
+            {
+                $ancestor = $ancestor->parent();
+            }
+            if(defined($ancestor) && !$ancestor->is_root() && $ancestor->deprel() !~ m/^punct(:|$)/)
+            {
+                $node->set_parent($ancestor);
+                $node->set_deprel('punct');
+            }
+        }
+    }
 }
 
 
