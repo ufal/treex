@@ -315,8 +315,9 @@ sub fix_constructions
     }
     # The colon between two numbers is probably a division symbol, not punctuation.
     elsif($node->form() =~ m/^[+\-:]$/ && $parent->form() =~ m/^\d+(\.\d+)?$/ &&
-          any {$_->form() =~ m/^\d+(\.\d+)?$/} ($node->children()) &&
-          $node->ord() > $parent->ord())
+          $node->ord() > $parent->ord() &&
+          scalar($node->children()) > 0 &&
+          (any {$_->form() =~ m/^\d+(\.\d+)?$/} ($node->children())))
     {
         # The node is currently probably tagged as punctuation but it should be a symbol.
         $node->set_tag('SYM');
