@@ -268,6 +268,13 @@ sub fix_constructions
         $deprel = 'parataxis';
         $node->set_deprel($deprel);
     }
+    # Interjections showing the attitude to the speaker towards the event should
+    # be attached as 'discourse', not as 'advmod'.
+    elsif($node->is_interjection() && $deprel =~ m/^advmod(:|$)/)
+    {
+        $deprel = 'discourse';
+        $node->set_deprel($deprel);
+    }
 }
 
 
