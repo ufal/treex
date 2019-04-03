@@ -360,6 +360,14 @@ sub fix_constructions
         $node->set_parent($parent);
         $node->set_deprel($deprel);
     }
+    # "ať již" ("be it") is a fixed expression and the first part of a paired coordinator.
+    elsif(lc($node->form()) eq 'již' && lc($parent->form()) eq 'ať' &&
+          $parent->ord() == $node->ord()-1)
+    {
+        $deprel = 'fixed';
+        $node->set_deprel($deprel);
+        $parent->set_deprel('cc');
+    }
     # Interjections showing the attitude to the speaker towards the event should
     # be attached as 'discourse', not as 'advmod'.
     elsif($node->is_interjection() && $deprel =~ m/^advmod(:|$)/)
