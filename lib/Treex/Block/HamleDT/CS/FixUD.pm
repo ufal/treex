@@ -143,6 +143,27 @@ sub fix_constructions
         $deprel = 'nmod';
         $node->set_deprel($deprel);
     }
+    # Expressions like "týden co týden": the first word is not a 'cc'!
+    # Since the "X co X" pattern is not productive, we should treat it as a
+    # fixed expression with an adverbial meaning.
+    elsif(lc($node->form()) =~ m/^(den|noc|týden|měsíc|rok)$/ &&
+          $parent->ord() == $node->ord()+2 &&
+          lc($parent->form()) eq lc($node->form()) &&
+          defined($node->get_right_neighbor()) &&
+          $node->get_right_neighbor()->ord() == $node->ord()+1 &&
+          lc($node->get_right_neighbor()->form()) eq 'co')
+    {
+        my $co = $node->get_right_neighbor();
+        my $grandparent = $parent->parent();
+        $deprel = 'advmod';
+        $node->set_parent($grandparent);
+        $node->set_deprel($deprel);
+        $co->set_parent($node);
+        $co->set_deprel('fixed');
+        $parent->set_parent($node);
+        $parent->set_deprel('fixed');
+        $parent = $grandparent;
+    }
     # The noun "pravda" ("truth") used as sentence-initial particle is attached
     # as 'cc' but should be attached as 'discourse'.
     elsif(lc($node->form()) eq 'pravda' && $deprel =~ m/^cc(:|$)/)
