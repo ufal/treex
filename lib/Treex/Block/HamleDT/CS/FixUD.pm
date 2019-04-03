@@ -496,7 +496,7 @@ sub fix_annotation_errors
         }
     }
     # "kategorii ** nebo ***"
-    elsif($spanstring =~ m/kategorii \* \* nebo \* \* \*/)
+    elsif($spanstring eq 'kategorii * * nebo * * *')
     {
         my @subtree = $self->get_node_subtree($node);
         log_fatal('Something is wrong') if(scalar(@subtree)!=7);
@@ -518,6 +518,23 @@ sub fix_annotation_errors
         $subtree[5]->set_deprel('flat');
         $subtree[6]->set_parent($subtree[4]);
         $subtree[6]->set_deprel('flat');
+    }
+    # "m.j." ("among others"): error: "j." is interpreted as "je" ("is") instead of "jiné" ("others")
+    elsif($spanstring eq 'm . j .')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $node->set_lemma('jiný');
+        $node->set_tag('ADJ');
+        $node->iset()->set_hash({'gender' => 'neut', 'number' => 'sing', 'case' => 'acc', 'degree' => 'pos', 'polarity' => 'pos', 'abbr' => 'yes'});
+        my $parent = $node->parent();
+        $subtree[0]->set_parent($parent);
+        $subtree[0]->set_deprel('advmod');
+        $subtree[1]->set_parent($subtree[0]);
+        $subtree[1]->set_deprel('punct');
+        $subtree[2]->set_parent($subtree[0]);
+        $subtree[2]->set_deprel('fixed');
+        $subtree[3]->set_parent($subtree[2]);
+        $subtree[3]->set_deprel('punct');
     }
 }
 
