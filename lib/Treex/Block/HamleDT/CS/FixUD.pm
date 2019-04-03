@@ -124,10 +124,17 @@ sub fix_constructions
     my $node = shift;
     my $parent = $node->parent();
     my $deprel = $node->deprel();
+    # The noun "pravda" ("truth") used as sentence-initial particle is attached
+    # as 'cc' but should be attached as 'discourse'.
+    if(lc($node->form()) eq 'pravda' && $deprel =~ m/^cc(:|$)/)
+    {
+        $deprel = 'discourse';
+        $node->set_deprel($deprel);
+    }
     # The abbreviation "tzv" ("takzvaný" = "so called") is an adjective.
     # However, it is sometimes confused with "tzn" (see below) and attached as
     # 'cc'.
-    if(lc($node->form()) eq 'tzv' && $node->is_adjective() && $parent->ord() > $node->ord())
+    elsif(lc($node->form()) eq 'tzv' && $node->is_adjective() && $parent->ord() > $node->ord())
     {
         $deprel = 'amod';
         $node->set_deprel($deprel);
