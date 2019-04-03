@@ -313,6 +313,29 @@ sub fix_constructions
             }
         }
     }
+    # The colon between two numbers is probably a division symbol, not punctuation.
+    elsif($node->form() =~ m/^[+\-:]$/ && $parent->form() =~ m/^\d+(\.\d+)?$/ &&
+          any {$_->form() =~ m/^\d+(\.\d+)?$/} ($node->children()) &&
+          $node->ord() > $parent->ord())
+    {
+        # The node is currently probably tagged as punctuation but it should be a symbol.
+        $node->set_tag('SYM');
+        $node->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+        # The punct relation should no longer be used.
+        # We could treat the operator as a predicate and make it a head, with
+        # its arguments attached as dependents. However, it is not clear what
+        # their relation should be in linguistic terms. Therefore we simply resort
+        # to a flat structure.
+        $node->set_deprel('flat');
+        foreach my $child ($node->children())
+        {
+            if($child->ord() > $parent->ord())
+            {
+                $child->set_parent($parent);
+                $child->set_deprel($child->is_punctuation() ? 'punct' : 'flat');
+            }
+        }
+    }
 }
 
 
