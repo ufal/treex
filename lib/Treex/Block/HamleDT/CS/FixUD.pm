@@ -354,7 +354,7 @@ sub fix_constructions
         }
     }
     # The colon between two numbers is probably a division symbol, not punctuation.
-    elsif($node->form() =~ m/^[+\-:]$/ && $parent->form() =~ m/^\d+(\.\d+)?$/ &&
+    elsif($node->form() =~ m/^[+\-:]$/ && !$parent->is_root() && $parent->form() =~ m/^\d+(\.\d+)?$/ &&
           $node->ord() > $parent->ord() &&
           scalar($node->children()) > 0 &&
           (any {$_->form() =~ m/^\d+(\.\d+)?$/} ($node->children())))
