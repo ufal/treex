@@ -169,6 +169,25 @@ sub fix_constructions
         $parent->set_deprel('fixed');
         $parent = $grandparent;
     }
+    # In PDT, "na úkor něčeho" ("at the expense of something") is analyzed as
+    # a prepositional phrase with a compound preposition (fixed expression)
+    # "na úkor". However, it is no longer fixed if a possessive pronoun is
+    # inserted, as in "na její úkor".
+    elsif(lc($node->form()) eq 'úkor' && lc($node->parent()) eq 'na' &&
+          $parent->ord() == $node->ord()-2 &&
+          $parent->parent()->ord() == $node->ord()-1)
+    {
+        my $possessive = $parent->parent();
+        my $na = $parent;
+        $parent = $possessive->parent();
+        $deprel = $possessive->deprel();
+        $node->set_parent($parent);
+        $node->set_deprel($deprel);
+        $na->set_parent($node);
+        $na->set_deprel('case');
+        $possessive->set_parent($node);
+        $possessive->set_deprel($possessive->is_determiner() ? 'det' : $possessive->is_adjective() ? 'amod' : 'nmod');
+    }
     # In PDT, the words "dokud" ("while") and "jakoby" ("as if") are sometimes
     # attached as adverbial modifiers although they are conjunctions.
     elsif($node->is_subordinator() && $deprel =~ m/^advmod(:|$)/ && scalar($node->children()) == 0)
@@ -279,6 +298,17 @@ sub fix_constructions
     elsif(lc($node->form()) eq 'rozuměj' && $deprel =~ m/^cc(:|$)/)
     {
         $deprel = 'parataxis';
+        $node->set_deprel($deprel);
+    }
+    # "pokud ovšem" ("if however") is sometimes analyzed as a fixed expression
+    # but that is wrong because other words may be inserted between the two
+    # ("pokud ji ovšem zákon připustí").
+    elsif(lc($node->form()) eq 'ovšem' && $deprel =~ m/^fixed(:|$)/ &&
+          lc($parent->form()) eq 'pokud')
+    {
+        $parent = $parent->parent();
+        $deprel = 'cc';
+        $node->set_parent($parent);
         $node->set_deprel($deprel);
     }
     # Interjections showing the attitude to the speaker towards the event should
