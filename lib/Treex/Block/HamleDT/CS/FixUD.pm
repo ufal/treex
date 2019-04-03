@@ -370,6 +370,22 @@ sub fix_constructions
         $node->set_deprel($deprel);
         $parent->set_deprel('cc');
     }
+    # "jako kdyby", "i kdyby", "co kdyby" ... "kdyby" is decomposed to "když by",
+    # first node should form a fixed expression with the first conjunction
+    # while the second node is an auxiliary and should be attached higher.
+    elsif($node->lemma() eq 'být' && $parent->deprel() =~ m/^mark(:|$)/ &&
+          $parent->ord() == $node->ord()-2 &&
+          defined($node->get_left_neighbor()) &&
+          $node->get_left_neighbor()->ord() == $node->ord()-1 &&
+          lc($node->get_left_neighbor()->form()) eq 'když')
+    {
+        my $kdyz = $node->get_left_neighbor();
+        my $grandparent = $parent->parent();
+        $node->set_parent($grandparent);
+        $node->set_deprel('aux');
+        $parent = $grandparent;
+        $kdyz->set_deprel('fixed');
+    }
     # Interjections showing the attitude to the speaker towards the event should
     # be attached as 'discourse', not as 'advmod'.
     elsif($node->is_interjection() && $deprel =~ m/^advmod(:|$)/)
