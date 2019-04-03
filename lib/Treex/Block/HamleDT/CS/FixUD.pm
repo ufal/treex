@@ -264,6 +264,12 @@ sub fix_constructions
         $deprel = 'case';
         $od->set_parent($parent);
         $od->set_deprel($deprel);
+        # Any punctuation on the left hand should be re-attached to preserve projectivity.
+        my @punctuation = grep {$_->deprel() =~ m/^punct(:|$)/ && $_->ord() < $rozdil->ord()} ($noun->children());
+        foreach my $punct (@punctuation)
+        {
+            $punct->set_parent($rozdil);
+        }
     }
     # In PDT, the words "dokud" ("while") and "jakoby" ("as if") are sometimes
     # attached as adverbial modifiers although they are conjunctions.
