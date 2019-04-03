@@ -361,7 +361,9 @@ sub fix_constructions
         $node->set_deprel($deprel);
     }
     # "ať již" ("be it") is a fixed expression and the first part of a paired coordinator.
-    elsif(lc($node->form()) eq 'již' && lc($parent->form()) eq 'ať' &&
+    # "přece jen" can also be understood as a multi-word conjunction ("avšak přece jen")
+    elsif((lc($node->form()) eq 'již' && lc($parent->form()) eq 'ať' ||
+           lc($node->form()) eq 'jen' && lc($parent->form()) eq 'přece') &&
           $parent->ord() == $node->ord()-1)
     {
         $deprel = 'fixed';
