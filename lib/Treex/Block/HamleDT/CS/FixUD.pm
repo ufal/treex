@@ -477,6 +477,33 @@ sub fix_annotation_errors
             }
         }
     }
+    # "kategorii ** nebo ***"
+    elsif($spanstring =~ m/kategorii \* \* nebo \* \* \*/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        # The stars are symbols but not punctuation.
+        foreach my $istar (1, 2, 4, 5, 6)
+        {
+            $subtree[$istar]->set_tag('SYM');
+            $subtree[$istar]->iset()->set_hash({'pos' => 'sym'});
+            if($istar==2)
+            {
+                $subtree[$istar]->set_parent($subtree[1]);
+                $subtree[$istar]->set_deprel('flat');
+            }
+            elsif($istar>4)
+            {
+                $subtree[$istar]->set_parent($subtree[4]);
+                $subtree[$istar]->set_deprel('flat');
+            }
+        }
+        $subtree[3]->set_parent($subtree[4]);
+        $subtree[3]->set_deprel('cc');
+        $subtree[4]->set_parent($subtree[1]);
+        $subtree[4]->set_deprel('conj');
+        $subtree[1]->set_parent($node); # i.e. $subtree[0]
+        $subtree[1]->set_deprel('nmod');
+    }
 }
 
 
