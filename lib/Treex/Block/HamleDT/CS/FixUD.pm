@@ -118,9 +118,17 @@ sub fix_constructions
     my $node = shift;
     my $parent = $node->parent();
     my $deprel = $node->deprel();
+    # The abbreviation "tzv" ("takzvaný" = "so called") is an adjective.
+    # However, it is sometimes confused with "tzn" (see below) and attached as
+    # 'cc'.
+    if(lc($node->form()) eq 'tzv' && $node->is_adjective() && $parent->ord() > $node->ord())
+    {
+        $deprel = 'amod';
+        $node->set_deprel($deprel);
+    }
     # In PDT, the words "dokud" ("while") and "jakoby" ("as if") are sometimes
     # attached as adverbial modifiers although they are conjunctions.
-    if($node->is_subordinator() && $deprel =~ m/^advmod(:|$)/ && scalar($node->children()) == 0)
+    elsif($node->is_subordinator() && $deprel =~ m/^advmod(:|$)/ && scalar($node->children()) == 0)
     {
         $deprel = 'mark';
         $node->set_deprel($deprel);
