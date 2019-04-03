@@ -125,9 +125,27 @@ sub fix_constructions
     my $node = shift;
     my $parent = $node->parent();
     my $deprel = $node->deprel();
+    # In "Los Angeles", "Los" is wrongly attached to "Angeles" as 'cc'.
+    if(lc($node->form()) eq 'los' && $parent->is_proper_noun() &&
+       $parent->ord() > $node->ord())
+    {
+        my $grandparent = $parent->parent();
+        $deprel = $parent->deprel();
+        $node->set_parent($grandparent);
+        $node->set_deprel($deprel);
+        $parent->set_parent($node);
+        $parent->set_deprel('flat');
+        $parent = $grandparent;
+    }
+    # "skupiny Faith No More": for some reason, "Faith" is attached to "skupiny" as 'advmod'.
+    elsif($node->is_noun() && $parent->is_noun() && $deprel =~ m/^advmod(:|$)/)
+    {
+        $deprel = 'nmod';
+        $node->set_deprel($deprel);
+    }
     # The noun "pravda" ("truth") used as sentence-initial particle is attached
     # as 'cc' but should be attached as 'discourse'.
-    if(lc($node->form()) eq 'pravda' && $deprel =~ m/^cc(:|$)/)
+    elsif(lc($node->form()) eq 'pravda' && $deprel =~ m/^cc(:|$)/)
     {
         $deprel = 'discourse';
         $node->set_deprel($deprel);
