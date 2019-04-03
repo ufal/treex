@@ -3,7 +3,7 @@ use utf8;
 use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
-extends 'Treex::Block::HamleDT::SplitFusedWords';
+extends 'Treex::Block::HamleDT::Harmonize'; # provides get_node_spanstring()
 
 
 
@@ -23,6 +23,7 @@ sub process_atree
     foreach my $node (@nodes)
     {
         $self->fix_constructions($node);
+        $self->fix_annotation_errors($node);
     }
     $self->fix_jak_znamo($root);
     # It is possible that we changed the form of a multi-word token.
@@ -347,6 +348,68 @@ sub fix_jak_znamo
             {
                 $nodes[$i+2]->set_parent($n1);
                 $nodes[$i+2]->set_deprel('punct');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes various annotation errors in individual sentences. It is preferred to
+# fix them when harmonizing the Prague style but in some cases the conversion
+# would be still difficult, so we do it here.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $node = shift;
+    my $spanstring = $self->get_node_spanstring($node);
+    # Full sentence: Maďarský občan přitom zaplatí za: - 1 l mléka kolem 60
+    # forintů, - 1 kg chleba kolem 70, - 1 lahev coca coly (0.33 l) kolem 15
+    # forintů, - krabička cigaret Marlboro asi 120 forintů, - 1 l bezolovnatého
+    # benzinu asi 76 forintů.
+    if($spanstring =~ m/Maďarský občan přitom zaplatí za : -/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        # Sanity check: do we have the right sentence and node indices?
+        # forint: 12 32 40 49
+        if(scalar(@subtree) != 51 ||
+           $subtree[12]->form() ne 'forintů' ||
+           $subtree[32]->form() ne 'forintů' ||
+           $subtree[40]->form() ne 'forintů' ||
+           $subtree[49]->form() ne 'forintů')
+        {
+            log_warn("Bad match in expected sentence: $spanstring");
+        }
+        else
+        {
+            # $node is the main verb, "zaplatí".
+            # comma dash goods price
+            my $c = 0;
+            my $d = 1;
+            my $g = 2;
+            my $p = 3;
+            my @conjuncts =
+            (
+                [13, 14, 16, 19],
+                [20, 21, 23, 32],
+                [33, 34, 35, 40],
+                [41, 42, 44, 49]
+            );
+            foreach my $conjunct (@conjuncts)
+            {
+                # The price is the direct object of the missing verb. Promote it.
+                $subtree[$conjunct->[$p]]->set_parent($node);
+                $subtree[$conjunct->[$p]]->set_deprel('conj');
+                # The goods item is the other orphan.
+                $subtree[$conjunct->[$g]]->set_parent($subtree[$conjunct->[$p]]);
+                $subtree[$conjunct->[$g]]->set_deprel('orphan');
+                # Punctuation will be attached to the head of the conjunct, too.
+                $subtree[$conjunct->[$c]]->set_parent($subtree[$conjunct->[$p]]);
+                $subtree[$conjunct->[$c]]->set_deprel('punct');
+                $subtree[$conjunct->[$d]]->set_parent($subtree[$conjunct->[$p]]);
+                $subtree[$conjunct->[$d]]->set_deprel('punct');
             }
         }
     }
