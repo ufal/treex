@@ -179,7 +179,7 @@ sub fix_constructions
     # "to", which is a demonstrative pronoun, not conjunction. Transform it and
     # use the 'fixed' relation.
     elsif(lc($node->form()) eq 'a' && $deprel =~ m/^cc(:|$)/ &&
-          lc($parent->form()) eq 'to' && $parent->deprel() =~ m/^(cc|advmod|discourse)(:|$)/ && $parent->ord() > $node->ord())
+          $parent->form() =~ m/^(to|sice)$/i && $parent->deprel() =~ m/^(cc|advmod|discourse)(:|$)/ && $parent->ord() > $node->ord())
     {
         my $grandparent = $parent->parent();
         $node->set_parent($grandparent);
