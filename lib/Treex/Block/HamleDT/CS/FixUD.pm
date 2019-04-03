@@ -373,7 +373,8 @@ sub fix_constructions
     # "jako kdyby", "i kdyby", "co kdyby" ... "kdyby" is decomposed to "když by",
     # first node should form a fixed expression with the first conjunction
     # while the second node is an auxiliary and should be attached higher.
-    elsif($node->lemma() eq 'být' && $parent->deprel() =~ m/^mark(:|$)/ &&
+    elsif($node->lemma() eq 'být' && !$parent->is_root() &&
+          $parent->deprel() =~ m/^mark(:|$)/ &&
           $parent->ord() == $node->ord()-2 &&
           defined($node->get_left_neighbor()) &&
           $node->get_left_neighbor()->ord() == $node->ord()-1 &&
