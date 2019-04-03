@@ -73,6 +73,12 @@ sub process_atree
             {
                 $rcand = $self->climb($rcand, $node, +1, \@rcrumbs);
             }
+            # If we could not find any suitable parent, relax the condition on parent's deprel and try again.
+            if(!defined($lcand) && !defined($rcand))
+            {
+                $lcand = $self->find_candidate_left($node, \@nodes, 1);
+                $rcand = $self->find_candidate_right($node, \@nodes, 1);
+            }
             my $winner = $self->decide_left_or_right($node->form(), $pord, $lcand, \@lcrumbs, $rcand, \@rcrumbs);
             if(defined($winner))
             {
@@ -236,6 +242,7 @@ sub find_candidate_left
     my $self = shift;
     my $node = shift;
     my $nodes = shift; # array reference, ordered list of tree nodes including $node
+    my $relax = shift; # if set, relax restriction on suitable parents because nothing better was available in the first attempt
     # We do not know the index of $node in @{$nodes}. We cannot rely on ord() being always the index+1.
     my $in;
     for(my $i = 0; $i <= $#{$nodes}; $i++)
@@ -254,7 +261,7 @@ sub find_candidate_left
     # But we can climb to their ancestors, as long as these lie to the left of the original node.
     # We also have to check for nonprojectivity because the left neighbor may
     # be currently attached nonprojectively and if we attach to its parent we will be nonprojective too.
-    while($candidate->is_punctuation() || $candidate->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
+    while($candidate->is_punctuation() || !$relax && $candidate->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
     {
         my $parent = $candidate->parent();
         if($parent->is_root())
@@ -283,6 +290,7 @@ sub find_candidate_right
     my $self = shift;
     my $node = shift;
     my $nodes = shift; # array reference, ordered list of tree nodes including $node
+    my $relax = shift; # if set, relax restriction on suitable parents because nothing better was available in the first attempt
     # We do not know the index of $node in @{$nodes}. We cannot rely on ord() being always the index+1.
     my $in;
     for(my $i = 0; $i <= $#{$nodes}; $i++)
@@ -301,7 +309,7 @@ sub find_candidate_right
     # But we can climb to their ancestors, as long as these lie to the right of the original node.
     # We also have to check for nonprojectivity because the right neighbor may
     # be currently attached nonprojectively and if we attach to its parent we will be nonprojective too.
-    while($candidate->is_punctuation() || $candidate->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
+    while($candidate->is_punctuation() || !$relax && $candidate->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
     {
         my $parent = $candidate->parent();
         if($parent->is_root())
