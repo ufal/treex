@@ -237,6 +237,30 @@ sub fix_constructions
         $possessive->set_parent($node);
         $possessive->set_deprel($possessive->is_determiner() ? 'det' : $possessive->is_adjective() ? 'amod' : 'nmod');
     }
+    # Similarly, "na rozdíl od něčeho" ("in contrast to something") is normally
+    # a fixed expression (multi-word preposition "na rozdíl od") but occasionally
+    # it is not fixed: "na rozdíl třeba od Mikoláše".
+    elsif(!$parent->is_root() && !$parent->parent()->is_root() &&
+          defined($parent->get_right_neighbor()) && defined($node->get_left_neighbor()) &&
+          lc($node->form()) eq 'od' &&
+          lc($parent->form()) eq 'na' && $parent->ord() == $node->ord()-3 &&
+          lc($node->get_left_neighbor()->form()) eq 'rozdíl' && $node->get_left_neighbor()->ord() == $node->ord()-2 &&
+          $parent->get_right_neighbor()->ord() == $node->ord()-1)
+    {
+        # Dissolve the fixed expression and give it ordinary analysis.
+        my $noun = $parent->parent();
+        my $na = $parent;
+        my $rozdil = $node->get_left_neighbor();
+        my $od = $node;
+        $parent = $noun->parent();
+        $deprel = $noun->deprel();
+        $rozdil->set_parent($parent);
+        $rozdil->set_deprel($deprel);
+        $na->set_parent($rozdil);
+        $na->set_deprel('case');
+        $od->set_parent($noun);
+        $od->set_deprel('case');
+    }
     # In PDT, the words "dokud" ("while") and "jakoby" ("as if") are sometimes
     # attached as adverbial modifiers although they are conjunctions.
     elsif($node->is_subordinator() && $deprel =~ m/^advmod(:|$)/ && scalar($node->children()) == 0)

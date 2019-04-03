@@ -652,6 +652,30 @@ sub fix_annotation_errors
                 }
             }
         }
+        elsif($spanstring =~ m/^2 : 15 min \. před Sabym \( .*? \) a 9 : 04 min \. před/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            my $num1 = $subtree[0];
+            my $num2 = $subtree[2];
+            my $colon = $subtree[1];
+            $colon->set_deprel('Coord');
+            $colon->set_is_member(1);
+            $num1->set_deprel('ExD');
+            $num1->set_is_member(1);
+            $num2->set_parent($colon);
+            $num2->set_deprel('ExD');
+            $num2->set_is_member(1);
+            $num1 = $subtree[14];
+            $num2 = $subtree[16];
+            $colon = $subtree[15];
+            $colon->set_deprel('Coord');
+            $colon->set_is_member(1);
+            $num1->set_deprel('ExD');
+            $num1->set_is_member(1);
+            $num2->set_parent($colon);
+            $num2->set_deprel('ExD');
+            $num2->set_is_member(1);
+        }
     }
 }
 
