@@ -62,6 +62,12 @@ sub fix_morphology
     {
         $iset->set_hash({'pos' => 'conj', 'conjtype' => 'coor', 'abbr' => 'yes'});
     }
+    # The word "plus" can be a noun or a mathematical conjunction. If it is
+    # attached as 'cc', it should be conjunction.
+    elsif($lform eq 'plus' && $deprel =~ m/^cc(:|$)/)
+    {
+        $iset->set_hash({'pos' => 'conj', 'conjtype' => 'oper'});
+    }
     # Make sure that the UPOS tag still matches Interset features.
     $node->set_tag($node->iset()->get_upos());
 }
