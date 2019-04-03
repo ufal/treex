@@ -3,7 +3,7 @@ use utf8;
 use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
-extends 'Treex::Block::HamleDT::Harmonize'; # provides get_node_spanstring()
+extends 'Treex::Block::HamleDT::Base'; # provides get_node_spanstring()
 
 
 
