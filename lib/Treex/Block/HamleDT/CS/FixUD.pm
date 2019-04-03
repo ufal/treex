@@ -258,8 +258,12 @@ sub fix_constructions
         $rozdil->set_deprel($deprel);
         $na->set_parent($rozdil);
         $na->set_deprel('case');
-        $od->set_parent($noun);
-        $od->set_deprel('case');
+        $noun->set_parent($rozdil);
+        $noun->set_deprel('nmod');
+        $parent = $noun;
+        $deprel = 'case';
+        $od->set_parent($parent);
+        $od->set_deprel($deprel);
     }
     # In PDT, the words "dokud" ("while") and "jakoby" ("as if") are sometimes
     # attached as adverbial modifiers although they are conjunctions.
