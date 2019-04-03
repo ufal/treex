@@ -132,6 +132,16 @@ sub fix_constructions
         $deprel = 'discourse';
         $node->set_deprel($deprel);
     }
+    # There are a few right-to-left appositions that resulted from transforming
+    # copula-like constructions with punctuation (":") instead of the copula.
+    # Each of them would probably deserve a different analysis but at present
+    # we do not care too much and make them 'parataxis' (they occur in nonverbal
+    # sentences or segments).
+    elsif($deprel =~ m/^appos(:|$)/ && $node->ord() < $parent->ord())
+    {
+        $deprel = 'parataxis';
+        $node->set_deprel($deprel);
+    }
     # The abbreviation "tzv" ("takzvaný" = "so called") is an adjective.
     # However, it is sometimes confused with "tzn" (see below) and attached as
     # 'cc'.
@@ -173,7 +183,7 @@ sub fix_constructions
     # a prepositional phrase with a compound preposition (fixed expression)
     # "na úkor". However, it is no longer fixed if a possessive pronoun is
     # inserted, as in "na její úkor".
-    elsif(lc($node->form()) eq 'úkor' && lc($node->parent()) eq 'na' &&
+    elsif(lc($node->form()) eq 'úkor' && lc($parent->form()) eq 'na' &&
           $parent->ord() == $node->ord()-2 &&
           $parent->parent()->ord() == $node->ord()-1)
     {
