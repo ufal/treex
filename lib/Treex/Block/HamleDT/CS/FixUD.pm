@@ -343,6 +343,16 @@ sub fix_constructions
         $deprel = 'mark';
         $node->set_deprel($deprel);
     }
+    # "a jak" ("and as") should not be treated as a fixed expression and not even as a constituent.
+    elsif(lc($node->form()) eq 'a' && $parent->ord() == $node->ord()+1 &&
+          lc($parent->form()) eq 'jak' && $parent->is_subordinator() && !$parent->deprel() =~ m/^root(:|$)/)
+    {
+        $parent->set_deprel('mark');
+        $parent = $parent->parent();
+        $deprel = 'cc';
+        $node->set_parent($parent);
+        $node->set_deprel($deprel);
+    }
     # Czech "a to" ("viz.") is a multi-word conjunction. In PDT it is headed by
     # "to", which is a demonstrative pronoun, not conjunction. Transform it and
     # use the 'fixed' relation.
