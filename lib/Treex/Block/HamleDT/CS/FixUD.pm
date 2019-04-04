@@ -683,6 +683,18 @@ sub fix_annotation_errors
         $subtree[3]->set_parent($subtree[2]);
         $subtree[3]->set_deprel('punct');
     }
+    # "hlavního lékaře", de facto ministra zdravotnictví, ... "de facto" is split.
+    elsif($spanstring eq '" hlavního lékaře " , de facto ministra zdravotnictví ,')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        my $de = $subtree[5];
+        my $facto = $subtree[6];
+        my $ministra = $subtree[7];
+        $de->set_parent($ministra);
+        $de->set_deprel('advmod:emph');
+        $facto->set_parent($de);
+        $facto->set_deprel('fixed');
+    }
 }
 
 
