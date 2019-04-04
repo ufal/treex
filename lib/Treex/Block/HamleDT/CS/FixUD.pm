@@ -300,6 +300,18 @@ sub fix_constructions
         $parent->set_deprel('fixed');
         $parent = $grandparent;
     }
+    # The expression "nota bene" functions as an adverb.
+    elsif(lc($node->form()) eq 'nota' && $parent->ord() == $node->ord()+1 &&
+          lc($parent->form()) eq 'bene')
+    {
+        my $grandparent = $parent->parent();
+        $deprel = $parent->deprel();
+        $node->set_parent($grandparent);
+        $node->set_deprel($deprel);
+        $parent->set_parent($node);
+        $parent->set_deprel('fixed');
+        $parent = $grandparent;
+    }
     # The expression "in memoriam" functions as an adverb.
     elsif(lc($node->form()) eq 'memoriam' && $parent->ord() == $node->ord()-1 &&
           lc($parent->form()) eq 'in')
