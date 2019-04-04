@@ -527,10 +527,10 @@ sub fix_constructions
                 $child->set_parent($node);
             }
         }
-        my @children = grep {m/^[12]?\d\d\d$/} ($node->children());
-        $year = $children[0];
-        if(defined($year) && $year->form() =~ m/^[12]?\d\d\d$/)
+        my @children = grep {$_->form() =~ m/^[12]?\d\d\d$/} ($node->children());
+        if(scalar(@children)>0)
         {
+            $year = $children[0];
             $year->set_deprel('obl');
         }
         # If there are parentheses, make sure they are attached to the star as well.
