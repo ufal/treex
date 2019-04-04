@@ -550,6 +550,13 @@ sub fix_constructions
             $r->set_parent($node);
         }
     }
+    # "..." is sometimes attached as the last conjunct in coordination.
+    # (It is three tokens, each period separate.)
+    elsif($node->form() eq '.' && $deprel =~ m/^conj(:|$)/)
+    {
+        $deprel = 'punct';
+        $node->set_deprel($deprel);
+    }
 }
 
 
