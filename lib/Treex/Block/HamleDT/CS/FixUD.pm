@@ -209,7 +209,7 @@ sub fix_constructions
     }
     # The noun "pravda" ("truth") used as sentence-initial particle is attached
     # as 'cc' but should be attached as 'discourse'.
-    elsif(lc($node->form()) eq 'pravda' && $deprel =~ m/^cc(:|$)/)
+    elsif(lc($node->form()) eq 'pravda' && $deprel =~ m/^(cc|advmod)(:|$)/)
     {
         $deprel = 'discourse';
         $node->set_deprel($deprel);
