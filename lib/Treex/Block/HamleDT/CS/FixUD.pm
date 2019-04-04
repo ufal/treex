@@ -56,6 +56,14 @@ sub fix_morphology
     {
         $iset->set_hash({'pos' => 'adv', 'prontype' => 'rel'});
     }
+    # If attached as 'advmod', "vlastně" ("actually") is an adverb and not a
+    # converb of "vlastnit" ("to own").
+    elsif($lform eq 'vlastně' && $deprel =~ m/^advmod(:|$)/)
+    {
+        $lemma = 'vlastně';
+        $node->set_lemma($lemma);
+        $iset->set_hash({'pos' => 'adv', 'degree' => 'pos', 'polarity' => 'pos'});
+    }
     # "I" can be the conjunction "i", capitalized, or it can be the Roman numeral 1.
     # If it appears at the beginning of the sentence and is attached as advmod:emph or cc,
     # we will assume that it is a conjunction (there is at least one case where it
