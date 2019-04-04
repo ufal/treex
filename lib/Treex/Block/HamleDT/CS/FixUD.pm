@@ -335,7 +335,7 @@ sub fix_constructions
     # Similar: "to jest/to je/to znamená".
     elsif(lc($node->form()) =~ m/^(to)$/ && $deprel =~ m/^(cc|advmod)(:|$)/ &&
           defined($node->get_right_neighbor()) &&
-          lc($node->get_right_neighbor()->form()) =~ m/^(je(st)?|znamená)$/ && $node->get_right_neighbor()->deprel() =~ m/^cc(:|$)/)
+          lc($node->get_right_neighbor()->form()) =~ m/^(je(st)?|znamená)$/ && $node->get_right_neighbor()->deprel() =~ m/^(cc|advmod)(:|$)/)
     {
         my $je = $node->get_right_neighbor();
         $je->set_parent($node);
