@@ -241,6 +241,14 @@ sub fix_constructions
             $node->set_deprel($deprel);
         }
     }
+    # The expression "více než" ("more than") functions as an adverb.
+    elsif(lc($node->form()) eq 'než' && $parent->ord() == $node->ord()-1 &&
+          lc($parent->form()) eq 'více')
+    {
+        $deprel = 'fixed';
+        $node->set_deprel($deprel);
+        $parent->set_deprel('advmod');
+    }
     # The expression "všeho všudy" ("altogether") functions as an adverb.
     elsif(lc($node->form()) eq 'všeho' && $parent->ord() == $node->ord()+1 &&
           lc($parent->form()) eq 'všudy')
