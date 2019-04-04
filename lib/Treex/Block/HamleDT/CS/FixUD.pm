@@ -733,6 +733,14 @@ sub fix_annotation_errors
         $subtree[1]->set_parent($subtree[2]);
         $subtree[1]->set_deprel('cc');
     }
+    # Too many vertical bars attached to the root. The Punctuation block could
+    # not deal with it.
+    elsif($spanstring eq '| Nabídky kurzů , školení , | | seminářů a rekvalifikací | | zveřejňujeme na straně 15 . |')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[5]->set_parent($subtree[8]);
+        $subtree[6]->set_parent($subtree[8]);
+    }
 }
 
 
