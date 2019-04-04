@@ -482,7 +482,7 @@ sub fix_constructions
     # Especially if enclosed in parentheses.
     elsif($node->form() eq '*' &&
           (defined($node->get_right_neighbor()) && $node->get_right_neighbor()->ord() == $node->ord()+1 && $node->get_right_neighbor()->form() =~ m/^[12]?\d\d\d$/ ||
-           scalar($node->children())==1 && ($node->children())[0]->ord() == $node->ord()+1 && ($node->children())[0]->form() =! m/^[12]?\d\d\d$/))
+           scalar($node->children())==1 && ($node->children())[0]->ord() == $node->ord()+1 && ($node->children())[0]->form() =~ m/^[12]?\d\d\d$/))
     {
         $node->set_tag('SYM');
         $node->iset()->set_hash({'pos' => 'sym'});
