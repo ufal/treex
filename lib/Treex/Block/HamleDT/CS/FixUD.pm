@@ -172,6 +172,12 @@ sub fix_constructions
         $parent->set_deprel('fixed');
         $parent = $grandparent;
     }
+    # "většinou" ("mostly") is the noun "většina", almost grammaticalized to an adverb.
+    elsif(lc($node->form()) eq 'většinou' && $node->is_noun() && $deprel =~ m/^advmod(:|$)/)
+    {
+        $deprel = 'obl';
+        $node->set_deprel($deprel);
+    }
     # The noun "pravda" ("truth") used as sentence-initial particle is attached
     # as 'cc' but should be attached as 'discourse'.
     elsif(lc($node->form()) eq 'pravda' && $deprel =~ m/^cc(:|$)/)
@@ -570,10 +576,16 @@ sub fix_constructions
         my @children = $node->get_children({'ordered' => 1});
         my @punctchildren = grep {$_->deprel() =~ m/^punct(:|$)/} (@children);
         my @argchildren = grep {$_->deprel() !~ m/^punct(:|$)/} (@children);
-        if(scalar(@argchildren) != 2)
+        if(scalar(@argchildren) == 0)
+        {
+            # There are 2 or more children and all are punctuation.
+            # Silently exit this branch. This will be solved elsewhere.
+        }
+        elsif(scalar(@argchildren) != 2)
         {
             my $spanstring = $self->get_node_spanstring($node);
-            log_warn("Do not know what to do with '$spanstring'");
+            my $args = join(' ', map {$_->form()} (@argchildren));
+            log_warn("Do not know what to do with '$spanstring' ($args)");
         }
         else
         {
