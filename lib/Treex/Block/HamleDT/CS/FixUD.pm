@@ -56,6 +56,14 @@ sub fix_morphology
     {
         $iset->set_hash({'pos' => 'adv', 'prontype' => 'rel'});
     }
+    # "I" can be the conjunction "i", capitalized, or it can be the Roman numeral 1.
+    # If it appears at the beginning of the sentence and is attached as advmod:emph or cc,
+    # we will assume that it is a conjunction (there is at least one case where it
+    # is wrongly tagged NUM).
+    elsif($lform eq 'i' && $node->ord() == 1 && $deprel =~ m/^(advmod|cc)(:|$)/)
+    {
+        $iset->set_hash({'pos' => 'conj', 'conjtype' => 'coor'});
+    }
     # If "to znamená" is abbreviated and tokenized as "tzn .", PDT tags it as
     # a verb but analyzes it syntactically as a conjunction. We will re-tag it
     # as a conjunction.
