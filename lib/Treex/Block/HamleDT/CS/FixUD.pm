@@ -592,6 +592,7 @@ sub fix_constructions
             my $s = $argchildren[0];
             my $p = $argchildren[1];
             $p->set_parent($parent);
+            $deprel = 'parataxis' if($deprel =~ m/^punct(:|$)/);
             $p->set_deprel($deprel);
             $s->set_parent($p);
             $s->set_deprel('nsubj'); ###!!! It could be also csubj!
