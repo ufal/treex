@@ -652,6 +652,29 @@ sub fix_annotation_errors
                 }
             }
         }
+        elsif($spanstring =~ m/^Hamburg Messe und Congres , GmbH$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Original annotation uses wrong deprels (AuxY).
+            my $parent = $node->parent();
+            my $deprel = $node->deprel();
+            my $member = $node->is_member();
+            $subtree[2]->set_parent($parent);
+            $subtree[2]->set_deprel('Coord');
+            $subtree[2]->set_is_member($member);
+            $subtree[0]->set_parent($subtree[2]);
+            $subtree[0]->set_deprel('Atr');
+            $subtree[0]->set_is_member(undef);
+            $subtree[1]->set_parent($subtree[2]);
+            $subtree[1]->set_deprel($deprel);
+            $subtree[1]->set_is_member(1);
+            $subtree[3]->set_parent($subtree[2]);
+            $subtree[3]->set_deprel($deprel);
+            $subtree[3]->set_is_member(1);
+            $subtree[5]->set_parent($subtree[2]);
+            $subtree[5]->set_deprel('Atr');
+            $subtree[5]->set_is_member(undef);
+        }
         elsif($spanstring =~ m/^2 : 15 min \. před Sabym \( .*? \) a 9 : 04 min \. před/)
         {
             my @subtree = $self->get_node_subtree($node);
