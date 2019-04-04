@@ -62,7 +62,8 @@ sub fix_morphology
     {
         $lemma = 'vlastně';
         $node->set_lemma($lemma);
-        $iset->set_hash({'pos' => 'adv', 'degree' => 'pos', 'polarity' => 'pos'});
+        # This is vlastně-2 ("totiž"), without the features of Degree and Polarity.
+        $iset->set_hash({'pos' => 'adv'});
     }
     # "I" can be the conjunction "i", capitalized, or it can be the Roman numeral 1.
     # If it appears at the beginning of the sentence and is attached as advmod:emph or cc,
