@@ -172,6 +172,12 @@ sub fix_constructions
         $deprel = 'nmod';
         $node->set_deprel($deprel);
     }
+    # "v play off"
+    elsif($node->is_noun() && $deprel =~ m/^advmod(:|$)/)
+    {
+        $deprel = 'obl';
+        $node->set_deprel($deprel);
+    }
     # An initial ("K", "Z") is sometimes mistaken for a preposition, although
     # it is correctly tagged PROPN.
     elsif($node->is_proper_noun() && $parent->is_proper_noun() && $deprel =~ m/^case(:|$)/)
