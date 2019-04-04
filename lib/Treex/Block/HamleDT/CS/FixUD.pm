@@ -628,7 +628,7 @@ sub fix_constructions
     # "týden pro dospělého - 1400 korun, pro dítě do deseti let - 700 korun"
     # We do not know what to do if there fewer than 2 children. However, there
     # can be more if the entire expression is enclosed in parentheses.
-    elsif($node->form() eq '-' && scalar($node->children()) >= 2)
+    elsif($node->form() =~ m/^[-:]$/ && scalar($node->children()) >= 2)
     {
         my @children = $node->get_children({'ordered' => 1});
         my @punctchildren = grep {$_->deprel() =~ m/^punct(:|$)/} (@children);
