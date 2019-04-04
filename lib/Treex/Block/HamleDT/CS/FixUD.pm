@@ -741,6 +741,17 @@ sub fix_annotation_errors
         $subtree[5]->set_parent($subtree[8]);
         $subtree[6]->set_parent($subtree[8]);
     }
+    # "Jenomže všechno má své kdyby." ... "kdyby" is mentioned, not used.
+    elsif($spanstring eq 'Jenomže všechno má své když by .')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[4]->set_parent($subtree[2]);
+        $subtree[4]->set_deprel('obj');
+        # Maybe it would be better not to split "kdyby" to "když by" in this case.
+        # But the splitting block cannot detect such cases. And what UPOS tag would we use? NOUN?
+        $subtree[5]->set_parent($subtree[4]);
+        $subtree[5]->set_deprel('conj');
+    }
 }
 
 
