@@ -151,6 +151,18 @@ sub fix_constructions
         $deprel = 'nmod';
         $node->set_deprel($deprel);
     }
+    # An initial ("K", "Z") is sometimes mistaken for a preposition, although
+    # it is correctly tagged PROPN.
+    elsif($node->is_proper_noun() && $parent->is_proper_noun() && $deprel =~ m/^case(:|$)/)
+    {
+        my $grandparent = $parent->parent();
+        $deprel = $parent->deprel();
+        $node->set_parent($grandparent);
+        $node->set_deprel($deprel);
+        $parent->set_parent($node);
+        $parent->set_deprel('flat');
+        $parent = $grandparent;
+    }
     # Expressions like "týden co týden": the first word is not a 'cc'!
     # Since the "X co X" pattern is not productive, we should treat it as a
     # fixed expression with an adverbial meaning.
