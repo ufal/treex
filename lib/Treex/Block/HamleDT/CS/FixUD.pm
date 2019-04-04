@@ -703,6 +703,16 @@ sub fix_annotation_errors
         $facto->set_parent($de);
         $facto->set_deprel('fixed');
     }
+    # "z Jensen Beach"
+    elsif($spanstring eq 'z Jensen Beach')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        # Jensen is tagged ADJ and currently attached as 'cc'. We change it to
+        # 'amod' now, although in all such cases, both English words should be
+        # PROPN in Czech, Jensen should be the head and Beach should be attached
+        # as 'flat:name'.
+        $subtree[1]->set_deprel('amod');
+    }
 }
 
 
