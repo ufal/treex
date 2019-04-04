@@ -882,6 +882,22 @@ sub fix_annotation_errors
         $subtree[5]->set_parent($subtree[4]);
         $subtree[5]->set_deprel('conj');
     }
+    # "podle § 209 tr. zák." ... "§" is strangely mis-coded as "|"
+    elsif($spanstring eq 'podle | 209 tr . zák .')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        my $parent = $node->parent();
+        my $deprel = 'obl';
+        $subtree[1]->set_lemma('§');
+        $subtree[1]->set_tag('SYM');
+        $subtree[1]->iset()->set_hash({'pos' => 'sym', 'typo' => 'yes'});
+        $subtree[1]->set_parent($parent);
+        $subtree[1]->set_deprel($deprel);
+        $subtree[0]->set_parent($subtree[1]);
+        $subtree[0]->set_deprel('case');
+        $subtree[5]->set_parent($subtree[1]);
+        # The rest seems to be annotated correctly.
+    }
 }
 
 
