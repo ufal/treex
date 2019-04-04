@@ -333,13 +333,16 @@ sub fix_constructions
         $to->iset()->set_hash({'pos' => 'part'});
     }
     # Similar: "to jest/to je/to znamená".
-    elsif(lc($node->form()) =~ m/^(to)$/ && $deprel =~ m/^cc(:|$)/ &&
+    elsif(lc($node->form()) =~ m/^(to)$/ && $deprel =~ m/^(cc|advmod)(:|$)/ &&
           defined($node->get_right_neighbor()) &&
           lc($node->get_right_neighbor()->form()) =~ m/^(je(st)?|znamená)$/ && $node->get_right_neighbor()->deprel() =~ m/^cc(:|$)/)
     {
-        my $to = $node->get_right_neighbor();
-        $to->set_parent($node);
-        $to->set_deprel('fixed');
+        my $je = $node->get_right_neighbor();
+        $je->set_parent($node);
+        $je->set_deprel('fixed');
+        # Normalize the attachment of "to" (sometimes it is 'advmod' but it should always be 'cc').
+        $deprel = 'cc';
+        $node->set_deprel($deprel);
     }
     # If "to jest" is abbreviated and tokenized as "t . j .", the above branch
     # will not catch it.
