@@ -218,6 +218,18 @@ sub fix_constructions
         $parent->set_deprel('fixed');
         $parent = $grandparent;
     }
+    # The expression "suma sumárum" ("to summarize") functions as an adverb.
+    elsif(lc($node->form()) eq 'suma' && $parent->ord() == $node->ord()+1 &&
+          lc($parent->form()) eq 'sumárum')
+    {
+        my $grandparent = $parent->parent();
+        $deprel = $parent->deprel();
+        $node->set_parent($grandparent);
+        $node->set_deprel($deprel);
+        $parent->set_parent($node);
+        $parent->set_deprel('fixed');
+        $parent = $grandparent;
+    }
     # In PDT, "na úkor něčeho" ("at the expense of something") is analyzed as
     # a prepositional phrase with a compound preposition (fixed expression)
     # "na úkor". However, it is no longer fixed if a possessive pronoun is
