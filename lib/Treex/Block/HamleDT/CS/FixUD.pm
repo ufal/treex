@@ -726,8 +726,8 @@ sub fix_annotation_errors
     {
         my @subtree = $self->get_node_subtree($node);
         # Gottlieb is currently 'cc' on Pearson.
-        $subtree[0]->set_parent($parent);
-        $subtree[0]->set_deprel($deprel);
+        $subtree[0]->set_parent($node->parent());
+        $subtree[0]->set_deprel($node->deprel());
         $subtree[2]->set_parent($subtree[0]);
         $subtree[2]->set_deprel('conj');
         $subtree[1]->set_parent($subtree[2]);
