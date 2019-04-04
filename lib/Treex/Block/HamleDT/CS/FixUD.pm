@@ -581,21 +581,51 @@ sub fix_constructions
             # There are 2 or more children and all are punctuation.
             # Silently exit this branch. This will be solved elsewhere.
         }
-        elsif(scalar(@argchildren) != 2)
+        elsif(scalar(@argchildren) == 2)
         {
-            my $spanstring = $self->get_node_spanstring($node);
-            my $args = join(' ', map {$_->form()} (@argchildren));
-            log_warn("Do not know what to do with '$spanstring' ($args)");
-        }
-        else
-        {
+            # Assume that the hyphen is acting like a copula. If we are lucky,
+            # one of the children is labeled as a subject. The other will be
+            # object or oblique and that is the one we will treat as predicate.
+            # If we are unlucky (e.g. because of ellipsis), no child is labeled
+            # as subject. Then we take the first one.
             my $s = $argchildren[0];
             my $p = $argchildren[1];
+            if($p->deprel() =~ m/subj/ && $s->deprel() !~ m/subj/)
+            {
+                $s = $argchildren[1];
+                $p = $argchildren[0];
+            }
             $p->set_parent($parent);
             $deprel = 'parataxis' if($deprel =~ m/^punct(:|$)/);
             $p->set_deprel($deprel);
             $s->set_parent($p);
-            $s->set_deprel('nsubj'); ###!!! It could be also csubj!
+            foreach my $punct (@punctchildren)
+            {
+                $punct->set_parent($p);
+            }
+            $parent = $p;
+            $deprel = 'punct';
+            $node->set_parent($parent);
+            $node->set_deprel($deprel);
+        }
+        else # more than two non-punctuation children
+        {
+            # Examples (head words of children in parentheses):
+            # 'Náměstek ministra podnikatelům - daňové nedoplatky dosahují miliard' (Náměstek podnikatelům dosahují)
+            # 'Týden pro dospělého - 1400 korun , pro dítě do deseti let - 700 korun .' (Týden korun -)
+            # 'V " supertermínech " jako je Silvestr - 20 německých marek za osobu , jinak 12 marek , případně v přepočtu na koruny .' (supertermínech marek osobu jinak)
+            # 'Dnes v listě Neobyčejně obyčejné příběhy - portrét režiséra Karla Kachyni' (Dnes listě portrét)
+            # 'Brankáři s nulou : Hlinka ( Vítkovice ) a Novotný ( Jihlava ) - oba ve 2 . kole .' (Brankáři oba kole)
+            # '25 . 2 . 1994 - hebronský masakr ( židovský osadník Baruch Goldstein postřílel při modlitbě tři desítky Arabů ) ;' (2 masakr postřílel)
+            ###!!! It is not clear what we should do. For the moment, we just pick the first child as the head.
+            my $p = shift(@argchildren);
+            $p->set_parent($parent);
+            $deprel = 'parataxis' if($deprel =~ m/^punct(:|$)/);
+            $p->set_deprel($deprel);
+            foreach my $arg (@argchildren)
+            {
+                $arg->set_parent($p);
+            }
             foreach my $punct (@punctchildren)
             {
                 $punct->set_parent($p);
