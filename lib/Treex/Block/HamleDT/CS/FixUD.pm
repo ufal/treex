@@ -262,6 +262,14 @@ sub fix_constructions
         $node->set_deprel($deprel);
         $parent->set_deprel('advmod');
     }
+    # The expression "pokud možno" ("if possible") functions as an adverb.
+    elsif(lc($node->form()) eq 'možno' && $parent->ord() == $node->ord()-1 &&
+          lc($parent->form()) eq 'pokud')
+    {
+        $deprel = 'fixed';
+        $node->set_deprel($deprel);
+        $parent->set_deprel('advmod');
+    }
     # The expression "všeho všudy" ("altogether") functions as an adverb.
     elsif(lc($node->form()) eq 'všeho' && $parent->ord() == $node->ord()+1 &&
           lc($parent->form()) eq 'všudy')
