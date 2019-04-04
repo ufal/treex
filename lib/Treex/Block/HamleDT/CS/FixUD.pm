@@ -932,6 +932,13 @@ sub fix_annotation_errors
         $subtree[2]->set_parent($subtree[0]);
         $subtree[2]->set_deprel('punct');
     }
+    # "Tenis ad-Řím"
+    # In this case I really do not know what it is supposed to mean.
+    elsif($spanstring =~ m/^Tenis ad - Řím$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[1]->set_deprel('dep');
+    }
 }
 
 
