@@ -675,6 +675,15 @@ sub fix_annotation_errors
             $subtree[5]->set_deprel('Atr');
             $subtree[5]->set_is_member(undef);
         }
+        elsif($spanstring =~ m/^nejdelším On The Burial Ground/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Original annotation uses wrong deprels (AuxY).
+            for(my $i = 1; $i <= 3; $i++)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
         elsif($spanstring =~ m/^2 : 15 min \. před Sabym \( .*? \) a 9 : 04 min \. před/)
         {
             my @subtree = $self->get_node_subtree($node);
