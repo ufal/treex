@@ -166,7 +166,8 @@ sub fix_constructions
     # Expressions like "týden co týden": the first word is not a 'cc'!
     # Since the "X co X" pattern is not productive, we should treat it as a
     # fixed expression with an adverbial meaning.
-    elsif(lc($node->form()) =~ m/^(den|noc|týden|měsíc|rok)$/ &&
+    # Somewhat different in meaning but identical in structure is "stůj co stůj", and it is also adverbial.
+    elsif(lc($node->form()) =~ m/^(den|noc|týden|měsíc|rok|stůj)$/ &&
           $parent->ord() == $node->ord()+2 &&
           lc($parent->form()) eq lc($node->form()) &&
           defined($node->get_right_neighbor()) &&
