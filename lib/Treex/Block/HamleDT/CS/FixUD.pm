@@ -558,6 +558,40 @@ sub fix_constructions
         $deprel = 'punct';
         $node->set_deprel($deprel);
     }
+    # Hyphen is sometimes used as a predicate similar to a copula, but not with
+    # Pnom. Rather its children are subject and object. Sometimes there is
+    # ellipsis and one of the children comes out as 'dep'.
+    # "celková škoda - 1000 korun"
+    # "týden pro dospělého - 1400 korun, pro dítě do deseti let - 700 korun"
+    # We do not know what to do if there fewer than 2 children. However, there
+    # can be more if the entire expression is enclosed in parentheses.
+    elsif($node->form() eq '-' && scalar($node->children()) >= 2)
+    {
+        my @children = $node->get_children({'ordered' => 1});
+        my @punctchildren = grep {$_->deprel() =~ m/^punct(:|$)/} (@children);
+        my @argchildren = grep {$_->deprel() !~ m/^punct(:|$)/} (@children);
+        if(scalar(@argchildren) != 2)
+        {
+            log_warn("Do not know what to do with '$spanstring'");
+        }
+        else
+        {
+            my $s = $argchildren[0];
+            my $p = $argchildren[1];
+            $p->set_parent($parent);
+            $p->set_deprel($deprel);
+            $s->set_parent($p);
+            $s->set_deprel('nsubj'); ###!!! It could be also csubj!
+            foreach my $punct (@punctchildren)
+            {
+                $punct->set_parent($p);
+            }
+            $parent = $p;
+            $deprel = 'punct';
+            $node->set_parent($parent);
+            $node->set_deprel($deprel);
+        }
+    }
 }
 
 
@@ -712,7 +746,7 @@ sub fix_annotation_errors
         $facto->set_deprel('fixed');
     }
     # "z Jensen Beach"
-    elsif($spanstring eq 'z Jensen Beach')
+    elsif($spanstring eq 'z Jensen Beach na Floridě')
     {
         my @subtree = $self->get_node_subtree($node);
         # Jensen is tagged ADJ and currently attached as 'cc'. We change it to
