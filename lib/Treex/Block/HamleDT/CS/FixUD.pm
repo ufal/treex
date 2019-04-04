@@ -916,6 +916,15 @@ sub fix_annotation_errors
     {
         $node->set_deprel('parataxis');
     }
+    # "Žvásty,"
+    elsif($spanstring =~ m/^Žvásty , "/i) #"
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[1]->set_parent($subtree[0]);
+        $subtree[1]->set_deprel('punct');
+        $subtree[2]->set_parent($subtree[0]);
+        $subtree[2]->set_deprel('punct');
+    }
 }
 
 
