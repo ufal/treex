@@ -478,6 +478,34 @@ sub fix_constructions
             }
         }
     }
+    # A star followed by a year is not punctuation. It is a symbol meaning "born in".
+    # Especially if enclosed in parentheses.
+    elsif($node->form() eq '*' &&
+          (defined($node->get_right_neighbor()) && $node->get_right_neighbor()->ord() == $node->ord()+1 && $node->get_right_neighbor()->form() =~ m/^[12]?\d\d\d$/ ||
+           scalar($node->children())==1 && ($node->children())[0]->ord() == $node->ord()+1 && ($node->children())[0]->form() =! m/^[12]?\d\d\d$/))
+    {
+        $node->set_tag('SYM');
+        $node->iset()->set_hash({'pos' => 'sym'});
+        my $year = $node->get_right_neighbor();
+        if(defined($year) && $year->form() =~ m/^[12]?\d\d\d$/)
+        {
+            $year->set_parent($node);
+        }
+        my @children = $node->children();
+        $year = $children[0];
+        if(defined($year) && $year->form() =~ m/^[12]?\d\d\d$/)
+        {
+            $year->set_deprel('obl');
+        }
+        # If there are parentheses, make sure they are attached to the star as well.
+        my $l = $node->get_left_neighbor();
+        my $r = $node->get_right_neighbor();
+        if(defined($l) && defined($r) && $l->form() eq '(' && $r->form() eq ')')
+        {
+            $l->set_parent($node);
+            $r->set_parent($node);
+        }
+    }
 }
 
 
