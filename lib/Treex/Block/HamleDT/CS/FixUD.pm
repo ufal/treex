@@ -333,7 +333,7 @@ sub fix_constructions
         }
     }
     # "a tím i" ("and this way also")
-    elsif(lc($node->form()) eq 'tím' && $deprel =~ m/^cc(:|$)/)
+    elsif(lc($node->form()) eq 'tím' && $deprel =~ m/^(cc|advmod)(:|$)/)
     {
         $deprel = 'obl';
         $node->set_deprel($deprel);
