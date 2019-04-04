@@ -294,6 +294,13 @@ sub fix_constructions
         $parent->set_deprel('fixed');
         $parent = $grandparent;
     }
+    # The expression "in memoriam" functions as an adverb.
+    elsif(lc($node->form()) eq 'memoriam' && $parent->ord() == $node->ord()-1 &&
+          lc($parent->form()) eq 'in')
+    {
+        $deprel = 'fixed';
+        $node->set_deprel($deprel);
+    }
     # In PDT, "na úkor něčeho" ("at the expense of something") is analyzed as
     # a prepositional phrase with a compound preposition (fixed expression)
     # "na úkor". However, it is no longer fixed if a possessive pronoun is
