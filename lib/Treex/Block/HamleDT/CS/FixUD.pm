@@ -145,6 +145,13 @@ sub fix_constructions
         $parent->set_deprel('flat');
         $parent = $grandparent;
     }
+    # In "Tchaj wan", "wan" is wrongly attached to "Tchaj" as 'cc'.
+    elsif(lc($node->form()) eq 'wan' && $node->is_proper_noun() &&
+       $parent->ord() < $node->ord())
+    {
+        $deprel = 'flat';
+        $node->set_deprel($deprel);
+    }
     # "skupiny Faith No More": for some reason, "Faith" is attached to "skupiny" as 'advmod'.
     elsif($node->is_noun() && $parent->is_noun() && $deprel =~ m/^advmod(:|$)/)
     {
