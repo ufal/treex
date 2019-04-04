@@ -720,6 +720,18 @@ sub fix_annotation_errors
         # as 'flat:name'.
         $subtree[1]->set_deprel('amod');
     }
+    # "Gottlieb and Pearson"
+    elsif($spanstring eq 'Gottlieb and Pearson')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        # Gottlieb is currently 'cc' on Pearson.
+        $subtree[0]->set_parent($parent);
+        $subtree[0]->set_deprel($deprel);
+        $subtree[2]->set_parent($subtree[0]);
+        $subtree[2]->set_deprel('conj');
+        $subtree[1]->set_parent($subtree[2]);
+        $subtree[1]->set_deprel('cc');
+    }
 }
 
 
