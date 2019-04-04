@@ -572,6 +572,7 @@ sub fix_constructions
         my @argchildren = grep {$_->deprel() !~ m/^punct(:|$)/} (@children);
         if(scalar(@argchildren) != 2)
         {
+            my $spanstring = $self->get_node_spanstring($node);
             log_warn("Do not know what to do with '$spanstring'");
         }
         else
