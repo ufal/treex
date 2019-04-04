@@ -485,16 +485,37 @@ sub fix_constructions
     # Especially if enclosed in parentheses.
     elsif($node->form() eq '*' &&
           (defined($node->get_right_neighbor()) && $node->get_right_neighbor()->ord() == $node->ord()+1 && $node->get_right_neighbor()->form() =~ m/^[12]?\d\d\d$/ ||
-           scalar($node->children())==1 && ($node->children())[0]->ord() == $node->ord()+1 && ($node->children())[0]->form() =~ m/^[12]?\d\d\d$/))
+           scalar($node->children())==1 && ($node->children())[0]->ord() == $node->ord()+1 && ($node->children())[0]->form() =~ m/^[12]?\d\d\d$/ ||
+           !$parent->is_root() && $parent->ord() == $node->ord()+1 && $parent->form() =~ m/^[12]?\d\d\d$/))
     {
         $node->set_tag('SYM');
         $node->iset()->set_hash({'pos' => 'sym'});
+        $deprel = 'parataxis' unless($deprel =~ m/^root(:|$)/);
+        $node->set_deprel($deprel);
         my $year = $node->get_right_neighbor();
         if(defined($year) && $year->form() =~ m/^[12]?\d\d\d$/)
         {
             $year->set_parent($node);
         }
-        my @children = $node->children();
+        elsif(!$parent->is_root() && $parent->form() =~ m/^[12]?\d\d\d$/)
+        {
+            $year = $parent;
+            $parent = $year->parent();
+            $node->set_parent($parent);
+            if($year->deprel() =~ m/^root(:|$)/)
+            {
+                $deprel = $year->deprel();
+                $node->set_deprel($deprel);
+            }
+            $year->set_parent($node);
+            $year->set_deprel('obl');
+            # There may be parentheses attached to the year. Reattach them to me.
+            foreach my $child ($year->children())
+            {
+                $child->set_parent($node);
+            }
+        }
+        my @children = grep {m/^[12]?\d\d\d$/} ($node->children());
         $year = $children[0];
         if(defined($year) && $year->form() =~ m/^[12]?\d\d\d$/)
         {
