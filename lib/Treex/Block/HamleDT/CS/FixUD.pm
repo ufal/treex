@@ -63,6 +63,10 @@ sub fix_morphology
         $lemma = 'vlastně';
         $node->set_lemma($lemma);
         # This is vlastně-2 ("totiž"), without the features of Degree and Polarity.
+        # If the corpus contains any instances of the other adverb (derived from
+        # the adjective "vlastní" ("own"), this step will erase its degree and
+        # polarity, which is not desirable. However, the occurrence of the other
+        # sense is not likely.
         $iset->set_hash({'pos' => 'adv'});
     }
     # "I" can be the conjunction "i", capitalized, or it can be the Roman numeral 1.
