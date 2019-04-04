@@ -147,7 +147,8 @@ sub fix_constructions
     }
     # In "Tchaj wan", "wan" is wrongly attached to "Tchaj" as 'cc'.
     elsif(lc($node->form()) eq 'wan' && $node->is_proper_noun() &&
-       $parent->ord() < $node->ord())
+          lc($parent->form()) eq 'tchaj' &&
+          $parent->ord() < $node->ord())
     {
         $deprel = 'flat';
         $node->set_deprel($deprel);
@@ -582,7 +583,8 @@ sub fix_constructions
     # (It is three tokens, each period separate.)
     # Comma is sometimes attached as a conjunct. It is a result of ExD_Co in
     # the original treebank.
-    elsif($node->is_punctuation() && $deprel =~ m/^conj(:|$)/)
+    elsif($node->is_punctuation() && $deprel =~ m/^conj(:|$)/ &&
+          $node->is_leaf())
     {
         $deprel = 'punct';
         $node->set_deprel($deprel);
