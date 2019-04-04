@@ -939,6 +939,16 @@ sub fix_annotation_errors
         my @subtree = $self->get_node_subtree($node);
         $subtree[1]->set_deprel('dep');
     }
+    # Pokud jsme ..., tak
+    elsif($spanstring =~ m/^pokud tak$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        if($subtree[1]->ord() >= $subtree[0]->ord()+4)
+        {
+            $subtree[1]->set_parent($subtree[0]->parent()->parent());
+            $subtree[1]->set_deprel('advmod');
+        }
+    }
 }
 
 
