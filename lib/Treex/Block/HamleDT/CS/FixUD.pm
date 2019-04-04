@@ -572,7 +572,9 @@ sub fix_constructions
     }
     # "..." is sometimes attached as the last conjunct in coordination.
     # (It is three tokens, each period separate.)
-    elsif($node->form() eq '.' && $deprel =~ m/^conj(:|$)/)
+    # Comma is sometimes attached as a conjunct. It is a result of ExD_Co in
+    # the original treebank.
+    elsif($node->is_punctuation() && $deprel =~ m/^conj(:|$)/)
     {
         $deprel = 'punct';
         $node->set_deprel($deprel);
