@@ -708,6 +708,12 @@ sub fix_annotation_errors
             $num2->set_deprel('ExD');
             $num2->set_is_member(1);
         }
+        elsif($spanstring =~ m/^nový nástup stran , které stály/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # "stran" has the wrong deprel 'AuxP' here.
+            $subtree[2]->set_deprel('Atr');
+        }
     }
 }
 
