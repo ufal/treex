@@ -911,6 +911,11 @@ sub fix_annotation_errors
         $subtree[5]->set_parent($subtree[1]);
         # The rest seems to be annotated correctly.
     }
+    # MIROSLAV MACEK
+    elsif($node->form() eq 'MIROSLAV' && $node->deprel() =~ m/^punct(:|$)/)
+    {
+        $node->set_deprel('parataxis');
+    }
 }
 
 
