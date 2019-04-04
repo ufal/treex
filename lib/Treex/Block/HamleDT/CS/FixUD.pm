@@ -278,7 +278,8 @@ sub fix_constructions
     # "na úkor". However, it is no longer fixed if a possessive pronoun is
     # inserted, as in "na její úkor".
     # Similar: "na základě něčeho" vs. "na jejichž základě"
-    elsif($node->form() =~ m/^(úkor|základě)$/i && lc($parent->form()) eq 'na' &&
+    # Similar: "v čele něčeho" vs. "v jejich čele"
+    elsif($node->form() =~ m/^(úkor|základě|čele)$/i && lc($parent->form()) =~ m/^(na|v)$/ &&
           $parent->ord() == $node->ord()-2 &&
           $parent->parent()->ord() == $node->ord()-1)
     {
