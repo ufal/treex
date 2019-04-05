@@ -1236,6 +1236,22 @@ sub fix_annotation_errors
             $subtree[1]->set_deprel('nmod');
         }
     }
+    # "v jejich čele"
+    elsif($spanstring eq 'v jejich čele')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[2]->set_deprel('obl');
+    }
+    # "a jak"
+    elsif($spanstring =~ m/^a jak$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        my $parent = $node->parent();
+        $subtree[0]->set_parent($parent);
+        $subtree[0]->set_deprel('cc');
+        $subtree[1]->set_parent($parent);
+        $subtree[1]->set_deprel($subtree[1]->is_adverb() ? 'advmod' : 'mark');
+    }
 }
 
 
