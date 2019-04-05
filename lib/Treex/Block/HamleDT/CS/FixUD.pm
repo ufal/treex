@@ -786,6 +786,14 @@ sub fix_constructions
             $node->set_deprel($deprel);
         }
     }
+    # If we changed tag of a symbol from PUNCT to SYM above, we must also change
+    # its dependency relation.
+    elsif($node->is_symbol() && $deprel =~ m/^punct(:|$)/ &&
+          $node->ord() > $parent->ord())
+    {
+        $deprel = 'flat';
+        $node->set_deprel($deprel);
+    }
 }
 
 
@@ -1156,12 +1164,55 @@ sub fix_annotation_errors
             $subtree[0]->set_deprel('flat');
         }
     }
+    elsif($spanstring =~ m/^\. \( [pq] - \d+ \)$/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        if($subtree[0]->parent()->ord() < $subtree[0]->ord())
+        {
+            $subtree[0]->set_tag('SYM');
+            $subtree[0]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+            $subtree[0]->set_deprel('flat');
+        }
+    }
+    elsif($spanstring =~ m/^\d+ \. \d+/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        if($subtree[1]->parent() == $subtree[0] &&
+           $subtree[2]->parent() == $subtree[1])
+        {
+            $subtree[1]->set_tag('SYM');
+            $subtree[1]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+            $subtree[1]->set_deprel('flat');
+        }
+    }
+    elsif($spanstring =~ m/^i \. j - \d+$/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[1]->set_tag('SYM');
+        $subtree[1]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+        $subtree[1]->set_deprel('flat');
+        $subtree[3]->set_tag('SYM');
+        $subtree[3]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+        $subtree[3]->set_deprel('flat');
+    }
     elsif($spanstring =~ m/^Kdykoliv p > pc ,$/i)
     {
         my @subtree = $self->get_node_subtree($node);
         $subtree[2]->set_tag('SYM');
         $subtree[2]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
         $subtree[2]->set_deprel('advcl');
+    }
+    elsif($spanstring =~ m/^" Není možné , aby by sin ( x ) > 1 "$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[10]->set_tag('SYM');
+        $subtree[10]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+        $subtree[10]->set_deprel('csubj');
+        $subtree[10]->set_parent($subtree[2]);
+        for(my $i = 3; $i <= 5; $i++)
+        {
+            $subtree[$i]->set_parent($subtree[10]);
+        }
     }
 }
 
