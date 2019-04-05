@@ -426,7 +426,7 @@ sub fix_constructions
         $parent = $grandparent;
     }
     # Sometimes "to" is already attached to "a", and we only change the relation type.
-    elsif(lc($node->form()) =~ m/^(to|sice)$/i && $deprel =~ m/^(cc|advmod|discourse)(:|$)/ &&
+    elsif(lc($node->form()) =~ m/^(to|sice)$/i && $deprel =~ m/^(cc|advmod|discourse|mark)(:|$)/ &&
           lc($parent->form()) eq 'a' && $parent->ord() == $node->ord()-1)
     {
         $deprel = 'fixed';
