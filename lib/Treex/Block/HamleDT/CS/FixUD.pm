@@ -1202,7 +1202,7 @@ sub fix_annotation_errors
         $subtree[2]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
         $subtree[2]->set_deprel('advcl');
     }
-    elsif($spanstring =~ m/^" Není možné , aby by sin ( x ) > 1 "$/i)
+    elsif($spanstring =~ m/^" Není možné , aby by sin \( x \) > 1 "$/i)
     {
         my @subtree = $self->get_node_subtree($node);
         $subtree[10]->set_tag('SYM');
