@@ -1220,10 +1220,13 @@ sub fix_annotation_errors
     {
         my @subtree = $self->get_node_subtree($node);
         my $parent = $node->parent();
-        foreach my $node (@subtree)
+        unless($parent->is_root())
         {
-            $node->set_parent($parent);
-            $node->set_deprel('punct');
+            foreach my $node (@subtree)
+            {
+                $node->set_parent($parent);
+                $node->set_deprel('punct');
+            }
         }
     }
     # degrees of Celsius
