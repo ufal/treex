@@ -1104,11 +1104,26 @@ sub fix_annotation_errors
         $subtree[1]->set_parent($subtree[4]);
         $subtree[2]->set_parent($subtree[4]);
     }
-    elsif($spanstring =~ m/(^|, )je - li rho [<>] rho/i)
+    elsif($spanstring =~ m/^, je - li rho > rho _ c ,$/i)
     {
         my @subtree = $self->get_node_subtree($node);
-        # V prvním případě podstrom ještě začínal čárkou, ve druhém ne.
-        shift(@subtree) if($subtree[0]->form() eq ',');
+        my $parent = $node->parent();
+        my $deprel = $node->deprel();
+        $subtree[5]->set_parent($parent);
+        $subtree[5]->set_deprel($deprel);
+        $subtree[5]->set_tag('SYM');
+        $subtree[5]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+        $subtree[0]->set_parent($subtree[5]);
+        $subtree[1]->set_parent($subtree[5]);
+        $subtree[1]->set_deprel('cop');
+        $subtree[2]->set_parent($subtree[5]);
+        $subtree[3]->set_parent($subtree[5]);
+        $subtree[4]->set_parent($subtree[5]);
+        $subtree[9]->set_parent($subtree[5]);
+    }
+    elsif($spanstring =~ m/^je - li rho < rho _ c ,$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
         my $parent = $node->parent();
         my $deprel = $node->deprel();
         $subtree[4]->set_parent($parent);
@@ -1117,13 +1132,10 @@ sub fix_annotation_errors
         $subtree[4]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
         $subtree[0]->set_parent($subtree[4]);
         $subtree[0]->set_deprel('cop');
-        foreach my $child ($subtree[0]->children())
-        {
-            $child->set_parent($subtree[4]);
-        }
         $subtree[1]->set_parent($subtree[4]);
         $subtree[2]->set_parent($subtree[4]);
         $subtree[3]->set_parent($subtree[4]);
+        $subtree[8]->set_parent($subtree[4]);
     }
     elsif($spanstring =~ m/^(- (\d+|p|C)|< pc|\. (q|r))$/i)
     {
