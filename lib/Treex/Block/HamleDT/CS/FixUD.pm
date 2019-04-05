@@ -1214,6 +1214,16 @@ sub fix_annotation_errors
             $subtree[$i]->set_parent($subtree[10]);
         }
     }
+    elsif($spanstring =~ m/^\. \. \.$/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        my $parent = $node->parent();
+        foreach my $node (@subtree)
+        {
+            $node->set_parent($parent);
+            $node->set_deprel('punct');
+        }
+    }
 }
 
 
