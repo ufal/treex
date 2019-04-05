@@ -90,6 +90,11 @@ sub fix_morphology
     {
         $iset->set_hash({'pos' => 'conj', 'conjtype' => 'oper'});
     }
+    # These are symbols, not punctuation.
+    elsif($lform =~ m/^[<>]$/)
+    {
+        $iset->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+    }
     # Make sure that the UPOS tag still matches Interset features.
     $node->set_tag($node->iset()->get_upos());
 }
@@ -210,6 +215,12 @@ sub fix_constructions
         $co->set_deprel('fixed');
         $parent->set_parent($node);
         $parent->set_deprel('fixed');
+        # Any other children of the original parent (especially punctuation, which could now be nonprojective)
+        # will be reattached to the new head.
+        foreach my $child ($parent->children())
+        {
+            $child->set_parent($node);
+        }
         $parent = $grandparent;
     }
     # "většinou" ("mostly") is the noun "většina", almost grammaticalized to an adverb.
@@ -254,7 +265,8 @@ sub fix_constructions
     # but sometimes it is attached to the last conjunct as 'cc'. We should re-
     # attach it as a conjunct. We may also consider splitting it as a multi-
     # word token.
-    elsif(lc($node->form()) eq 'aj' && $node->is_adjective() && $deprel =~ m/^cc(:|$)/)
+    # Similar: "ad" ("a další" = "and other")
+    elsif($node->form() =~ m/^(ad|aj)$/i && $node->is_adjective() && $deprel =~ m/^cc(:|$)/)
     {
         my $first_conjunct = $parent->deprel() =~ m/^conj(:|$)/ ? $parent->parent() : $parent;
         # If it is the first conjunct, it lies on our left hand. If it does not,
@@ -355,15 +367,22 @@ sub fix_constructions
         $possessive->set_parent($node);
         $possessive->set_deprel($possessive->is_determiner() ? 'det' : $possessive->is_adjective() ? 'amod' : 'nmod');
     }
+    # In one case, "v jejich čele" has already the right structure but the deprel of "čele" is wrong ('det').
+    elsif($node->form() =~ m/^čele$/i && $deprel =~ m/^det(:|$)/)
+    {
+        $deprel = 'nmod';
+        $node->set_deprel($deprel);
+    }
     # Similarly, "na rozdíl od něčeho" ("in contrast to something") is normally
     # a fixed expression (multi-word preposition "na rozdíl od") but occasionally
     # it is not fixed: "na rozdíl třeba od Mikoláše".
+    # More inserted nodes: "na rozdíl např . od sousedního Německa"
     elsif(!$parent->is_root() && !$parent->parent()->is_root() &&
           defined($parent->get_right_neighbor()) && defined($node->get_left_neighbor()) &&
           lc($node->form()) eq 'od' &&
-          lc($parent->form()) eq 'na' && $parent->ord() == $node->ord()-3 &&
-          lc($node->get_left_neighbor()->form()) eq 'rozdíl' && $node->get_left_neighbor()->ord() == $node->ord()-2 &&
-          $parent->get_right_neighbor()->ord() == $node->ord()-1)
+          lc($parent->form()) eq 'na' && $parent->ord() <= $node->ord()-3 &&
+          lc($node->get_left_neighbor()->form()) eq 'rozdíl' && $node->get_left_neighbor()->ord() <= $node->ord()-2 &&
+          $parent->get_right_neighbor()->ord() <= $node->ord()-1)
     {
         # Dissolve the fixed expression and give it ordinary analysis.
         my $noun = $parent->parent();
@@ -510,10 +529,22 @@ sub fix_constructions
     # "rozuměj" (imperative of "understand") is a verb but attached as 'cc'.
     # We will not keep the parallelism to "to jest" here. We will make it a parataxis.
     # Similar: "míněno" (ADJ, passive participle of "mínit")
-    elsif($node->form() =~ m/^(rozuměj|míněno|řekněme)$/ && $deprel =~ m/^cc(:|$)/)
+    elsif($node->form() =~ m/^(rozuměj|dejme|míněno|počínaje|řekněme|srov(nej)?|víte|event)$/i && $deprel =~ m/^(cc|advmod|mark)(:|$)/)
     {
         $deprel = 'parataxis';
         $node->set_deprel($deprel);
+    }
+    # "chtě nechtě" (converbs of "chtít", "to want") is a fixed expression with adverbial meaning.
+    elsif($node->form() =~ m/^(chtě|chtíc)$/ && $parent->ord() == $node->ord()+1 &&
+          $parent->form() =~ m/^(nechtě|nechtíc)$/)
+    {
+        my $grandparent = $parent->parent();
+        $node->set_parent($grandparent);
+        $deprel = 'advcl';
+        $node->set_deprel($deprel);
+        $parent->set_parent($node);
+        $parent->set_deprel('fixed');
+        $parent = $grandparent;
     }
     # "pokud ovšem" ("if however") is sometimes analyzed as a fixed expression
     # but that is wrong because other words may be inserted between the two
@@ -528,6 +559,7 @@ sub fix_constructions
     }
     # "ať již" ("be it") is a fixed expression and the first part of a paired coordinator.
     # "přece jen" can also be understood as a multi-word conjunction ("avšak přece jen")
+    # If the two words are not adjacent, the expression is not fixed (example: "ať se již dohodnou jakkoli").
     elsif(!$parent->is_root() &&
           ($node->form() =~ m/^(již|už)$/i && lc($parent->form()) eq 'ať' ||
            lc($node->form()) eq 'jen' && lc($parent->form()) eq 'přece') &&
@@ -545,7 +577,7 @@ sub fix_constructions
           $parent->ord() == $node->ord()-2 &&
           defined($node->get_left_neighbor()) &&
           $node->get_left_neighbor()->ord() == $node->ord()-1 &&
-          lc($node->get_left_neighbor()->form()) eq 'když')
+          $node->get_left_neighbor()->form() =~ m/^(aby|když)$/)
     {
         my $kdyz = $node->get_left_neighbor();
         my $grandparent = $parent->parent();
@@ -1014,6 +1046,98 @@ sub fix_annotation_errors
             $subtree[$fc]->set_parent($subtree[5]);
             $subtree[$fc]->set_deprel('conj');
         }
+    }
+    # "Kainarova koleda Vracaja sa dom"
+    elsif($node->form() eq 'Vracaja' && $node->deprel() =~ m/^advmod(:|$)/)
+    {
+        # This is not a typical example of an adnominal clause.
+        # But we cannot use anything else because the head node is a verb.
+        $node->set_deprel('acl');
+    }
+    # "Žili byli v zemi české..."
+    elsif($spanstring =~ m/^Žili byli/ && $node->form() eq 'byli')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[0]->set_parent($node->get_root());
+        $subtree[0]->set_deprel('root');
+        $subtree[1]->set_parent($subtree[0]);
+        $subtree[1]->set_deprel('aux');
+        foreach my $child ($subtree[1]->children())
+        {
+            $child->set_parent($subtree[0]);
+        }
+    }
+    elsif($spanstring =~ m/^, tj \. bude - li zákon odmítnut/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[1]->set_deprel('cc');
+        $subtree[2]->set_parent($subtree[1]);
+        $subtree[5]->set_parent($subtree[7]);
+        $subtree[5]->set_deprel('mark');
+    }
+    elsif($spanstring =~ m/^, co je a co není rovný přístup ke vzdělání$/i)
+    {
+        # In the original treebank, "co" is subject and "rovný přístup ke vzdělání" is predicate, not vice versa.
+        my $parent = $node->parent();
+        my $deprel = $node->deprel();
+        my @subtree = $self->get_node_subtree($node);
+        # The first conjunct lacks the nominal predicate. Promote the copula.
+        $subtree[2]->set_parent($parent);
+        $subtree[2]->set_deprel($deprel);
+        $subtree[0]->set_parent($subtree[2]);
+        # Attach the nominal predicate as the second conjunct.
+        $subtree[7]->set_parent($subtree[2]);
+        $subtree[7]->set_deprel('conj');
+        $subtree[3]->set_parent($subtree[7]);
+        $subtree[4]->set_parent($subtree[7]);
+        $subtree[5]->set_parent($subtree[7]);
+        $subtree[5]->set_deprel('cop');
+        # Since "není" originally did not have the 'cop' relation, it was probably not converted from VERB to AUX.
+        $subtree[5]->set_tag('AUX');
+        $subtree[5]->iset()->set('verbtype' => 'aux');
+    }
+    elsif($spanstring =~ m/^Karoshi : přece jen smrt z přepracování \?$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[4]->set_parent($subtree[0]);
+        $subtree[4]->set_deprel('parataxis');
+        $subtree[1]->set_parent($subtree[4]);
+        $subtree[2]->set_parent($subtree[4]);
+    }
+    elsif($spanstring =~ m/(^|, )je - li rho [<>] rho/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        # V prvním případě podstrom ještě začínal čárkou, ve druhém ne.
+        shift(@subtree) if($subtree[0]->form() eq ',');
+        my $parent = $node->parent();
+        my $deprel = $node->deprel();
+        $subtree[4]->set_parent($parent);
+        $subtree[4]->set_deprel($deprel);
+        $subtree[4]->set_tag('SYM');
+        $subtree[4]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+        $subtree[0]->set_parent($subtree[4]);
+        $subtree[0]->set_deprel('cop');
+        foreach my $child ($subtree[0]->children())
+        {
+            $child->set_parent($subtree[4]);
+        }
+        $subtree[1]->set_parent($subtree[4]);
+        $subtree[2]->set_parent($subtree[4]);
+        $subtree[3]->set_parent($subtree[4]);
+    }
+    elsif($spanstring =~ m/^(- (\d+|p|C)|< pc|\. (q|r))$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[0]->set_tag('SYM');
+        $subtree[0]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+        $subtree[0]->set_deprel('flat');
+    }
+    elsif($spanstring =~ m/^Kdykoliv p > pc$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[2]->set_tag('SYM');
+        $subtree[2]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+        $subtree[2]->set_deprel('advcl');
     }
 }
 

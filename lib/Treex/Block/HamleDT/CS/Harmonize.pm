@@ -693,6 +693,32 @@ sub fix_annotation_errors
                 $subtree[$i]->set_deprel('Atr');
             }
         }
+        elsif($spanstring =~ m/^(JUMP OK|World News|Worldwide Update|CNN Newsroom|Business Morning|Business Day|Business Asia)$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Original annotation uses wrong deprels (AuxY).
+            for(my $i = 0; $i <= 0; $i++)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
+        elsif($spanstring =~ m/^(International Euromarket Award|Headline News Update|CNN Showbiz Today)$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Original annotation uses wrong deprels (AuxY).
+            for(my $i = 0; $i <= 1; $i++)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
+        elsif($spanstring =~ m/^Essay on the principle of population as it affects the future improvement of society/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            for(my $i = 1; $i <= 13; $i++)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
         elsif($spanstring =~ m/^2 : 15 min \. před Sabym \( .*? \) a 9 : 04 min \. před/)
         {
             my @subtree = $self->get_node_subtree($node);
