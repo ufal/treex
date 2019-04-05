@@ -1069,6 +1069,8 @@ sub fix_annotation_errors
         $subtree[0]->set_parent($node->get_root());
         $subtree[0]->set_deprel('root');
         $subtree[1]->set_parent($subtree[0]);
+        $subtree[1]->set_tag('AUX');
+        $subtree[1]->iset()->set('verbtype' => 'aux');
         $subtree[1]->set_deprel('aux');
         foreach my $child ($subtree[1]->children())
         {
