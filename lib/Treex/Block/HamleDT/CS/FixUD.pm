@@ -218,6 +218,12 @@ sub fix_constructions
         $deprel = 'obl';
         $node->set_deprel($deprel);
     }
+    # "v podstatě" ("basically") is a prepositional phrase used as an adverb.
+    elsif(lc($node->form()) eq 'podstatě' && $deprel =~ m/^(cc|advmod)(:|$)/)
+    {
+        $deprel = 'obl';
+        $node->set_deprel($deprel);
+    }
     # The noun "pravda" ("truth") used as sentence-initial particle is attached
     # as 'cc' but should be attached as 'discourse'.
     elsif(lc($node->form()) eq 'pravda' && $deprel =~ m/^(cc|advmod)(:|$)/)
@@ -538,6 +544,19 @@ sub fix_constructions
         $node->set_deprel('aux');
         $parent = $grandparent;
         $kdyz->set_deprel('fixed');
+    }
+    # "no" (Czech particle)
+    elsif(lc($node->form()) eq 'no' && $node->is_particle() && !$node->is_foreign() &&
+          $deprel =~ m/^cc(:|$)/)
+    {
+        $deprel = 'discourse';
+        $node->set_deprel($deprel);
+        # In sequences like "no a", "no" may be attached to "a" but there is no reason for it.
+        if($parent->deprel() =~ m/^cc(:|$)/ && $parent->ord() == $node->ord()+1)
+        {
+            $parent = $parent->parent();
+            $node->set_parent($parent);
+        }
     }
     # Interjections showing the attitude to the speaker towards the event should
     # be attached as 'discourse', not as 'advmod'.
@@ -965,6 +984,26 @@ sub fix_annotation_errors
         {
             $subtree[1]->set_parent($subtree[0]->parent()->parent());
             $subtree[1]->set_deprel('advmod');
+        }
+    }
+    # "SÁZKA 5 ZE 40: 9, 11, 23, 36, 40, dodatkové číslo: 1."
+    elsif($spanstring =~ m/^SÁZKA 5 ZE 40 : \d+ , \d+ , \d+ , \d+ , \d+ , dodatkové číslo : \d+ \.$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        # "ze 40" depends on "5" but it is not 'compound'
+        $subtree[3]->set_deprel('nmod');
+        # The first number after the colon depends on "sázka".
+        $subtree[5]->set_parent($subtree[0]);
+        $subtree[5]->set_deprel('appos');
+        # All other numbers are conjuncts.
+        for(my $i = 6; $i <= 14; $i += 2)
+        {
+            # Punctuation depends on the following conjunct.
+            my $fc = $i==14 ? $i+2 : $i+1;
+            $subtree[$i]->set_parent($subtree[$fc]);
+            # Conjunct depends on the first conjunct.
+            $subtree[$fc]->set_parent($subtree[5]);
+            $subtree[$fc]->set_deprel('conj');
         }
     }
 }
