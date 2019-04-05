@@ -266,6 +266,14 @@ sub fix_constructions
             $node->set_deprel($deprel);
         }
     }
+    # An adverb should not depend on a copula but on the nominal part of the
+    # predicate. Example: "Také vakovlk je, respektive před vyhubením byl, ..."
+    elsif($node->is_adverb() && $node->deprel() =~ m/^advmod(:|$)/ &&
+          $parent->deprel() =~ m/^cop(:|$)/)
+    {
+        $parent = $parent->parent();
+        $node->set_parent($parent);
+    }
     # The expression "více než" ("more than") functions as an adverb.
     elsif(lc($node->form()) eq 'než' && $parent->ord() == $node->ord()-1 &&
           lc($parent->form()) eq 'více')
