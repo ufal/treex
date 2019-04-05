@@ -1128,9 +1128,17 @@ sub fix_annotation_errors
     elsif($spanstring =~ m/^(- (\d+|p|C)|< pc|\. (q|r))$/i)
     {
         my @subtree = $self->get_node_subtree($node);
-        $subtree[0]->set_tag('SYM');
-        $subtree[0]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
-        $subtree[0]->set_deprel('flat');
+        # In cases where "-" acts as the minus operator, it is attached to the
+        # first operand and the second operand is attached to it. We must check
+        # the topology, otherwise this block would transform all occurrences of
+        # a hyphen between two numbers.
+        if($subtree[0]->parent()->ord() == $subtree[0]->ord()-1 &&
+           $subtree[1]->parent()->ord() == $subtree[0]->ord())
+        {
+            $subtree[0]->set_tag('SYM');
+            $subtree[0]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+            $subtree[0]->set_deprel('flat');
+        }
     }
     elsif($spanstring =~ m/^Kdykoliv p > pc$/i)
     {
