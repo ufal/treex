@@ -58,7 +58,7 @@ sub fix_morphology
     }
     # If attached as 'advmod', "vlastně" ("actually") is an adverb and not a
     # converb of "vlastnit" ("to own").
-    elsif($lform eq 'vlastně' && $deprel =~ m/^advmod(:|$)/)
+    elsif($lform eq 'vlastně' && $deprel =~ m/^(cc|advmod)(:|$)/)
     {
         $lemma = 'vlastně';
         $node->set_lemma($lemma);
@@ -529,7 +529,7 @@ sub fix_constructions
     # "rozuměj" (imperative of "understand") is a verb but attached as 'cc'.
     # We will not keep the parallelism to "to jest" here. We will make it a parataxis.
     # Similar: "míněno" (ADJ, passive participle of "mínit")
-    elsif($node->form() =~ m/^(rozuměj|dejme|míněno|počínaje|řekněme|srov(nej)?|víte|event)$/i && $deprel =~ m/^(cc|advmod|mark)(:|$)/)
+    elsif($node->form() =~ m/^(rozuměj|dejme|míněno|počínaje|řekněme|říkajíc|srov(nej)?|víte|event)$/i && $deprel =~ m/^(cc|advmod|mark)(:|$)/)
     {
         $deprel = 'parataxis';
         $node->set_deprel($deprel);
@@ -1222,6 +1222,18 @@ sub fix_annotation_errors
         {
             $node->set_parent($parent);
             $node->set_deprel('punct');
+        }
+    }
+    # degrees of Celsius
+    elsif($spanstring eq 'o C')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        if($subtree[0]->deprel() =~ m/^punct(:|$)/)
+        {
+            $subtree[0]->set_tag('SYM');
+            $subtree[0]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+            $subtree[0]->set_deprel('flat');
+            $subtree[1]->set_deprel('nmod');
         }
     }
 }
