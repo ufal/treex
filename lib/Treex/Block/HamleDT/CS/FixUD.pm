@@ -1252,10 +1252,14 @@ sub fix_annotation_errors
     {
         my @subtree = $self->get_node_subtree($node);
         my $parent = $node->parent();
-        $subtree[0]->set_parent($parent);
-        $subtree[0]->set_deprel('cc');
-        $subtree[1]->set_parent($parent);
-        $subtree[1]->set_deprel($subtree[1]->is_adverb() ? 'advmod' : 'mark');
+        # Avoid messing up coordination "kdy a jak". Require that the parent is to the right.
+        if($parent->ord() > $node->ord())
+        {
+            $subtree[0]->set_parent($parent);
+            $subtree[0]->set_deprel('cc');
+            $subtree[1]->set_parent($parent);
+            $subtree[1]->set_deprel($subtree[1]->is_adverb() ? 'advmod' : 'mark');
+        }
     }
 }
 
