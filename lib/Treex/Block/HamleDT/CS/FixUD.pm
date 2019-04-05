@@ -1115,6 +1115,8 @@ sub fix_annotation_errors
         $subtree[5]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
         $subtree[0]->set_parent($subtree[5]);
         $subtree[1]->set_parent($subtree[5]);
+        $subtree[1]->set_tag('AUX');
+        $subtree[1]->iset()->set('verbtype' => 'aux');
         $subtree[1]->set_deprel('cop');
         $subtree[2]->set_parent($subtree[5]);
         $subtree[3]->set_parent($subtree[5]);
@@ -1131,6 +1133,8 @@ sub fix_annotation_errors
         $subtree[4]->set_tag('SYM');
         $subtree[4]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
         $subtree[0]->set_parent($subtree[4]);
+        $subtree[0]->set_tag('AUX');
+        $subtree[0]->iset()->set('verbtype' => 'aux');
         $subtree[0]->set_deprel('cop');
         $subtree[1]->set_parent($subtree[4]);
         $subtree[2]->set_parent($subtree[4]);
@@ -1152,7 +1156,7 @@ sub fix_annotation_errors
             $subtree[0]->set_deprel('flat');
         }
     }
-    elsif($spanstring =~ m/^Kdykoliv p > pc$/i)
+    elsif($spanstring =~ m/^Kdykoliv p > pc ,$/i)
     {
         my @subtree = $self->get_node_subtree($node);
         $subtree[2]->set_tag('SYM');
