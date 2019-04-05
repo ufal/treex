@@ -684,6 +684,15 @@ sub fix_annotation_errors
                 $subtree[$i]->set_deprel('Atr');
             }
         }
+        elsif($spanstring =~ m/^NBA New Jersey Nets$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Original annotation uses wrong deprels (AuxY).
+            for(my $i = 0; $i <= 2; $i++)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
         elsif($spanstring =~ m/^2 : 15 min \. před Sabym \( .*? \) a 9 : 04 min \. před/)
         {
             my @subtree = $self->get_node_subtree($node);
