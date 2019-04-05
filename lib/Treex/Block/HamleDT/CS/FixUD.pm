@@ -509,7 +509,7 @@ sub fix_constructions
     # "rozuměj" (imperative of "understand") is a verb but attached as 'cc'.
     # We will not keep the parallelism to "to jest" here. We will make it a parataxis.
     # Similar: "míněno" (ADJ, passive participle of "mínit")
-    elsif($node->form() =~ m/^(rozuměj|míněno)$/ && $deprel =~ m/^cc(:|$)/)
+    elsif($node->form() =~ m/^(rozuměj|míněno|řekněme)$/ && $deprel =~ m/^cc(:|$)/)
     {
         $deprel = 'parataxis';
         $node->set_deprel($deprel);
