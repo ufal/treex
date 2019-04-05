@@ -219,7 +219,8 @@ sub fix_constructions
         $node->set_deprel($deprel);
     }
     # "v podstatě" ("basically") is a prepositional phrase used as an adverb.
-    elsif(lc($node->form()) eq 'podstatě' && $deprel =~ m/^(cc|advmod)(:|$)/)
+    # Similar: "ve skutečnosti" ("in reality")
+    elsif($node->form() =~ m/^(podstatě|skutečnosti)$/i && $deprel =~ m/^(cc|advmod)(:|$)/)
     {
         $deprel = 'obl';
         $node->set_deprel($deprel);
