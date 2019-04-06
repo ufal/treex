@@ -199,7 +199,7 @@ sub fix_constructions
     # Since the "X co X" pattern is not productive, we should treat it as a
     # fixed expression with an adverbial meaning.
     # Somewhat different in meaning but identical in structure is "stůj co stůj", and it is also adverbial.
-    elsif(lc($node->form()) =~ m/^(den|noc|týden|měsíc|rok|stůj)$/ &&
+    elsif(lc($node->form()) =~ m/^(den|noc|týden|pondělí|úterý|středu|čtvrtek|pátek|sobotu|neděli|měsíc|rok|stůj)$/ &&
           $parent->ord() == $node->ord()+2 &&
           lc($parent->form()) eq lc($node->form()) &&
           defined($node->get_right_neighbor()) &&
