@@ -1416,6 +1416,21 @@ sub fix_annotation_errors
         my @subtree = $self->get_node_subtree($node);
         $subtree[0]->set_deprel('xcomp');
     }
+    elsif($spanstring eq 'Časy Oldřicha Nového jsou ty tam , ale snímání obrazů prožívá renesanci .')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[4]->set_parent($node->parent());
+        $subtree[4]->set_deprel('root');
+        $subtree[0]->set_parent($subtree[4]);
+        $subtree[0]->set_deprel('nsubj');
+        $subtree[3]->set_parent($subtree[4]);
+        $subtree[3]->set_deprel('cop');
+        $subtree[5]->set_parent($subtree[4]);
+        $subtree[5]->set_deprel('fixed');
+        $subtree[10]->set_parent($subtree[4]);
+        $subtree[10]->set_deprel('conj');
+        $subtree[12]->set_deprel($subtree[4]);
+    }
 }
 
 
