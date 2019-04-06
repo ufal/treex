@@ -346,6 +346,20 @@ sub fix_constructions
         $deprel = 'fixed';
         $node->set_deprel($deprel);
     }
+    # The expression "a priori" functions as an adverb.
+    elsif(lc($node->form()) eq 'priori' && $parent->ord() == $node->ord()-1 &&
+          lc($parent->form()) eq 'a')
+    {
+        $deprel = 'fixed';
+        $node->set_deprel($deprel);
+    }
+    # The expression "ex ante" functions as an adverb.
+    elsif(lc($node->form()) eq 'ante' && $parent->ord() == $node->ord()-1 &&
+          lc($parent->form()) eq 'ex')
+    {
+        $deprel = 'fixed';
+        $node->set_deprel($deprel);
+    }
     # In PDT, "na úkor něčeho" ("at the expense of something") is analyzed as
     # a prepositional phrase with a compound preposition (fixed expression)
     # "na úkor". However, it is no longer fixed if a possessive pronoun is
@@ -478,6 +492,15 @@ sub fix_constructions
         $to->set_lemma('to');
         $to->set_tag('PART');
         $to->iset()->set_hash({'pos' => 'part'});
+    }
+    # Similar: "co možná"
+    elsif($node->form() =~ m/^co$/i && $deprel =~ m/^(cc|advmod|discourse)(:|$)/ &&
+          defined($node->get_right_neighbor()) &&
+          $node->get_right_neighbor()->form() =~ m/^možná$/i && $node->get_right_neighbor()->deprel() =~ m/^(cc|advmod|discourse)(:|$)/)
+    {
+        my $n2 = $node->get_right_neighbor();
+        $n2->set_parent($node);
+        $n2->set_deprel('fixed');
     }
     # Similar: "to jest/to je/to znamená".
     elsif(lc($node->form()) =~ m/^(to)$/ && $deprel =~ m/^(cc|advmod)(:|$)/ &&
@@ -1284,6 +1307,20 @@ sub fix_annotation_errors
         $subtree[2]->iset()->set_hash({'verbform' => 'fin', 'verbtype' => 'aux', 'mood' => 'ind', 'voice' => 'act', 'tense' => 'pres', 'number' => 'sing', 'person' => '3', 'polarity' => 'pos'});
         $subtree[5]->set_parent($subtree[3]);
         $subtree[5]->set_deprel('mark');
+    }
+    # "ať se již dohodnou jakkoli"
+    elsif($spanstring =~ m/^ať již$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        if($subtree[1]->deprel() =~ m/^fixed(:|$)/ && $subtree[1]->ord() >= $subtree[0]->ord()+1)
+        {
+            $subtree[1]->set_parent($node->parent());
+            $subtree[1]->set_deprel('advmod');
+        }
+    }
+    elsif($spanstring =~ m/^Wish You Were Here$/i)
+    {
+        $node->set_deprel('nmod'); # attached to "album"
     }
 }
 
