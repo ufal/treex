@@ -733,6 +733,14 @@ sub fix_annotation_errors
             # "U" is wrongly attached as AuxP (confusion with the Czech preposition).
             $subtree[1]->set_deprel('Atr');
         }
+        elsif($spanstring =~ m/^\( Dynamic Integrated Climate - Economy \)$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            for(my $i = 1; $i <= 3; $i++)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
         elsif($spanstring =~ m/^Sin - kan$/i)
         {
             my @subtree = $self->get_node_subtree($node);
