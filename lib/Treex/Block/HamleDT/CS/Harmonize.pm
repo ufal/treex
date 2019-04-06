@@ -773,7 +773,7 @@ sub fix_annotation_errors
             # "stran" has the wrong deprel 'AuxP' here.
             $subtree[2]->set_deprel('Atr');
         }
-        elsif($spanstring =~ m/^, " dokud všechny řady pozorování$/i) #"
+        elsif($spanstring =~ m/^, " dokud všechny řady pozorování/i) #"
         {
             my @subtree = $self->get_node_subtree($node);
             # "dokud" has the wrong deprel 'Adv' here.
