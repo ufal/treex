@@ -1399,7 +1399,7 @@ sub fix_annotation_errors
         $subtree[5]->set_deprel('case');
     }
     # Tohle by měl být schopen řešit blok Punctuation, ale nezvládá to.
-    elsif($spanstring =~ m/^\( podle vysoké účasti folkových písničkářů a skupin .*\)/)
+    elsif($spanstring =~ m/^\( podle vysoké účasti folkových písničkářů a skupin .*\) ,$/)
     {
         my @subtree = $self->get_node_subtree($node);
         my $parent = $node->parent();
