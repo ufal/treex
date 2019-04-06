@@ -1490,6 +1490,14 @@ sub fix_annotation_errors
     {
         $node->set_deprel('nmod');
     }
+    elsif($spanstring =~ m/^jako u mrtvol nebo utopených/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[2]->set_parent($node->parent());
+        $subtree[2]->set_deprel('obl');
+        $subtree[0]->set_parent($subtree[2]);
+        $subtree[0]->set_deprel('case');
+    }
 }
 
 
