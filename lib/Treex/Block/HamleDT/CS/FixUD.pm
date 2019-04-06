@@ -1181,7 +1181,7 @@ sub fix_annotation_errors
         # first operand and the second operand is attached to it. We must check
         # the topology, otherwise this block would transform all occurrences of
         # a hyphen between two numbers.
-        if($subtree[0]->parent()->ord() == $subtree[0]->ord()-1 &&
+        if($subtree[0]->parent()->ord() <= $subtree[0]->ord()-1 &&
            $subtree[1]->parent()->ord() == $subtree[0]->ord())
         {
             $subtree[0]->set_tag('SYM');
@@ -1276,6 +1276,15 @@ sub fix_annotation_errors
             $subtree[0]->set_deprel('flat');
             $subtree[1]->set_deprel('nmod');
         }
+    }
+    elsif($spanstring eq 'při teplotě -103 C')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[3]->set_parent($subtree[1]);
+        $subtree[2]->set_parent($subtree[3]);
+        $subtree[2]->set_deprel('nummod:gov');
+        $subtree[2]->set_tag('NUM');
+        $subtree[2]->iset()->set_hash({'pos' => 'num', 'numform' => 'digit', 'numtype' => 'card'});
     }
     # "v jejich čele"
     elsif($spanstring eq 'v jejich čele')
