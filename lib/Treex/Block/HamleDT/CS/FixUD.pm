@@ -829,6 +829,53 @@ sub fix_constructions
         $deprel = 'flat';
         $node->set_deprel($deprel);
     }
+    $self->fix_auxiliary_verb($node);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fix auxiliary verb that should not be auxiliary.
+#------------------------------------------------------------------------------
+sub fix_auxiliary_verb
+{
+    my $self = shift;
+    my $node = shift;
+    if($node->tag() eq 'AUX')
+    {
+        if($node->deprel() =~ m/^cop(:|$)/ &&
+           $node->lemma() =~ m/^(stát|mít|moci)$/)
+        {
+            my $pnom = $node->parent();
+            my $parent = $pnom->parent();
+            my $deprel = $pnom->deprel();
+            # The nominal predicate may have been attached as a non-clause;
+            # however, now we have definitely a clause.
+            $deprel =~ s/^nsubj/csubj/;
+            $deprel =~ s/^i?obj/ccomp/;
+            $deprel =~ s/^(advmod|obl)/advcl/;
+            $deprel =~ s/^(nmod|amod|appos)/acl/;
+            $node->set_parent($parent);
+            $node->set_deprel($deprel);
+            $pnom->set_parent($node);
+            $pnom->set_deprel('xcomp');
+            # Subject, adjuncts and other auxiliaries go up (also 'expl:pv' in "stát se").
+            # We also have to raise conjunctions and punctuation, otherwise we risk nonprojectivities.
+            # Noun modifiers remain with the nominal predicate.
+            my @children = $pnom->children();
+            foreach my $child (@children)
+            {
+                if($child->deprel() =~ m/^(([nc]subj|obj|advmod|discourse|vocative|expl|aux|mark|cc|punct)(:|$)|obl$)/ ||
+                   $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
+                {
+                    $child->set_parent($node);
+                }
+            }
+            # We also need to change the part-of-speech tag from AUX to VERB.
+            $node->iset()->clear('verbtype');
+            $node->set_tag('VERB');
+        }
+    }
 }
 
 
