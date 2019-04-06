@@ -1397,6 +1397,14 @@ sub fix_annotation_errors
         $subtree[5]->set_parent($subtree[7]);
         $subtree[5]->set_deprel('case');
     }
+    # Tohle by měl být schopen řešit blok Punctuation, ale nezvládá to.
+    elsif($spanstring =~ m/^\( podle vysoké účasti folkových písničkářů a skupin .*\)/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        my $parent = $node->parent();
+        # Neprojektivně zavěšená čárka za závorkou.
+        $subtree[22]->set_parent($parent);
+    }
 }
 
 
