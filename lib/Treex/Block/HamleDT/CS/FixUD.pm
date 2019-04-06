@@ -597,7 +597,7 @@ sub fix_constructions
     # If the two words are not adjacent, the expression is not fixed (example: "ať se již dohodnou jakkoli").
     elsif(!$parent->is_root() &&
           ($node->form() =~ m/^(již|už)$/i && lc($parent->form()) eq 'ať' ||
-           lc($node->form()) eq 'jen' && lc($parent->form()) eq 'přece') &&
+           $node->form() =~ m/^jen(om)?$/i && lc($parent->form()) eq 'přece') &&
           $parent->ord() == $node->ord()-1)
     {
         $deprel = 'fixed';
