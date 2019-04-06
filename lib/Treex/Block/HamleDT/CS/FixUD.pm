@@ -1429,7 +1429,7 @@ sub fix_annotation_errors
         $subtree[5]->set_deprel('fixed');
         $subtree[10]->set_parent($subtree[4]);
         $subtree[10]->set_deprel('conj');
-        $subtree[12]->set_deprel($subtree[4]);
+        $subtree[12]->set_parent($subtree[4]);
     }
 }
 
