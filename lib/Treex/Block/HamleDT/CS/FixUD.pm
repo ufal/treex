@@ -1229,6 +1229,19 @@ sub fix_annotation_errors
             }
         }
     }
+    elsif($spanstring =~ m/^, \.$/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        my $parent = $node->parent();
+        unless($parent->is_root())
+        {
+            foreach my $node (@subtree)
+            {
+                $node->set_parent($parent);
+                $node->set_deprel('punct');
+            }
+        }
+    }
     # degrees of Celsius
     elsif($spanstring eq 'o C')
     {
@@ -1260,6 +1273,17 @@ sub fix_annotation_errors
             $subtree[1]->set_parent($parent);
             $subtree[1]->set_deprel($subtree[1]->is_adverb() ? 'advmod' : 'mark');
         }
+    }
+    # "to je nedovedeme-li"
+    elsif($spanstring =~ m/^, to je nedovedeme - li/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        # "je" is mistagged PRON, should be AUX
+        $subtree[2]->set_lemma('být');
+        $subtree[2]->set_tag('AUX');
+        $subtree[2]->iset()->set_hash({'verbform' => 'fin', 'verbtype' => 'aux', 'mood' => 'ind', 'voice' => 'act', 'tense' => 'pres', 'number' => 'sing', 'person' => '3', 'polarity' => 'pos'});
+        $subtree[5]->set_parent($subtree[3]);
+        $subtree[5]->set_deprel('mark');
     }
 }
 
