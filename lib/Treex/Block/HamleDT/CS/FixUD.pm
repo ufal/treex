@@ -602,7 +602,7 @@ sub fix_constructions
     {
         $deprel = 'fixed';
         $node->set_deprel($deprel);
-        $parent->set_deprel('cc');
+        $parent->set_deprel('cc') unless($parent->parent()->is_root());
     }
     # "jako kdyby", "i kdyby", "co kdyby" ... "kdyby" is decomposed to "když by",
     # first node should form a fixed expression with the first conjunction
