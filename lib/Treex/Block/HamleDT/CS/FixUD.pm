@@ -395,7 +395,7 @@ sub fix_constructions
     # Similar: "ve srovnání například s úvěry"
     elsif(!$parent->is_root() && !$parent->parent()->is_root() &&
           defined($parent->get_right_neighbor()) && defined($node->get_left_neighbor()) &&
-          $node->form() =~ m/^(od|v)$/i &&
+          $node->form() =~ m/^(od|se?)$/i &&
           $parent->form() =~ m/^(na|ve)$/i && $parent->ord() <= $node->ord()-3 &&
           $node->get_left_neighbor()->form() =~ m/^(rozdíl|srovnání)$/i && $node->get_left_neighbor()->ord() <= $node->ord()-2 &&
           $parent->get_right_neighbor()->ord() <= $node->ord()-1)
