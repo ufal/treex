@@ -727,11 +727,21 @@ sub fix_annotation_errors
                 $subtree[$i]->set_deprel('Atr');
             }
         }
-        elsif($spanstring =~ m/^, U \. S \. Department of energy$/)
+        elsif($spanstring =~ m/^, U \. S \. Department of energy$/i)
         {
             my @subtree = $self->get_node_subtree($node);
             # "U" is wrongly attached as AuxP (confusion with the Czech preposition).
             $subtree[1]->set_deprel('Atr');
+        }
+        elsif($spanstring =~ m/^Sin - kan$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_deprel('Atr');
+            $subtree[0]->set_lemma('Sin');
+            $subtree[0]->iset()->set_hash({'pos' => 'noun', 'nountype' => 'prop', 'gender' => 'masc', 'animacy' => 'inan', 'number' => 'sing', 'case' => 'nom', 'polarity' => 'pos'});
+            $subtree[2]->set_lemma('kan');
+            $subtree[2]->set_tag('PROPN');
+            $subtree[2]->iset()->set_hash({'pos' => 'noun', 'nountype' => 'prop', 'gender' => 'masc', 'animacy' => 'inan', 'number' => 'sing', 'case' => 'nom', 'polarity' => 'pos'});
         }
         elsif($spanstring =~ m/^2 : 15 min \. před Sabym \( .*? \) a 9 : 04 min \. před/)
         {
