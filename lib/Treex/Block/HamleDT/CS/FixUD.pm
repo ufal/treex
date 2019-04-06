@@ -1304,7 +1304,7 @@ sub fix_annotation_errors
         # "je" is mistagged PRON, should be AUX
         $subtree[2]->set_lemma('být');
         $subtree[2]->set_tag('AUX');
-        $subtree[2]->iset()->set_hash({'verbform' => 'fin', 'verbtype' => 'aux', 'mood' => 'ind', 'voice' => 'act', 'tense' => 'pres', 'number' => 'sing', 'person' => '3', 'polarity' => 'pos'});
+        $subtree[2]->iset()->set_hash({'pos' => 'verb', 'verbform' => 'fin', 'verbtype' => 'aux', 'mood' => 'ind', 'voice' => 'act', 'tense' => 'pres', 'number' => 'sing', 'person' => '3', 'polarity' => 'pos'});
         $subtree[5]->set_parent($subtree[3]);
         $subtree[5]->set_deprel('mark');
     }
