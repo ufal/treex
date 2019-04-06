@@ -1498,6 +1498,14 @@ sub fix_annotation_errors
         $subtree[0]->set_parent($subtree[2]);
         $subtree[0]->set_deprel('case');
     }
+    elsif($spanstring =~ m/^, nemohl - li by být rozpočet sice vyrovnaný , přesto však štíhlejší$/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[7]->set_deprel('cc');
+        $subtree[9]->set_parent($subtree[12]);
+        $subtree[11]->set_parent($subtree[12]);
+        $subtree[11]->set_deprel('cc');
+    }
 }
 
 
