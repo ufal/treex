@@ -1369,6 +1369,20 @@ sub fix_annotation_errors
         # But since we retagged all ">" to SYM, it cannot be 'punct'.
         $subtree[1]->set_deprel('dep');
     }
+    elsif($spanstring eq ', Ekonomická věda a ekonomická reforma , GENNEX & TOP AGENCY , 1991 )')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[10]->set_parent($subtree[2]->parent());
+        $subtree[10]->set_deprel('dep');
+        $subtree[6]->set_parent($subtree[10]);
+        $subtree[7]->set_parent($subtree[10]);
+        $subtree[9]->set_parent($subtree[7]);
+        $subtree[9]->set_deprel('conj');
+        $subtree[8]->set_parent($subtree[9]);
+        $subtree[8]->set_deprel('cc');
+        $subtree[8]->set_tag('SYM');
+        $subtree[8]->iset()->set_hash({'pos' => 'sym'});
+    }
 }
 
 
