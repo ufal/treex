@@ -1140,7 +1140,7 @@ sub fix_annotation_errors
         $subtree[5]->set_tag('AUX');
         $subtree[5]->iset()->set('verbtype' => 'aux');
     }
-    elsif($spanstring =~ m/^Karoshi : přece jen smrt z přepracování \?$/i)
+    elsif($spanstring =~ m/^Karoshi : přece jen smrt z přepracování \?/i)
     {
         my @subtree = $self->get_node_subtree($node);
         $subtree[4]->set_parent($subtree[0]);
