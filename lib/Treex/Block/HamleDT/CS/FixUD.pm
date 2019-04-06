@@ -1395,6 +1395,8 @@ sub fix_annotation_errors
         $subtree[1]->set_deprel('mark');
         $subtree[2]->set_parent($subtree[7]);
         $subtree[2]->set_deprel('cop');
+        $subtree[2]->set_tag('AUX');
+        $subtree[2]->iset()->set('verbtype' => 'aux');
         $subtree[5]->set_parent($subtree[7]);
         $subtree[5]->set_deprel('case');
     }
