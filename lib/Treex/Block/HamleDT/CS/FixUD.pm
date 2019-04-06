@@ -1435,6 +1435,14 @@ sub fix_annotation_errors
         $subtree[10]->set_deprel('conj');
         $subtree[12]->set_parent($subtree[4]);
     }
+    # "dílem" as paired conjunction (but tagged NOUN)
+    # Lemma in the data is "dílo" but it should be "díl".
+    # And maybe we really want to say that it is a grammaticalized conjunction.
+    # If not, it cannot be 'cc'. Then it is probably 'obl' or 'nmod'.
+    elsif($node->form() =~ m/^dílem$/i && $node->is_noun() && $node->deprel() =~ m/^cc(:|$)/)
+    {
+        $node->set_deprel('nmod');
+    }
 }
 
 
