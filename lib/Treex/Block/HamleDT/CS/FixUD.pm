@@ -1411,6 +1411,11 @@ sub fix_annotation_errors
         my @subtree = $self->get_node_subtree($node);
         $subtree[1]->set_deprel('nmod');
     }
+    elsif($spanstring eq 'VADO MA DOVE ?')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[0]->set_deprel('xcomp');
+    }
 }
 
 
