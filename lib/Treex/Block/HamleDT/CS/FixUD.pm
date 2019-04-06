@@ -1362,6 +1362,13 @@ sub fix_annotation_errors
         $subtree[1]->set_parent($subtree[2]);
         $subtree[1]->set_deprel('case');
     }
+    elsif($spanstring eq 'pro > ty nahoře')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        # I do not know why there is the ">" symbol here.
+        # But since we retagged all ">" to SYM, it cannot be 'punct'.
+        $subtree[1]->set_deprel('dep');
+    }
 }
 
 
