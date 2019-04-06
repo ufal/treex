@@ -1383,6 +1383,20 @@ sub fix_annotation_errors
         $subtree[8]->set_tag('SYM');
         $subtree[8]->iset()->set_hash({'pos' => 'sym'});
     }
+    elsif($spanstring =~ m/^, jako jsou např \. na vstřícných svazcích/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        my $parent = $node->parent();
+        $subtree[7]->set_parent($parent);
+        $subtree[7]->set_deprel('advcl');
+        $subtree[0]->set_parent($subtree[7]);
+        $subtree[1]->set_parent($subtree[7]);
+        $subtree[1]->set_deprel('mark');
+        $subtree[2]->set_parent($subtree[7]);
+        $subtree[2]->set_deprel('cop');
+        $subtree[5]->set_parent($subtree[7]);
+        $subtree[5]->set_deprel('case');
+    }
 }
 
 
