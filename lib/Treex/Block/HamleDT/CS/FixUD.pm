@@ -1406,6 +1406,11 @@ sub fix_annotation_errors
         # Neprojektivně zavěšená čárka za závorkou.
         $subtree[22]->set_parent($parent);
     }
+    elsif($spanstring eq 'Větev A')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[1]->set_deprel('nmod');
+    }
 }
 
 
