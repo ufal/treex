@@ -422,6 +422,16 @@ sub fix_constructions
             $punct->set_parent($rozdil);
         }
     }
+    # "nehledě na" is normally a fixed multi-word preposition but not if
+    # another word is inserted: "nehledě tedy na"
+    elsif($node->form() =~ m/^na$/i && !$parent->is_root() &&
+          $parent->form() =~ m/^nehledě$/i && $parent->ord() <= $node->ord()-2)
+    {
+        $parent = $parent->parent();
+        $deprel = 'case';
+        $node->set_parent($parent);
+        $node->set_deprel($deprel);
+    }
     # In PDT, the words "dokud" ("while") and "jakoby" ("as if") are sometimes
     # attached as adverbial modifiers although they are conjunctions.
     elsif($node->is_subordinator() && $deprel =~ m/^advmod(:|$)/ && scalar($node->children()) == 0)
@@ -1330,6 +1340,18 @@ sub fix_annotation_errors
     elsif($spanstring =~ m/^Wish You Were Here$/i)
     {
         $node->set_deprel('nmod'); # attached to "album"
+    }
+    elsif($spanstring =~ m/^Malba I$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[1]->set_deprel('nummod');
+    }
+    elsif($node->form() =~ m/^že$/i && !$node->parent()->is_root() &&
+          $node->parent()->form() =~ m/^možná$/i && $node->parent()->ord() < $node->ord()-1)
+    {
+        $node->parent()->set_deprel('advmod');
+        $node->set_parent($node->parent()->parent());
+        $node->set_deprel('mark');
     }
 }
 
