@@ -719,10 +719,10 @@ sub fix_annotation_errors
                 $subtree[$i]->set_deprel('Atr');
             }
         }
-        elsif($spanstring =~ m/^, École Supérieure de Physique et Chimie , Paříž$/i)
+        elsif($spanstring =~ m/^École Supérieure de Physique et Chimie , Paříž$/i)
         {
             my @subtree = $self->get_node_subtree($node);
-            for(my $i = 2; $i <= 6; $i++)
+            for(my $i = 1; $i <= 5; $i++)
             {
                 $subtree[$i]->set_deprel('Atr');
             }
