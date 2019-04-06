@@ -266,7 +266,8 @@ sub fix_constructions
     # attach it as a conjunct. We may also consider splitting it as a multi-
     # word token.
     # Similar: "ad" ("a další" = "and other")
-    elsif($node->form() =~ m/^(ad|aj)$/i && $node->is_adjective() && $deprel =~ m/^cc(:|$)/)
+    # Note: "ad" is sometimes tagged ADJ and sometimes even NOUN.
+    elsif($node->form() =~ m/^(ad|aj)$/i && ($node->is_adjective() || $node->is_noun()) && $deprel =~ m/^cc(:|$)/)
     {
         my $first_conjunct = $parent->deprel() =~ m/^conj(:|$)/ ? $parent->parent() : $parent;
         # If it is the first conjunct, it lies on our left hand. If it does not,
