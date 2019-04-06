@@ -392,11 +392,12 @@ sub fix_constructions
     # a fixed expression (multi-word preposition "na rozdíl od") but occasionally
     # it is not fixed: "na rozdíl třeba od Mikoláše".
     # More inserted nodes: "na rozdíl např . od sousedního Německa"
+    # Similar: "ve srovnání například s úvěry"
     elsif(!$parent->is_root() && !$parent->parent()->is_root() &&
           defined($parent->get_right_neighbor()) && defined($node->get_left_neighbor()) &&
-          lc($node->form()) eq 'od' &&
-          lc($parent->form()) eq 'na' && $parent->ord() <= $node->ord()-3 &&
-          lc($node->get_left_neighbor()->form()) eq 'rozdíl' && $node->get_left_neighbor()->ord() <= $node->ord()-2 &&
+          $node->form() =~ m/^(od|v)$/i &&
+          $parent->form() =~ m/^(na|ve)$/i && $parent->ord() <= $node->ord()-3 &&
+          $node->get_left_neighbor()->form() =~ m/^(rozdíl|srovnání)$/i && $node->get_left_neighbor()->ord() <= $node->ord()-2 &&
           $parent->get_right_neighbor()->ord() <= $node->ord()-1)
     {
         # Dissolve the fixed expression and give it ordinary analysis.
