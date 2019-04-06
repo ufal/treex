@@ -1425,6 +1425,8 @@ sub fix_annotation_errors
         $subtree[0]->set_deprel('nsubj');
         $subtree[3]->set_parent($subtree[4]);
         $subtree[3]->set_deprel('cop');
+        $subtree[3]->set_tag('AUX');
+        $subtree[3]->iset()->set('verbtype' => 'aux');
         $subtree[5]->set_parent($subtree[4]);
         $subtree[5]->set_deprel('fixed');
         $subtree[10]->set_parent($subtree[4]);
