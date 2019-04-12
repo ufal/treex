@@ -1,5 +1,6 @@
 package Treex::Block::Write::CoNLLU;
 use Moose;
+use Unicode::Normalize;
 use Lingua::Interset qw(encode);
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
@@ -116,7 +117,7 @@ sub process_atree {
         {
             foreach my $c (@newdocpar)
             {
-                print {$self->_file_handle} ("# $c\n");
+                $self->print_nfc("# $c\n");
             }
             @comment = grep {!m/^new(doc|par)/i} (@comment);
         }
@@ -125,19 +126,19 @@ sub process_atree {
         {
             $sent_id .= '/' . $tree->get_zone->get_label;
         }
-        print {$self->_file_handle} "# sent_id = $sent_id\n";
+        $self->print_nfc("# sent_id = $sent_id\n");
     }
     if ($self->print_text)
     {
         my $text = $tree->get_zone->sentence;
-        print {$self->_file_handle} "# text = $text\n" if defined $text;
+        $self->print_nfc("# text = $text\n") if defined $text;
     }
     # Print the original CoNLL-U comments for this sentence if present.
     if (scalar(@comment) > 0)
     {
         foreach my $c (@comment)
         {
-            print {$self->_file_handle} ("# $c\n");
+            $self->print_nfc("# $c\n");
         }
     }
     for(my $i = 0; $i<=$#nodes; $i++)
@@ -160,7 +161,7 @@ sub process_atree {
             }
             my $form = $node->get_fusion();
             my $misc = $last_fused_node_no_space_after ? 'SpaceAfter=No' : '_';
-            print { $self->_file_handle() } ("$range\t$form\t_\t_\t_\t_\t_\t_\t_\t$misc\n");
+            $self->print_nfc("$range\t$form\t_\t_\t_\t_\t_\t_\t_\t$misc\n");
         }
         my $ord = $node->ord;
         my $pord = $node->get_parent->ord;
@@ -272,9 +273,9 @@ sub process_atree {
         (@values);
         $values[1] = $form;
         $values[2] = $lemma;
-        print { $self->_file_handle() } join("\t", @values)."\n";
+        $self->print_nfc(join("\t", @values)."\n");
     }
-    print { $self->_file_handle() } "\n" if $tree->get_descendants();
+    $self->print_nfc("\n") if $tree->get_descendants();
     return;
 }
 
@@ -290,6 +291,23 @@ sub _print_alignment {
             $type =~ /rule|supervised/ ? 'rule' : 'other';
     return "$id:align_$t";
 }
+
+
+
+#------------------------------------------------------------------------------
+# Normalizes Unicode to NFC and prints the result to the output file handle.
+# Note that it is still possible to output unnormalized text if this method is
+# called several times and problematic combining characters appear next to the
+# border between two calls.
+#------------------------------------------------------------------------------
+sub print_nfc
+{
+    my $self = shift;
+    my $string = shift;
+    print {$self->_file_handle} (NFC($string));
+}
+
+
 
 1;
 
@@ -349,6 +367,6 @@ Martin Popel
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014, 2017 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014, 2017, 2019 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
