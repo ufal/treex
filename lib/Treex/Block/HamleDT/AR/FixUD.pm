@@ -106,8 +106,8 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
-    # Determiner cannot be advmod.
-    elsif($node->is_determiner() && $deprel =~ m/^advmod(:|$)/)
+    # Determiner cannot be advmod, case.
+    elsif($node->is_determiner() && $deprel =~ m/^(advmod|case)(:|$)/)
     {
         if($parent->is_noun())
         {
@@ -176,7 +176,7 @@ sub fix_auxiliary_verb
     if($node->tag() eq 'AUX')
     {
         if($node->deprel() =~ m/^cop(:|$)/ &&
-           $node->lemma() =~ m/^(stát|mít|moci)$/)
+           $node->lemma() =~ m/^(صَرَّح)$/)
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
