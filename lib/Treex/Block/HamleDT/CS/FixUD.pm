@@ -1514,7 +1514,7 @@ sub fix_annotation_errors
 
 =over
 
-=item Treex::Block::HamleDT::DE::FixUD
+=item Treex::Block::HamleDT::CS::FixUD
 
 Czech-specific post-processing after the treebank has been converted from the
 Prague style to Universal Dependencies. It can also be used to check for and
