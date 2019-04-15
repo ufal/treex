@@ -93,6 +93,19 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
+    # Pronoun cannot be nummod.
+    elsif($node->is_pronoun() && $deprel =~ m/^nummod(:|$)/)
+    {
+        if($parent->is_noun())
+        {
+            $deprel = 'nmod';
+        }
+        else
+        {
+            $deprel = 'obl';
+        }
+        $node->set_deprel($deprel);
+    }
     # Determiner cannot be advmod.
     elsif($node->is_determiner() && $deprel =~ m/^advmod(:|$)/)
     {
