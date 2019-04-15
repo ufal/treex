@@ -240,7 +240,8 @@ sub fix_auxiliary_verb
             $node->set_tag('VERB');
         }
         ###!!! Debugging: Why did not we go to the previous branch?
-        else
+        ###!!! These are the approved arabic copulas: 'كَان', 'لَيس'
+        elsif($node->deprel() =~ m/^cop(:|$)/)
         {
             log_warn("Lemma of copula is '".$node->lemma()."'");
         }
