@@ -107,7 +107,7 @@ sub fix_constructions
         $node->set_deprel($deprel);
     }
     # Adjective cannot be copula.
-    elsif($node->is_adjective() && !$node->is_pronominal() && $deprel =~ m/^cop(:|$)/)
+    elsif($node->is_adjective() && !$node->is_pronominal() && $deprel =~ m/^(cop|case|mark)(:|$)/)
     {
         if($parent->is_noun())
         {
@@ -208,7 +208,7 @@ sub fix_auxiliary_verb
     if($node->tag() eq 'AUX')
     {
         if($node->deprel() =~ m/^cop(:|$)/ &&
-           $node->lemma() =~ m/^(صَرَّح)$/)
+           $node->lemma() =~ m/^صَرَّح$/) # ṣarraḥ
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
@@ -238,6 +238,11 @@ sub fix_auxiliary_verb
             # We also need to change the part-of-speech tag from AUX to VERB.
             $node->iset()->clear('verbtype');
             $node->set_tag('VERB');
+        }
+        ###!!! Debugging: Why did not we go to the previous branch?
+        else
+        {
+            log_warn("Lemma of copula is '".$node->lemma()."'");
         }
     }
 }
