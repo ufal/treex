@@ -80,8 +80,8 @@ sub fix_constructions
     my $node = shift;
     my $parent = $node->parent();
     my $deprel = $node->deprel();
-    # Noun cannot be copula, case marker, subordinator, coordinator.
-    if($node->is_noun() && !$node->is_pronoun() && $deprel =~ m/^(cop|case|mark|cc)(:|$)/)
+    # Noun cannot be copula, case marker, subordinator, coordinator, adverbial modifier.
+    if($node->is_noun() && !$node->is_pronoun() && $deprel =~ m/^(cop|case|mark|cc|advmod)(:|$)/)
     {
         if($parent->is_noun())
         {
