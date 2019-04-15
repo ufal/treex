@@ -93,6 +93,19 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
+    # Adjective cannot be copula.
+    elsif($node->is_adjective() && !$node->is_pronominal() && $deprel =~ m/^cop(:|$)/)
+    {
+        if($parent->is_noun())
+        {
+            $deprel = 'amod';
+        }
+        else
+        {
+            $deprel = 'advmod';
+        }
+        $node->set_deprel($deprel);
+    }
     # Pronoun cannot be nummod.
     elsif($node->is_pronoun() && $deprel =~ m/^nummod(:|$)/)
     {
