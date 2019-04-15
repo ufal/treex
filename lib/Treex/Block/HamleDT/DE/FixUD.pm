@@ -189,7 +189,7 @@ sub fix_auxiliary_verb
     my $node = shift;
     if($node->tag() eq 'AUX')
     {
-        if($node->deprel() =~ m/^root(:|$)/ && $node->lemma() =~ m/^(betrachten|bezeichnen|funktionieren)$/)
+        if($node->deprel() =~ m/^(root|acl)(:|$)/ && $node->lemma() =~ m/^(ansehen|auftreten|betrachten|bezeichnen|funktionieren|sehen)$/)
         {
             $node->iset()->clear('verbtype');
             $node->set_tag('VERB');
