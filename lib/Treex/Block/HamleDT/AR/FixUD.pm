@@ -205,7 +205,7 @@ sub fix_auxiliary_verb
 {
     my $self = shift;
     my $node = shift;
-    if($node->tag() eq 'AUX')
+    if($node->is_verb())
     {
         if($node->deprel() =~ m/^cop(:|$)/ &&
            $node->lemma() =~ m/^صَرَّح$/) # ṣarraḥ
