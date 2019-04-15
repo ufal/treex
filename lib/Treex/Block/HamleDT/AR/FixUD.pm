@@ -93,6 +93,19 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
+    # Determiner cannot be advmod.
+    elsif($node->is_determiner() && $deprel =~ m/^advmod(:|$)/)
+    {
+        if($parent->is_noun())
+        {
+            $deprel = 'nmod';
+        }
+        else
+        {
+            $deprel = 'obl';
+        }
+        $node->set_deprel($deprel);
+    }
     # Preposition cannot be advmod. It could be oblique dependent if it is a
     # promoted orphan of a noun phrase. Or it is an annotation error and a
     # prepositional phrase stayed mistakenly headed by the preposition.
