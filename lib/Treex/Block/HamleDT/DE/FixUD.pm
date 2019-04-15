@@ -189,7 +189,7 @@ sub fix_auxiliary_verb
     my $node = shift;
     if($node->tag() eq 'AUX')
     {
-        if($node->deprel() =~ m/^(root|acl)(:|$)/ && $node->lemma() =~ m/^(ansehen|auftreten|betrachten|bezeichnen|funktionieren|sehen)$/)
+        if($node->deprel() =~ m/^(root|acl|xcomp)(:|$)/ && $node->lemma() =~ m/^(ansehen|auftreten|betrachten|bezeichnen|funktionieren|lassen|sehen)$/)
         {
             $node->iset()->clear('verbtype');
             $node->set_tag('VERB');
@@ -233,7 +233,7 @@ sub fix_auxiliary_verb
                 $node->set_tag('VERB');
             }
         }
-        elsif($node->lemma() =~ m/^(abkürzen|amtieren|anerkennen|anfühlen|ansehen|aufbauen|auftreten|ausmachen|bedeuten|befinden|befördern|bekannt|benennen|berufen|beschimpfen|beschreiben|bestehen|bestimmen|betiteln|betragen|bezeichnen|bilden|bleiben|darstellen|degradieren|deuten|dienen|duften|einstufen|empfinden|entlarven|entwickeln|entziffern|erachten|erheben|erklären|ernennen|eröffnen|erscheinen|erwähnen|erweisen|erweitern|feiern|feststellen|finden|folgen|fungieren|gehen|gelten|gestalten|glauben|gründen|halten|handeln|heißen|identifizieren|interpretieren|kosten|küren|lauten|liegen|listen|machen|messen|nehmen|nennen|nominieren|prägen|scheinen|schlagen|schmecken|schreiben|sehen|stehen|stellen|überzeugen|umbauen|umbenennen|umbilden|umwandeln|verarbeiten|vereidigen|verhaften|verlegen|versterben|vorstellen|wählen|wandeln|wirken|wissen)$/ &&
+        elsif($node->lemma() =~ m/^(abkürzen|amtieren|anerkennen|anfühlen|ansehen|aufbauen|auftreten|ausmachen|bedeuten|befinden|befördern|bekannt|benennen|berufen|beschimpfen|beschreiben|bestehen|bestimmen|betiteln|betragen|bezeichnen|bilden|bleiben|darstellen|degradieren|deuten|dienen|duften|einstufen|empfinden|entlarven|entwickeln|entziffern|erachten|erheben|erklären|ernennen|eröffnen|erscheinen|erwähnen|erweisen|erweitern|feiern|feststellen|finden|folgen|fungieren|gehen|gelten|gestalten|glauben|gründen|halten|handeln|heißen|identifizieren|interpretieren|kosten|küren|lauten|liegen|listen|machen|messen|nehmen|nennen|nominieren|prägen|scheinen|schlagen|schmecken|schreiben|sehen|stehen|stellen|überzeugen|umbauen|umbenennen|umbilden|umwandeln|verarbeiten|vereidigen|verhaften|verlegen|versterben|vestehen|vorstellen|wählen|wandeln|wirken|wissen)$/ &&
               $node->deprel() =~ m/^cop(:|$)/)
         {
             my $pnom = $node->parent();
