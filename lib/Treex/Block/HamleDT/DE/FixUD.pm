@@ -199,7 +199,7 @@ sub fix_auxiliary_verb
             # in which order we reattach them.
             my $infinitive = $node->parent();
             # The VerbForm=Inf feature is often missing in German PUD.
-            if($infinitive->iset()->verbform() eq '' && $node->form() =~ m/(^sein$|en$)/i)
+            if($infinitive->iset()->verbform() eq '' && $infinitive->is_verb() && $infinitive->form() =~ m/(^sein$|en$)/i)
             {
                 $infinitive->iset()->set('verbform', 'inf');
             }
