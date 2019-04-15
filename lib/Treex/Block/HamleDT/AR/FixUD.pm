@@ -210,6 +210,7 @@ sub fix_auxiliary_verb
         if($node->deprel() =~ m/^cop(:|$)/ &&
            $node->lemma() =~ m/^صَرَّح$/) # ṣarraḥ
         {
+            log_warn('I AM HERE!');
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
             my $deprel = $pnom->deprel();
