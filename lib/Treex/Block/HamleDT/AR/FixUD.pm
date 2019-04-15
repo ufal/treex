@@ -106,8 +106,8 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
-    # Determiner cannot be advmod, case.
-    elsif($node->is_determiner() && $deprel =~ m/^(advmod|case)(:|$)/)
+    # Determiner cannot be advmod, case, mark, cc.
+    elsif($node->is_determiner() && $deprel =~ m/^(advmod|case|mark|cc)(:|$)/)
     {
         if($parent->is_noun())
         {
