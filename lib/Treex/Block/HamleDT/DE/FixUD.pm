@@ -308,6 +308,13 @@ sub fix_auxiliary_verb
                 $node->set_tag('VERB');
             }
         }
+        # Some verbs were tagged AUX and appeared in coordination with other pseudo-auxiliaries.
+        # Their deprel is 'conj'. Therefore the above branches did not catch them.
+        elsif($node->deprel() =~ m/^conj(:|$)/ && $node->parent()->deprel() !~ m/^(aux|cop)(:|$)/)
+        {
+            $node->iset()->clear('verbtype');
+            $node->set_tag('VERB');
+        }
     }
 }
 
