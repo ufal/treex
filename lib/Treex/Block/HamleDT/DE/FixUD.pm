@@ -115,6 +115,19 @@ sub convert_deprels
             $deprel = 'nmod';
             $node->set_deprel($deprel);
         }
+        # Phrases like "ein wenig", "ein paar", "zwei Jahre" are tagged NOUN but attached as advmod. They have to be obl or nmod.
+        if($node->is_noun() && $node->deprel() =~ m/^advmod(:|$)/)
+        {
+            if($parent->is_noun())
+            {
+                $deprel = 'nmod';
+            }
+            else
+            {
+                $deprel = 'obl';
+            }
+            $node->set_deprel($deprel);
+        }
         # Adjectives cannot be attached as det. They have to be amod.
         if($node->is_adjective() && !$node->is_pronominal() && $node->deprel() eq 'det')
         {
