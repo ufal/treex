@@ -106,6 +106,12 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
+    # Cardinal numeral cannot be copula.
+    elsif($node->is_numeral() && $deprel =~ m/^cop(:|$)/)
+    {
+        $deprel = 'nummod';
+        $node->set_deprel($deprel);
+    }
     # Preposition cannot be advmod. It could be oblique dependent if it is a
     # promoted orphan of a noun phrase. Or it is an annotation error and a
     # prepositional phrase stayed mistakenly headed by the preposition.
