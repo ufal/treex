@@ -140,6 +140,19 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
+    # Some particles (e.g., "الا") are attached as aux or aux:pass and have children, which is inacceptable.
+    elsif($node->is_particle() && !$node->is_leaf() && $deprel =~ m/^(aux|cop)(:|$)/)
+    {
+        if($parent->is_noun())
+        {
+            $deprel = 'nmod';
+        }
+        else
+        {
+            $deprel = 'obl';
+        }
+        $node->set_deprel($deprel);
+    }
     # If we changed tag of a symbol from PUNCT to SYM above, we must also change
     # its dependency relation.
     elsif($node->is_symbol() && $deprel =~ m/^punct(:|$)/ &&
