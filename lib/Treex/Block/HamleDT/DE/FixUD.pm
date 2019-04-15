@@ -198,6 +198,11 @@ sub fix_auxiliary_verb
             # If there were other spuriious auxiliaries, it would matter
             # in which order we reattach them.
             my $infinitive = $node->parent();
+            # The VerbForm=Inf feature is often missing in German PUD.
+            if(!$infinitive->iset()->verbform() eq '' && $node->form() =~ m/(^sein$|en$)/i)
+            {
+                $infinitive->iset()->set('verbform', 'inf');
+            }
             # In some cases it is not infinitive but participle: "bekommt angeboten".
             if($infinitive->is_infinitive() || $infinitive->is_participle())
             {
@@ -223,7 +228,7 @@ sub fix_auxiliary_verb
                 $node->set_tag('VERB');
             }
         }
-        elsif($node->lemma() =~ m/^(abkürzen|amtieren|anerkennen|anfühlen|ansehen|aufbauen|auftreten|bedeuten|befinden|befördern|benennen|berufen|beschimpfen|bestehen|bestimmen|betiteln|betragen|bezeichnen|bilden|bleiben|darstellen|degradieren|deuten|dienen|duften|einstufen|empfinden|entlarven|entwickeln|entziffern|erachten|erheben|erklären|ernennen|eröffnen|erscheinen|erwähnen|erweisen|erweitern|feiern|feststellen|finden|folgen|fungieren|gehen|gelten|gestalten|glauben|gründen|halten|handeln|heißen|identifizieren|kosten|küren|lauten|liegen|listen|machen|messen|nehmen|nennen|nominieren|prägen|scheinen|schlagen|schmecken|sehen|stehen|stellen|überzeugen|umbauen|umbenennen|umbilden|umwandeln|verarbeiten|vereidigen|verhaften|verlegen|versterben|vorstellen|wählen|wandeln|wirken|wissen)$/ &&
+        elsif($node->lemma() =~ m/^(abkürzen|amtieren|anerkennen|anfühlen|ansehen|aufbauen|auftreten|bedeuten|befinden|befördern|benennen|berufen|beschimpfen|beschreiben|bestehen|bestimmen|betiteln|betragen|bezeichnen|bilden|bleiben|darstellen|degradieren|deuten|dienen|duften|einstufen|empfinden|entlarven|entwickeln|entziffern|erachten|erheben|erklären|ernennen|eröffnen|erscheinen|erwähnen|erweisen|erweitern|feiern|feststellen|finden|folgen|fungieren|gehen|gelten|gestalten|glauben|gründen|halten|handeln|heißen|identifizieren|kosten|küren|lauten|liegen|listen|machen|messen|nehmen|nennen|nominieren|prägen|scheinen|schlagen|schmecken|sehen|stehen|stellen|überzeugen|umbauen|umbenennen|umbilden|umwandeln|verarbeiten|vereidigen|verhaften|verlegen|versterben|vorstellen|wählen|wandeln|wirken|wissen)$/ &&
               $node->deprel() =~ m/^cop(:|$)/)
         {
             my $pnom = $node->parent();
