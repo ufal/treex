@@ -153,6 +153,12 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
+    # Other particles are leaves, are correctly attached as aux but should also be tagged AUX.
+    elsif($node->is_particle() && $node->is_leaf() && $deprel =~ m/^aux(:|$)/)
+    {
+        $node->set_tag('AUX');
+        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux'});
+    }
     # If we changed tag of a symbol from PUNCT to SYM above, we must also change
     # its dependency relation.
     elsif($node->is_symbol() && $deprel =~ m/^punct(:|$)/ &&
