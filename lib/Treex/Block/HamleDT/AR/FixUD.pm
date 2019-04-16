@@ -288,10 +288,6 @@ sub fix_auxiliary_verb
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
             my $deprel = $pnom->deprel();
-            if($node->form() eq 'أفادت')
-            {
-                log_warn('Copula أفادت: parent = '.$parent->form().', deprel = '.$deprel);
-            }
             # The nominal predicate may have been attached as a non-clause;
             # however, now we have definitely a clause.
             $deprel =~ s/^nsubj/csubj/;
@@ -300,7 +296,7 @@ sub fix_auxiliary_verb
             $deprel =~ s/^(nmod|amod|appos|nummod)/acl/;
             # Be prepared for incorrect input: the pnom's deprel could have been
             # something weird which we don't want to inherit.
-            $deprel =~ s/^(det|cop|aux|case|mark|cc)/parataxis/;
+            $deprel =~ s/^(det|cop|aux|case|mark|cc)(:|$)/parataxis$2/;
             $node->set_parent($parent);
             $node->set_deprel($deprel);
             $pnom->set_parent($node);
