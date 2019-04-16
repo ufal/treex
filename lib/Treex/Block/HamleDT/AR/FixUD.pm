@@ -297,7 +297,10 @@ sub fix_auxiliary_verb
             $deprel =~ s/^nsubj/csubj/;
             $deprel =~ s/^i?obj/ccomp/;
             $deprel =~ s/^(advmod|obl)/advcl/;
-            $deprel =~ s/^(nmod|amod|appos)/acl/;
+            $deprel =~ s/^(nmod|amod|appos|nummod)/acl/;
+            # Be prepared for incorrect input: the pnom's deprel could have been
+            # something weird which we don't want to inherit.
+            $deprel =~ s/^(det|cop|aux|case|mark|cc)/parataxis/;
             $node->set_parent($parent);
             $node->set_deprel($deprel);
             $pnom->set_parent($node);
