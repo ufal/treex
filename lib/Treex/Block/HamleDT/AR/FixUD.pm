@@ -107,8 +107,8 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
-    # Adjective cannot be copula, case or mark.
-    elsif($node->is_adjective() && !$node->is_pronominal() && $deprel =~ m/^(cop|case|mark)(:|$)/)
+    # Adjective cannot be copula, case, mark, cc.
+    elsif($node->is_adjective() && !$node->is_pronominal() && $deprel =~ m/^(cop|case|mark|cc)(:|$)/)
     {
         if($parent->is_noun())
         {
