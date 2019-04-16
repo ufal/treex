@@ -185,6 +185,12 @@ sub fix_constructions
         $node->set_tag('AUX');
         $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux'});
     }
+    # Coordinating conjunction cannot be copula.
+    elsif($node->is_coordinator() && $deprel =~ m/^cop(:|$)/)
+    {
+        $deprel = 'cc';
+        $node->set_deprel($deprel);
+    }
     # If we changed tag of a symbol from PUNCT to SYM above, we must also change
     # its dependency relation.
     elsif($node->is_symbol() && $deprel =~ m/^punct(:|$)/ &&
