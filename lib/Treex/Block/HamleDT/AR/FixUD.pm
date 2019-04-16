@@ -49,26 +49,8 @@ sub fix_morphology
     my $lemma = $node->lemma();
     my $iset = $node->iset();
     my $deprel = $node->deprel();
-    # In PDT, the word "přičemž" ("and/where/while") is tagged as SCONJ but attached as Adv (advmod).
-    # Etymologically, it is a preposition fused with a pronoun ("při+čemž"). We will re-tag it as adverb.
-    # Similar cases: "zato" ("in exchange for what", literally "za+to" = "for+it").
-    # This one is typically grammaticalized as a coordinating conjunction, similar to "but".
-    # In some occurrences, we have "sice-zato", which is similar to paired cc "sice-ale".
-    # But that is not a problem, other adverbs have grammaticalized to conjunctions too.
-    # On the other hand, the following should stay SCONJ and the relation should change to mark:
-    # "jakoby" ("as if"), "dokud" ("while")
-    if($lform =~ m/^(přičemž|zato)$/)
-    {
-        $iset->set_hash({'pos' => 'adv', 'prontype' => 'rel'});
-    }
-    # The word "plus" can be a noun or a mathematical conjunction. If it is
-    # attached as 'cc', it should be conjunction.
-    elsif($lform eq 'plus' && $deprel =~ m/^cc(:|$)/)
-    {
-        $iset->set_hash({'pos' => 'conj', 'conjtype' => 'oper'});
-    }
     # These are symbols, not punctuation.
-    elsif($lform =~ m/^[<>]$/)
+    if($lform =~ m/^[<>]$/)
     {
         $iset->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
     }
@@ -87,6 +69,11 @@ sub fix_constructions
     my $node = shift;
     my $parent = $node->parent();
     my $deprel = $node->deprel();
+    ###!!! Debugging.
+    if($node->form() eq 'أفادت')
+    {
+        log_warn('أفادت '.$node->ord().':'.$deprel.':'.$node->iset()->pos());
+    }
     # Noun cannot be copula. Some pronouns can be copulas but then they cannot have children.
     if(($node->is_noun() && !$node->is_pronoun() ||
         $node->is_pronoun() && !$node->is_leaf) && $deprel =~ m/^cop(:|$)/)
@@ -385,10 +372,6 @@ sub fix_annotation_errors
     my $self = shift;
     my $node = shift;
     my $spanstring = $self->get_node_spanstring($node);
-    # Full sentence: Maďarský občan přitom zaplatí za: - 1 l mléka kolem 60
-    # forintů, - 1 kg chleba kolem 70, - 1 lahev coca coly (0.33 l) kolem 15
-    # forintů, - krabička cigaret Marlboro asi 120 forintů, - 1 l bezolovnatého
-    # benzinu asi 76 forintů.
     if($spanstring =~ m/Maďarský občan přitom zaplatí za : -/)
     {
         my @subtree = $self->get_node_subtree($node);
