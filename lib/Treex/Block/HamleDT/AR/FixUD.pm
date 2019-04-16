@@ -381,9 +381,13 @@ sub fix_annotation_errors
     my $self = shift;
     my $node = shift;
     my $spanstring = $self->get_node_spanstring($node);
-    if($spanstring =~ m/Maďarský občan přitom zaplatí za : -/)
+    if($spanstring =~ m/^التي ، و التي تعتبر هذا الموسم/)
     {
         my @subtree = $self->get_node_subtree($node);
+        if($subtree[0]->parent() == $subtree[3])
+        {
+            $subtree[0]->set_parent($node->parent());
+        }
     }
 }
 
