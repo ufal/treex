@@ -205,12 +205,11 @@ sub fix_auxiliary_verb
 {
     my $self = shift;
     my $node = shift;
-    if($node->is_verb())
+    if($node->is_verb() && $node->deprel() =~ m/^cop(:|$)/)
     {
-        if($node->deprel() =~ m/^cop(:|$)/ &&
-           $node->lemma() =~ m/^صَرَّح$/) # ṣarraḥ
+        if($node->lemma() !~ m/^(كَان|لَيس)$/)
+           # $node->lemma() =~ m/^صَرَّح$/ # ṣarraḥ
         {
-            log_warn('I AM HERE!');
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
             my $deprel = $pnom->deprel();
@@ -239,13 +238,6 @@ sub fix_auxiliary_verb
             # We also need to change the part-of-speech tag from AUX to VERB.
             $node->iset()->clear('verbtype');
             $node->set_tag('VERB');
-        }
-        ###!!! Debugging: Why did not we go to the previous branch?
-        ###!!! These are the approved arabic copulas: 'كَان', 'لَيس'
-        elsif($node->deprel() =~ m/^cop(:|$)/ &&
-              $node->lemma() !~ m/^(كَان|لَيس)$/)
-        {
-            log_warn("Lemma of copula is '".$node->lemma()."'");
         }
     }
 }
