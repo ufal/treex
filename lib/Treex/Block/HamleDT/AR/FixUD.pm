@@ -392,7 +392,8 @@ sub fix_annotation_errors
     # الاستثمارات الأجنبية " ليس إلى مصر فقط و لكن إلى كل الدول النامية "
     # Zahraniční investice „nejen do Egypta, ale do všech rozvojových zemí“
     #elsif($spanstring =~ m/^الاستثمارات الأجنبية " ليس إلى مصر فقط و لٰكن إلى كل الدول النامية " ،$/)
-    elsif($spanstring =~ m/^الاستثمارات الأجنبية/)
+    #elsif($spanstring =~ m/^الاستثمارات الأجنبية/)
+    elsif($spanstring eq 'الاستثمارات الأجنبية " ليس إلى مصر فقط و لٰكن إلى كل الدول النامية "')
     {
         log_warn('JSEM TU: '.$spanstring);
         if(0)
