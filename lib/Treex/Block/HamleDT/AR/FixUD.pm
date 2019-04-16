@@ -215,7 +215,7 @@ sub fix_constructions
     }
     # Unknown part of speech ('X') cannot be copula. One example that I saw was
     # an out-of-vocabulary proper noun but I do not know what the others are.
-    elsif($node->iset()->pos() eq '' && $deprel =~ m/^cop(:|$)/)
+    elsif($node->iset()->pos() eq '' && $deprel =~ m/^(aux|cop)(:|$)/)
     {
         if($parent->is_noun())
         {
