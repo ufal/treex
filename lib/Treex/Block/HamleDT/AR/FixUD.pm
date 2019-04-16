@@ -406,7 +406,6 @@ sub fix_annotation_errors
         $subtree[2]->set_parent($subtree[5]);
         $subtree[10]->set_parent($subtree[5]);
         $subtree[13]->set_parent($subtree[5]);
-        $subtree[14]->set_parent($subtree[5]);
     }
 }
 
