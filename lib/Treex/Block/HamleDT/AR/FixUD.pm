@@ -199,6 +199,14 @@ sub fix_constructions
         $deprel = 'flat';
         $node->set_deprel($deprel);
     }
+    # There are some strange cases of right-to-left apposition. I do not
+    # understand what is going on there and what should be the remedy. This is
+    # just a temporary hack to silence the validator.
+    elsif($deprel =~ m/^appos(:|$)/ && $parent->ord() > $node->ord())
+    {
+        $deprel = 'dislocated';
+        $node->set_deprel($deprel);
+    }
     $self->fix_auxiliary_verb($node);
 }
 
