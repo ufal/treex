@@ -181,7 +181,7 @@ sub fix_constructions
         $node->set_deprel($deprel);
     }
     # Conjunction cannot be copula, punctuation.
-    elsif($node->is_conjunction() && $deprel =~ m/^(cop|punct)(:|$)/)
+    elsif($node->is_conjunction() && $deprel =~ m/^(aux|cop|punct)(:|$)/)
     {
         $deprel = 'cc';
         $node->set_deprel($deprel);
