@@ -184,7 +184,7 @@ sub fix_constructions
         ###!!! Debugging.
         if($deprel eq 'cc')
         {
-            log_fatal("I am here: ".$node->ord().":".$node->form());
+            log_warn("I am here: ".$node->ord().":".$node->form());
         }
         $deprel = 'parataxis';
         $node->set_deprel($deprel);
