@@ -80,8 +80,9 @@ sub fix_constructions
     my $node = shift;
     my $parent = $node->parent();
     my $deprel = $node->deprel();
-    # Noun cannot be copula.
-    if($node->is_noun() && !$node->is_pronoun() && $deprel =~ m/^cop(:|$)/)
+    # Noun cannot be copula. Some pronouns can be copulas but then they cannot have children.
+    if(($node->is_noun() && !$node->is_pronoun() ||
+        $node->is_pronoun() && $node->is_leaf) && $deprel =~ m/^cop(:|$)/)
     {
         if($parent->is_noun())
         {
@@ -106,7 +107,7 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
-    # Adjective cannot be copula.
+    # Adjective cannot be copula, case or mark.
     elsif($node->is_adjective() && !$node->is_pronominal() && $deprel =~ m/^(cop|case|mark)(:|$)/)
     {
         if($parent->is_noun())
@@ -132,12 +133,25 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
+    # Some determiners could be copulas but then they cannot have children.
+    elsif($node->is_determiner() && !$node->is_leaf() && $deprel =~ m/^cop(:|$)/)
+    {
+        if($parent->is_noun())
+        {
+            $deprel = 'det';
+        }
+        else
+        {
+            $deprel = 'obl';
+        }
+        $node->set_deprel($deprel);
+    }
     # Determiner cannot be aux, advmod, case, mark, cc.
     elsif($node->is_determiner() && $deprel =~ m/^(aux|advmod|case|mark|cc)(:|$)/)
     {
         if($parent->is_noun())
         {
-            $deprel = 'nmod';
+            $deprel = 'det';
         }
         else
         {
