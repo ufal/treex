@@ -16,8 +16,8 @@ sub process_atree
     ###!!! Add ‘single’ quotes, but make sure these symbols are not used e.g. as apostrophes.
     ###!!! We need to know the language, there are many other quotation styles,
     ###!!! e.g. Finnish and Swedish uses the same symbol for opening and closing: ”X”.
-    ###!!! Danish uses the French quotes but swapped: »X«.
-    my %pairs =
+    ###!!! Danish uses the French quotes but swapped: »X«; the same appears in PADT (Arabic).
+    my %pairs = # opening symbol => closing symbol
     (
         '(' => ')',
         '[' => ']',
@@ -26,6 +26,8 @@ sub process_atree
         '„' => '“', # Czech, German, Russian,...
         '«' => '»', # French, Russian, Spanish,...
         '‹' => '›', # ditto
+        '»' => '«', # Danish, Arabic,...
+        '›' => '‹', # ditto
         '《' => '》', # Korean, Chinese
         '「' => '」', # Chinese, Japanese
         '『' => '』'  # ditto
