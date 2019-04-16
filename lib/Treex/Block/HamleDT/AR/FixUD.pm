@@ -389,6 +389,18 @@ sub fix_annotation_errors
             $subtree[0]->set_parent($node->parent());
         }
     }
+    # Zahraniční investice „nejen do Egypta, ale do všech rozvojových zemí“
+    elsif($spanstring eq 'الاستثمارات الأجنبية " ليس إلى مصر فقط و لكن إلى كل الدول النامية "')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[4]->set_parent($subtree[5]);
+        $subtree[4]->set_deprel('case');
+        $subtree[3]->set_parent($subtree[5]);
+        $subtree[3]->set_deprel('cop');
+        $subtree[2]->set_parent($subtree[5]);
+        $subtree[10]->set_parent($subtree[5]);
+        $subtree[13]->set_parent($subtree[5]);
+    }
 }
 
 
