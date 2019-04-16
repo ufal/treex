@@ -335,8 +335,8 @@ sub fix_leaves
     my $node = shift;
     # Some types of dependents, such as 'conj', are allowed even under function
     # words.
-    if($node->parent()->deprel() =~ m/^(det|cop|aux|case|mark|cc|punct)(:|$)/ &&
-       $node->deprel() !~ m/^(fixed|conj|punct)(:|$)/)
+    if($node->parent()->deprel() =~ m/^(det|cop|aux|case|mark|cc|fixed|goeswith|punct)(:|$)/ &&
+       $node->deprel() !~ m/^(fixed|goeswith|conj|punct)(:|$)/)
     {
         my $grandparent = $node->parent()->parent();
         $node->set_parent($grandparent);
