@@ -257,15 +257,26 @@ sub fix_auxiliary_verb
             $pnom->set_parent($node);
             $pnom->set_deprel('xcomp');
             # Subject, adjuncts and other auxiliaries go up (also 'expl:pv' in "stát se").
-            # We also have to raise conjunctions and punctuation, otherwise we risk nonprojectivities.
             # Noun modifiers remain with the nominal predicate.
             my @children = $pnom->children();
             foreach my $child (@children)
             {
-                if($child->deprel() =~ m/^(([nc]subj|obj|advmod|discourse|vocative|expl|aux|mark|cc|punct)(:|$)|obl$)/ ||
+                if($child->deprel() =~ m/^(([nc]subj|obj|advmod|discourse|vocative|expl|aux|mark|cc)(:|$)|obl$)/ ||
                    $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
                 {
                     $child->set_parent($node);
+                }
+            }
+            # Sometimes punctuation must be raised because of nonprojectivity.
+            # Sometimes punctuation causes nonprojectivity when raised.
+            foreach my $child (@children)
+            {
+                if($child->deprel() =~ m/^punct(:|$)/)
+                {
+                    unless($self->would_be_nonprojective($node, $child) || $self->would_cause_nonprojectivity($node, $child))
+                    {
+                        $child->set_parent($node);
+                    }
                 }
             }
             # We also need to change the part-of-speech tag from AUX to VERB.
@@ -295,6 +306,64 @@ sub fix_annotation_errors
     {
         my @subtree = $self->get_node_subtree($node);
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# For a candidate attachment, tells whether it would be nonprojective. We want
+# to use the relatively complex method Node->is_nonprojective(), which means
+# that we must temporarily attach the node to the candidate parent. This will
+# throw an exception if there is a cycle. But then we should not be considering
+# the parent anyways.
+#------------------------------------------------------------------------------
+sub would_be_nonprojective
+{
+    my $self = shift;
+    my $parent = shift;
+    my $child = shift;
+    # Remember the current attachment of the child so we can later restore it.
+    my $current_parent = $child->parent();
+    # We could now check for potential cycles by calling $parent->is_descendant_of($child).
+    # But it is not clear what we should do if the answer is yes. And at present,
+    # this module does not try to attach punctuation nodes that are not leaves.
+    $child->set_parent($parent);
+    my $nprj = $child->is_nonprojective();
+    # Restore the current parent.
+    $child->set_parent($current_parent);
+    return $nprj;
+}
+
+
+
+#------------------------------------------------------------------------------
+# For a candidate attachment, tells whether it would cause a new
+# nonprojectivity, provided the rest of the tree stays as it is. We want to
+# use the relatively complex method Node->get_gap(), which means that we must
+# temporarily attach the node to the candidate parent. This will throw an
+# exception if there is a cycle. But then we should not be considering the
+# parent anyways.
+#------------------------------------------------------------------------------
+sub would_cause_nonprojectivity
+{
+    my $self = shift;
+    my $parent = shift;
+    my $child = shift;
+    # Remember the current attachment of the child so we can later restore it.
+    my $current_parent = $child->parent();
+    # We could now check for potential cycles by calling $parent->is_descendant_of($child).
+    # But it is not clear what we should do if the answer is yes. And at present,
+    # this module does not try to attach punctuation nodes that are not leaves.
+    $child->set_parent($parent);
+    # The punctuation node itself must not cause nonprojectivity of others.
+    # If the gap contains other, non-punctuation nodes, we could hold those
+    # other nodes responsible for the gap, but then the child would have to be
+    # attached to them and not to something else. So we will consider any gap
+    # a problem.
+    my @gap = $child->get_gap();
+    # Restore the current parent.
+    $child->set_parent($current_parent);
+    return scalar(@gap);
 }
 
 
