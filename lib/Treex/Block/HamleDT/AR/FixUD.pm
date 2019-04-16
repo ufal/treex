@@ -24,6 +24,13 @@ sub process_atree
         $self->fix_constructions($node);
         $self->fix_annotation_errors($node);
     }
+    # Certain node types are supposed to be leaves. If they have children, we
+    # will raise the children. However, we can only do it after we have fixed
+    # all deprels, thus it cannot be included in fix_constructions() above.
+    foreach my $node (@nodes)
+    {
+        $self->fix_leaves($node);
+    }
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
     #$root->get_zone()->set_sentence($root->collect_sentence_text());
@@ -312,6 +319,27 @@ sub fix_auxiliary_verb
             $node->iset()->clear('verbtype');
             $node->set_tag('VERB');
         }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Certain node types are supposed to be leaves. If they have children, we
+# will raise the children. However, we can only do it after we have fixed
+# all deprels, thus it cannot be included in fix_constructions() above.
+#------------------------------------------------------------------------------
+sub fix_leaves
+{
+    my $self = shift;
+    my $node = shift;
+    # Some types of dependents, such as 'conj', are allowed even under function
+    # words.
+    if($node->parent()->deprel() =~ m/^(det|cop|aux|case|mark|cc|punct)(:|$)/ &&
+       $node->deprel() !~ m/^(fixed|conj|punct)(:|$)/)
+    {
+        my $grandparent = $node->parent()->parent();
+        $node->set_parent($grandparent);
     }
 }
 
