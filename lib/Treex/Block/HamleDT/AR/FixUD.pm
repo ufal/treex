@@ -165,6 +165,12 @@ sub fix_constructions
         $deprel = 'nummod';
         $node->set_deprel($deprel);
     }
+    # Verb should not be case, mark, cc.
+    elsif($node->is_verb() && $deprel =~ m/^(case|mark|cc)(:|$)/)
+    {
+        $deprel = 'parataxis';
+        $node->set_deprel($deprel);
+    }
     # Preposition cannot be advmod. It could be oblique dependent if it is a
     # promoted orphan of a noun phrase. Or it is an annotation error and a
     # prepositional phrase stayed mistakenly headed by the preposition.
