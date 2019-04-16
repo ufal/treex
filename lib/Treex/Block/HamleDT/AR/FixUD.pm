@@ -82,7 +82,7 @@ sub fix_constructions
     my $deprel = $node->deprel();
     # Noun cannot be copula. Some pronouns can be copulas but then they cannot have children.
     if(($node->is_noun() && !$node->is_pronoun() ||
-        $node->is_pronoun() && $node->is_leaf) && $deprel =~ m/^cop(:|$)/)
+        $node->is_pronoun() && !$node->is_leaf) && $deprel =~ m/^cop(:|$)/)
     {
         if($parent->is_noun())
         {
