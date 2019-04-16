@@ -395,15 +395,18 @@ sub fix_annotation_errors
     elsif($spanstring =~ m/^الاستثمارات الأجنبية/)
     {
         log_warn('JSEM TU: '.$spanstring);
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[4]->set_parent($subtree[5]);
-        $subtree[4]->set_deprel('case');
-        $subtree[3]->set_parent($subtree[5]);
-        $subtree[3]->set_deprel('cop');
-        $subtree[2]->set_parent($subtree[5]);
-        $subtree[10]->set_parent($subtree[5]);
-        $subtree[13]->set_parent($subtree[5]);
-        $subtree[14]->set_parent($subtree[5]);
+        if(0)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_parent($subtree[5]);
+            $subtree[4]->set_deprel('case');
+            $subtree[3]->set_parent($subtree[5]);
+            $subtree[3]->set_deprel('cop');
+            $subtree[2]->set_parent($subtree[5]);
+            $subtree[10]->set_parent($subtree[5]);
+            $subtree[13]->set_parent($subtree[5]);
+            $subtree[14]->set_parent($subtree[5]);
+        }
     }
 }
 
