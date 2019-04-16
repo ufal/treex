@@ -166,6 +166,12 @@ sub fix_constructions
         $deprel = 'parataxis';
         $node->set_deprel($deprel);
     }
+    # Adverb cannot be copula.
+    elsif($node->is_adverb() && $deprel =~ m/^(cop|aux)(:|$)/)
+    {
+        $deprel = 'advmod';
+        $node->set_deprel($deprel);
+    }
     # Preposition cannot be advmod. It could be oblique dependent if it is a
     # promoted orphan of a noun phrase. Or it is an annotation error and a
     # prepositional phrase stayed mistakenly headed by the preposition.
@@ -218,6 +224,12 @@ sub fix_constructions
     {
         $node->set_tag('AUX');
         $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux'});
+    }
+    # Interjection cannot be auxiliary.
+    elsif($node->is_interjection() && $deprel =~ m/^(cop|aux)(:|$)/)
+    {
+        $deprel = 'discourse';
+        $node->set_deprel($deprel);
     }
     # If we changed tag of a symbol from PUNCT to SYM above, we must also change
     # its dependency relation.
