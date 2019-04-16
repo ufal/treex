@@ -200,7 +200,7 @@ sub fix_constructions
         $node->set_deprel($deprel);
     }
     # Preposition cannot be copula.
-    elsif($node->is_adposition() && $deprel =~ m/^cop(:|$)/)
+    elsif(($node->is_adposition() || $node->is_particle()) && $deprel =~ m/^cop(:|$)/)
     {
         if($parent->is_noun())
         {
