@@ -150,11 +150,15 @@ sub process_atree
                             {
                                 # We expect at least one of the brackets to be already attached to the head (and the other probably higher).
                                 # If it is not the case, maybe there are projectivity issues and we should not enforce attachment to the head.
-                                if($n0->parent() == $head)
+                                if($n0->parent() == $head &&
+                                   !$self->would_be_nonprojective($head, $n1) &&
+                                   !$self->would_cause_nonprojectivity($head, $n1))
                                 {
                                     $n1->set_parent($head);
                                 }
-                                elsif($n1->parent() == $head)
+                                elsif($n1->parent() == $head &&
+                                      !$self->would_be_nonprojective($head, $n0) &&
+                                      !$self->would_cause_nonprojectivity($head, $n0))
                                 {
                                     $n0->set_parent($head);
                                 }
