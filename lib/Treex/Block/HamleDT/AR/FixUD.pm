@@ -181,6 +181,11 @@ sub fix_constructions
     # Verb should not be case, mark, cc.
     elsif($node->is_verb() && $deprel =~ m/^(case|mark|cc)(:|$)/)
     {
+        ###!!! Debugging.
+        if($deprel eq 'cc')
+        {
+            log_fatal("I am here: ".$node->ord().":".$node->form());
+        }
         $deprel = 'parataxis';
         $node->set_deprel($deprel);
     }
