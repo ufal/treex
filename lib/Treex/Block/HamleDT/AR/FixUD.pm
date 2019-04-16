@@ -114,8 +114,8 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
-    # Adjective cannot be copula, case, mark, cc.
-    elsif($node->is_adjective() && !$node->is_pronominal() && $deprel =~ m/^(cop|case|mark|cc)(:|$)/)
+    # Adjective cannot be auxiliary, copula, case, mark, cc.
+    elsif($node->is_adjective() && !$node->is_pronominal() && $deprel =~ m/^(aux|cop|case|mark|cc)(:|$)/)
     {
         if($parent->is_noun())
         {
@@ -172,6 +172,12 @@ sub fix_constructions
         $deprel = 'nummod';
         $node->set_deprel($deprel);
     }
+    # Verb cannot be advmod.
+    elsif($node->is_verb() && $deprel =~ m/^advmod(:|$)/)
+    {
+        $deprel = 'advcl';
+        $node->set_deprel($deprel);
+    }
     # Verb should not be case, mark, cc.
     elsif($node->is_verb() && $deprel =~ m/^(case|mark|cc)(:|$)/)
     {
@@ -192,6 +198,18 @@ sub fix_constructions
             $deprel = 'obl';
         }
         $node->set_deprel($deprel);
+    }
+    # Preposition cannot be copula.
+    elsif($node->is_adposition() && $deprel =~ m/^cop(:|$)/)
+    {
+        if($parent->is_noun())
+        {
+            $deprel = 'case';
+        }
+        else
+        {
+            $deprel = 'mark';
+        }
     }
     # Conjunction cannot be copula, punctuation.
     elsif($node->is_conjunction() && $deprel =~ m/^(aux|cop|punct)(:|$)/)
