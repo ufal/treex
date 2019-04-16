@@ -397,6 +397,8 @@ sub fix_annotation_errors
     {
         #log_warn('JSEM TU: '.$spanstring);
         my @subtree = $self->get_node_subtree($node);
+        $subtree[5]->set_parent($subtree[0]);
+        $subtree[5]->set_deprel('nmod');
         $subtree[4]->set_parent($subtree[5]);
         $subtree[4]->set_deprel('case');
         $subtree[3]->set_parent($subtree[5]);
