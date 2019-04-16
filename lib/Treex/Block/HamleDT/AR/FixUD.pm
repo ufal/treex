@@ -261,10 +261,20 @@ sub fix_auxiliary_verb
             my @children = $pnom->children();
             foreach my $child (@children)
             {
-                if($child->deprel() =~ m/^(([nc]subj|obj|advmod|discourse|vocative|expl|aux|mark|cc)(:|$)|obl$)/ ||
+                if($child->deprel() =~ m/^(([nc]subj|obj|advmod|discourse|vocative|expl)(:|$)|obl$)/ ||
                    $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
                 {
                     $child->set_parent($node);
+                }
+            }
+            foreach my $child (@children)
+            {
+                if($child->deprel() =~ m/^(aux|mark|cc)(:|$)/)
+                {
+                    unless($self->would_be_nonprojective($node, $child) || $self->would_cause_nonprojectivity($node, $child))
+                    {
+                        $child->set_parent($node);
+                    }
                 }
             }
             # Sometimes punctuation must be raised because of nonprojectivity.
