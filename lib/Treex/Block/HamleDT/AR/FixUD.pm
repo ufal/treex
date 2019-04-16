@@ -213,7 +213,7 @@ sub fix_auxiliary_verb
     my $node = shift;
     if($node->is_verb() && $node->deprel() =~ m/^cop(:|$)/)
     {
-        if($node->lemma() !~ m/^(كَان|لَيس)$/)
+        if($node->lemma() !~ m/^(كَان|لَيس|لسنا)$/)
            # $node->lemma() =~ m/^صَرَّح$/ # ṣarraḥ
         {
             my $pnom = $node->parent();
