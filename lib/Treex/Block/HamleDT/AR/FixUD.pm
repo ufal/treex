@@ -84,7 +84,7 @@ sub fix_constructions
         $node->set_deprel($deprel);
     }
     # Neither noun nor pronoun can be auxiliary verb, case marker, subordinator, coordinator, adverbial modifier.
-    elsif($node->is_noun() && $deprel =~ m/^(aux|case|mark|cc|advmod|punct)(:|$)/)
+    elsif($node->is_noun() && $deprel =~ m/^(nummod|aux|case|mark|cc|advmod|punct)(:|$)/)
     {
         if($parent->is_noun())
         {
@@ -123,7 +123,10 @@ sub fix_constructions
         $node->set_deprel($deprel);
     }
     # Some determiners could be copulas but then they cannot have children.
-    elsif($node->is_determiner() && !$node->is_leaf() && $deprel =~ m/^cop(:|$)/)
+    # Also, if the following are labeled as copulas, it is wrong:
+    # مَن = man = who
+    # مَا = mā = what, which
+    elsif($node->is_determiner() && (!$node->is_leaf() || $node->lemma() =~ m/^(مَن|مَا)$/) && $deprel =~ m/^cop(:|$)/)
     {
         if($parent->is_noun())
         {
