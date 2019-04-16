@@ -226,6 +226,11 @@ sub fix_constructions
         $deprel = 'flat';
         $node->set_deprel($deprel);
     }
+    elsif($node->is_symbol() && $deprel =~ m/^punct(:|$)/)
+    {
+        $deprel = 'dep';
+        $node->set_deprel($deprel);
+    }
     # Unknown part of speech ('X') cannot be copula. One example that I saw was
     # an out-of-vocabulary proper noun but I do not know what the others are.
     elsif($node->iset()->pos() eq '' && $deprel =~ m/^(aux|cop)(:|$)/)
