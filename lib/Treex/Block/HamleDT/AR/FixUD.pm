@@ -69,11 +69,6 @@ sub fix_constructions
     my $node = shift;
     my $parent = $node->parent();
     my $deprel = $node->deprel();
-    ###!!! Debugging.
-    if($node->form() eq 'أفادت')
-    {
-        log_warn('أفادت '.$node->id().':'.$node->ord().':'.$deprel.':'.$node->iset()->pos());
-    }
     # Noun cannot be copula. Some pronouns can be copulas but then they cannot have children.
     if(($node->is_noun() && !$node->is_pronoun() ||
         $node->is_pronoun() && !$node->is_leaf) && $deprel =~ m/^cop(:|$)/)
@@ -168,11 +163,6 @@ sub fix_constructions
     # Verb should not be case, mark, cc.
     elsif($node->is_verb() && $deprel =~ m/^(case|mark|cc)(:|$)/)
     {
-        ###!!! Debugging.
-        if($deprel eq 'cc')
-        {
-            log_warn("I am here: ".$node->ord().":".$node->form());
-        }
         $deprel = 'parataxis';
         $node->set_deprel($deprel);
     }
@@ -202,6 +192,7 @@ sub fix_constructions
         {
             $deprel = 'mark';
         }
+        $node->set_deprel($deprel);
     }
     # Conjunction cannot be copula, punctuation.
     elsif($node->is_conjunction() && $deprel =~ m/^(aux|cop|punct)(:|$)/)
