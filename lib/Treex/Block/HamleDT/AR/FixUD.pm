@@ -389,9 +389,11 @@ sub fix_annotation_errors
             $subtree[0]->set_parent($node->parent());
         }
     }
+    # الاستثمارات الأجنبية " ليس إلى مصر فقط و لكن إلى كل الدول النامية "
     # Zahraniční investice „nejen do Egypta, ale do všech rozvojových zemí“
-    elsif($spanstring eq 'الاستثمارات الأجنبية " ليس إلى مصر فقط و لكن إلى كل الدول النامية "')
+    elsif($spanstring =~ m/^الاستثمارات الأجنبية .* مصر فقط.*".+"$/)
     {
+        log_warn('JSEM TU!');
         my @subtree = $self->get_node_subtree($node);
         $subtree[4]->set_parent($subtree[5]);
         $subtree[4]->set_deprel('case');
