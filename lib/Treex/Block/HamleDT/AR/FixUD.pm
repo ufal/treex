@@ -159,8 +159,8 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
-    # Cardinal numeral cannot be copula.
-    elsif($node->is_numeral() && $deprel =~ m/^cop(:|$)/)
+    # Cardinal numeral cannot be aux, copula, case, mark, cc.
+    elsif($node->is_numeral() && $deprel =~ m/^(aux|cop|case|mark|cc)(:|$)/)
     {
         $deprel = 'nummod';
         $node->set_deprel($deprel);
