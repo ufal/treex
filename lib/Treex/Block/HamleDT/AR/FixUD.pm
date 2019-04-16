@@ -213,6 +213,20 @@ sub fix_constructions
         $deprel = 'flat';
         $node->set_deprel($deprel);
     }
+    # Unknown part of speech ('X') cannot be copula. One example that I saw was
+    # an out-of-vocabulary proper noun but I do not know what the others are.
+    elsif($node->iset()->pos() eq '' && $deprel =~ m/^cop(:|$)/)
+    {
+        if($parent->is_noun())
+        {
+            $deprel = 'nmod';
+        }
+        else
+        {
+            $deprel = 'obl';
+        }
+        $node->set_deprel($deprel);
+    }
     # There are some strange cases of right-to-left apposition. I do not
     # understand what is going on there and what should be the remedy. This is
     # just a temporary hack to silence the validator.
