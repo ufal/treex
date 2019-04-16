@@ -275,7 +275,7 @@ sub fix_auxiliary_verb
             my @children = $pnom->children();
             foreach my $child (@children)
             {
-                if($child->deprel() =~ m/^([nc]subj|obj|obl|advmod|discourse|vocative|expl)(:|$)$/)
+                if($child->deprel() =~ m/^([nc]subj|obj|obl|advmod|discourse|vocative|expl)(:|$)/)
                 {
                     $child->set_parent($node);
                 }
