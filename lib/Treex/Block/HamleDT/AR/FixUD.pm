@@ -94,8 +94,8 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
-    # Neither noun nor pronoun can be case marker, subordinator, coordinator, adverbial modifier.
-    elsif($node->is_noun() && $deprel =~ m/^(case|mark|cc|advmod)(:|$)/)
+    # Neither noun nor pronoun can be auxiliary verb, case marker, subordinator, coordinator, adverbial modifier.
+    elsif($node->is_noun() && $deprel =~ m/^(aux|case|mark|cc|advmod)(:|$)/)
     {
         if($parent->is_noun())
         {
