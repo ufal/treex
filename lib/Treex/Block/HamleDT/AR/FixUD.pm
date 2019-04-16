@@ -211,6 +211,11 @@ sub fix_auxiliary_verb
 {
     my $self = shift;
     my $node = shift;
+    if($node->lemma() eq 'لسنا' && $node->tag() eq 'X' && $node->deprel() =~ m/^cop(:|$)/)
+    {
+        $node->set_tag('AUX');
+        $node->iset()->add('pos' => 'verb', 'verbtype' => 'aux');
+    }
     if($node->is_verb() && $node->deprel() =~ m/^cop(:|$)/)
     {
         if($node->lemma() !~ m/^(كَان|لَيس|لسنا)$/)
