@@ -72,7 +72,7 @@ sub fix_constructions
     ###!!! Debugging.
     if($node->form() eq 'أفادت')
     {
-        log_warn('أفادت '.$node->ord().':'.$deprel.':'.$node->iset()->pos());
+        log_warn('أفادت '.$node->id().':'.$node->ord().':'.$deprel.':'.$node->iset()->pos());
     }
     # Noun cannot be copula. Some pronouns can be copulas but then they cannot have children.
     if(($node->is_noun() && !$node->is_pronoun() ||
