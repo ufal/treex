@@ -138,7 +138,14 @@ sub process_atree {
     {
         foreach my $c (@comment)
         {
-            $self->print_nfc("# $c\n");
+            if($c ne '')
+            {
+                $self->print_nfc("# $c\n");
+            }
+            else
+            {
+                $self->print_nfc("#\n");
+            }
         }
     }
     for(my $i = 0; $i<=$#nodes; $i++)
