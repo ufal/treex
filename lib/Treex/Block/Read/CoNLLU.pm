@@ -44,6 +44,7 @@ sub next_document {
         my $fuform;
         my @funodes = ();
         my $funspaf; # no space after the fused token?
+        my $fumisc; # MISC column of fused token line, except SpaceAfter=No, which is stored in $funspaf
 
         LINE:
         foreach my $line (@lines) {
@@ -109,6 +110,15 @@ sub next_document {
                 {
                     $sentence .= ' ';
                 }
+                # MISC may contain other information than SpaceAfter=No and we must preserve it.
+                unless($misc eq '_')
+                {
+                    my @misc = grep {$_ ne 'SpaceAfter=No'} (split(/\|/, $misc));
+                    if (scalar(@misc) > 0)
+                    {
+                        $fumisc = join('|', @misc);
+                    }
+                }
                 next LINE;
             }
             elsif ($id > $printed_up_to)
@@ -134,6 +144,7 @@ sub next_document {
                     if (scalar(@funodes) >= 2)
                     {
                         $funodes[0]->set_fused_form($fuform);
+                        $funodes[0]->set_fused_misc($fumisc);
                         for (my $i = 0; $i < $#funodes; $i++)
                         {
                             $funodes[$i]->set_fused_with_next(1);
@@ -152,6 +163,7 @@ sub next_document {
                     $fuform = undef;
                     splice(@funodes);
                     $funspaf = undef;
+                    $fumisc = undef;
                 }
             }
             $newnode->set_form($form);

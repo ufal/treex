@@ -160,7 +160,12 @@ sub process_atree {
                 log_warn("Cannot determine the span of a fused token");
             }
             my $form = $node->get_fusion();
-            my $misc = $last_fused_node_no_space_after ? 'SpaceAfter=No' : '_';
+            my $misc = $node->get_fused_misc() // '';
+            if($last_fused_node_no_space_after)
+            {
+                $misc = join('|', (split(/\|/, $misc), 'SpaceAfter=No'));
+            }
+            $misc = '_' if($misc eq '');
             $self->print_nfc("$range\t$form\t_\t_\t_\t_\t_\t_\t_\t$misc\n");
         }
         my $ord = $node->ord;
