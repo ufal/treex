@@ -102,29 +102,30 @@ sub next_document {
                 $fuform = $form;
                 $printed_up_to = $2;
                 $sentence .= $form if defined $form;
-                if ($misc =~ m/SpaceAfter=No/)
-                {
-                    $funspaf = 1;
-                }
-                else
-                {
-                    $sentence .= ' ';
-                }
                 # MISC may contain other information than SpaceAfter=No and we must preserve it.
                 unless($misc eq '_')
                 {
-                    my @misc = grep {$_ ne 'SpaceAfter=No'} (split(/\|/, $misc));
+                    my @misc = split(/\|/, $misc);
+                    if(any {$_ eq 'SpaceAfter=No'} (@misc))
+                    {
+                        $funspaf = 1;
+                    }
+                    @misc = grep {$_ ne 'SpaceAfter=No'} (@misc);
                     if (scalar(@misc) > 0)
                     {
                         $fumisc = join('|', @misc);
                     }
+                }
+                unless($funspaf)
+                {
+                    $sentence .= ' ';
                 }
                 next LINE;
             }
             elsif ($id > $printed_up_to)
             {
                 $sentence .= $form if defined $form;
-                $sentence .= ' ' if $misc !~ /SpaceAfter=No/;
+                $sentence .= ' ' if(any {$_ eq 'SpaceAfter=No'} (split(/\|/, $misc)));
             }
 
             my $newnode = $aroot->create_child();
