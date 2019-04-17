@@ -286,7 +286,9 @@ sub fix_auxiliary_verb
         $node->set_tag('AUX');
         $node->iset()->add('pos' => 'verb', 'verbtype' => 'aux');
     }
-    if($node->is_verb() && $node->deprel() =~ m/^cop(:|$)/)
+    if($node->is_verb() && $node->deprel() =~ m/^cop(:|$)/
+        # For now, do not touch the copulas in Arabic-PUD: kAn-u_1, >aSobaH_1, bAt-i_1, Ead~-u_1, jaEal-a_1, layosa_1, EAd-u_1, {iEotabar_1, Zal~-a_1, baqiy-a_1
+        && $node->lemma() !~ m/^(kAn-u_1|>aSobaH_1|bAt-i_1|Ead~-u_1|jaEal-a_1|layosa_1|EAd-u_1|\{iEotabar_1|Zal~-a_1|baqiy-a_1)$/)
     {
         if($node->lemma() !~ m/^(كَان|لَيس|لسنا)$/)
            # $node->lemma() =~ m/^صَرَّح$/ # ṣarraḥ
