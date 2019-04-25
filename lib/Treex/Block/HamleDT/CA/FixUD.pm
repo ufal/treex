@@ -155,82 +155,87 @@ sub fix_morphology
                 $iset->add('case' => 'nom|acc', 'number' => 'plur');
             }
         }
-        elsif($form =~ m/^(ell|el|lo|${ap}l)$/i) # see below for "l'"
+        # In the 3rd person, exclude DET because "l'", "els", "la" etc. are ambiguous between pronouns and definite articles.
+        elsif(!$iset->is_adjective() && $node->deprel() !~ m/^det(:|$)/ &&
+              $form =~ m/^(ell|el|lo|${ap}l|ella|la|l$ap|ho|li|ells|elles|els|los|${ap}ls|les)$/i)
         {
-            $node->set_lemma('ell');
-            $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing', 'gender' => 'masc');
-            $iset->clear('degree', 'numtype');
-            if($form =~ m/^ell$/i)
+            if($form =~ m/^(ell|el|lo|${ap}l)$/i) # see below for "l'"
             {
-                $iset->set('case', 'nom');
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing', 'gender' => 'masc');
+                $iset->clear('degree', 'numtype');
+                if($form =~ m/^ell$/i)
+                {
+                    $iset->set('case', 'nom');
+                }
+                elsif($form =~ m/^(el|l$ap|lo|${ap}l)$/i)
+                {
+                    $iset->set('case' => 'acc');
+                }
             }
-            elsif($form =~ m/^(el|l$ap|lo|${ap}l)$/i)
+            elsif($form =~ m/^(ella|la)$/i) # see below for "l'"
             {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing', 'gender' => 'masc');
+                $iset->clear('degree', 'numtype');
+                if($form =~ m/^ell$/i)
+                {
+                    $iset->set('case', 'nom');
+                }
+                elsif($form =~ m/^(el|l$ap|lo|${ap}l)$/i)
+                {
+                    $iset->set('case' => 'acc');
+                }
+            }
+            # "l'" can be either masculine or feminine
+            elsif($form =~ m/^l$ap$/i)
+            {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing');
+                $iset->clear('gender', 'degree', 'numtype');
                 $iset->set('case' => 'acc');
             }
-        }
-        elsif($form =~ m/^(ella|la)$/i) # see below for "l'"
-        {
-            $node->set_lemma('ell');
-            $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing', 'gender' => 'masc');
-            $iset->clear('degree', 'numtype');
-            if($form =~ m/^ell$/i)
+            # "ho" is the neuter direct object
+            elsif($form =~ m/^ho$/i)
             {
-                $iset->set('case', 'nom');
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing', 'gender' => 'neut', 'case' => 'acc');
+                $iset->clear('degree', 'numtype');
             }
-            elsif($form =~ m/^(el|l$ap|lo|${ap}l)$/i)
+            # The indirect object does not distinguish gender.
+            elsif($form =~ m/^li$/i)
             {
-                $iset->set('case' => 'acc');
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing');
+                $iset->clear('gender', 'degree', 'numtype');
+                $iset->set('case' => 'dat');
             }
-        }
-        # "l'" can be either masculine or feminine
-        elsif($form =~ m/^l$ap$/i)
-        {
-            $node->set_lemma('ell');
-            $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing');
-            $iset->clear('gender', 'degree', 'numtype');
-            $iset->set('case' => 'acc');
-        }
-        # "ho" is the neuter direct object
-        elsif($form =~ m/^ho$/i)
-        {
-            $node->set_lemma('ell');
-            $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing', 'gender' => 'neut', 'case' => 'acc');
-            $iset->clear('degree', 'numtype');
-        }
-        # The indirect object does not distinguish gender.
-        elsif($form =~ m/^li$/i)
-        {
-            $node->set_lemma('ell');
-            $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing');
-            $iset->clear('gender', 'degree', 'numtype');
-            $iset->set('case' => 'dat');
-        }
-        elsif($form =~ m/^(ells)$/i)
-        {
-            $node->set_lemma('ell');
-            $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'plur', 'gender' => 'masc', 'case' => 'nom');
-            $iset->clear('degree', 'numtype');
-        }
-        elsif($form =~ m/^(elles)$/i)
-        {
-            $node->set_lemma('ell');
-            $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'plur', 'gender' => 'fem', 'case' => 'nom');
-            $iset->clear('degree', 'numtype');
-        }
-        # "els" can be masculine direct object, or indirect object in either gender
-        elsif($form =~ m/^(els|los|${ap}ls)$/i)
-        {
-            $node->set_lemma('ell');
-            $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'plur', 'case' => 'acc|dat');
-            $iset->clear('gender', 'degree', 'numtype');
-        }
-        # "les" is the feminine direct object
-        elsif($form =~ m/^(les)$/i)
-        {
-            $node->set_lemma('ell');
-            $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'plur', 'gender' => 'fem', 'case' => 'acc');
-            $iset->clear('degree', 'numtype');
+            elsif($form =~ m/^(ells)$/i)
+            {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'plur', 'gender' => 'masc', 'case' => 'nom');
+                $iset->clear('degree', 'numtype');
+            }
+            elsif($form =~ m/^(elles)$/i)
+            {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'plur', 'gender' => 'fem', 'case' => 'nom');
+                $iset->clear('degree', 'numtype');
+            }
+            # "els" can be masculine direct object, or indirect object in either gender
+            elsif($form =~ m/^(els|los|${ap}ls)$/i)
+            {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'plur', 'case' => 'acc|dat');
+                $iset->clear('gender', 'degree', 'numtype');
+            }
+            # "les" is the feminine direct object
+            elsif($form =~ m/^(les)$/i)
+            {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'plur', 'gender' => 'fem', 'case' => 'acc');
+                $iset->clear('degree', 'numtype');
+            }
         }
         elsif($form =~ m/^(es|s$ap)$/i)
         {
