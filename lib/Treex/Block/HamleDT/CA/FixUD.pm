@@ -243,7 +243,9 @@ sub fix_morphology
             $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'reflex' => 'yes', 'case' => 'dat|acc', 'prepcase' => 'npr');
             $iset->clear('gender', 'number', 'degree', 'numtype');
         }
-        elsif($form =~ m/^(si)$/i)
+        # "si" is ambiguous, it can be SCONJ ("if") and reflexive after preposition.
+        # We must not damage SCONJ.
+        elsif($form =~ m/^(si)$/i && !$iset->is_conjunction() && $node->deprel() !~ m/^mark(:|$)/)
         {
             $node->set_lemma('ell');
             $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'reflex' => 'yes', 'case' => 'acc', 'prepcase' => 'pre');
@@ -258,7 +260,10 @@ sub fix_morphology
         }
         # There are also "adverbial personal pronouns":
         # ablative/genitive "en", and locative "hi"
-        elsif($form =~ m/^(en|n$ap|hi)$/i)
+        # But "en" is also a frequent preposition ("in").
+        # Moreover, "hi" is currently PRON and obl. If we change PRON to ADV, we will have to also change obl to advmod.
+        # Better do not touch it.
+        elsif(0 && $form =~ m/^(en|n$ap|hi)$/i && !$iset->is_adposition())
         {
             $iset->add('pos' => 'adv', 'prontype' => 'prs');
             $iset->clear('person', 'gender', 'number', 'case', 'degree', 'numtype');
@@ -335,6 +340,7 @@ sub fix_morphology
         if($iset->is_adverb() && $form =~ m/^(més|menys)$/i)
         {
             $iset->set('degree', 'cmp');
+            $iset->clear('adptype');
         }
         # Fix verbs including auxiliaries.
         if($iset->is_verb())
