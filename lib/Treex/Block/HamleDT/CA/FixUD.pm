@@ -71,7 +71,7 @@ sub fix_morphology
     {
         my $form = $node->form();
         my $iset = $node->iset();
-        continue; ###!!! THIS FUNCTION MUST BE CATALANIZED
+        next; ###!!! THIS FUNCTION MUST BE CATALANIZED
         # Now the positive approach: Tag certain closed-class words regardless the context.
         # For example, the forms of the personal pronoun "yo" occasionally appear as PROPN or X and we want to unify them.
         if($form =~ m/^(yo|me|mí|conmigo)$/i)
