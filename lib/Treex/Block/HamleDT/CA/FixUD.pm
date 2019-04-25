@@ -896,10 +896,10 @@ sub fix_auxiliary_verb
         # We must also approve the empty lemma '_', otherwise this method would mess up unlemmatized treebanks.
         my $approved_auxiliary = $node->lemma() =~ m/^(ser|estar|haver|anar|deber|poder|saber|querer|_)$/;
         my $approved_copula    = $node->lemma() =~ m/^(ser|estar|_)$/;
-        # Warn if the lemma does not end in "-r". That could mean that we have
+        # Warn if the lemma does not end in "-r" or "-re". That could mean that we have
         # a genuine auxiliary which is just wrongly lemmatized (e.g., "habiendo").
         # Of course it could also mean that we have a correct lemma of a non-verb.
-        if($node->lemma() !~ m/r$/ && $node->lemma() ne '_')
+        if($node->lemma() !~ m/re?$/ && $node->lemma() ne '_')
         {
             log_warn("AUX lemma '".$node->lemma()."' of '".$node->form()."' does not look like an infinitive.");
         }
