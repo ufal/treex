@@ -833,13 +833,10 @@ sub fix_auxiliary_verb
     my $node = shift;
     if($node->tag() eq 'AUX')
     {
-        # Hacer often occurs in temporal expressions like "hace unos días" ("some days ago").
-        # hace 16 meses
-        # hace algunos días
-        # hace un par de días ("par" is the head)
-        # hace poco (meaning "recently"; "poco" is adverb, the phrase is advmod instead of obl)
-        # desde hacía tiempo
-        if($node->form() =~ m/^(hace|hacía)$/i && $node->parent()->tag() =~ m/^(NOUN|PRON|DET|NUM|ADV)$/ && 0) ###!!! THIS FUNCTION MUST BE CATALANIZED
+        # Fer often occurs in temporal expressions (analogy to Spanish "hacer"
+        # as in "hace unos días" ("some days ago")): "des de fa setmanes"
+        # ("since weeks ago").
+        if($node->form() =~ m/^(fa)$/i && $node->parent()->tag() =~ m/^(NOUN|PRON|DET|NUM|ADV)$/)
         {
             $node->set_tag('VERB');
             $node->iset()->clear('verbtype');
@@ -855,7 +852,7 @@ sub fix_auxiliary_verb
             }
             else
             {
-                log_warn("Unexpected deprel '".$nphead->deprel()."' of a 'hace unos días'-type phrase");
+                log_warn("Unexpected deprel '".$nphead->deprel()."' of a 'des de fa setmanes'-type phrase");
             }
             $nphead->set_parent($node);
             $nphead->set_deprel('obj');
