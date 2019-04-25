@@ -831,7 +831,7 @@ sub fix_auxiliary_verb
 {
     my $self = shift;
     my $node = shift;
-    if($node->tag() eq 'AUX' && 0) ###!!! THIS FUNCTION MUST BE CATALANIZED
+    if($node->tag() eq 'AUX')
     {
         # Hacer often occurs in temporal expressions like "hace unos días" ("some days ago").
         # hace 16 meses
@@ -839,7 +839,7 @@ sub fix_auxiliary_verb
         # hace un par de días ("par" is the head)
         # hace poco (meaning "recently"; "poco" is adverb, the phrase is advmod instead of obl)
         # desde hacía tiempo
-        if($node->form() =~ m/^(hace|hacía)$/i && $node->parent()->tag() =~ m/^(NOUN|PRON|DET|NUM|ADV)$/)
+        if($node->form() =~ m/^(hace|hacía)$/i && $node->parent()->tag() =~ m/^(NOUN|PRON|DET|NUM|ADV)$/ && 0) ###!!! THIS FUNCTION MUST BE CATALANIZED
         {
             $node->set_tag('VERB');
             $node->iset()->clear('verbtype');
@@ -894,7 +894,7 @@ sub fix_auxiliary_verb
         # wrong (not exhaustive): $node->lemma() =~ m/^(acabar|colar|comenzar|continuar|dejar|empezar|hacer|lograr|llegar|pasar|preguntar|quedar|seguir|soler|sufrir|tender|terminar|tratar|volver)$/
         # correct auxiliaries:    $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/
         # We must also approve the empty lemma '_', otherwise this method would mess up unlemmatized treebanks.
-        my $approved_auxiliary = $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer|_)$/;
+        my $approved_auxiliary = $node->lemma() =~ m/^(ser|estar|haver|anar|deber|poder|saber|querer|_)$/;
         my $approved_copula    = $node->lemma() =~ m/^(ser|estar|_)$/;
         # Warn if the lemma does not end in "-r". That could mean that we have
         # a genuine auxiliary which is just wrongly lemmatized (e.g., "habiendo").
@@ -1014,17 +1014,6 @@ sub fix_auxiliary_verb
                     $child->set_parent($node);
                 }
             }
-            # We also need to change the part-of-speech tag from AUX to VERB.
-            $node->set_tag('VERB');
-            $node->iset()->clear('verbtype');
-        }
-        # "como diciendo" ("like saying")
-        elsif($node->form() =~ m/^diciendo$/i && defined($node->get_left_neighbor()) && $node->get_left_neighbor()->form() =~ m/^como$/i)
-        {
-            my $como = $node->get_left_neighbor();
-            $como->set_parent($node);
-            $como->set_deprel('mark');
-            $node->set_deprel('parataxis');
             # We also need to change the part-of-speech tag from AUX to VERB.
             $node->set_tag('VERB');
             $node->iset()->clear('verbtype');
