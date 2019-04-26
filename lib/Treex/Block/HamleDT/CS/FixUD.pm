@@ -1620,6 +1620,12 @@ sub fix_annotation_errors
         $subtree[0]->set_parent($subtree[3]);
         $subtree[9]->set_parent($subtree[3]);
     }
+    elsif($spanstring =~ m/^" Jednou mi ujel vlak , " vyprávěl J \. M \. , " kterým jsem nutně potřeboval odjet \.$/i) #"
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[12]->set_parent($subtree[14]);
+        $subtree[13]->set_parent($subtree[14]);
+    }
 }
 
 
