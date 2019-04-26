@@ -82,17 +82,19 @@ sub process_atree
                 $rcand = $self->find_candidate_right($node, \@nodes, 1);
             }
             my $winner = $self->decide_left_or_right($node->form(), $pord, $lcand, \@lcrumbs, $rcand, \@rcrumbs);
+            my $old_pord = $node->parent()->ord();
+            my $old_pform = $node->parent()->is_root() ? 'ROOT' : $node->parent()->form();
             if(defined($winner))
             {
                 # Debugging: save the decision in wild attributes.
-                $node->wild()->{debug_punctuation} = $node->parent()->ord().':'.$node->parent()->form().' --> '.$winner->ord().':'.$winner->form();
+                $node->wild()->{debug_punctuation} = "$old_pord:$old_pform --> ".$winner->ord().':'.$winner->form();
                 $node->set_parent($winner);
                 $node->set_deprel('punct');
             }
             else
             {
                 # Debugging: save the decision in wild attributes.
-                $node->wild()->{debug_punctuation} = $node->parent()->ord().':'.$node->parent()->form().' --> nothing better found';
+                $node->wild()->{debug_punctuation} = "$old_pord:$old_pform -->  nothing better found";
                 log_warn("Failed to find better attachment for punctuation node ".$node->form());
             }
         }
@@ -448,7 +450,7 @@ sub decide_left_or_right
         return $rcand;
     }
     # If we stopped on the left because it jumps to the right, and we have passed through the parent on the right, attach left.
-    if(defined($lcand) && $lcand->parent()->ord() > $pord && defined($rcrumbs->[$lcand->parent()->ord()]) && $rcrumbs->[$lcand->parent()->ord()] > 0)
+    if(defined($lcand) && !$lcand->is_root() && $lcand->parent()->ord() > $pord && defined($rcrumbs->[$lcand->parent()->ord()]) && $rcrumbs->[$lcand->parent()->ord()] > 0)
     {
         return $lcand;
     }
