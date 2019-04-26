@@ -1587,6 +1587,7 @@ sub fix_annotation_errors
     {
         my @subtree = $self->get_node_subtree($node);
         $subtree[5]->set_parent($node->parent());
+        $subtree[5]->set_deprel($node->deprel());
         $subtree[0]->set_parent($subtree[5]);
         $subtree[1]->set_parent($subtree[5]);
         $subtree[2]->set_parent($subtree[5]);
