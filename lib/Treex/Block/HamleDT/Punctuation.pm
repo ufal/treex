@@ -87,7 +87,9 @@ sub process_atree
             if(defined($winner))
             {
                 # Debugging: save the decision in wild attributes.
-                $node->wild()->{debug_punctuation} = "$old_pord:$old_pform --> ".$winner->ord().':'.$winner->form();
+                my $new_pord = $winner->ord();
+                my $new_pform = $winner->is_root() ? 'ROOT' : $winner->form();
+                $node->wild()->{debug_punctuation} = "$old_pord:$old_pform --> $new_pord:$new_pform";
                 $node->set_parent($winner);
                 $node->set_deprel('punct');
             }

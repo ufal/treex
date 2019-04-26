@@ -865,7 +865,8 @@ sub fix_constructions
         $deprel = 'flat';
         $node->set_deprel($deprel);
     }
-    elsif($node->is_punctuation() && $deprel !~ m/^punct(:|$)/)
+    # Punctuation can be exceptionally root, otherwise it is always attached as punct.
+    elsif($node->is_punctuation() && $deprel !~ m/^(punct|root)(:|$)/)
     {
         $deprel = 'punct';
         $node->set_deprel($deprel);
