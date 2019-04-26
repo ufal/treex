@@ -1592,6 +1592,8 @@ sub fix_annotation_errors
         $subtree[2]->set_parent($subtree[5]);
         $subtree[3]->set_parent($subtree[5]);
         $subtree[3]->set_deprel('aux:pass');
+        $subtree[3]->iset()->set('verbtype' => 'aux');
+        $subtree[3]->set_tag('AUX');
         $subtree[4]->set_parent($subtree[5]);
     }
     elsif($node->form() eq 'by' && $node->deprel() =~ m/^expl(:|$)/)
