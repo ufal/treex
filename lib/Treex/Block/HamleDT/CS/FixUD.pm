@@ -199,7 +199,7 @@ sub fix_constructions
     # Since the "X co X" pattern is not productive, we should treat it as a
     # fixed expression with an adverbial meaning.
     # Somewhat different in meaning but identical in structure is "stůj co stůj", and it is also adverbial.
-    elsif(lc($node->form()) =~ m/^(den|noc|týden|pondělí|úterý|středu|čtvrtek|pátek|sobotu|neděli|měsíc|rok|stůj)$/ &&
+    elsif(lc($node->form()) =~ m/^(den|večer|noc|týden|pondělí|úterý|středu|čtvrtek|pátek|sobotu|neděli|měsíc|rok|stůj)$/ &&
           $parent->ord() == $node->ord()+2 &&
           lc($parent->form()) eq lc($node->form()) &&
           defined($node->get_right_neighbor()) &&
@@ -571,7 +571,7 @@ sub fix_constructions
     # "rozuměj" (imperative of "understand") is a verb but attached as 'cc'.
     # We will not keep the parallelism to "to jest" here. We will make it a parataxis.
     # Similar: "míněno" (ADJ, passive participle of "mínit")
-    elsif($node->form() =~ m/^(rozuměj|dejme|míněno|nevím|počínaje|řekněme|říkajíc|srov(nej)?|víš|víte|event)$/i && $deprel =~ m/^(cc|advmod|mark)(:|$)/)
+    elsif($node->form() =~ m/^(rozuměj|dejme|míněno|nedala|nevím|počínaje|řekněme|říkajíc|srov(nej)?|víš|víte|event)$/i && $deprel =~ m/^(cc|advmod|mark)(:|$)/)
     {
         $deprel = 'parataxis';
         $node->set_deprel($deprel);
@@ -587,6 +587,18 @@ sub fix_constructions
         $parent->set_parent($node);
         $parent->set_deprel('fixed');
         $parent = $grandparent;
+    }
+    # "cestou necestou": both are NOUN, "cestou" is attached to "necestou" as 'cc'.
+    elsif($node->is_noun() && $deprel =~ m/^cc(:|$)/)
+    {
+        $deprel = 'nmod';
+        $node->set_deprel($deprel);
+    }
+    # "tip ťop": both are ADJ, "tip" is attached to "ťop" as 'cc'.
+    elsif($node->is_adjective() && $deprel =~ m/^cc(:|$)/)
+    {
+        $deprel = 'amod';
+        $node->set_deprel($deprel);
     }
     # "pokud ovšem" ("if however") is sometimes analyzed as a fixed expression
     # but that is wrong because other words may be inserted between the two
@@ -627,6 +639,13 @@ sub fix_constructions
         $node->set_deprel('aux');
         $parent = $grandparent;
         $kdyz->set_deprel('fixed');
+    }
+    # "jak" can be ADV or SCONJ. If it is attached as advmod, we will assume that it is ADV.
+    elsif($node->lemma() eq 'jak' && $node->is_conjunction() && $deprel =~ m/^advmod(:|$)/)
+    {
+        $node->iset()->set('pos' => 'adv');
+        $node->iset()->clear('conjtype');
+        $node->set_tag('ADV');
     }
     # "no" (Czech particle)
     elsif(lc($node->form()) eq 'no' && $node->is_particle() && !$node->is_foreign() &&
@@ -842,7 +861,7 @@ sub fix_constructions
     # directly to the content word.
     if($node->deprel() =~ m/^(aux|cop)(:|$)/)
     {
-        my @children = grep {$_->deprel() =~ m/^(nsubj|csubj|obj|iobj|expl|ccomp|xcomp|obl|advmod|advcl|vocative|dislocated)(:|$)/} ($node->children());
+        my @children = grep {$_->deprel() =~ m/^(nsubj|csubj|obj|iobj|expl|ccomp|xcomp|obl|advmod|advcl|vocative|dislocated|dep)(:|$)/} ($node->children());
         my $parent = $node->parent();
         foreach my $child (@children)
         {
