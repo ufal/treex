@@ -830,6 +830,27 @@ sub fix_constructions
         $node->set_deprel($deprel);
     }
     $self->fix_auxiliary_verb($node);
+    # Functional nodes normally do not have modifiers of their own, with a few
+    # exception, such as coordination. Most modifiers should be attached
+    # directly to the content word.
+    if($node->deprel() =~ m/^(aux|cop)(:|$)/)
+    {
+        my @children = grep {$_->deprel() =~ m/^(nsubj|csubj|obj|iobj|expl|ccomp|xcomp|obl|advmod|advcl|vocative|dislocated)(:|$)/} ($node->children());
+        my $parent = $node->parent();
+        foreach my $child (@children)
+        {
+            $child->set_parent($parent);
+        }
+    }
+    elsif($node->deprel() =~ m/^(case|mark|cc|punct)(:|$)/)
+    {
+        my @children = grep {$_->deprel() !~ m/^(conj|fixed|goeswith|punct)(:|$)/} ($node->children());
+        my $parent = $node->parent();
+        foreach my $child (@children)
+        {
+            $child->set_parent($parent);
+        }
+    }
 }
 
 
@@ -874,18 +895,6 @@ sub fix_auxiliary_verb
             # We also need to change the part-of-speech tag from AUX to VERB.
             $node->iset()->clear('verbtype');
             $node->set_tag('VERB');
-        }
-    }
-    # Auxiliary verbs normally do not have modifiers of their own, with a few
-    # exception, such as coordination. Most modifiers should be attached
-    # directly to the main verb.
-    if($node->deprel() =~ m/^(aux|cop)(:|$)/)
-    {
-        my @children = grep {$_->deprel() =~ m/^(nsubj|csubj|obj|iobj|expl|ccomp|xcomp|obl|advmod|advcl|vocative|dislocated)(:|$)/} ($node->children());
-        my $parent = $node->parent();
-        foreach my $child (@children)
-        {
-            $child->set_parent($parent);
         }
     }
 }
