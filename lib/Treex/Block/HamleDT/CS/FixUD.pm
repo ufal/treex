@@ -647,6 +647,16 @@ sub fix_constructions
         $node->iset()->clear('conjtype');
         $node->set_tag('ADV');
     }
+    # "ať" is a particle in Czech grammar but it is sometimes tagged as SCONJ in the Prague treebanks.
+    # It may function as a 3rd-person imperative marker: "ať laskavě táhne k čertu".
+    # We could thus analyze it as an auxiliary, similar to Polish "niech", but
+    # first we would have to put it on the list of approved Czech auxiliaries,
+    # and then we should make sure that all other occurrences are analyzed similarly.
+    elsif($node->form() =~ m/^ať$/i && $node->is_conjunction() && $deprel =~ m/^advmod(:|$)/)
+    {
+        $deprel = 'discourse';
+        $node->set_deprel($deprel);
+    }
     # "no" (Czech particle)
     elsif(lc($node->form()) eq 'no' && $node->is_particle() && !$node->is_foreign() &&
           $deprel =~ m/^cc(:|$)/)
@@ -853,6 +863,11 @@ sub fix_constructions
           $node->ord() > $parent->ord())
     {
         $deprel = 'flat';
+        $node->set_deprel($deprel);
+    }
+    elsif($node->is_punctuation() && $deprel !~ m/^punct(:|$)/)
+    {
+        $deprel = 'punct';
         $node->set_deprel($deprel);
     }
     $self->fix_auxiliary_verb($node);
@@ -1552,6 +1567,37 @@ sub fix_annotation_errors
         $subtree[9]->set_parent($subtree[12]);
         $subtree[11]->set_parent($subtree[12]);
         $subtree[11]->set_deprel('cc');
+    }
+    # The following annotation errors have been found in Czech FicTree.
+    elsif($spanstring =~ m/^neboť to , co ho tak slastně nadýmalo , byla smrt ;$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[1]->set_parent($node->parent());
+        $subtree[1]->set_deprel('root');
+        $subtree[0]->set_parent($subtree[1]);
+        $subtree[9]->set_parent($subtree[1]);
+        $subtree[9]->set_deprel('cop');
+        $subtree[9]->iset()->set('verbtype' => 'aux');
+        $subtree[9]->set_tag('AUX');
+        $subtree[10]->set_parent($subtree[1]);
+        $subtree[11]->set_parent($subtree[1]);
+    }
+    elsif($spanstring =~ m/^, jako by bylo tělo ztraceno$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[5]->set_parent($node->parent());
+        $subtree[0]->set_parent($subtree[5]);
+        $subtree[1]->set_parent($subtree[5]);
+        $subtree[2]->set_parent($subtree[5]);
+        $subtree[3]->set_parent($subtree[5]);
+        $subtree[3]->set_deprel('aux:pass');
+        $subtree[4]->set_parent($subtree[5]);
+    }
+    elsif($node->form() eq 'by' && $node->deprel() =~ m/^expl(:|$)/)
+    {
+        $node->set_deprel('aux');
+        $node->iset()->set('verbtype' => 'aux');
+        $node->set_tag('AUX');
     }
 }
 
