@@ -355,7 +355,7 @@ sub climb
     # There could be a node that we skipped on the other side (because it is aux, cc etc.)
     # and that node might be attached somewhere to our side; if we climb above that node's parent,
     # it will make that node's attachment nonprojective.
-    while(!$candidate->parent()->is_root() && ($candidate->parent()->ord() <=> $child->ord()) == $side &&
+    while(!$candidate->is_root() && !$candidate->parent()->is_root() && ($candidate->parent()->ord() <=> $child->ord()) == $side &&
           !$self->would_be_nonprojective($candidate->parent(), $child) &&
           !$self->would_cause_nonprojectivity($candidate->parent(), $child))
     {
