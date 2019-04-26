@@ -140,7 +140,7 @@ sub split_fused_words
             my $aux_deprel = $node->iset()->is_passive() ? 'aux:pass' : 'aux';
             my $aux_recipe = {'form' => 'jsi',
                 'lemma'  => 'být',          'tag' => 'AUX',        'conll_pos' => 'VB-S---2P-AA---',
-                'iset'   => {'pos' => 'verb', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act',
+                'iset'   => {'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act',
                              'person' => '2', 'number' => 'sing', 'polarity' => 'pos'},
                 'deprel' => $aux_deprel};
             my @new_nodes = $self->split_fused_token($node, $host_recipe, $aux_recipe);
@@ -172,7 +172,7 @@ sub split_fused_words
                 'deprel' => $node->deprel()};
             my $aux_recipe = {'form' => 'jsi',
                 'lemma'  => 'být',          'tag' => 'AUX',        'conll_pos' => 'VB-S---2P-AA---',
-                'iset'   => {'pos' => 'verb', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act',
+                'iset'   => {'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act',
                              'person' => '2', 'number' => 'sing', 'polarity' => 'pos'},
                 'deprel' => 'aux'};
             my @new_nodes;
