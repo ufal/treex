@@ -278,7 +278,9 @@ sub find_candidate_left
         {
             return $parent;
         }
-        elsif($parent->ord() < $node->ord() && !$self->would_be_nonprojective($parent, $node))
+        elsif($parent->ord() < $node->ord() &&
+              !$self->would_be_nonprojective($parent, $node) &&
+              !$self->would_cause_nonprojectivity($parent, $node))
         {
             $candidate = $parent;
         }
@@ -326,7 +328,9 @@ sub find_candidate_right
         {
             return $parent;
         }
-        elsif($parent->ord() > $node->ord() && !$self->would_be_nonprojective($parent, $node))
+        elsif($parent->ord() > $node->ord() &&
+              !$self->would_be_nonprojective($parent, $node) &&
+              !$self->would_cause_nonprojectivity($parent, $node))
         {
             $candidate = $parent;
         }
