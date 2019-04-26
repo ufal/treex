@@ -261,6 +261,13 @@ sub fix_constructions
         $deprel = 'amod';
         $node->set_deprel($deprel);
     }
+    # In "jakýs takýs", both words are DET and "jakýs" is attached to "takýs"
+    # as 'cc', which is wrong.
+    elsif($node->is_determiner() && $deprel =~ m/^cc(:|$)/)
+    {
+        $deprel = 'det';
+        $node->set_deprel($deprel);
+    }
     # The abbreviation "aj" ("a jiné" = "and other") is tagged as an adjective
     # but sometimes it is attached to the last conjunct as 'cc'. We should re-
     # attach it as a conjunct. We may also consider splitting it as a multi-
@@ -564,7 +571,7 @@ sub fix_constructions
     # "rozuměj" (imperative of "understand") is a verb but attached as 'cc'.
     # We will not keep the parallelism to "to jest" here. We will make it a parataxis.
     # Similar: "míněno" (ADJ, passive participle of "mínit")
-    elsif($node->form() =~ m/^(rozuměj|dejme|míněno|počínaje|řekněme|říkajíc|srov(nej)?|víš|víte|event)$/i && $deprel =~ m/^(cc|advmod|mark)(:|$)/)
+    elsif($node->form() =~ m/^(rozuměj|dejme|míněno|nevím|počínaje|řekněme|říkajíc|srov(nej)?|víš|víte|event)$/i && $deprel =~ m/^(cc|advmod|mark)(:|$)/)
     {
         $deprel = 'parataxis';
         $node->set_deprel($deprel);
