@@ -673,8 +673,8 @@ sub fix_auxiliary_verb
             }
             $nphead->set_parent($node);
             $nphead->set_deprel('obj');
-            # If there were children of the NP head to the left of "hace" (e.g., punctuation),
-            # they are now nonprojective. Reattach them to "hace".
+            # If there were children of the NP head to the left of "fa" (e.g., punctuation),
+            # they are now nonprojective. Reattach them to "fa".
             my @leftchildren = grep {$_->ord() < $node->ord()} ($nphead->children());
             foreach my $child (@leftchildren)
             {
