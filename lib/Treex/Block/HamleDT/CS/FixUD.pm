@@ -564,7 +564,7 @@ sub fix_constructions
     # "rozuměj" (imperative of "understand") is a verb but attached as 'cc'.
     # We will not keep the parallelism to "to jest" here. We will make it a parataxis.
     # Similar: "míněno" (ADJ, passive participle of "mínit")
-    elsif($node->form() =~ m/^(rozuměj|dejme|míněno|počínaje|řekněme|říkajíc|srov(nej)?|víte|event)$/i && $deprel =~ m/^(cc|advmod|mark)(:|$)/)
+    elsif($node->form() =~ m/^(rozuměj|dejme|míněno|počínaje|řekněme|říkajíc|srov(nej)?|víš|víte|event)$/i && $deprel =~ m/^(cc|advmod|mark)(:|$)/)
     {
         $deprel = 'parataxis';
         $node->set_deprel($deprel);
@@ -844,7 +844,7 @@ sub fix_auxiliary_verb
     if($node->tag() eq 'AUX')
     {
         if($node->deprel() =~ m/^cop(:|$)/ &&
-           $node->lemma() =~ m/^(stát|mít|moci)$/)
+           $node->lemma() =~ m/^(stát|mít|moci|jít)$/)
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
@@ -874,6 +874,18 @@ sub fix_auxiliary_verb
             # We also need to change the part-of-speech tag from AUX to VERB.
             $node->iset()->clear('verbtype');
             $node->set_tag('VERB');
+        }
+    }
+    # Auxiliary verbs normally do not have modifiers of their own, with a few
+    # exception, such as coordination. Most modifiers should be attached
+    # directly to the main verb.
+    if($node->deprel() =~ m/^(aux|cop)(:|$)/)
+    {
+        my @children = grep {$_->deprel() =~ m/^(nsubj|csubj|obj|iobj|expl|ccomp|xcomp|obl|advmod|advcl|vocative|dislocated)(:|$)/} ($node->children());
+        my $parent = $node->parent();
+        foreach my $child (@children)
+        {
+            $child->set_parent($parent);
         }
     }
 }
