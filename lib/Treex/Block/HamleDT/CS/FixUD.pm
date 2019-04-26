@@ -1603,6 +1603,23 @@ sub fix_annotation_errors
         $node->iset()->set('verbtype' => 'aux');
         $node->set_tag('AUX');
     }
+    elsif($spanstring =~ m/^" a když by \? " řekla dívka \.$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[2]->set_parent($subtree[6]);
+        $subtree[2]->set_deprel('ccomp');
+        $subtree[1]->set_parent($subtree[2]);
+        $subtree[1]->set_deprel('cc');
+        $subtree[3]->set_parent($subtree[2]);
+        $subtree[3]->set_deprel('aux');
+        $subtree[4]->set_parent($subtree[2]);
+    }
+    elsif($spanstring =~ m/^" ten budeš mít , když mě neposlechneš ! " ukončila jsem rozmluvu/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[0]->set_parent($subtree[3]);
+        $subtree[9]->set_parent($subtree[3]);
+    }
 }
 
 
