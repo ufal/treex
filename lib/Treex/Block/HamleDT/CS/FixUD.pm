@@ -1627,27 +1627,24 @@ sub fix_annotation_errors
         $subtree[13]->set_parent($subtree[14]);
     }
     # The following annotation errors have been found in Czech CAC.
-    elsif($spanstring =~ m/^že mnohý z nich v sobě určitou naději živí/i)
+    elsif($spanstring =~ m/mnohý z nich v sobě určitou naději živí , ale jen několik vyvolených může být o své síle přesvědčeno/i)
     {
         # Two previous nodes, "Možná" and "," are also attached to the root.
-        if($node->ord() == 3 && $node->parent()->is_root())
+        my $root = $node->get_root();
+        my @subtree = $root->get_descendants({'ordered' => 1});
+        if($subtree[0]->form() =~ m/^možná$/i && $subtree[1]->form() eq ',' && $#subtree >= 22 && $subtree[22]->form() eq '.')
         {
-            my $root = $node->get_root();
-            my @subtree = $root->get_descendants({'ordered' => 1});
-            if($subtree[0]->form() =~ m/^možná$/i && $subtree[1]->form() eq ',' && $#subtree >= 22 && $subtree[22]->form() eq '.')
-            {
-                $subtree[0]->set_parent($root);
-                $subtree[0]->set_deprel('root');
-                $subtree[10]->set_parent($subtree[0]);
-                $subtree[10]->set_deprel('csubj');
-                $subtree[1]->set_parent($subtree[10]);
-                $subtree[1]->set_deprel('punct');
-                $subtree[2]->set_parent($subtree[10]);
-                $subtree[2]->set_deprel('mark');
-                # Reattach the final period from "že" to "Možná".
-                $subtree[22]->set_parent($subtree[0]);
-                $subtree[22]->set_deprel('punct');
-            }
+            $subtree[0]->set_parent($root);
+            $subtree[0]->set_deprel('root');
+            $subtree[10]->set_parent($subtree[0]);
+            $subtree[10]->set_deprel('csubj');
+            $subtree[1]->set_parent($subtree[10]);
+            $subtree[1]->set_deprel('punct');
+            $subtree[2]->set_parent($subtree[10]);
+            $subtree[2]->set_deprel('mark');
+            # Reattach the final period from "že" to "Možná".
+            $subtree[22]->set_parent($subtree[0]);
+            $subtree[22]->set_deprel('punct');
         }
     }
 }
