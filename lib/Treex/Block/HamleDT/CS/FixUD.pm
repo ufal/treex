@@ -907,7 +907,7 @@ sub fix_auxiliary_verb
     if($node->tag() eq 'AUX')
     {
         if($node->deprel() =~ m/^cop(:|$)/ &&
-           $node->lemma() =~ m/^(stát|mít|moci|jít)$/)
+           $node->lemma() =~ m/^(stát|mít|moci|muset|jít|pěstovat|připadat|vyžadovat)$/)
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
@@ -1625,6 +1625,30 @@ sub fix_annotation_errors
         my @subtree = $self->get_node_subtree($node);
         $subtree[12]->set_parent($subtree[14]);
         $subtree[13]->set_parent($subtree[14]);
+    }
+    # The following annotation errors have been found in Czech CAC.
+    elsif($spanstring =~ m/^že mnohý z nich v sobě určitou naději živí/i)
+    {
+        # Two previous nodes, "Možná" and "," are also attached to the root.
+        if($node->ord() == 3 && $node->parent()->is_root())
+        {
+            my $root = $node->get_root();
+            my @subtree = $root->get_descendants({'ordered' => 1});
+            if($subtree[0]->form() =~ m/^možná$/i && $subtree[1]->form() eq ',' && $#subtree >= 22 && $subtree[22]->form() eq '.')
+            {
+                $subtree[0]->set_parent($root);
+                $subtree[0]->set_deprel('root');
+                $subtree[10]->set_parent($subtree[0]);
+                $subtree[10]->set_deprel('csubj');
+                $subtree[1]->set_parent($subtree[10]);
+                $subtree[1]->set_deprel('punct');
+                $subtree[2]->set_parent($subtree[10]);
+                $subtree[2]->set_deprel('mark');
+                # Reattach the final period from "že" to "Možná".
+                $subtree[22]->set_parent($subtree[0]);
+                $subtree[22]->set_deprel('punct');
+            }
+        }
     }
 }
 
