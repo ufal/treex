@@ -37,8 +37,9 @@ sub decide_between_det_and_num
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->is_cardinal() && $node->is_total() && $node->deprel() !~ m/^det(:|$)/)
+        if($node->is_cardinal() && $node->is_total() && $node->deprel() !~ m/^det(:|$)/ && $node->tag() ne 'NUM')
         {
+            #log_warn("Changing tag of node '".$node->form()."' from '".$node->tag()."' to 'NUM'");
             $node->set_tag('NUM');
         }
     }
