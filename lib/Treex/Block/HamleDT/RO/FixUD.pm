@@ -12,7 +12,7 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
-    $self->fix_features($root);
+    #$self->fix_features($root);
 }
 
 
