@@ -24,7 +24,7 @@ has 'alignment'                        => ( is => 'ro', isa => 'Bool', default =
 # and using just one item in each sequence.
 # "iset" is a special value which means to use Lingua::Interset::encode('mul::uposf', $node->iset)
 # for extracting UPOS and/or FEATS.
-has 'upos' => ( is => 'ro', default => 'iset', documentation => 'list of node attributes to check when printing the UPOS column' );
+has 'upos' => ( is => 'ro', default => 'tag,iset', documentation => 'list of node attributes to check when printing the UPOS column' );
 has 'xpos' => ( is => 'ro', default => 'conll/pos,conll/cpos,tag', documentation => 'list of node attributes to check when printing the XPOS column' );
 has 'feats' => ( is => 'ro', default => 'iset,conll/feat', documentation => 'list of node attributes to check when printing the FEATS column' );
 has 'deprel' => ( is => 'ro', default => 'deprel,conll/deprel,afun', documentation => 'list of node attributes to check when printing the DEPREL column' );
