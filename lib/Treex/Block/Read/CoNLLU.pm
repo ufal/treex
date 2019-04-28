@@ -177,41 +177,56 @@ sub next_document {
             $newnode->set_deprel($deprel);
             $newnode->set_conll_deprel($deprel);
 
-            $newnode->iset->set_upos($upos);
-            if ($feats ne '_') {
-                $newnode->iset->add_ufeatures(split(/\|/, $feats));
+            $newnode->iset()->set_upos($upos);
+            if ($feats ne '_')
+            {
+                $newnode->iset()->add_ufeatures(split(/\|/, $feats));
+                # UD features that are not defined in Interset are now stored
+                # as subfeatures of the 'other' feature of Interset. Unfortunately,
+                # the 'other' feature will not be saved with the Treex document.
+                # In order to save it, we must make it a wild attribute of the node.
+                if(defined($newnode->iset()->other()))
+                {
+                    $newnode->wild()->{iset_other} = $newnode->iset()->other();
+                }
             }
-            if ($misc && $misc ne '_') {
+            if ($misc && $misc ne '_')
+            {
                 my @misc = split(/\|/, $misc);
                 # Check whether MISC contains SpaceAfter=No.
                 my $n0 = scalar(@misc);
                 @misc = grep {$_ ne 'SpaceAfter=No'} (@misc);
                 my $n1 = scalar(@misc);
-                if ($n1 < $n0) {
+                if ($n1 < $n0)
+                {
                     $newnode->set_no_space_after(1);
                 }
                 # Check whether MISC contains transliteration of the word form.
                 my @translit = map {my $x = $_; $x =~ s/^Translit=//; $x} (grep {m/^Translit=(.+)$/} (@misc));
-                if (scalar(@translit) > 0) {
+                if (scalar(@translit) > 0)
+                {
                     $newnode->set_translit($translit[0]);
                     @misc = grep {!m/^Translit=/} (@misc);
                 }
                 # Check whether MISC contains transliteration of the lemma.
                 my @ltranslit = map {my $x = $_; $x =~ s/^LTranslit=//; $x} (grep {m/^LTranslit=(.+)$/} (@misc));
-                if (scalar(@ltranslit) > 0) {
+                if (scalar(@ltranslit) > 0)
+                {
                     $newnode->set_ltranslit($ltranslit[0]);
                     @misc = grep {!m/^LTranslit=/} (@misc);
                 }
                 # Check whether MISC contains gloss of the word form.
                 my @gloss = map {my $x = $_; $x =~ s/^Gloss=//; $x} (grep {m/^Gloss=(.+)$/} (@misc));
-                if (scalar(@gloss) > 0) {
+                if (scalar(@gloss) > 0)
+                {
                     $newnode->set_gloss($gloss[0]);
                     @misc = grep {!m/^Gloss=/} (@misc);
                 }
                 # Remaining MISC attributes (those that we don't have special fields for) will be stored as wild attributes.
                 $newnode->set_misc(@misc);
             }
-            if ($deps && $deps ne '_'){
+            if ($deps && $deps ne '_')
+            {
                 $newnode->wild->{deps} = $deps;
             }
 
