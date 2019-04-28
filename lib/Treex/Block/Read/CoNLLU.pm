@@ -185,9 +185,10 @@ sub next_document {
                 # as subfeatures of the 'other' feature of Interset. Unfortunately,
                 # the 'other' feature will not be saved with the Treex document.
                 # In order to save it, we must make it a wild attribute of the node.
-                if(defined($newnode->iset()->other()))
+                my $other = $newnode->iset()->other();
+                if(defined($other) && ref($other) eq 'HASH')
                 {
-                    $newnode->wild()->{iset_other} = $newnode->iset()->other();
+                    $newnode->wild()->{iset_other} = $other;
                 }
             }
             if ($misc && $misc ne '_')
