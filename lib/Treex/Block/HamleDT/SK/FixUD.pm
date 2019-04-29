@@ -15,7 +15,6 @@ sub process_atree
     foreach my $node (@nodes)
     {
         $self->fix_morphology($node);
-        $self->classify_numerals($node);
     }
     # Do not call syntactic fixes from the previous loop. First make sure that
     # all nodes have correct morphology, then do syntax (so that you can rely
@@ -44,30 +43,24 @@ sub fix_morphology
     my $lemma = $node->lemma();
     my $iset = $node->iset();
     my $deprel = $node->deprel();
-    # In PDT, the word "přičemž" ("and/where/while") is tagged as SCONJ but attached as Adv (advmod).
-    # Etymologically, it is a preposition fused with a pronoun ("při+čemž"). We will re-tag it as adverb.
-    # Similar cases: "zato" ("in exchange for what", literally "za+to" = "for+it").
-    # This one is typically grammaticalized as a coordinating conjunction, similar to "but".
-    # In some occurrences, we have "sice-zato", which is similar to paired cc "sice-ale".
-    # But that is not a problem, other adverbs have grammaticalized to conjunctions too.
-    # On the other hand, the following should stay SCONJ and the relation should change to mark:
-    # "jakoby" ("as if"), "dokud" ("while")
-    if($lform =~ m/^(přičemž|zato)$/)
+    # Abbreviations have X instead of the UPOS tag of the unabbreviated word.
+    # Try to fix at least some occurrences.
+    if($node->is_abbreviation() && $iset->pos() eq '')
     {
-        $iset->set_hash({'pos' => 'adv', 'prontype' => 'rel'});
-    }
-    # If attached as 'advmod', "vlastně" ("actually") is an adverb and not a
-    # converb of "vlastnit" ("to own").
-    elsif($lform eq 'vlastně' && $deprel =~ m/^(cc|advmod)(:|$)/)
-    {
-        $lemma = 'vlastně';
-        $node->set_lemma($lemma);
-        # This is vlastně-2 ("totiž"), without the features of Degree and Polarity.
-        # If the corpus contains any instances of the other adverb (derived from
-        # the adjective "vlastní" ("own"), this step will erase its degree and
-        # polarity, which is not desirable. However, the occurrence of the other
-        # sense is not likely.
-        $iset->set_hash({'pos' => 'adv'});
+        # If all letters are uppercase, assume it is an acronym of a named entity.
+        if($node->form() =~ m/^\pL$/ && uc($node->form()) eq $node->form())
+        {
+            $iset->add('pos' => 'noun', 'nountype' => 'prop');
+            if($deprel =~ m/^advmod(:|$)/)
+            {
+                $deprel = 'obl';
+                $node->set_deprel($deprel);
+            }
+        }
+        elsif($lform =~ m/^(cca|napr|resp)$/)
+        {
+            $iset->add('pos' => 'adv');
+        }
     }
     # "I" can be the conjunction "i", capitalized, or it can be the Roman numeral 1.
     # If it appears at the beginning of the sentence and is attached as advmod:emph or cc,
@@ -102,48 +95,7 @@ sub fix_morphology
 
 
 #------------------------------------------------------------------------------
-# Splits numeral types that have the same tag in the PDT tagset and the
-# Interset decoder cannot distinguish them because it does not see the word
-# forms. NOTE: We may want to move this function to Prague harmonization.
-#------------------------------------------------------------------------------
-sub classify_numerals
-{
-    my $self  = shift;
-    my $node  = shift;
-    my $iset = $node->iset();
-    # Separate multiplicative numerals (jednou, dvakrát, třikrát) and
-    # adverbial ordinal numerals (poprvé, podruhé, potřetí).
-    if($iset->numtype() eq 'mult')
-    {
-        # poprvé, podruhé, počtvrté, popáté, ..., popadesáté, posté
-        # potřetí, potisící
-        if($node->form() =~ m/^po.*[éí]$/i)
-        {
-            $iset->set('numtype', 'ord');
-        }
-    }
-    # Separate generic numerals
-    # for number of kinds (obojí, dvojí, trojí, čtverý, paterý) and
-    # for number of sets (oboje, dvoje, troje, čtvery, patery).
-    elsif($iset->numtype() eq 'gen')
-    {
-        if($iset->variant() eq '1')
-        {
-            $iset->set('numtype', 'sets');
-        }
-    }
-    # Separate agreeing adjectival indefinite numeral "nejeden" (lit. "not one" = "more than one")
-    # from indefinite/demonstrative adjectival ordinal numerals (několikátý, tolikátý).
-    elsif($node->is_adjective() && $iset->contains('numtype', 'ord') && $node->lemma() eq 'nejeden')
-    {
-        $iset->add('pos' => 'num', 'numtype' => 'card', 'prontype' => 'ind');
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Converts dependency relations from UD v1 to v2.
+# Fixes dependency relation labels and/or topology of the tree.
 #------------------------------------------------------------------------------
 sub fix_constructions
 {
@@ -151,104 +103,12 @@ sub fix_constructions
     my $node = shift;
     my $parent = $node->parent();
     my $deprel = $node->deprel();
-    # In "Los Angeles", "Los" is wrongly attached to "Angeles" as 'cc'.
-    if(lc($node->form()) eq 'los' && $parent->is_proper_noun() &&
-       $parent->ord() > $node->ord())
-    {
-        my $grandparent = $parent->parent();
-        $deprel = $parent->deprel();
-        $node->set_parent($grandparent);
-        $node->set_deprel($deprel);
-        $parent->set_parent($node);
-        $parent->set_deprel('flat');
-        $parent = $grandparent;
-    }
-    # In "Tchaj wan", "wan" is wrongly attached to "Tchaj" as 'cc'.
-    elsif(lc($node->form()) eq 'wan' && $node->is_proper_noun() &&
-          lc($parent->form()) eq 'tchaj' &&
-          $parent->ord() < $node->ord())
-    {
-        $deprel = 'flat';
-        $node->set_deprel($deprel);
-    }
-    # "skupiny Faith No More": for some reason, "Faith" is attached to "skupiny" as 'advmod'.
-    elsif($node->is_noun() && $parent->is_noun() && $deprel =~ m/^advmod(:|$)/)
-    {
-        $deprel = 'nmod';
-        $node->set_deprel($deprel);
-    }
-    # "v play off"
-    elsif($node->is_noun() && $deprel =~ m/^advmod(:|$)/)
-    {
-        $deprel = 'obl';
-        $node->set_deprel($deprel);
-    }
-    # An initial ("K", "Z") is sometimes mistaken for a preposition, although
-    # it is correctly tagged PROPN.
-    elsif($node->is_proper_noun() && $parent->is_proper_noun() && $deprel =~ m/^case(:|$)/)
-    {
-        my $grandparent = $parent->parent();
-        $deprel = $parent->deprel();
-        $node->set_parent($grandparent);
-        $node->set_deprel($deprel);
-        $parent->set_parent($node);
-        $parent->set_deprel('flat');
-        $parent = $grandparent;
-    }
-    # Expressions like "týden co týden": the first word is not a 'cc'!
-    # Since the "X co X" pattern is not productive, we should treat it as a
-    # fixed expression with an adverbial meaning.
-    # Somewhat different in meaning but identical in structure is "stůj co stůj", and it is also adverbial.
-    elsif(lc($node->form()) =~ m/^(den|noc|týden|pondělí|úterý|středu|čtvrtek|pátek|sobotu|neděli|měsíc|rok|stůj)$/ &&
-          $parent->ord() == $node->ord()+2 &&
-          lc($parent->form()) eq lc($node->form()) &&
-          defined($node->get_right_neighbor()) &&
-          $node->get_right_neighbor()->ord() == $node->ord()+1 &&
-          lc($node->get_right_neighbor()->form()) eq 'co')
-    {
-        my $co = $node->get_right_neighbor();
-        my $grandparent = $parent->parent();
-        $deprel = 'advmod';
-        $node->set_parent($grandparent);
-        $node->set_deprel($deprel);
-        $co->set_parent($node);
-        $co->set_deprel('fixed');
-        $parent->set_parent($node);
-        $parent->set_deprel('fixed');
-        # Any other children of the original parent (especially punctuation, which could now be nonprojective)
-        # will be reattached to the new head.
-        foreach my $child ($parent->children())
-        {
-            $child->set_parent($node);
-        }
-        $parent = $grandparent;
-    }
-    # "většinou" ("mostly") is the noun "většina", almost grammaticalized to an adverb.
-    elsif(lc($node->form()) eq 'většinou' && $node->is_noun() && $deprel =~ m/^advmod(:|$)/)
-    {
-        $deprel = 'obl';
-        $node->set_deprel($deprel);
-    }
-    # "v podstatě" ("basically") is a prepositional phrase used as an adverb.
-    # Similar: "ve skutečnosti" ("in reality")
-    elsif($node->form() =~ m/^(podstatě|skutečnosti)$/i && $deprel =~ m/^(cc|advmod)(:|$)/)
-    {
-        $deprel = 'obl';
-        $node->set_deprel($deprel);
-    }
-    # The noun "pravda" ("truth") used as sentence-initial particle is attached
-    # as 'cc' but should be attached as 'discourse'.
-    elsif(lc($node->form()) eq 'pravda' && $deprel =~ m/^(cc|advmod)(:|$)/)
-    {
-        $deprel = 'discourse';
-        $node->set_deprel($deprel);
-    }
     # There are a few right-to-left appositions that resulted from transforming
     # copula-like constructions with punctuation (":") instead of the copula.
     # Each of them would probably deserve a different analysis but at present
     # we do not care too much and make them 'parataxis' (they occur in nonverbal
     # sentences or segments).
-    elsif($deprel =~ m/^appos(:|$)/ && $node->ord() < $parent->ord())
+    if($deprel =~ m/^appos(:|$)/ && $node->ord() < $parent->ord())
     {
         $deprel = 'parataxis';
         $node->set_deprel($deprel);
@@ -260,25 +120,6 @@ sub fix_constructions
     {
         $deprel = 'amod';
         $node->set_deprel($deprel);
-    }
-    # The abbreviation "aj" ("a jiné" = "and other") is tagged as an adjective
-    # but sometimes it is attached to the last conjunct as 'cc'. We should re-
-    # attach it as a conjunct. We may also consider splitting it as a multi-
-    # word token.
-    # Similar: "ad" ("a další" = "and other")
-    # Note: "ad" is sometimes tagged ADJ and sometimes even NOUN.
-    elsif($node->form() =~ m/^(ad|aj)$/i && ($node->is_adjective() || $node->is_noun()) && $deprel =~ m/^cc(:|$)/)
-    {
-        my $first_conjunct = $parent->deprel() =~ m/^conj(:|$)/ ? $parent->parent() : $parent;
-        # If it is the first conjunct, it lies on our left hand. If it does not,
-        # there is something weird and wrong.
-        if($first_conjunct->ord() < $node->ord())
-        {
-            $parent = $first_conjunct;
-            $deprel = 'conj';
-            $node->set_parent($parent);
-            $node->set_deprel($deprel);
-        }
     }
     # An adverb should not depend on a copula but on the nominal part of the
     # predicate. Example: "Také vakovlk je, respektive před vyhubením byl, ..."
@@ -304,263 +145,6 @@ sub fix_constructions
         $node->set_deprel($deprel);
         $parent->set_deprel('advmod');
     }
-    # The expression "všeho všudy" ("altogether") functions as an adverb.
-    elsif(lc($node->form()) eq 'všeho' && $parent->ord() == $node->ord()+1 &&
-          lc($parent->form()) eq 'všudy')
-    {
-        my $grandparent = $parent->parent();
-        $deprel = $parent->deprel();
-        $node->set_parent($grandparent);
-        $node->set_deprel($deprel);
-        $parent->set_parent($node);
-        $parent->set_deprel('fixed');
-        $parent = $grandparent;
-    }
-    # The expression "suma sumárum" ("to summarize") functions as an adverb.
-    elsif(lc($node->form()) eq 'suma' && $parent->ord() == $node->ord()+1 &&
-          lc($parent->form()) eq 'sumárum')
-    {
-        my $grandparent = $parent->parent();
-        $deprel = $parent->deprel();
-        $node->set_parent($grandparent);
-        $node->set_deprel($deprel);
-        $parent->set_parent($node);
-        $parent->set_deprel('fixed');
-        $parent = $grandparent;
-    }
-    # The expression "nota bene" functions as an adverb.
-    elsif(lc($node->form()) eq 'nota' && $parent->ord() == $node->ord()+1 &&
-          lc($parent->form()) eq 'bene')
-    {
-        my $grandparent = $parent->parent();
-        $deprel = $parent->deprel();
-        $node->set_parent($grandparent);
-        $node->set_deprel($deprel);
-        $parent->set_parent($node);
-        $parent->set_deprel('fixed');
-        $parent = $grandparent;
-    }
-    # The expression "in memoriam" functions as an adverb.
-    elsif(lc($node->form()) eq 'memoriam' && $parent->ord() == $node->ord()-1 &&
-          lc($parent->form()) eq 'in')
-    {
-        $deprel = 'fixed';
-        $node->set_deprel($deprel);
-    }
-    # The expression "a priori" functions as an adverb.
-    elsif(lc($node->form()) eq 'priori' && $parent->ord() == $node->ord()-1 &&
-          lc($parent->form()) eq 'a')
-    {
-        $deprel = 'fixed';
-        $node->set_deprel($deprel);
-    }
-    # The expression "ex ante" functions as an adverb.
-    elsif(lc($node->form()) eq 'ante' && $parent->ord() == $node->ord()-1 &&
-          lc($parent->form()) eq 'ex')
-    {
-        $deprel = 'fixed';
-        $node->set_deprel($deprel);
-    }
-    # In PDT, "na úkor něčeho" ("at the expense of something") is analyzed as
-    # a prepositional phrase with a compound preposition (fixed expression)
-    # "na úkor". However, it is no longer fixed if a possessive pronoun is
-    # inserted, as in "na její úkor".
-    # Similar: "na základě něčeho" vs. "na jejichž základě"
-    # Similar: "v čele něčeho" vs. "v jejich čele"
-    elsif($node->form() =~ m/^(úkor|základě|čele)$/i && lc($parent->form()) =~ m/^(na|v)$/ &&
-          $parent->ord() == $node->ord()-2 &&
-          $parent->parent()->ord() == $node->ord()-1)
-    {
-        my $possessive = $parent->parent();
-        my $na = $parent;
-        $parent = $possessive->parent();
-        $deprel = $possessive->deprel();
-        $node->set_parent($parent);
-        $node->set_deprel($deprel);
-        $na->set_parent($node);
-        $na->set_deprel('case');
-        $possessive->set_parent($node);
-        $possessive->set_deprel($possessive->is_determiner() ? 'det' : $possessive->is_adjective() ? 'amod' : 'nmod');
-    }
-    # In one case, "v jejich čele" has already the right structure but the deprel of "čele" is wrong ('det').
-    elsif($node->form() =~ m/^čele$/i && $deprel =~ m/^det(:|$)/)
-    {
-        $deprel = 'nmod';
-        $node->set_deprel($deprel);
-    }
-    # Similarly, "na rozdíl od něčeho" ("in contrast to something") is normally
-    # a fixed expression (multi-word preposition "na rozdíl od") but occasionally
-    # it is not fixed: "na rozdíl třeba od Mikoláše".
-    # More inserted nodes: "na rozdíl např . od sousedního Německa"
-    # Similar: "ve srovnání například s úvěry"
-    elsif(!$parent->is_root() && !$parent->parent()->is_root() &&
-          defined($parent->get_right_neighbor()) && defined($node->get_left_neighbor()) &&
-          $node->form() =~ m/^(od|se?)$/i &&
-          $parent->form() =~ m/^(na|ve)$/i && $parent->ord() <= $node->ord()-3 &&
-          $node->get_left_neighbor()->form() =~ m/^(rozdíl|srovnání)$/i && $node->get_left_neighbor()->ord() <= $node->ord()-2 &&
-          $parent->get_right_neighbor()->ord() <= $node->ord()-1)
-    {
-        # Dissolve the fixed expression and give it ordinary analysis.
-        my $noun = $parent->parent();
-        my $na = $parent;
-        my $rozdil = $node->get_left_neighbor();
-        my $od = $node;
-        $parent = $noun->parent();
-        $deprel = $noun->deprel();
-        $rozdil->set_parent($parent);
-        $rozdil->set_deprel($deprel);
-        $na->set_parent($rozdil);
-        $na->set_deprel('case');
-        $noun->set_parent($rozdil);
-        $noun->set_deprel('nmod');
-        $parent = $noun;
-        $deprel = 'case';
-        $od->set_parent($parent);
-        $od->set_deprel($deprel);
-        # Any punctuation on the left hand should be re-attached to preserve projectivity.
-        my @punctuation = grep {$_->deprel() =~ m/^punct(:|$)/ && $_->ord() < $rozdil->ord()} ($noun->children());
-        foreach my $punct (@punctuation)
-        {
-            $punct->set_parent($rozdil);
-        }
-    }
-    # "nehledě na" is normally a fixed multi-word preposition but not if
-    # another word is inserted: "nehledě tedy na"
-    elsif($node->form() =~ m/^na$/i && !$parent->is_root() &&
-          $parent->form() =~ m/^nehledě$/i && $parent->ord() <= $node->ord()-2)
-    {
-        $parent = $parent->parent();
-        $deprel = 'case';
-        $node->set_parent($parent);
-        $node->set_deprel($deprel);
-    }
-    # In PDT, the words "dokud" ("while") and "jakoby" ("as if") are sometimes
-    # attached as adverbial modifiers although they are conjunctions.
-    elsif($node->is_subordinator() && $deprel =~ m/^advmod(:|$)/ && scalar($node->children()) == 0)
-    {
-        $deprel = 'mark';
-        $node->set_deprel($deprel);
-    }
-    # "a jak" ("and as") should not be treated as a fixed expression and not even as a constituent.
-    elsif(lc($node->form()) eq 'a' && $parent->ord() == $node->ord()+1 &&
-          lc($parent->form()) eq 'jak' && $parent->is_subordinator() && !$parent->deprel() =~ m/^root(:|$)/)
-    {
-        $parent->set_deprel('mark');
-        $parent = $parent->parent();
-        $deprel = 'cc';
-        $node->set_parent($parent);
-        $node->set_deprel($deprel);
-    }
-    # Czech "a to" ("viz.") is a multi-word conjunction. In PDT it is headed by
-    # "to", which is a demonstrative pronoun, not conjunction. Transform it and
-    # use the 'fixed' relation.
-    elsif(lc($node->form()) eq 'a' && $deprel =~ m/^cc(:|$)/ &&
-          $parent->form() =~ m/^(to|sice)$/i && $parent->deprel() =~ m/^(cc|advmod|discourse)(:|$)/ && $parent->ord() > $node->ord())
-    {
-        my $grandparent = $parent->parent();
-        $node->set_parent($grandparent);
-        $deprel = 'cc';
-        $node->set_deprel($deprel);
-        $parent->set_parent($node);
-        $parent->set_deprel('fixed');
-        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
-        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
-        $parent->set_lemma('to');
-        $parent->set_tag('PART');
-        $parent->iset()->set_hash({'pos' => 'part'});
-        $parent = $grandparent;
-    }
-    # Sometimes "to" is already attached to "a", and we only change the relation type.
-    elsif(lc($node->form()) =~ m/^(to|sice)$/i && $deprel =~ m/^(cc|advmod|discourse|mark)(:|$)/ &&
-          lc($parent->form()) eq 'a' && $parent->ord() == $node->ord()-1)
-    {
-        $deprel = 'fixed';
-        $node->set_deprel($deprel);
-        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
-        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
-        if(lc($node->form()) eq 'to')
-        {
-            $node->set_lemma('to');
-            $node->set_tag('PART');
-            $node->iset()->set_hash({'pos' => 'part'});
-        }
-    }
-    # "a tím i" ("and this way also")
-    elsif(lc($node->form()) eq 'tím' && $deprel =~ m/^(cc|advmod)(:|$)/)
-    {
-        $deprel = 'obl';
-        $node->set_deprel($deprel);
-    }
-    # Occasionally "a" and "to" are attached as siblings rather than one to the other.
-    elsif(lc($node->form()) =~ m/^(a)$/ && $deprel =~ m/^cc(:|$)/ &&
-          defined($node->get_right_neighbor()) &&
-          lc($node->get_right_neighbor()->form()) =~ m/^(to)$/ && $node->get_right_neighbor()->deprel() =~ m/^(cc|advmod|discourse)(:|$)/)
-    {
-        my $to = $node->get_right_neighbor();
-        $to->set_parent($node);
-        $to->set_deprel('fixed');
-        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
-        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
-        $to->set_lemma('to');
-        $to->set_tag('PART');
-        $to->iset()->set_hash({'pos' => 'part'});
-    }
-    # Similar: "co možná"
-    elsif($node->form() =~ m/^co$/i && $deprel =~ m/^(cc|advmod|discourse)(:|$)/ &&
-          defined($node->get_right_neighbor()) &&
-          $node->get_right_neighbor()->form() =~ m/^možná$/i && $node->get_right_neighbor()->deprel() =~ m/^(cc|advmod|discourse)(:|$)/)
-    {
-        my $n2 = $node->get_right_neighbor();
-        $n2->set_parent($node);
-        $n2->set_deprel('fixed');
-    }
-    # Similar: "to jest/to je/to znamená".
-    elsif(lc($node->form()) =~ m/^(to)$/ && $deprel =~ m/^(cc|advmod)(:|$)/ &&
-          defined($node->get_right_neighbor()) &&
-          lc($node->get_right_neighbor()->form()) =~ m/^(je(st)?|znamená)$/ && $node->get_right_neighbor()->deprel() =~ m/^(cc|advmod)(:|$)/)
-    {
-        my $je = $node->get_right_neighbor();
-        $je->set_parent($node);
-        $je->set_deprel('fixed');
-        # Normalize the attachment of "to" (sometimes it is 'advmod' but it should always be 'cc').
-        $deprel = 'cc';
-        $node->set_deprel($deprel);
-    }
-    # If "to jest" is abbreviated and tokenized as "t . j .", the above branch
-    # will not catch it.
-    elsif(lc($node->form()) eq 't' && $deprel =~ m/^cc(:|$)/ &&
-          scalar($node->get_siblings({'following_only' => 1})) >= 3 &&
-          # following_only implies ordered
-          lc(($node->get_siblings({'following_only' => 1}))[0]->form()) eq '.' &&
-          lc(($node->get_siblings({'following_only' => 1}))[1]->form()) eq 'j' &&
-          lc(($node->get_siblings({'following_only' => 1}))[2]->form()) eq '.')
-    {
-        my @rsiblings = $node->get_siblings({'following_only' => 1});
-        $rsiblings[0]->set_parent($node);
-        $rsiblings[0]->set_deprel('punct');
-        $rsiblings[2]->set_parent($rsiblings[1]);
-        $rsiblings[2]->set_deprel('punct');
-        $rsiblings[1]->set_parent($node);
-        $rsiblings[1]->set_deprel('fixed');
-    }
-    # "takové přání, jako je svatba" ("such a wish as (is) a wedding")
-    elsif($node->lemma() eq 'být' && $deprel =~ m/^cc(:|$)/ &&
-          defined($node->get_left_neighbor()) && lc($node->get_left_neighbor()->form()) eq 'jako' &&
-          $parent->ord() > $node->ord())
-    {
-        my $grandparent = $parent->parent();
-        # Besides "jako", there might be other left siblings (punctuation).
-        foreach my $sibling ($node->get_siblings({'preceding_only' => 1}))
-        {
-            $sibling->set_parent($node);
-        }
-        $node->set_parent($grandparent);
-        $node->set_deprel($grandparent->iset()->pos() =~ m/^(noun|num|sym)$/ ? 'acl' : 'advcl');
-        $deprel = $node->deprel();
-        $parent->set_parent($node);
-        $parent->set_deprel('nsubj');
-        $parent = $grandparent;
-    }
     # "rozuměj" (imperative of "understand") is a verb but attached as 'cc'.
     # We will not keep the parallelism to "to jest" here. We will make it a parataxis.
     # Similar: "míněno" (ADJ, passive participle of "mínit")
@@ -568,71 +152,6 @@ sub fix_constructions
     {
         $deprel = 'parataxis';
         $node->set_deprel($deprel);
-    }
-    # "chtě nechtě" (converbs of "chtít", "to want") is a fixed expression with adverbial meaning.
-    elsif($node->form() =~ m/^(chtě|chtíc)$/ && $parent->ord() == $node->ord()+1 &&
-          $parent->form() =~ m/^(nechtě|nechtíc)$/)
-    {
-        my $grandparent = $parent->parent();
-        $node->set_parent($grandparent);
-        $deprel = 'advcl';
-        $node->set_deprel($deprel);
-        $parent->set_parent($node);
-        $parent->set_deprel('fixed');
-        $parent = $grandparent;
-    }
-    # "pokud ovšem" ("if however") is sometimes analyzed as a fixed expression
-    # but that is wrong because other words may be inserted between the two
-    # ("pokud ji ovšem zákon připustí").
-    elsif(lc($node->form()) eq 'ovšem' && $deprel =~ m/^fixed(:|$)/ &&
-          lc($parent->form()) eq 'pokud')
-    {
-        $parent = $parent->parent();
-        $deprel = 'cc';
-        $node->set_parent($parent);
-        $node->set_deprel($deprel);
-    }
-    # "ať již" ("be it") is a fixed expression and the first part of a paired coordinator.
-    # "přece jen" can also be understood as a multi-word conjunction ("avšak přece jen")
-    # If the two words are not adjacent, the expression is not fixed (example: "ať se již dohodnou jakkoli").
-    elsif(!$parent->is_root() &&
-          ($node->form() =~ m/^(již|už)$/i && lc($parent->form()) eq 'ať' ||
-           $node->form() =~ m/^jen(om)?$/i && lc($parent->form()) eq 'přece') &&
-          $parent->ord() == $node->ord()-1)
-    {
-        $deprel = 'fixed';
-        $node->set_deprel($deprel);
-        $parent->set_deprel('cc') unless($parent->parent()->is_root());
-    }
-    # "jako kdyby", "i kdyby", "co kdyby" ... "kdyby" is decomposed to "když by",
-    # first node should form a fixed expression with the first conjunction
-    # while the second node is an auxiliary and should be attached higher.
-    elsif($node->lemma() eq 'být' && !$parent->is_root() &&
-          $parent->deprel() =~ m/^mark(:|$)/ &&
-          $parent->ord() == $node->ord()-2 &&
-          defined($node->get_left_neighbor()) &&
-          $node->get_left_neighbor()->ord() == $node->ord()-1 &&
-          $node->get_left_neighbor()->form() =~ m/^(aby|když)$/)
-    {
-        my $kdyz = $node->get_left_neighbor();
-        my $grandparent = $parent->parent();
-        $node->set_parent($grandparent);
-        $node->set_deprel('aux');
-        $parent = $grandparent;
-        $kdyz->set_deprel('fixed');
-    }
-    # "no" (Czech particle)
-    elsif(lc($node->form()) eq 'no' && $node->is_particle() && !$node->is_foreign() &&
-          $deprel =~ m/^cc(:|$)/)
-    {
-        $deprel = 'discourse';
-        $node->set_deprel($deprel);
-        # In sequences like "no a", "no" may be attached to "a" but there is no reason for it.
-        if($parent->deprel() =~ m/^cc(:|$)/ && $parent->ord() == $node->ord()+1)
-        {
-            $parent = $parent->parent();
-            $node->set_parent($parent);
-        }
     }
     # Interjections showing the attitude to the speaker towards the event should
     # be attached as 'discourse', not as 'advmod'.
@@ -844,7 +363,7 @@ sub fix_auxiliary_verb
     if($node->tag() eq 'AUX')
     {
         if($node->deprel() =~ m/^cop(:|$)/ &&
-           $node->lemma() =~ m/^(stát|mít|moci)$/)
+           $node->lemma() =~ m/^(mať)$/)
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
