@@ -49,6 +49,7 @@ sub fix_morphology
         # If all letters are uppercase, assume it is an acronym of a named entity.
         if(uc($node->form()) eq $node->form())
         {
+            $node->set_tag('PROPN');
             $iset->add('pos' => 'noun', 'nountype' => 'prop');
             if($deprel =~ m/^advmod(:|$)/)
             {
@@ -394,6 +395,11 @@ sub fix_auxiliary_verb
             $node->set_tag('VERB');
         }
     }
+    elsif($node->deprel() =~ m/^cop(:|$)/ && $node->lemma() =~ m/^(mať)$/)
+    {
+        log_warn("Deprel is 'cop' and lemma is 'mať' but tag is ".$node->tag());
+    }
+
 }
 
 
