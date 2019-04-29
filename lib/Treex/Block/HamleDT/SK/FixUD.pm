@@ -24,7 +24,6 @@ sub process_atree
         $self->fix_constructions($node);
         $self->fix_annotation_errors($node);
     }
-    $self->fix_jak_znamo($root);
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
     #$root->get_zone()->set_sentence($root->collect_sentence_text());
@@ -48,7 +47,7 @@ sub fix_morphology
     if($node->is_abbreviation() && $iset->pos() eq '')
     {
         # If all letters are uppercase, assume it is an acronym of a named entity.
-        if($node->form() =~ m/^\pL$/ && uc($node->form()) eq $node->form())
+        if(uc($node->form()) eq $node->form())
         {
             $iset->add('pos' => 'noun', 'nountype' => 'prop');
             if($deprel =~ m/^advmod(:|$)/)
@@ -393,44 +392,6 @@ sub fix_auxiliary_verb
             # We also need to change the part-of-speech tag from AUX to VERB.
             $node->iset()->clear('verbtype');
             $node->set_tag('VERB');
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# The two Czech words "jak známo" ("as known") are attached as ExD siblings in
-# the Prague style because there is missing copula. However, in UD the nominal
-# predicate "známo" is the head.
-#------------------------------------------------------------------------------
-sub fix_jak_znamo
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants({'ordered' => 1});
-    for(my $i = 0; $i<$#nodes; $i++)
-    {
-        my $n0 = $nodes[$i];
-        my $n1 = $nodes[$i+1];
-        if(defined($n0->form()) && lc($n0->form()) eq 'jak' &&
-           defined($n1->form()) && lc($n1->form()) eq 'známo' &&
-           $n0->parent() == $n1->parent())
-        {
-            $n0->set_parent($n1);
-            $n0->set_deprel('mark');
-            $n1->set_deprel('advcl') if(!defined($n1->deprel()) || $n1->deprel() eq 'dep');
-            # If the expression is delimited by commas, the commas should be attached to "známo".
-            if($i>0 && $nodes[$i-1]->parent() == $n1->parent() && defined($nodes[$i-1]->form()) && $nodes[$i-1]->form() =~ m/^[-,]$/)
-            {
-                $nodes[$i-1]->set_parent($n1);
-                $nodes[$i-1]->set_deprel('punct');
-            }
-            if($i+2<=$#nodes && $nodes[$i+2]->parent() == $n1->parent() && defined($nodes[$i+2]->form()) && $nodes[$i+2]->form() =~ m/^[-,]$/)
-            {
-                $nodes[$i+2]->set_parent($n1);
-                $nodes[$i+2]->set_deprel('punct');
-            }
         }
     }
 }
