@@ -87,7 +87,7 @@ sub fix_morphology
         $iset->set_hash({'pos' => 'adv', 'prontype' => $lform eq 'tým' ? 'dem' : 'int|rel'});
     }
     # "že" is attached as advmod in "Že ste už o mne počuli?" but we will re-attach it as mark.
-    elsif($lform =~ m/^(že|akoby)$/ && $deprel =~ m/^advmod(:|$)/)
+    elsif($lform =~ m/^(že|akoby|keby)$/ && $deprel =~ m/^advmod(:|$)/)
     {
         $deprel = 'mark';
         $node->set_deprel($deprel);
