@@ -65,10 +65,16 @@ sub fix_morphology
     # "ako" can be adverb ("how") or subordinating conjunction ("as, like").
     # If it is tagged SCONJ but attached as advmod, the UPOS should be changed
     # to ADV.
-    elsif($lform =~ m/^(ako|čím|tým)$/ && $node->is_conjunction() && $deprel =~ m/^advmod(:|$)/)
+    elsif($lform =~ m/^(ako|čo|čím|tým)$/ && $node->is_conjunction() && $deprel =~ m/^advmod(:|$)/)
     {
         $node->set_tag('ADV');
         $iset->set_hash({'pos' => 'adv', 'prontype' => $lform eq 'tým' ? 'dem' : 'int|rel'});
+    }
+    # "že" is attached as advmod in "Že ste už o mne počuli?" but we will re-attach it as mark.
+    elsif($lform =~ m/^(že|akoby)$/ && $deprel =~ m/^advmod(:|$)/)
+    {
+        $deprel = 'mark';
+        $node->set_deprel($deprel);
     }
     # "I" can be the conjunction "i", capitalized, or it can be the Roman numeral 1.
     # If it appears at the beginning of the sentence and is attached as advmod:emph or cc,
