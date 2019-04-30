@@ -365,6 +365,7 @@ sub fix_auxiliary_verb
         if($node->deprel() =~ m/^cop(:|$)/ &&
            $node->lemma() =~ m/^(mať)$/)
         {
+            log_warn("Jsem tu.");
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
             my $deprel = $pnom->deprel();
