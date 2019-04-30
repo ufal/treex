@@ -68,7 +68,7 @@ sub fix_morphology
     elsif($lform =~ m/^(ako|čím|tým)$/ && $node->is_conjunction() && $deprel =~ m/^advmod(:|$)/)
     {
         $node->set_tag('ADV');
-        $iset->set_hash({'pos' => 'adv', 'prontype' => 'int|rel'});
+        $iset->set_hash({'pos' => 'adv', 'prontype' => $lform eq 'tým' ? 'dem' : 'int|rel'});
     }
     # "I" can be the conjunction "i", capitalized, or it can be the Roman numeral 1.
     # If it appears at the beginning of the sentence and is attached as advmod:emph or cc,
@@ -369,7 +369,6 @@ sub fix_auxiliary_verb
         if($node->deprel() =~ m/^cop(:|$)/ &&
            $node->lemma() =~ m/^(mať)$/)
         {
-            log_warn("Jsem tu.");
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
             my $deprel = $pnom->deprel();
