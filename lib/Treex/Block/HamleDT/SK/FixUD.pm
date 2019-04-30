@@ -62,6 +62,14 @@ sub fix_morphology
             $iset->add('pos' => 'adv');
         }
     }
+    # "ako" can be adverb ("how") or subordinating conjunction ("as, like").
+    # If it is tagged SCONJ but attached as advmod, the UPOS should be changed
+    # to ADV.
+    elsif($lform =~ m/^(ako|čím|tým)$/ && $node->is_conjunction() && $deprel =~ m/^advmod(:|$)/)
+    {
+        $node->set_tag('ADV');
+        $iset->set_hash({'pos' => 'adv', 'prontype' => 'int|rel'});
+    }
     # "I" can be the conjunction "i", capitalized, or it can be the Roman numeral 1.
     # If it appears at the beginning of the sentence and is attached as advmod:emph or cc,
     # we will assume that it is a conjunction (there is at least one case where it
@@ -132,14 +140,6 @@ sub fix_constructions
     # The expression "více než" ("more than") functions as an adverb.
     elsif(lc($node->form()) eq 'než' && $parent->ord() == $node->ord()-1 &&
           lc($parent->form()) eq 'více')
-    {
-        $deprel = 'fixed';
-        $node->set_deprel($deprel);
-        $parent->set_deprel('advmod');
-    }
-    # The expression "pokud možno" ("if possible") functions as an adverb.
-    elsif(lc($node->form()) eq 'možno' && $parent->ord() == $node->ord()-1 &&
-          lc($parent->form()) eq 'pokud')
     {
         $deprel = 'fixed';
         $node->set_deprel($deprel);
@@ -360,7 +360,7 @@ sub fix_auxiliary_verb
 {
     my $self = shift;
     my $node = shift;
-    if($node->deprel() =~ m/^cop(:|$)/)
+    if($node->deprel() =~ m/^cop(:|$)/ && $node->lemma() !~ m/^(byť|bývať)$/)
     {
         log_warn("Spona má lemma '".$node->lemma()."' a značku '".$node->tag()."'.");
     }
@@ -855,147 +855,6 @@ sub fix_annotation_errors
             $subtree[1]->set_parent($parent);
             $subtree[1]->set_deprel($subtree[1]->is_adverb() ? 'advmod' : 'mark');
         }
-    }
-    # "to je nedovedeme-li"
-    elsif($spanstring =~ m/^, to je nedovedeme - li/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        # "je" is mistagged PRON, should be AUX
-        $subtree[2]->set_lemma('být');
-        $subtree[2]->set_tag('AUX');
-        $subtree[2]->iset()->set_hash({'pos' => 'verb', 'verbform' => 'fin', 'verbtype' => 'aux', 'mood' => 'ind', 'voice' => 'act', 'tense' => 'pres', 'number' => 'sing', 'person' => '3', 'polarity' => 'pos'});
-        $subtree[5]->set_parent($subtree[3]);
-        $subtree[5]->set_deprel('mark');
-    }
-    # "ať se již dohodnou jakkoli"
-    elsif($spanstring =~ m/^ať již$/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        if($subtree[1]->deprel() =~ m/^fixed(:|$)/ && $subtree[1]->ord() >= $subtree[0]->ord()+1)
-        {
-            $subtree[1]->set_parent($node->parent());
-            $subtree[1]->set_deprel('advmod');
-        }
-    }
-    elsif($spanstring =~ m/^Wish You Were Here$/i)
-    {
-        $node->set_deprel('nmod'); # attached to "album"
-    }
-    elsif($spanstring =~ m/^Malba I$/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[1]->set_deprel('nummod');
-    }
-    elsif($node->form() =~ m/^že$/i && !$node->parent()->is_root() &&
-          $node->parent()->form() =~ m/^možná$/i && $node->parent()->ord() < $node->ord()-1)
-    {
-        $node->parent()->set_deprel('advmod');
-        $node->set_parent($node->parent()->parent());
-        $node->set_deprel('mark');
-    }
-    elsif($spanstring eq 'více než epizodou')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[2]->set_parent($subtree[0]);
-        $subtree[2]->set_deprel('obl');
-        $subtree[1]->set_parent($subtree[2]);
-        $subtree[1]->set_deprel('case');
-    }
-    elsif($spanstring eq 'pro > ty nahoře')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        # I do not know why there is the ">" symbol here.
-        # But since we retagged all ">" to SYM, it cannot be 'punct'.
-        $subtree[1]->set_deprel('dep');
-    }
-    elsif($spanstring eq ', Ekonomická věda a ekonomická reforma , GENNEX & TOP AGENCY , 1991 )')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[10]->set_parent($subtree[2]->parent());
-        $subtree[10]->set_deprel('dep');
-        $subtree[6]->set_parent($subtree[10]);
-        $subtree[7]->set_parent($subtree[10]);
-        $subtree[9]->set_parent($subtree[7]);
-        $subtree[9]->set_deprel('conj');
-        $subtree[8]->set_parent($subtree[9]);
-        $subtree[8]->set_deprel('cc');
-        $subtree[8]->set_tag('SYM');
-        $subtree[8]->iset()->set_hash({'pos' => 'sym'});
-    }
-    elsif($spanstring =~ m/^, jako jsou např \. na vstřícných svazcích/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        my $parent = $node->parent();
-        $subtree[7]->set_parent($parent);
-        $subtree[7]->set_deprel('advcl');
-        $subtree[0]->set_parent($subtree[7]);
-        $subtree[1]->set_parent($subtree[7]);
-        $subtree[1]->set_deprel('mark');
-        $subtree[2]->set_parent($subtree[7]);
-        $subtree[2]->set_deprel('cop');
-        $subtree[2]->set_tag('AUX');
-        $subtree[2]->iset()->set('verbtype' => 'aux');
-        $subtree[5]->set_parent($subtree[7]);
-        $subtree[5]->set_deprel('case');
-    }
-    # Tohle by měl být schopen řešit blok Punctuation, ale nezvládá to.
-    elsif($spanstring =~ m/^\( podle vysoké účasti folkových písničkářů a skupin .*\) ,$/)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        my $parent = $node->parent();
-        # Neprojektivně zavěšená čárka za závorkou.
-        $subtree[22]->set_parent($parent);
-    }
-    elsif($spanstring eq 'Větev A')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[1]->set_deprel('nmod');
-    }
-    elsif($spanstring eq 'VADO MA DOVE ?')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[0]->set_deprel('xcomp');
-    }
-    elsif($spanstring eq 'Časy Oldřicha Nového jsou ty tam , ale snímání obrazů prožívá renesanci .')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[4]->set_parent($node->parent());
-        $subtree[4]->set_deprel('root');
-        $subtree[0]->set_parent($subtree[4]);
-        $subtree[0]->set_deprel('nsubj');
-        $subtree[3]->set_parent($subtree[4]);
-        $subtree[3]->set_deprel('cop');
-        $subtree[3]->set_tag('AUX');
-        $subtree[3]->iset()->set('verbtype' => 'aux');
-        $subtree[5]->set_parent($subtree[4]);
-        $subtree[5]->set_deprel('fixed');
-        $subtree[10]->set_parent($subtree[4]);
-        $subtree[10]->set_deprel('conj');
-        $subtree[12]->set_parent($subtree[4]);
-    }
-    # "dílem" as paired conjunction (but tagged NOUN)
-    # Lemma in the data is "dílo" but it should be "díl".
-    # And maybe we really want to say that it is a grammaticalized conjunction.
-    # If not, it cannot be 'cc'. Then it is probably 'obl' or 'nmod'.
-    elsif($node->form() =~ m/^dílem$/i && $node->is_noun() && $node->deprel() =~ m/^cc(:|$)/)
-    {
-        $node->set_deprel('nmod');
-    }
-    elsif($spanstring =~ m/^jako u mrtvol nebo utopených/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[2]->set_parent($node->parent());
-        $subtree[2]->set_deprel('obl');
-        $subtree[0]->set_parent($subtree[2]);
-        $subtree[0]->set_deprel('case');
-    }
-    elsif($spanstring =~ m/^, nemohl - li by být rozpočet sice vyrovnaný , přesto však štíhlejší$/)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[7]->set_deprel('cc');
-        $subtree[9]->set_parent($subtree[12]);
-        $subtree[11]->set_parent($subtree[12]);
-        $subtree[11]->set_deprel('cc');
     }
 }
 
