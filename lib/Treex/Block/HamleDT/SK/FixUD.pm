@@ -142,6 +142,12 @@ sub fix_constructions
         $deprel = 'amod';
         $node->set_deprel($deprel);
     }
+    # Reflexive "sa" should not be attached as 'mark'.
+    elsif($node->form() =~ m/^(sa)$/i && $node->is_pronoun() && $deprel =~ m/^mark(:|$)/)
+    {
+        $deprel = 'expl:pv';
+        $node->set_deprel($deprel);
+    }
     # An adverb should not depend on a copula but on the nominal part of the
     # predicate. Example: "Také vakovlk je, respektive před vyhubením byl, ..."
     elsif($node->is_adverb() && $node->deprel() =~ m/^advmod(:|$)/ &&
