@@ -63,7 +63,7 @@ sub fix_morphology
         }
     }
     # "si" is the 2nd person present form of "byť" ("to be"), or the dative form of the reflexive clitic.
-    elsif($lform eq 'si' && $deprel =~ m/^aux(:|$)/ && $node->parent()->is_participle())
+    elsif($lform eq 'si' && $deprel =~ m/^(aux|cop)(:|$)/)
     {
         $lemma = 'byť';
         $node->set_lemma($lemma);
