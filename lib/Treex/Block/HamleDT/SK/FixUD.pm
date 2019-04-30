@@ -425,6 +425,27 @@ sub fix_constructions
         $node->set_deprel($deprel);
     }
     $self->fix_auxiliary_verb($node);
+    # Functional nodes normally do not have modifiers of their own, with a few
+    # exceptions, such as coordination. Most modifiers should be attached
+    # directly to the content word.
+    if($node->deprel() =~ m/^(aux|cop)(:|$)/)
+    {
+        my @children = grep {$_->deprel() =~ m/^(nsubj|csubj|obj|iobj|expl|ccomp|xcomp|obl|advmod|advcl|vocative|dislocated|dep)(:|$)/} ($node->children());
+        my $parent = $node->parent();
+        foreach my $child (@children)
+        {
+            $child->set_parent($parent);
+        }
+    }
+    elsif($node->deprel() =~ m/^(case|mark|cc|punct)(:|$)/)
+    {
+        my @children = grep {$_->deprel() !~ m/^(conj|fixed|goeswith|punct)(:|$)/} ($node->children());
+        my $parent = $node->parent();
+        foreach my $child (@children)
+        {
+            $child->set_parent($parent);
+        }
+    }
 }
 
 
@@ -499,394 +520,18 @@ sub fix_annotation_errors
     {
         $node->set_deprel('obj');
     }
-    # "kategorii ** nebo ***"
-    elsif($spanstring eq 'kategorii * * nebo * * *')
+    # "široko - ďaleko": the hyphen should not be treated as "ADJ" and "cc".
+    elsif($node->form() eq '‐' && $node->is_adjective() && $node->deprel() =~ m/^cc(:|$)/)
     {
-        my @subtree = $self->get_node_subtree($node);
-        log_fatal('Something is wrong') if(scalar(@subtree)!=7);
-        # The stars are symbols but not punctuation.
-        foreach my $istar (1, 2, 4, 5, 6)
-        {
-            $subtree[$istar]->set_tag('SYM');
-            $subtree[$istar]->iset()->set_hash({'pos' => 'sym'});
-        }
-        $subtree[3]->set_parent($subtree[4]);
-        $subtree[3]->set_deprel('cc');
-        $subtree[4]->set_parent($subtree[1]);
-        $subtree[4]->set_deprel('conj');
-        $subtree[1]->set_parent($node); # i.e. $subtree[0]
-        $subtree[1]->set_deprel('nmod');
-        $subtree[2]->set_parent($subtree[1]);
-        $subtree[2]->set_deprel('flat');
-        $subtree[5]->set_parent($subtree[4]);
-        $subtree[5]->set_deprel('flat');
-        $subtree[6]->set_parent($subtree[4]);
-        $subtree[6]->set_deprel('flat');
+        $node->set_tag('PUNCT');
+        $node->iset()->set_hash({'pos' => 'punc'});
+        $node->set_deprel('punct');
     }
-    # "m.j." ("among others"): error: "j." is interpreted as "je" ("is") instead of "jiné" ("others")
-    elsif($spanstring eq 'm . j .')
+    # "+ a –"
+    elsif($node->form() eq '–' && $node->deprel() =~ m/^conj(:|$)/)
     {
-        my @subtree = $self->get_node_subtree($node);
-        $node->set_lemma('jiný');
-        $node->set_tag('ADJ');
-        $node->iset()->set_hash({'pos' => 'adj', 'gender' => 'neut', 'number' => 'sing', 'case' => 'acc', 'degree' => 'pos', 'polarity' => 'pos', 'abbr' => 'yes'});
-        my $parent = $node->parent();
-        $subtree[0]->set_parent($parent);
-        $subtree[0]->set_deprel('advmod');
-        $subtree[1]->set_parent($subtree[0]);
-        $subtree[1]->set_deprel('punct');
-        $subtree[2]->set_parent($subtree[0]);
-        $subtree[2]->set_deprel('fixed');
-        $subtree[3]->set_parent($subtree[2]);
-        $subtree[3]->set_deprel('punct');
-    }
-    # "hlavního lékaře", de facto ministra zdravotnictví, ... "de facto" is split.
-    elsif($spanstring eq '" hlavního lékaře " , de facto ministra zdravotnictví ,')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        my $de = $subtree[5];
-        my $facto = $subtree[6];
-        my $ministra = $subtree[7];
-        $de->set_parent($ministra);
-        $de->set_deprel('advmod:emph');
-        $facto->set_parent($de);
-        $facto->set_deprel('fixed');
-    }
-    # "z Jensen Beach"
-    elsif($spanstring eq 'z Jensen Beach na Floridě')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        # Jensen is tagged ADJ and currently attached as 'cc'. We change it to
-        # 'amod' now, although in all such cases, both English words should be
-        # PROPN in Czech, Jensen should be the head and Beach should be attached
-        # as 'flat:name'.
-        $subtree[1]->set_deprel('amod');
-    }
-    # "Gottlieb and Pearson"
-    elsif($spanstring eq 'Gottlieb and Pearson')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        # Gottlieb is currently 'cc' on Pearson.
-        $subtree[0]->set_parent($node->parent());
-        $subtree[0]->set_deprel($node->deprel());
-        $subtree[2]->set_parent($subtree[0]);
-        $subtree[2]->set_deprel('conj');
-        $subtree[1]->set_parent($subtree[2]);
-        $subtree[1]->set_deprel('cc');
-    }
-    # Too many vertical bars attached to the root. The Punctuation block could
-    # not deal with it.
-    elsif($spanstring eq '| Nabídky kurzů , školení , | | seminářů a rekvalifikací | | zveřejňujeme na straně 15 . |')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[5]->set_parent($subtree[8]);
-        $subtree[6]->set_parent($subtree[8]);
-    }
-    # "Jenomže všechno má své kdyby." ... "kdyby" is mentioned, not used.
-    elsif($spanstring eq 'Jenomže všechno má své když by .')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[4]->set_parent($subtree[2]);
-        $subtree[4]->set_deprel('obj');
-        # Maybe it would be better not to split "kdyby" to "když by" in this case.
-        # But the splitting block cannot detect such cases. And what UPOS tag would we use? NOUN?
-        $subtree[5]->set_parent($subtree[4]);
-        $subtree[5]->set_deprel('conj');
-    }
-    # "podle § 209 tr. zák." ... "§" is strangely mis-coded as "|"
-    elsif($spanstring eq 'podle | 209 tr . zák .')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        my $parent = $node->parent();
-        my $deprel = 'obl';
-        $subtree[1]->set_lemma('§');
-        $subtree[1]->set_tag('SYM');
-        $subtree[1]->iset()->set_hash({'pos' => 'sym', 'typo' => 'yes'});
-        $subtree[1]->set_parent($parent);
-        $subtree[1]->set_deprel($deprel);
-        $subtree[0]->set_parent($subtree[1]);
-        $subtree[0]->set_deprel('case');
-        $subtree[5]->set_parent($subtree[1]);
-        # The rest seems to be annotated correctly.
-    }
-    # MIROSLAV MACEK
-    elsif($node->form() eq 'MIROSLAV' && $node->deprel() =~ m/^punct(:|$)/)
-    {
-        $node->set_deprel('parataxis');
-    }
-    # "Žvásty,"
-    elsif($spanstring =~ m/^Žvásty , "/i) #"
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[1]->set_parent($subtree[0]);
-        $subtree[1]->set_deprel('punct');
-        $subtree[2]->set_parent($subtree[0]);
-        $subtree[2]->set_deprel('punct');
-    }
-    # "Tenis ad-Řím"
-    # In this case I really do not know what it is supposed to mean.
-    elsif($spanstring =~ m/^Tenis ad - Řím$/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[1]->set_deprel('dep');
-    }
-    # Pokud jsme ..., tak
-    elsif($spanstring =~ m/^pokud tak$/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        if($subtree[1]->ord() >= $subtree[0]->ord()+4)
-        {
-            $subtree[1]->set_parent($subtree[0]->parent()->parent());
-            $subtree[1]->set_deprel('advmod');
-        }
-    }
-    # "SÁZKA 5 ZE 40: 9, 11, 23, 36, 40, dodatkové číslo: 1."
-    elsif($spanstring =~ m/^SÁZKA 5 ZE 40 : \d+ , \d+ , \d+ , \d+ , \d+ , dodatkové číslo : \d+ \.$/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        # "ze 40" depends on "5" but it is not 'compound'
-        $subtree[3]->set_deprel('nmod');
-        # The first number after the colon depends on "sázka".
-        $subtree[5]->set_parent($subtree[0]);
-        $subtree[5]->set_deprel('appos');
-        # All other numbers are conjuncts.
-        for(my $i = 6; $i <= 14; $i += 2)
-        {
-            # Punctuation depends on the following conjunct.
-            my $fc = $i==14 ? $i+2 : $i+1;
-            $subtree[$i]->set_parent($subtree[$fc]);
-            # Conjunct depends on the first conjunct.
-            $subtree[$fc]->set_parent($subtree[5]);
-            $subtree[$fc]->set_deprel('conj');
-        }
-    }
-    # "Kainarova koleda Vracaja sa dom"
-    elsif($node->form() eq 'Vracaja' && $node->deprel() =~ m/^advmod(:|$)/)
-    {
-        # This is not a typical example of an adnominal clause.
-        # But we cannot use anything else because the head node is a verb.
-        $node->set_deprel('acl');
-    }
-    # "Žili byli v zemi české..."
-    elsif($spanstring =~ m/^Žili byli/ && $node->form() eq 'byli')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[0]->set_parent($node->get_root());
-        $subtree[0]->set_deprel('root');
-        $subtree[1]->set_parent($subtree[0]);
-        $subtree[1]->set_tag('AUX');
-        $subtree[1]->iset()->set('verbtype' => 'aux');
-        $subtree[1]->set_deprel('aux');
-        foreach my $child ($subtree[1]->children())
-        {
-            $child->set_parent($subtree[0]);
-        }
-    }
-    elsif($spanstring =~ m/^, tj \. bude - li zákon odmítnut/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[1]->set_deprel('cc');
-        $subtree[2]->set_parent($subtree[1]);
-        $subtree[5]->set_parent($subtree[7]);
-        $subtree[5]->set_deprel('mark');
-    }
-    elsif($spanstring =~ m/^, co je a co není rovný přístup ke vzdělání$/i)
-    {
-        # In the original treebank, "co" is subject and "rovný přístup ke vzdělání" is predicate, not vice versa.
-        my $parent = $node->parent();
-        my $deprel = $node->deprel();
-        my @subtree = $self->get_node_subtree($node);
-        # The first conjunct lacks the nominal predicate. Promote the copula.
-        $subtree[2]->set_parent($parent);
-        $subtree[2]->set_deprel($deprel);
-        $subtree[0]->set_parent($subtree[2]);
-        # Attach the nominal predicate as the second conjunct.
-        $subtree[7]->set_parent($subtree[2]);
-        $subtree[7]->set_deprel('conj');
-        $subtree[3]->set_parent($subtree[7]);
-        $subtree[4]->set_parent($subtree[7]);
-        $subtree[5]->set_parent($subtree[7]);
-        $subtree[5]->set_deprel('cop');
-        # Since "není" originally did not have the 'cop' relation, it was probably not converted from VERB to AUX.
-        $subtree[5]->set_tag('AUX');
-        $subtree[5]->iset()->set('verbtype' => 'aux');
-    }
-    elsif($spanstring =~ m/^Karoshi [-:] přece jen smrt z přepracování \?/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[4]->set_parent($subtree[0]);
-        $subtree[4]->set_deprel('parataxis');
-        $subtree[1]->set_parent($subtree[4]);
-        $subtree[2]->set_parent($subtree[4]);
-    }
-    elsif($spanstring =~ m/^, je - li rho > rho _ c ,$/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        my $parent = $node->parent();
-        my $deprel = $node->deprel();
-        $subtree[5]->set_parent($parent);
-        $subtree[5]->set_deprel($deprel);
-        $subtree[5]->set_tag('SYM');
-        $subtree[5]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
-        $subtree[0]->set_parent($subtree[5]);
-        $subtree[1]->set_parent($subtree[5]);
-        $subtree[1]->set_tag('AUX');
-        $subtree[1]->iset()->set('verbtype' => 'aux');
-        $subtree[1]->set_deprel('cop');
-        $subtree[2]->set_parent($subtree[5]);
-        $subtree[3]->set_parent($subtree[5]);
-        $subtree[4]->set_parent($subtree[5]);
-        $subtree[9]->set_parent($subtree[5]);
-    }
-    elsif($spanstring =~ m/^je - li rho < rho _ c ,$/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        my $parent = $node->parent();
-        my $deprel = $node->deprel();
-        $subtree[4]->set_parent($parent);
-        $subtree[4]->set_deprel($deprel);
-        $subtree[4]->set_tag('SYM');
-        $subtree[4]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
-        $subtree[0]->set_parent($subtree[4]);
-        $subtree[0]->set_tag('AUX');
-        $subtree[0]->iset()->set('verbtype' => 'aux');
-        $subtree[0]->set_deprel('cop');
-        $subtree[1]->set_parent($subtree[4]);
-        $subtree[2]->set_parent($subtree[4]);
-        $subtree[3]->set_parent($subtree[4]);
-        $subtree[8]->set_parent($subtree[4]);
-    }
-    elsif($spanstring =~ m/^(- (\d+|p|C)|< pc|\. (q|r))$/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        # In cases where "-" acts as the minus operator, it is attached to the
-        # first operand and the second operand is attached to it. We must check
-        # the topology, otherwise this block would transform all occurrences of
-        # a hyphen between two numbers.
-        if($subtree[0]->parent()->ord() <= $subtree[0]->ord()-1 &&
-           $subtree[1]->parent()->ord() == $subtree[0]->ord())
-        {
-            $subtree[0]->set_tag('SYM');
-            $subtree[0]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
-            $subtree[0]->set_deprel('flat');
-        }
-    }
-    elsif($spanstring =~ m/^\. \( [pq] - \d+ \)$/)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        if($subtree[0]->parent()->ord() < $subtree[0]->ord())
-        {
-            $subtree[0]->set_tag('SYM');
-            $subtree[0]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
-            $subtree[0]->set_deprel('flat');
-        }
-    }
-    elsif($spanstring =~ m/^\d+ \. \d+/)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        if($subtree[1]->parent() == $subtree[0] &&
-           $subtree[2]->parent() == $subtree[1])
-        {
-            $subtree[1]->set_tag('SYM');
-            $subtree[1]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
-            $subtree[1]->set_deprel('flat');
-        }
-    }
-    elsif($spanstring =~ m/^i \. j - \d+$/)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[1]->set_tag('SYM');
-        $subtree[1]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
-        $subtree[1]->set_deprel('flat');
-        $subtree[3]->set_tag('SYM');
-        $subtree[3]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
-        $subtree[3]->set_deprel('flat');
-    }
-    elsif($spanstring =~ m/^Kdykoliv p > pc ,$/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[2]->set_tag('SYM');
-        $subtree[2]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
-        $subtree[2]->set_deprel('advcl');
-    }
-    elsif($spanstring =~ m/^" Není možné , aby by sin \( x \) > 1 "$/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[10]->set_tag('SYM');
-        $subtree[10]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
-        $subtree[10]->set_deprel('csubj');
-        $subtree[10]->set_parent($subtree[2]);
-        for(my $i = 3; $i <= 5; $i++)
-        {
-            $subtree[$i]->set_parent($subtree[10]);
-        }
-    }
-    elsif($spanstring =~ m/^\. \. \.$/)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        my $parent = $node->parent();
-        unless($parent->is_root())
-        {
-            foreach my $node (@subtree)
-            {
-                $node->set_parent($parent);
-                $node->set_deprel('punct');
-            }
-        }
-    }
-    elsif($spanstring =~ m/^, \.$/)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        my $parent = $node->parent();
-        unless($parent->is_root())
-        {
-            foreach my $node (@subtree)
-            {
-                $node->set_parent($parent);
-                $node->set_deprel('punct');
-            }
-        }
-    }
-    # degrees of Celsius
-    elsif($spanstring eq 'o C')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        if($subtree[0]->deprel() =~ m/^punct(:|$)/)
-        {
-            $subtree[0]->set_tag('SYM');
-            $subtree[0]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
-            $subtree[0]->set_deprel('flat');
-            $subtree[1]->set_deprel('nmod');
-        }
-    }
-    elsif($spanstring eq 'při teplotě -103 C')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[3]->set_parent($subtree[1]);
-        $subtree[2]->set_parent($subtree[3]);
-        $subtree[2]->set_deprel('nummod:gov');
-        $subtree[2]->set_tag('NUM');
-        $subtree[2]->iset()->set_hash({'pos' => 'num', 'numform' => 'digit', 'numtype' => 'card'});
-    }
-    # "v jejich čele"
-    elsif($spanstring eq 'v jejich čele')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[2]->set_deprel('obl');
-    }
-    # "a jak"
-    elsif($spanstring =~ m/^a jak$/i)
-    {
-        my @subtree = $self->get_node_subtree($node);
-        my $parent = $node->parent();
-        # Avoid messing up coordination "kdy a jak". Require that the parent is to the right.
-        if($parent->ord() > $node->ord())
-        {
-            $subtree[0]->set_parent($parent);
-            $subtree[0]->set_deprel('cc');
-            $subtree[1]->set_parent($parent);
-            $subtree[1]->set_deprel($subtree[1]->is_adverb() ? 'advmod' : 'mark');
-        }
+        $node->set_tag('SYM');
+        $node->iset()->set_hash({'pos' => 'sym'});
     }
 }
 

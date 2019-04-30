@@ -873,7 +873,7 @@ sub fix_constructions
     }
     $self->fix_auxiliary_verb($node);
     # Functional nodes normally do not have modifiers of their own, with a few
-    # exception, such as coordination. Most modifiers should be attached
+    # exceptions, such as coordination. Most modifiers should be attached
     # directly to the content word.
     if($node->deprel() =~ m/^(aux|cop)(:|$)/)
     {
