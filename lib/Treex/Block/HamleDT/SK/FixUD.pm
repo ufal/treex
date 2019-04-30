@@ -76,6 +76,13 @@ sub fix_morphology
         $deprel = 'mark';
         $node->set_deprel($deprel);
     }
+    # "čo" is not a pronoun but a subordinator in sentences like
+    # "Po tom, čo boli počty zredukované..."
+    elsif($lform =~ m/^(čo)$/ && $deprel =~ m/^mark(:|$)/)
+    {
+        $node->set_tag('SCONJ');
+        $iset->set_hash({'pos' => 'conj', 'conjtype' => 'sub'});
+    }
     # "I" can be the conjunction "i", capitalized, or it can be the Roman numeral 1.
     # If it appears at the beginning of the sentence and is attached as advmod:emph or cc,
     # we will assume that it is a conjunction (there is at least one case where it
