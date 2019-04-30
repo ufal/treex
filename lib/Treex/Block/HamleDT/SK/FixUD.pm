@@ -62,6 +62,14 @@ sub fix_morphology
             $iset->add('pos' => 'adv');
         }
     }
+    # Typo: "so" instead of "som".
+    elsif($lform eq 'so' && $deprel =~ m/^aux(:|$)/ && $node->parent()->is_participle())
+    {
+        $lemma = 'byť';
+        $node->set_lemma($lemma);
+        $node->set_tag('AUX');
+        $iset->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'aspect' => 'imp', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'number' => 'sing', 'person' => '1', 'polarity' => 'pos', 'typo' => 'yes'});
+    }
     # "ako" can be adverb ("how") or subordinating conjunction ("as, like").
     # If it is tagged SCONJ but attached as advmod, the UPOS should be changed
     # to ADV.
