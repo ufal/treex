@@ -62,13 +62,21 @@ sub fix_morphology
             $iset->add('pos' => 'adv');
         }
     }
-    # "si" is the 2nd person present form of "byť" ("to be"), or the dative form of the reflexive clitic.
+    # "si" is the 2nd person singular present form of "byť" ("to be"), or the dative form of the reflexive clitic.
     elsif($lform eq 'si' && $deprel =~ m/^(aux|cop)(:|$)/)
     {
         $lemma = 'byť';
         $node->set_lemma($lemma);
         $node->set_tag('AUX');
         $iset->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'aspect' => 'imp', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'number' => 'sing', 'person' => '2', 'polarity' => 'pos'});
+    }
+    # "ste" is the 2nd person plural present form of "byť" ("to be"), or a form of the numeral "sto" ("hundred").
+    elsif($lform eq 'ste' && $deprel =~ m/^(aux|cop)(:|$)/)
+    {
+        $lemma = 'byť';
+        $node->set_lemma($lemma);
+        $node->set_tag('AUX');
+        $iset->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'aspect' => 'imp', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'number' => 'plur', 'person' => '2', 'polarity' => 'pos'});
     }
     # Typo: "so" instead of "som".
     elsif($lform eq 'so' && $deprel =~ m/^aux(:|$)/ && $node->parent()->is_participle())
