@@ -142,8 +142,8 @@ sub fix_constructions
         $deprel = 'amod';
         $node->set_deprel($deprel);
     }
-    # Reflexive "sa" should not be attached as 'mark'.
-    elsif($node->form() =~ m/^(sa)$/i && $node->is_pronoun() && $deprel =~ m/^mark(:|$)/)
+    # Reflexive "sa" should not be attached as 'mark' or 'aux'.
+    elsif($node->form() =~ m/^(sa)$/i && $node->is_pronoun() && $deprel =~ m/^(mark|aux)(:|$)/)
     {
         $deprel = 'expl:pv';
         $node->set_deprel($deprel);
