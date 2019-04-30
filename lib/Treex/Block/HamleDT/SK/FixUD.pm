@@ -486,53 +486,10 @@ sub fix_annotation_errors
     my $self = shift;
     my $node = shift;
     my $spanstring = $self->get_node_spanstring($node);
-    # Full sentence: Maďarský občan přitom zaplatí za: - 1 l mléka kolem 60
-    # forintů, - 1 kg chleba kolem 70, - 1 lahev coca coly (0.33 l) kolem 15
-    # forintů, - krabička cigaret Marlboro asi 120 forintů, - 1 l bezolovnatého
-    # benzinu asi 76 forintů.
-    if($spanstring =~ m/Maďarský občan přitom zaplatí za : -/)
+    # "prosím vás" ("I ask you"): "vás" should be "obj", not "cc".
+    if(lc($node->form()) eq 'vás' && !$node->is_root() && lc($node->parent()->form()) eq 'prosím')
     {
-        my @subtree = $self->get_node_subtree($node);
-        # Sanity check: do we have the right sentence and node indices?
-        # forint: 12 32 40 49
-        if(scalar(@subtree) != 51 ||
-           $subtree[12]->form() ne 'forintů' ||
-           $subtree[32]->form() ne 'forintů' ||
-           $subtree[40]->form() ne 'forintů' ||
-           $subtree[49]->form() ne 'forintů')
-        {
-            log_warn("Bad match in expected sentence: $spanstring");
-        }
-        else
-        {
-            # $node is the main verb, "zaplatí".
-            # comma dash goods price
-            my $c = 0;
-            my $d = 1;
-            my $g = 2;
-            my $p = 3;
-            my @conjuncts =
-            (
-                [13, 14, 16, 19],
-                [20, 21, 23, 32],
-                [33, 34, 35, 40],
-                [41, 42, 44, 49]
-            );
-            foreach my $conjunct (@conjuncts)
-            {
-                # The price is the direct object of the missing verb. Promote it.
-                $subtree[$conjunct->[$p]]->set_parent($node);
-                $subtree[$conjunct->[$p]]->set_deprel('conj');
-                # The goods item is the other orphan.
-                $subtree[$conjunct->[$g]]->set_parent($subtree[$conjunct->[$p]]);
-                $subtree[$conjunct->[$g]]->set_deprel('orphan');
-                # Punctuation will be attached to the head of the conjunct, too.
-                $subtree[$conjunct->[$c]]->set_parent($subtree[$conjunct->[$p]]);
-                $subtree[$conjunct->[$c]]->set_deprel('punct');
-                $subtree[$conjunct->[$d]]->set_parent($subtree[$conjunct->[$p]]);
-                $subtree[$conjunct->[$d]]->set_deprel('punct');
-            }
-        }
+        $node->set_deprel('obj');
     }
     # "kategorii ** nebo ***"
     elsif($spanstring eq 'kategorii * * nebo * * *')
