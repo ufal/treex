@@ -21,6 +21,7 @@ sub process_atree
     # on the morphology you see at the parent node).
     foreach my $node (@nodes)
     {
+        log_warn("KUK");
         $self->fix_constructions($node);
         $self->fix_annotation_errors($node);
     }
@@ -101,6 +102,7 @@ sub fix_constructions
 {
     my $self = shift;
     my $node = shift;
+    log_warn("PIC");
     my $parent = $node->parent();
     my $deprel = $node->deprel();
     # There are a few right-to-left appositions that resulted from transforming
@@ -348,6 +350,7 @@ sub fix_constructions
         $deprel = 'flat';
         $node->set_deprel($deprel);
     }
+    log_warn("BUM");
     $self->fix_auxiliary_verb($node);
 }
 
@@ -360,6 +363,7 @@ sub fix_auxiliary_verb
 {
     my $self = shift;
     my $node = shift;
+    log_warn("BAC");
     if($node->deprel() =~ m/^cop(:|$)/)
     {
         log_warn("Spona má lemma '".$node->lemma()."' a značku '".$node->tag()."'.");
