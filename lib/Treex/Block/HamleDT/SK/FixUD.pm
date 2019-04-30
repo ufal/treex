@@ -362,6 +362,10 @@ sub fix_auxiliary_verb
     my $node = shift;
     if($node->tag() eq 'AUX')
     {
+        if($node->deprel() =~ m/^cop(:|$)/)
+        {
+            log_warn("Spona má lemma '".$node->lemma()."'.");
+        }
         if($node->deprel() =~ m/^cop(:|$)/ &&
            $node->lemma() =~ m/^(mať)$/)
         {
