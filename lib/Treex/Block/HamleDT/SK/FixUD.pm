@@ -143,6 +143,39 @@ sub fix_constructions
         $parent = $parent->parent();
         $node->set_parent($parent);
     }
+    # Slovak "a to" ("viz.") is a multi-word conjunction. In the original
+    # treebank, multiple attachment options occur:
+    # 1. "a" is attached to "to" as 'cc'.
+    # 2. both words are attached as siblings (relations 'cc').
+    elsif(lc($node->form()) eq 'a' && $deprel =~ m/^cc(:|$)/ &&
+          $parent->form() =~ m/^(to|sice)$/i && $parent->deprel() =~ m/^(cc|advmod|discourse)(:|$)/ && $parent->ord() > $node->ord())
+    {
+        my $grandparent = $parent->parent();
+        $node->set_parent($grandparent);
+        $deprel = 'cc';
+        $node->set_deprel($deprel);
+        $parent->set_parent($node);
+        $parent->set_deprel('fixed');
+        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
+        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
+        $parent->set_lemma('to');
+        $parent->set_tag('PART');
+        $parent->iset()->set_hash({'pos' => 'part'});
+        $parent = $grandparent;
+    }
+    elsif(lc($node->form()) =~ m/^(a)$/ && $deprel =~ m/^cc(:|$)/ &&
+          defined($node->get_right_neighbor()) &&
+          lc($node->get_right_neighbor()->form()) =~ m/^(to)$/ && $node->get_right_neighbor()->deprel() =~ m/^(cc|advmod|discourse)(:|$)/)
+    {
+        my $to = $node->get_right_neighbor();
+        $to->set_parent($node);
+        $to->set_deprel('fixed');
+        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
+        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
+        $to->set_lemma('to');
+        $to->set_tag('PART');
+        $to->iset()->set_hash({'pos' => 'part'});
+    }
     # The expression "více než" ("more than") functions as an adverb.
     elsif(lc($node->form()) eq 'než' && $parent->ord() == $node->ord()-1 &&
           lc($parent->form()) eq 'více')
