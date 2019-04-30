@@ -360,14 +360,14 @@ sub fix_auxiliary_verb
 {
     my $self = shift;
     my $node = shift;
-    if($node->deprel() =~ m/^cop(:|$)/ && $node->lemma() !~ m/^(byť|bývať)$/)
+    if($node->deprel() =~ m/^cop(:|$)/ && $node->lemma() !~ m/^(byť|bývať|mať|stať)$/)
     {
         log_warn("Spona má lemma '".$node->lemma()."' a značku '".$node->tag()."'.");
     }
     if($node->tag() eq 'AUX')
     {
         if($node->deprel() =~ m/^cop(:|$)/ &&
-           $node->lemma() =~ m/^(mať)$/)
+           $node->lemma() =~ m/^(mať|stať)$/)
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
