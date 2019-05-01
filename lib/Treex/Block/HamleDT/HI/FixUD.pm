@@ -53,28 +53,39 @@ sub fix_functional_leaves
         # Functional nodes normally do not have modifiers of their own, with a few
         # exceptions, such as coordination. Most modifiers should be attached
         # directly to the content word.
+        my @badchildren;
         if($node->deprel() =~ m/^(aux|cop)(:|$)/)
         {
-            my @children = grep {$_->deprel() =~ m/^(nsubj|csubj|obj|iobj|expl|ccomp|xcomp|obl|advmod|advcl|vocative|dislocated|dep)(:|$)/} ($node->children());
-            my $parent = $node->parent();
-            while($parent->deprel() =~ m/^(aux|cop|case|mark|cc|punct|fixed|goeswith)(:|$)/)
-            {
-                $parent = $parent->parent();
-            }
-            foreach my $child (@children)
-            {
-                $child->set_parent($parent);
-            }
+            @badchildren = grep {$_->deprel() !~ m/^(goeswith|fixed|reparandum|conj|cc|punct)(:|$)/} ($node->children());
         }
-        elsif($node->deprel() =~ m/^(case|mark|cc|punct)(:|$)/)
+        elsif($node->deprel() =~ m/^(case|mark)(:|$)/)
         {
-            my @children = grep {$_->deprel() !~ m/^(conj|fixed|goeswith|punct)(:|$)/} ($node->children());
+            @badchildren = grep {$_->deprel() !~ m/^(advmod|obl|goeswith|fixed|reparandum|conj|cc|punct)(:|$)/} ($node->children());
+        }
+        elsif($node->deprel() =~ m/^(cc)(:|$)/)
+        {
+            @badchildren = grep {$_->deprel() !~ m/^(goeswith|fixed|reparandum|conj|punct)(:|$)/} ($node->children());
+        }
+        elsif($node->deprel() =~ m/^(fixed)(:|$)/)
+        {
+            @badchildren = grep {$_->deprel() !~ m/^(goeswith|reparandum|conj|punct)(:|$)/} ($node->children());
+        }
+        elsif($node->deprel() =~ m/^(goeswith)(:|$)/)
+        {
+            @badchildren = $node->children();
+        }
+        elsif($node->deprel() =~ m/^(punct)(:|$)/)
+        {
+            @badchildren = grep {$_->deprel() !~ m/^(punct)(:|$)/} ($node->children());
+        }
+        if(scalar(@badchildren) > 0)
+        {
             my $parent = $node->parent();
             while($parent->deprel() =~ m/^(aux|cop|case|mark|cc|punct|fixed|goeswith)(:|$)/)
             {
                 $parent = $parent->parent();
             }
-            foreach my $child (@children)
+            foreach my $child (@badchildren)
             {
                 $child->set_parent($parent);
             }
