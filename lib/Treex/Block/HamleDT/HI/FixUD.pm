@@ -57,6 +57,10 @@ sub fix_functional_leaves
         {
             my @children = grep {$_->deprel() =~ m/^(nsubj|csubj|obj|iobj|expl|ccomp|xcomp|obl|advmod|advcl|vocative|dislocated|dep)(:|$)/} ($node->children());
             my $parent = $node->parent();
+            while($parent->deprel() =~ m/^(aux|cop|case|mark|cc|punct|fixed|goeswith)(:|$)/)
+            {
+                $parent = $parent->parent();
+            }
             foreach my $child (@children)
             {
                 $child->set_parent($parent);
@@ -66,6 +70,10 @@ sub fix_functional_leaves
         {
             my @children = grep {$_->deprel() !~ m/^(conj|fixed|goeswith|punct)(:|$)/} ($node->children());
             my $parent = $node->parent();
+            while($parent->deprel() =~ m/^(aux|cop|case|mark|cc|punct|fixed|goeswith)(:|$)/)
+            {
+                $parent = $parent->parent();
+            }
             foreach my $child (@children)
             {
                 $child->set_parent($parent);
