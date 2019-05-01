@@ -13,6 +13,27 @@ sub process_atree
     my $self = shift;
     my $root = shift;
     #$self->fix_features($root);
+    $self->fix_auxiliary_lemmas($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fix lemmas of auxiliary verbs so that they can be identified by the
+# validator.
+#------------------------------------------------------------------------------
+sub fix_auxiliary_lemmas
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->tag() eq 'AUX' && $node->lemma() eq 'पड')
+        {
+            $node->set_lemma('पड़');
+        }
+    }
 }
 
 
