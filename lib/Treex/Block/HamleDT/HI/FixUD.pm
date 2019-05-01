@@ -14,6 +14,7 @@ sub process_atree
     my $root = shift;
     #$self->fix_features($root);
     $self->fix_auxiliary_lemmas($root);
+    $self->fix_functional_leaves($root);
 }
 
 
@@ -32,6 +33,43 @@ sub fix_auxiliary_lemmas
         if($node->tag() eq 'AUX' && $node->lemma() eq 'पड')
         {
             $node->set_lemma('पड़');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Makes sure that functional nodes do not have children other than the
+# exceptions permitted by guidelines.
+#------------------------------------------------------------------------------
+sub fix_functional_leaves
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # Functional nodes normally do not have modifiers of their own, with a few
+        # exceptions, such as coordination. Most modifiers should be attached
+        # directly to the content word.
+        if($node->deprel() =~ m/^(aux|cop)(:|$)/)
+        {
+            my @children = grep {$_->deprel() =~ m/^(nsubj|csubj|obj|iobj|expl|ccomp|xcomp|obl|advmod|advcl|vocative|dislocated|dep)(:|$)/} ($node->children());
+            my $parent = $node->parent();
+            foreach my $child (@children)
+            {
+                $child->set_parent($parent);
+            }
+        }
+        elsif($node->deprel() =~ m/^(case|mark|cc|punct)(:|$)/)
+        {
+            my @children = grep {$_->deprel() !~ m/^(conj|fixed|goeswith|punct)(:|$)/} ($node->children());
+            my $parent = $node->parent();
+            foreach my $child (@children)
+            {
+                $child->set_parent($parent);
+            }
         }
     }
 }
