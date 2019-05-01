@@ -14,6 +14,7 @@ sub process_atree
     my $root = shift;
     #$self->fix_features($root);
     $self->fix_auxiliary_lemmas($root);
+    $self->fix_advmod_to_obl($root);
     $self->fix_functional_leaves($root);
 }
 
@@ -33,6 +34,28 @@ sub fix_auxiliary_lemmas
         if($node->tag() eq 'AUX' && $node->lemma() eq 'पड')
         {
             $node->set_lemma('पड़');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adverbial modifiers (adjuncts) that are realized as noun phrases should be
+# attached as oblique dependents.
+#------------------------------------------------------------------------------
+sub fix_advmod_to_obl
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->tag() =~ m/^(NOUN|PROPN|PRON)$/ && $node->deprel() =~ m/^(advmod)(:|$)/)
+        {
+            my $deprel = $node->deprel();
+            $deprel =~ s/^advmod/obl/;
+            $node->set_deprel($deprel);
         }
     }
 }
