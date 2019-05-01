@@ -12,8 +12,88 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
-    $self->fix_features($root);
-    $self->fix_multiple_root_nodes($root);
+    #$self->fix_features($root);
+    #$self->fix_multiple_root_nodes($root);
+    $self->fix_advmod_to_obl($root);
+    $self->fix_functional_leaves($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adverbial modifiers (adjuncts) that are realized as noun phrases should be
+# attached as oblique dependents.
+#------------------------------------------------------------------------------
+sub fix_advmod_to_obl
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->tag() =~ m/^(NOUN|PROPN|PRON)$/ && $node->deprel() =~ m/^(advmod)(:|$)/)
+        {
+            my $deprel = $node->deprel();
+            $deprel =~ s/^advmod/obl/;
+            $node->set_deprel($deprel);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Makes sure that functional nodes do not have children other than the
+# exceptions permitted by guidelines.
+#------------------------------------------------------------------------------
+sub fix_functional_leaves
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # Functional nodes normally do not have modifiers of their own, with a few
+        # exceptions, such as coordination. Most modifiers should be attached
+        # directly to the content word.
+        my @badchildren;
+        if($node->deprel() =~ m/^(aux|cop)(:|$)/)
+        {
+            @badchildren = grep {$_->deprel() !~ m/^(goeswith|fixed|reparandum|conj|cc|punct)(:|$)/} ($node->children());
+        }
+        elsif($node->deprel() =~ m/^(case|mark)(:|$)/)
+        {
+            @badchildren = grep {$_->deprel() !~ m/^(advmod|obl|goeswith|fixed|reparandum|conj|cc|punct)(:|$)/} ($node->children());
+        }
+        elsif($node->deprel() =~ m/^(cc)(:|$)/)
+        {
+            @badchildren = grep {$_->deprel() !~ m/^(goeswith|fixed|reparandum|conj|punct)(:|$)/} ($node->children());
+        }
+        elsif($node->deprel() =~ m/^(fixed)(:|$)/)
+        {
+            @badchildren = grep {$_->deprel() !~ m/^(goeswith|reparandum|conj|punct)(:|$)/} ($node->children());
+        }
+        elsif($node->deprel() =~ m/^(goeswith)(:|$)/)
+        {
+            @badchildren = $node->children();
+        }
+        elsif($node->deprel() =~ m/^(punct)(:|$)/)
+        {
+            @badchildren = grep {$_->deprel() !~ m/^(punct)(:|$)/} ($node->children());
+        }
+        if(scalar(@badchildren) > 0)
+        {
+            my $parent = $node->parent();
+            while($parent->deprel() =~ m/^(aux|cop|case|mark|cc|punct|fixed|goeswith)(:|$)/)
+            {
+                $parent = $parent->parent();
+            }
+            foreach my $child (@badchildren)
+            {
+                $child->set_parent($parent);
+            }
+        }
+    }
 }
 
 
