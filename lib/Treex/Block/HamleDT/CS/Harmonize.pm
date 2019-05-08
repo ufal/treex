@@ -393,7 +393,7 @@ sub remove_features_from_lemmas
                     }
                     else
                     {
-                        $wild->{lderiv} = $lderiv;
+                        $node->set_misc_attr('LDeriv', $lderiv);
                     }
                 }
             }

@@ -51,10 +51,6 @@ sub modify_single {
             my $lgloss = join(',', @{$wild->{lgloss}});
             push(@misc, "LGloss=$lgloss");
         }
-        if(exists($wild->{lderiv}) && defined($wild->{lderiv}))
-        {
-            push(@misc, "LDeriv=$wild->{lderiv}");
-        }
         if(exists($wild->{lnumvalue}) && defined($wild->{lnumvalue}))
         {
             push(@misc, "LNumValue=$wild->{lnumvalue}");
