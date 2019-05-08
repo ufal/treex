@@ -126,6 +126,45 @@ sub fix_morphology
         if(defined($wild->{root}))
         {
             @misc = $self->add_misc('Root', $wild->{root}, @misc);
+            # Out-of-vocabulary words have 'OOV' as the value of the root. They also
+            # have different transliteration: they use the Buckwalter transliteration
+            # schema instead of Elixir. Let's try to make the transliteration similar
+            # although short vowels will be missing.
+            if($wild->{root} eq 'OOV')
+            {
+                my $translit = $node->translit();
+                # https://en.wikipedia.org/wiki/Buckwalter_transliteration
+                # Letters that are identical in Buckwalter and Elixir: b t d r z s f q k l m n h w y a u i
+                $translit =~ s/A/ā/g; # alif
+                $translit =~ s/v/ṯ/g; # th
+                $translit =~ s/H/ḥ/g;
+                $translit =~ s/x/ḫ/g; # kh
+                $translit =~ s/\*/ḏ/g; # dh
+                $translit =~ s/\$/š/g;
+                $translit =~ s/S/ṣ/g;
+                $translit =~ s/D/ḍ/g;
+                $translit =~ s/T/ṭ/g;
+                $translit =~ s/Z/ẓ/g;
+                $translit =~ s/E/ʿ/g;
+                $translit =~ s/g/ġ/g;
+                $translit =~ s/Y/ī/g; # alif maqsura
+                $translit =~ s/'/ʾ/g; #' # lone hamza
+                $translit =~ s/>/ʾa/g; # hamza on alif
+                $translit =~ s/</ʾi/g; # hamza below alif
+                $translit =~ s/&/ʾu/g; # hamza on wa
+                $translit =~ s/\}/ʾi/g; # hamza on ya
+                $translit =~ s/\|/ʾā/g; # alif madda
+                $translit =~ s/\{/ā/g; # alif al-wasla
+                $translit =~ s/\`/ā/g; #` # dagger alif
+                $translit =~ s/F/an/g; # fathatayn
+                $translit =~ s/N/un/g; # dammatayn
+                $translit =~ s/K/in/g; # kasratayn
+                $translit =~ s/(.)~/$1$1/g; # shadda
+                $translit =~ s/o//g; # sukun
+                $translit =~ s/p/at/g; # ta marbouta
+                $translit =~ s/_//g; # tatwil
+                $node->set_translit($translit);
+            }
         }
         # For debugging purposes, save the input form as well.
         ###!!! now turned off

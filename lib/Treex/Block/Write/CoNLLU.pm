@@ -253,6 +253,17 @@ sub process_atree {
         {
             @misc = sort {lc($a) cmp lc($b)} (@misc);
         }
+        # No MISC element should contain a vertical bar because we are going to
+        # join them using the vertical bar as a separator. We will issue a
+        # a warning if there is a vertical bar but we will not try to fix it
+        # because the CoNLL-U format does not define any escaping method.
+        foreach my $m (@misc)
+        {
+            if($m =~ m/\|/)
+            {
+                log_warn("MISC element '$m' should not contain the vertical bar '|'");
+            }
+        }
         my $misc = scalar(@misc)>0 ? join('|', @misc) : '_';
 
         my $relations = '_';
