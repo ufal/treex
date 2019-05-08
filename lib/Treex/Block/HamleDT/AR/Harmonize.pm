@@ -137,6 +137,7 @@ sub fix_morphology
                 # Letters that are identical in Buckwalter and Elixir: b t d r z s f q k l m n h w y a u i
                 $translit =~ s/A/ā/g; # alif
                 $translit =~ s/v/ṯ/g; # th
+                $translit =~ s/j/ǧ/g;
                 $translit =~ s/H/ḥ/g;
                 $translit =~ s/x/ḫ/g; # kh
                 $translit =~ s/\*/ḏ/g; # dh
