@@ -354,6 +354,23 @@ sub fix_morphology
                     $node->set_lemma($lemma);
                 }
             }
+            # Fix tags and features of verbs that are mistakenly tagged as participles.
+            my $lcform = lc($node->form());
+            if($lcform eq 'trúfa')
+            {
+                $node->set_tag('VERB');
+                $node->iset()->set_hash({'pos' => 'verb', 'aspect' => 'imp', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'number' => 'sing', 'person' => '3', 'polarity' => 'pos'});
+            }
+            elsif($lcform =~ m/^(plávajú|tuhnú)$/)
+            {
+                $node->set_tag('VERB');
+                $node->iset()->set_hash({'pos' => 'verb', 'aspect' => 'imp', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'number' => 'plur', 'person' => '3', 'polarity' => 'pos'});
+            }
+            elsif($lcform eq 'nestoja')
+            {
+                $node->set_tag('VERB');
+                $node->iset()->set_hash({'pos' => 'verb', 'aspect' => 'imp', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'number' => 'plur', 'person' => '3', 'polarity' => 'neg'});
+            }
         }
         # Distinguish coordinating and subordinating conjunctions.
         if($node->is_conjunction())
