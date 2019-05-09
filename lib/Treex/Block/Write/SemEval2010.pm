@@ -130,8 +130,8 @@ sub _extract_data {
         $NOT_SET,           # Col 16    PPRED: Same as 13 but predicted by an automatic analyzer
                             # Col *     APREDs: N columns, one for each predicate in 15, containing the semantic roles/dependencies of each particular predicate
                             # Col *     PAPREDs: M columns, one for each predicate in 16, with the same information as APREDs but predicted with an automatic analyzer
-        $coref,             # Col -1    COREF: coreference annotation in open-close notation, using "|" to separate multiple annotations
         $treex_id,          # Col -2    TREEX_ID
+        $coref,             # Col -1    COREF: coreference annotation in open-close notation, using "|" to separate multiple annotations
     );
     return \@cols;
 }
