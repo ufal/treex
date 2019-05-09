@@ -280,6 +280,26 @@ sub fix_morphology
                 $iset->set('pos', 'noun');
             }
         }
+        # Participles other than the l-participle are tagged ADJ in Slovak UD.
+        # They have a special category in the original treebank and their lemma
+        # should be the masculine singular nominative form of the participle,
+        # not the infinitive of the verb. However, there are a few errors. Fix them.
+        if($node->is_adjective() && $node->is_participle())
+        {
+            if($node->lemma() =~ m/ť$/)
+            {
+                my $lderiv = $node->lemma();
+                my $lemma = lc($node->form());
+                # Check that the form has an expected suffix, and replace it with the canonical suffix.
+                # If the suffix is not there, maybe we have a different problem (e.g. "plávajú" tagged ADJ + VerbForm=Part is a tagging error).
+                if($lemma =~ s/([nt])(ý|á|é|í|ého|ému|om|ým|ej|ú|ou|ých|ými)$/${1}ý/ ||
+                   $lemma =~ s/c(i|a|e|eho|emu|om|im|ej|u|ou|ich|imi)$/ci/)
+                {
+                    $node->set_misc_attr('LDeriv', $lderiv);
+                    $node->set_lemma($lemma);
+                }
+            }
+        }
         if($node->is_verb())
         {
             # Negation of verbs is treated as derivational morphology in the Slovak National Corpus.
