@@ -941,6 +941,12 @@ sub fix_a_to
         $deprel = 'obl';
         $node->set_deprel($deprel);
     }
+    ###!!! DEBUG
+    elsif($node->form() eq 'to' && $self->get_node_spanstring($node->get_root()) =~ m/a to jako učitel/i)
+    {
+        $self->log_sentence($node);
+        log_warn("'to' is attached to ".$node->parent()->form()." as '".$node->deprel()."'");
+    }
 }
 
 
