@@ -945,8 +945,12 @@ sub fix_a_to
     elsif($node->form() =~ m/^(a|to)$/i && $self->get_node_spanstring($node->get_root()) =~ m/a to jako učitel/i)
     {
         $self->log_sentence($node);
+        my $nodess = $self->get_node_spanstring($node);
+        my $rnbrss = $self->get_node_spanstring($rnbr);
         log_warn($node->form()." is attached to ".$node->parent()->form()." as '".$node->deprel()."' and its ord is ".$node->ord());
         log_warn("Right neighbor is ".$rnbr->form()." attached to ".$rnbr->parent()->form()." as '".$rnbr->deprel()."' and its ord is ".$rnbr->ord());
+        log_warn("Node spanstring = $nodess");
+        log_warn("Rnbr spanstring = $rnbrss");
     }
 }
 
