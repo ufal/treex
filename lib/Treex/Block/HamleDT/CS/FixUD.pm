@@ -890,7 +890,7 @@ sub fix_a_to
     # Depending on the original annotation and on the order of processing, "to"
     # may be already attached as 'det', or it may be still 'cc', 'mark' or 'advmod'.
     if($node->form() =~ m/^a$/i && $deprel =~ m/^cc(:|$)/ &&
-       $parent->form() =~ m/^(to|sice)$/i && $parent->deprel() =~ m/^(det|cc|mark|advmod|discourse)(:|$)/ && $parent->ord() > $node->ord())
+       $parent->form() =~ m/^(to|sice)$/i && $parent->deprel() =~ m/^(det|cc|mark|advmod|discourse|dep)(:|$)/ && $parent->ord() > $node->ord())
     {
         my $grandparent = $parent->parent();
         $node->set_parent($grandparent);
@@ -908,10 +908,11 @@ sub fix_a_to
     ###!!! DEBUG
     elsif($node->form() =~ m/^a$/i && !$parent->is_root() && $parent->ord() == $node->ord()+1 && $parent->form() =~ m/^(to|sice)$/i)
     {
+        $self->log_sentence($node);
         log_warn("'a to', parent is 'to', deprel of 'a' is $deprel, deprel of 'to' is ".$parent->deprel());
     }
     # Sometimes "to" is already attached to "a", and we only change the relation type.
-    elsif(lc($node->form()) =~ m/^(to|sice)$/i && $deprel =~ m/^(det|cc|mark|advmod|discourse)(:|$)/ &&
+    elsif(lc($node->form()) =~ m/^(to|sice)$/i && $deprel =~ m/^(det|cc|mark|advmod|discourse|dep)(:|$)/ &&
           lc($parent->form()) eq 'a' && $parent->ord() == $node->ord()-1)
     {
         $deprel = 'fixed';
@@ -927,7 +928,7 @@ sub fix_a_to
     }
     # Occasionally "a" and "to" are attached as siblings rather than one to the other.
     elsif(lc($node->form()) =~ m/^(a)$/ && $deprel =~ m/^cc(:|$)/ && defined($rnbr) &&
-          lc($rnbr->form()) =~ m/^(to)$/ && $rnbr->deprel() =~ m/^(det|cc|mark|advmod|discourse)(:|$)/)
+          lc($rnbr->form()) =~ m/^(to)$/ && $rnbr->deprel() =~ m/^(det|cc|mark|advmod|discourse|dep)(:|$)/)
     {
         my $to = $rnbr;
         $to->set_parent($node);
