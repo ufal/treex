@@ -906,7 +906,7 @@ sub fix_a_to
         $parent = $grandparent;
     }
     ###!!! DEBUG
-    elsif($node->form() =~ m/^a$/i && $parent->form() =~ m/^(to|sice)$/i)
+    elsif($node->form() =~ m/^a$/i && !$parent->is_root() && $parent->ord() == $node->ord()+1 && $parent->form() =~ m/^(to|sice)$/i)
     {
         log_warn("'a to', parent is 'to', deprel of 'a' is $deprel, deprel of 'to' is ".$parent->deprel());
     }
