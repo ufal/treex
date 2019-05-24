@@ -905,12 +905,6 @@ sub fix_a_to
         $parent->iset()->set_hash({'pos' => 'part'});
         $parent = $grandparent;
     }
-    ###!!! DEBUG
-    elsif($node->form() =~ m/^a$/i && !$parent->is_root() && $parent->ord() == $node->ord()+1 && $parent->form() =~ m/^(to|sice)$/i)
-    {
-        $self->log_sentence($node);
-        log_warn("'a to', parent is 'to', deprel of 'a' is $deprel, deprel of 'to' is ".$parent->deprel());
-    }
     # Sometimes "to" is already attached to "a", and we only change the relation type.
     elsif($node->form() =~ m/^(to|sice)$/i && $deprel =~ m/^(det|cc|mark|advmod|discourse|dep)(:|$)/ &&
           $parent->form() =~ m/^(a)$/i && $parent->ord() == $node->ord()-1)
@@ -935,15 +929,12 @@ sub fix_a_to
         $to->set_deprel('fixed');
         # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
         # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
-        $to->set_lemma('to');
-        $to->set_tag('PART');
-        $to->iset()->set_hash({'pos' => 'part'});
-    }
-    ###!!! DEBUG
-    elsif($node->form() =~ m/^a$/i && defined($rnbr) && $rnbr->ord() == $node->ord()+1 && $rnbr->form() =~ m/^(to|sice)$/i)
-    {
-        $self->log_sentence($node);
-        log_warn("'a to', siblings, deprel of 'a' is $deprel, deprel of 'to' is ".$rnbr->deprel());
+        if(lc($node->form()) eq 'to')
+        {
+            $node->set_lemma('to');
+            $node->set_tag('PART');
+            $node->iset()->set_hash({'pos' => 'part'});
+        }
     }
     # "a tím i" ("and this way also")
     elsif(lc($node->form()) eq 'tím' && $deprel =~ m/^(cc|advmod)(:|$)/)
