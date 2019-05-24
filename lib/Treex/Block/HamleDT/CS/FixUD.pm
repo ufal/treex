@@ -886,7 +886,7 @@ sub fix_a_to
     my $node = shift;
     my $parent = $node->parent();
     my $deprel = $node->deprel();
-    my $rnbr = $node->get_right_neighbor();
+    my $lnbr = $node->get_left_neighbor();
     # Depending on the original annotation and on the order of processing, "to"
     # may be already attached as 'det', or it may be still 'cc', 'mark' or 'advmod'.
     if($node->form() =~ m/^a$/i && $deprel =~ m/^cc(:|$)/ &&
@@ -921,18 +921,22 @@ sub fix_a_to
         }
     }
     # Occasionally "a" and "to" are attached as siblings rather than one to the other.
-    elsif($node->form() =~ m/^(a)$/i && $node->deprel() =~ m/^cc(:|$)/ && defined($rnbr) &&
-          $rnbr->form() =~ m/^(to|sice)$/i && $rnbr->deprel() =~ m/^(det|cc|mark|advmod|discourse|dep)(:|$)/ && $rnbr->ord() == $node->ord()+1)
+    # Note: If "to" was originally attached to "a" and "a" had a functional deprel
+    # such as 'cc', "to" was probably reattached to the parent of "a" at the time
+    # "a" was being processed. So they are now siblings, too (if we are now looking
+    # at "to").
+    elsif($node->form() =~ m/^(to|sice)$/i && $deprel =~ m/^(det|cc|mark|advmod|discourse|dep)(:|$)/ && defined($lnbr) &&
+          $lnbr->form() =~ m/^(a)$/i && $lnbr->ord() == $node->ord()-1)
     {
-        $rnbr->set_parent($node);
-        $rnbr->set_deprel('fixed');
+        $node->set_parent($lnbr);
+        $node->set_deprel('fixed');
         # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
         # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
-        if(lc($rnbr->form()) eq 'to')
+        if(lc($node->form()) eq 'to')
         {
-            $rnbr->set_lemma('to');
-            $rnbr->set_tag('PART');
-            $rnbr->iset()->set_hash({'pos' => 'part'});
+            $node->set_lemma('to');
+            $node->set_tag('PART');
+            $node->iset()->set_hash({'pos' => 'part'});
         }
     }
     # "a tím i" ("and this way also")
