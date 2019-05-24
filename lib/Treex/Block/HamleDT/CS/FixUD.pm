@@ -886,10 +886,11 @@ sub fix_a_to
     my $node = shift;
     my $parent = $node->parent();
     my $deprel = $node->deprel();
+    my $rnbr = $node->get_right_neighbor();
     # Depending on the original annotation and on the order of processing, "to"
     # may be already attached as 'det', or it may be still 'cc', 'mark' or 'advmod'.
-    if(lc($node->form()) eq 'a' && $deprel =~ m/^cc(:|$)/ &&
-          $parent->form() =~ m/^(to|sice)$/i && $parent->deprel() =~ m/^(det|cc|mark|advmod|discourse)(:|$)/ && $parent->ord() > $node->ord())
+    if($node->form() =~ m/^a$/i && $deprel =~ m/^cc(:|$)/ &&
+       $parent->form() =~ m/^(to|sice)$/i && $parent->deprel() =~ m/^(det|cc|mark|advmod|discourse)(:|$)/ && $parent->ord() > $node->ord())
     {
         my $grandparent = $parent->parent();
         $node->set_parent($grandparent);
@@ -903,6 +904,11 @@ sub fix_a_to
         $parent->set_tag('PART');
         $parent->iset()->set_hash({'pos' => 'part'});
         $parent = $grandparent;
+    }
+    ###!!! DEBUG
+    elsif($node->form() =~ m/^a$/i && $parent->form() =~ m/^(to|sice)$/i)
+    {
+        log_warn("'a to', parent is 'to', deprel of 'a' is $deprel, deprel of 'to' is ".$parent->deprel());
     }
     # Sometimes "to" is already attached to "a", and we only change the relation type.
     elsif(lc($node->form()) =~ m/^(to|sice)$/i && $deprel =~ m/^(det|cc|mark|advmod|discourse)(:|$)/ &&
@@ -920,11 +926,10 @@ sub fix_a_to
         }
     }
     # Occasionally "a" and "to" are attached as siblings rather than one to the other.
-    elsif(lc($node->form()) =~ m/^(a)$/ && $deprel =~ m/^cc(:|$)/ &&
-          defined($node->get_right_neighbor()) &&
-          lc($node->get_right_neighbor()->form()) =~ m/^(to)$/ && $node->get_right_neighbor()->deprel() =~ m/^(det|cc|mark|advmod|discourse)(:|$)/)
+    elsif(lc($node->form()) =~ m/^(a)$/ && $deprel =~ m/^cc(:|$)/ && defined($rnbr) &&
+          lc($rnbr->form()) =~ m/^(to)$/ && $rnbr->deprel() =~ m/^(det|cc|mark|advmod|discourse)(:|$)/)
     {
-        my $to = $node->get_right_neighbor();
+        my $to = $rnbr;
         $to->set_parent($node);
         $to->set_deprel('fixed');
         # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
