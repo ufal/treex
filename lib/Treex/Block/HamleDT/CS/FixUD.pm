@@ -921,7 +921,7 @@ sub fix_a_to
         }
     }
     # Occasionally "a" and "to" are attached as siblings rather than one to the other.
-    elsif($node->form() =~ m/^(a)$/i && $deprel =~ m/^cc(:|$)/ && defined($rnbr) &&
+    elsif($node->form() =~ m/^(a)$/i && $node->deprel() =~ m/^cc(:|$)/ && defined($rnbr) &&
           $rnbr->form() =~ m/^(to|sice)$/i && $rnbr->deprel() =~ m/^(det|cc|mark|advmod|discourse|dep)(:|$)/ && $rnbr->ord() == $node->ord()+1)
     {
         $rnbr->set_parent($node);
@@ -945,7 +945,8 @@ sub fix_a_to
     elsif($node->form() =~ m/^(a|to)$/i && $self->get_node_spanstring($node->get_root()) =~ m/a to jako učitel/i)
     {
         $self->log_sentence($node);
-        log_warn($node->form()." is attached to ".$node->parent()->form()." as '".$node->deprel()."'");
+        log_warn($node->form()." is attached to ".$node->parent()->form()." as '".$node->deprel()."' and its ord is ".$node->ord());
+        log_warn("Right neighbor is ".$rnbr->form()." attached to ".$rnbr->parent()->form()." as '".$rnbr->deprel()."' and its ord is ".$rnbr->ord());
     }
 }
 
