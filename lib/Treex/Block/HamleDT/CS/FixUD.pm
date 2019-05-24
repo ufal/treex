@@ -952,7 +952,7 @@ sub fix_to_jest
     {
         $rsbl[0]->set_parent($node);
         $rsbl[0]->set_deprel('punct');
-        $rsbl[2]->set_parent($rsiblings[1]);
+        $rsbl[2]->set_parent($rsbl[1]);
         $rsbl[2]->set_deprel('punct');
         $rsbl[1]->set_parent($node);
         $rsbl[1]->set_deprel('fixed');
