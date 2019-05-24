@@ -924,16 +924,15 @@ sub fix_a_to
     elsif($node->form() =~ m/^(a)$/i && $deprel =~ m/^cc(:|$)/ && defined($rnbr) &&
           $rnbr->form() =~ m/^(to|sice)$/i && $rnbr->deprel() =~ m/^(det|cc|mark|advmod|discourse|dep)(:|$)/ && $rnbr->ord() == $node->ord()+1)
     {
-        my $to = $rnbr;
-        $to->set_parent($node);
-        $to->set_deprel('fixed');
+        $rnbr->set_parent($node);
+        $rnbr->set_deprel('fixed');
         # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
         # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
-        if(lc($node->form()) eq 'to')
+        if(lc($rnbr->form()) eq 'to')
         {
-            $node->set_lemma('to');
-            $node->set_tag('PART');
-            $node->iset()->set_hash({'pos' => 'part'});
+            $rnbr->set_lemma('to');
+            $rnbr->set_tag('PART');
+            $rnbr->iset()->set_hash({'pos' => 'part'});
         }
     }
     # "a tím i" ("and this way also")
