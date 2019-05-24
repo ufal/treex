@@ -521,35 +521,6 @@ sub fix_constructions
         $n2->set_parent($node);
         $n2->set_deprel('fixed');
     }
-    # Similar: "to jest/to je/to znamená".
-    elsif(lc($node->form()) =~ m/^(to)$/ && $deprel =~ m/^(cc|advmod)(:|$)/ &&
-          defined($node->get_right_neighbor()) &&
-          lc($node->get_right_neighbor()->form()) =~ m/^(je(st)?|znamená)$/ && $node->get_right_neighbor()->deprel() =~ m/^(cc|advmod)(:|$)/)
-    {
-        my $je = $node->get_right_neighbor();
-        $je->set_parent($node);
-        $je->set_deprel('fixed');
-        # Normalize the attachment of "to" (sometimes it is 'advmod' but it should always be 'cc').
-        $deprel = 'cc';
-        $node->set_deprel($deprel);
-    }
-    # If "to jest" is abbreviated and tokenized as "t . j .", the above branch
-    # will not catch it.
-    elsif(lc($node->form()) eq 't' && $deprel =~ m/^cc(:|$)/ &&
-          scalar($node->get_siblings({'following_only' => 1})) >= 3 &&
-          # following_only implies ordered
-          lc(($node->get_siblings({'following_only' => 1}))[0]->form()) eq '.' &&
-          lc(($node->get_siblings({'following_only' => 1}))[1]->form()) eq 'j' &&
-          lc(($node->get_siblings({'following_only' => 1}))[2]->form()) eq '.')
-    {
-        my @rsiblings = $node->get_siblings({'following_only' => 1});
-        $rsiblings[0]->set_parent($node);
-        $rsiblings[0]->set_deprel('punct');
-        $rsiblings[2]->set_parent($rsiblings[1]);
-        $rsiblings[2]->set_deprel('punct');
-        $rsiblings[1]->set_parent($node);
-        $rsiblings[1]->set_deprel('fixed');
-    }
     # "takové přání, jako je svatba" ("such a wish as (is) a wedding")
     elsif($node->lemma() eq 'být' && $deprel =~ m/^cc(:|$)/ &&
           defined($node->get_left_neighbor()) && lc($node->get_left_neighbor()->form()) eq 'jako' &&
@@ -872,6 +843,7 @@ sub fix_constructions
         $node->set_deprel($deprel);
     }
     $self->fix_auxiliary_verb($node);
+    $self->fix_to_jest($node);
     # Functional nodes normally do not have modifiers of their own, with a few
     # exceptions, such as coordination. Most modifiers should be attached
     # directly to the content word.
@@ -938,6 +910,52 @@ sub fix_auxiliary_verb
             $node->iset()->clear('verbtype');
             $node->set_tag('VERB');
         }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Czech "to jest", lit. "that is", is a multi-word expression that functions as
+# a conjunction. Nevertheless, the two words are still tagged as determiner and
+# verb, respectively. PDT does not define any special treatment of multi-word
+# expressions, and there are many different annotations of this expression.
+#------------------------------------------------------------------------------
+sub fix_to_jest
+{
+    my $self = shift;
+    my $node = shift;
+    my $deprel = $node->deprel();
+    my $rnbr = $node->get_right_neighbor();
+    my @rsbl = $node->get_siblings({'following_only' => 1});
+    # Similar: "to jest/to je/to znamená".
+    # Depending on the original annotation and on the order of processing, "to"
+    # may be already attached as 'det', or it may be still 'cc' or 'advmod'.
+    if($node->form() =~ m/^(to)$/i && $deprel =~ m/^(det|cc|advmod)(:|$)/ && defined($rnbr) &&
+       $rnbr->form() =~ m/^(je(st)?|znamená)$/i && $rnbr->deprel() =~ m/^(cc|advmod)(:|$)/)
+    {
+        my $je = $node->get_right_neighbor();
+        $je->set_parent($node);
+        $je->set_deprel('fixed');
+        # Normalize the attachment of "to" (sometimes it is 'advmod' but it should always be 'cc').
+        $deprel = 'cc';
+        $node->set_deprel($deprel);
+    }
+    # If "to jest" is abbreviated and tokenized as "t . j .", the above branch
+    # will not catch it.
+    elsif(lc($node->form()) eq 't' && $deprel =~ m/^cc(:|$)/ &&
+          scalar(@rsbl) >= 3 &&
+          # following_only implies ordered
+          lc($rsbl[0]->form()) eq '.' &&
+          lc($rsbl[1]->form()) eq 'j' &&
+          lc($rsbl[2]->form()) eq '.')
+    {
+        $rsbl[0]->set_parent($node);
+        $rsbl[0]->set_deprel('punct');
+        $rsbl[2]->set_parent($rsiblings[1]);
+        $rsbl[2]->set_deprel('punct');
+        $rsbl[1]->set_parent($node);
+        $rsbl[1]->set_deprel('fixed');
     }
 }
 
