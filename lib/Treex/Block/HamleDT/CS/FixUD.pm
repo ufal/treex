@@ -308,22 +308,6 @@ sub fix_constructions
         $node->set_deprel($deprel);
         $parent->set_deprel('advmod');
     }
-    # The expression "pokud možno" ("if possible") functions as an adverb.
-    elsif(lc($node->form()) eq 'možno' && $parent->ord() == $node->ord()-1 &&
-          lc($parent->form()) eq 'pokud')
-    {
-        $deprel = 'fixed';
-        $node->set_deprel($deprel);
-        $parent->set_deprel('advmod');
-    }
-    elsif(lc($node->form()) eq 'možno' && defined($node->get_left_neighbor()) &&
-          lc($node->get_left_neighbor()->form()) eq 'pokud')
-    {
-        $node->set_parent($node->get_left_neighbor());
-        $deprel = 'fixed';
-        $node->set_deprel($deprel);
-        $parent->set_deprel('advmod');
-    }
     # The expression "všeho všudy" ("altogether") functions as an adverb.
     elsif(lc($node->form()) eq 'všeho' && $parent->ord() == $node->ord()+1 &&
           lc($parent->form()) eq 'všudy')
@@ -802,6 +786,7 @@ sub fix_constructions
         $node->set_deprel($deprel);
     }
     $self->fix_auxiliary_verb($node);
+    $self->fix_pokud_mozno($node);
     $self->fix_a_to($node);
     $self->fix_to_jest($node);
     # Functional nodes normally do not have modifiers of their own, with a few
@@ -870,6 +855,34 @@ sub fix_auxiliary_verb
             $node->iset()->clear('verbtype');
             $node->set_tag('VERB');
         }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Czech "pokud možno", lit. "if possible", is a multi-word expression that
+# functions as an adverb.
+#------------------------------------------------------------------------------
+sub fix_pokud_mozno
+{
+    my $self = shift;
+    my $node = shift;
+    my $parent = $node->parent();
+    my $lnbr = $node->get_left_neighbor();
+    # The expression "pokud možno" ("if possible") functions as an adverb.
+    elsif(lc($node->form()) eq 'možno' && $parent->ord() == $node->ord()-1 &&
+          lc($parent->form()) eq 'pokud')
+    {
+        $node->set_deprel('fixed');
+        $parent->set_deprel('advmod');
+    }
+    elsif(lc($node->form()) eq 'možno' && defined($lnbr) && $lnbr->ord() == $node->ord()-1 &&
+          lc($lnbr->form()) eq 'pokud')
+    {
+        $node->set_parent($lnbr);
+        $node->set_deprel('fixed');
+        $lnbr->set_deprel('advmod');
     }
 }
 
