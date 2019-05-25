@@ -871,8 +871,8 @@ sub fix_pokud_mozno
     my $parent = $node->parent();
     my $lnbr = $node->get_left_neighbor();
     # The expression "pokud možno" ("if possible") functions as an adverb.
-    elsif(lc($node->form()) eq 'možno' && $parent->ord() == $node->ord()-1 &&
-          lc($parent->form()) eq 'pokud')
+    if(lc($node->form()) eq 'možno' && $parent->ord() == $node->ord()-1 &&
+       lc($parent->form()) eq 'pokud')
     {
         $node->set_deprel('fixed');
         $parent->set_deprel('advmod');
