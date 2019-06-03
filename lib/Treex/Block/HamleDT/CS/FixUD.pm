@@ -94,6 +94,11 @@ sub fix_morphology
     elsif($lform =~ m/^[<>]$/)
     {
         $iset->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+        if($deprel =~ m/^punct(:|$)/)
+        {
+            $deprel = 'cc';
+            $node->set_deprel($deprel);
+        }
     }
     # Make sure that the UPOS tag still matches Interset features.
     $node->set_tag($node->iset()->get_upos());
@@ -303,14 +308,6 @@ sub fix_constructions
         $node->set_deprel($deprel);
         $parent->set_deprel('advmod');
     }
-    # The expression "pokud možno" ("if possible") functions as an adverb.
-    elsif(lc($node->form()) eq 'možno' && $parent->ord() == $node->ord()-1 &&
-          lc($parent->form()) eq 'pokud')
-    {
-        $deprel = 'fixed';
-        $node->set_deprel($deprel);
-        $parent->set_deprel('advmod');
-    }
     # The expression "všeho všudy" ("altogether") functions as an adverb.
     elsif(lc($node->form()) eq 'všeho' && $parent->ord() == $node->ord()+1 &&
           lc($parent->form()) eq 'všudy')
@@ -458,60 +455,6 @@ sub fix_constructions
         $node->set_parent($parent);
         $node->set_deprel($deprel);
     }
-    # Czech "a to" ("viz.") is a multi-word conjunction. In PDT it is headed by
-    # "to", which is a demonstrative pronoun, not conjunction. Transform it and
-    # use the 'fixed' relation.
-    elsif(lc($node->form()) eq 'a' && $deprel =~ m/^cc(:|$)/ &&
-          $parent->form() =~ m/^(to|sice)$/i && $parent->deprel() =~ m/^(cc|advmod|discourse)(:|$)/ && $parent->ord() > $node->ord())
-    {
-        my $grandparent = $parent->parent();
-        $node->set_parent($grandparent);
-        $deprel = 'cc';
-        $node->set_deprel($deprel);
-        $parent->set_parent($node);
-        $parent->set_deprel('fixed');
-        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
-        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
-        $parent->set_lemma('to');
-        $parent->set_tag('PART');
-        $parent->iset()->set_hash({'pos' => 'part'});
-        $parent = $grandparent;
-    }
-    # Sometimes "to" is already attached to "a", and we only change the relation type.
-    elsif(lc($node->form()) =~ m/^(to|sice)$/i && $deprel =~ m/^(cc|advmod|discourse|mark)(:|$)/ &&
-          lc($parent->form()) eq 'a' && $parent->ord() == $node->ord()-1)
-    {
-        $deprel = 'fixed';
-        $node->set_deprel($deprel);
-        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
-        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
-        if(lc($node->form()) eq 'to')
-        {
-            $node->set_lemma('to');
-            $node->set_tag('PART');
-            $node->iset()->set_hash({'pos' => 'part'});
-        }
-    }
-    # "a tím i" ("and this way also")
-    elsif(lc($node->form()) eq 'tím' && $deprel =~ m/^(cc|advmod)(:|$)/)
-    {
-        $deprel = 'obl';
-        $node->set_deprel($deprel);
-    }
-    # Occasionally "a" and "to" are attached as siblings rather than one to the other.
-    elsif(lc($node->form()) =~ m/^(a)$/ && $deprel =~ m/^cc(:|$)/ &&
-          defined($node->get_right_neighbor()) &&
-          lc($node->get_right_neighbor()->form()) =~ m/^(to)$/ && $node->get_right_neighbor()->deprel() =~ m/^(cc|advmod|discourse)(:|$)/)
-    {
-        my $to = $node->get_right_neighbor();
-        $to->set_parent($node);
-        $to->set_deprel('fixed');
-        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
-        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
-        $to->set_lemma('to');
-        $to->set_tag('PART');
-        $to->iset()->set_hash({'pos' => 'part'});
-    }
     # Similar: "co možná"
     elsif($node->form() =~ m/^co$/i && $deprel =~ m/^(cc|advmod|discourse)(:|$)/ &&
           defined($node->get_right_neighbor()) &&
@@ -520,35 +463,6 @@ sub fix_constructions
         my $n2 = $node->get_right_neighbor();
         $n2->set_parent($node);
         $n2->set_deprel('fixed');
-    }
-    # Similar: "to jest/to je/to znamená".
-    elsif(lc($node->form()) =~ m/^(to)$/ && $deprel =~ m/^(cc|advmod)(:|$)/ &&
-          defined($node->get_right_neighbor()) &&
-          lc($node->get_right_neighbor()->form()) =~ m/^(je(st)?|znamená)$/ && $node->get_right_neighbor()->deprel() =~ m/^(cc|advmod)(:|$)/)
-    {
-        my $je = $node->get_right_neighbor();
-        $je->set_parent($node);
-        $je->set_deprel('fixed');
-        # Normalize the attachment of "to" (sometimes it is 'advmod' but it should always be 'cc').
-        $deprel = 'cc';
-        $node->set_deprel($deprel);
-    }
-    # If "to jest" is abbreviated and tokenized as "t . j .", the above branch
-    # will not catch it.
-    elsif(lc($node->form()) eq 't' && $deprel =~ m/^cc(:|$)/ &&
-          scalar($node->get_siblings({'following_only' => 1})) >= 3 &&
-          # following_only implies ordered
-          lc(($node->get_siblings({'following_only' => 1}))[0]->form()) eq '.' &&
-          lc(($node->get_siblings({'following_only' => 1}))[1]->form()) eq 'j' &&
-          lc(($node->get_siblings({'following_only' => 1}))[2]->form()) eq '.')
-    {
-        my @rsiblings = $node->get_siblings({'following_only' => 1});
-        $rsiblings[0]->set_parent($node);
-        $rsiblings[0]->set_deprel('punct');
-        $rsiblings[2]->set_parent($rsiblings[1]);
-        $rsiblings[2]->set_deprel('punct');
-        $rsiblings[1]->set_parent($node);
-        $rsiblings[1]->set_deprel('fixed');
     }
     # "takové přání, jako je svatba" ("such a wish as (is) a wedding")
     elsif($node->lemma() eq 'být' && $deprel =~ m/^cc(:|$)/ &&
@@ -872,6 +786,9 @@ sub fix_constructions
         $node->set_deprel($deprel);
     }
     $self->fix_auxiliary_verb($node);
+    $self->fix_pokud_mozno($node);
+    $self->fix_a_to($node);
+    $self->fix_to_jest($node);
     # Functional nodes normally do not have modifiers of their own, with a few
     # exceptions, such as coordination. Most modifiers should be attached
     # directly to the content word.
@@ -938,6 +855,154 @@ sub fix_auxiliary_verb
             $node->iset()->clear('verbtype');
             $node->set_tag('VERB');
         }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Czech "pokud možno", lit. "if possible", is a multi-word expression that
+# functions as an adverb.
+#------------------------------------------------------------------------------
+sub fix_pokud_mozno
+{
+    my $self = shift;
+    my $node = shift;
+    my $parent = $node->parent();
+    my $lnbr = $node->get_left_neighbor();
+    # The expression "pokud možno" ("if possible") functions as an adverb.
+    if(lc($node->form()) eq 'možno' && $parent->ord() == $node->ord()-1 &&
+       lc($parent->form()) eq 'pokud')
+    {
+        $node->set_deprel('fixed');
+        $parent->set_deprel('advmod');
+    }
+    elsif(lc($node->form()) eq 'možno' && defined($lnbr) && $lnbr->ord() == $node->ord()-1 &&
+          lc($lnbr->form()) eq 'pokud')
+    {
+        $node->set_parent($lnbr);
+        $node->set_deprel('fixed');
+        $lnbr->set_deprel('advmod');
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Czech "a to/a sice", lit. "and that" ("viz."), is a multi-word expression that
+# functions as a conjunction. The second word is tagged as determiner, and PDT
+# has several inconsistent annotations for this expression.
+#------------------------------------------------------------------------------
+sub fix_a_to
+{
+    my $self = shift;
+    my $node = shift;
+    my $parent = $node->parent();
+    my $deprel = $node->deprel();
+    my $lnbr = $node->get_left_neighbor();
+    # Depending on the original annotation and on the order of processing, "to"
+    # may be already attached as 'det', or it may be still 'cc', 'mark' or 'advmod'.
+    if($node->form() =~ m/^a$/i && $deprel =~ m/^cc(:|$)/ &&
+       $parent->form() =~ m/^(to|sice)$/i && $parent->deprel() =~ m/^(det|cc|mark|advmod|discourse|dep)(:|$)/ && $parent->ord() == $node->ord()+1)
+    {
+        my $grandparent = $parent->parent();
+        $node->set_parent($grandparent);
+        $deprel = 'cc';
+        $node->set_deprel($deprel);
+        $parent->set_parent($node);
+        $parent->set_deprel('fixed');
+        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
+        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
+        $parent->set_lemma('to');
+        $parent->set_tag('PART');
+        $parent->iset()->set_hash({'pos' => 'part'});
+        $parent = $grandparent;
+    }
+    # Sometimes "to" is already attached to "a", and we only change the relation type.
+    elsif($node->form() =~ m/^(to|sice)$/i && $deprel =~ m/^(det|cc|mark|advmod|discourse|dep)(:|$)/ &&
+          $parent->form() =~ m/^(a)$/i && $parent->ord() == $node->ord()-1)
+    {
+        $deprel = 'fixed';
+        $node->set_deprel($deprel);
+        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
+        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
+        if(lc($node->form()) eq 'to')
+        {
+            $node->set_lemma('to');
+            $node->set_tag('PART');
+            $node->iset()->set_hash({'pos' => 'part'});
+        }
+    }
+    # Occasionally "a" and "to" are attached as siblings rather than one to the other.
+    # Note: If "to" was originally attached to "a" and "a" had a functional deprel
+    # such as 'cc', "to" was probably reattached to the parent of "a" at the time
+    # "a" was being processed. So they are now siblings, too (if we are now looking
+    # at "to").
+    elsif($node->form() =~ m/^(to|sice)$/i && $deprel =~ m/^(det|cc|mark|advmod|discourse|dep)(:|$)/ && defined($lnbr) &&
+          $lnbr->form() =~ m/^(a)$/i && $lnbr->ord() == $node->ord()-1)
+    {
+        $node->set_parent($lnbr);
+        $node->set_deprel('fixed');
+        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
+        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
+        if(lc($node->form()) eq 'to')
+        {
+            $node->set_lemma('to');
+            $node->set_tag('PART');
+            $node->iset()->set_hash({'pos' => 'part'});
+        }
+    }
+    # "a tím i" ("and this way also")
+    elsif(lc($node->form()) eq 'tím' && $deprel =~ m/^(cc|advmod)(:|$)/)
+    {
+        $deprel = 'obl';
+        $node->set_deprel($deprel);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Czech "to jest", lit. "that is", is a multi-word expression that functions as
+# a conjunction. Nevertheless, the two words are still tagged as determiner and
+# verb, respectively. PDT does not define any special treatment of multi-word
+# expressions, and there are many different annotations of this expression.
+#------------------------------------------------------------------------------
+sub fix_to_jest
+{
+    my $self = shift;
+    my $node = shift;
+    my $deprel = $node->deprel();
+    my $rnbr = $node->get_right_neighbor();
+    my @rsbl = $node->get_siblings({'following_only' => 1});
+    # Similar: "to jest/to je/to znamená".
+    # Depending on the original annotation and on the order of processing, "to"
+    # may be already attached as 'det', or it may be still 'cc' or 'advmod'.
+    if($node->form() =~ m/^(to)$/i && $deprel =~ m/^(det|cc|advmod)(:|$)/ && defined($rnbr) &&
+       $rnbr->form() =~ m/^(je(st)?|znamená)$/i && $rnbr->deprel() =~ m/^(cc|advmod)(:|$)/)
+    {
+        my $je = $node->get_right_neighbor();
+        $je->set_parent($node);
+        $je->set_deprel('fixed');
+        # Normalize the attachment of "to" (sometimes it is 'advmod' but it should always be 'cc').
+        $deprel = 'cc';
+        $node->set_deprel($deprel);
+    }
+    # If "to jest" is abbreviated and tokenized as "t . j .", the above branch
+    # will not catch it.
+    elsif(lc($node->form()) eq 't' && $deprel =~ m/^(det|cc|advmod)(:|$)/ &&
+          scalar(@rsbl) >= 3 &&
+          # following_only implies ordered
+          lc($rsbl[0]->form()) eq '.' &&
+          lc($rsbl[1]->form()) eq 'j' &&
+          lc($rsbl[2]->form()) eq '.')
+    {
+        $rsbl[0]->set_parent($node);
+        $rsbl[0]->set_deprel('punct');
+        $rsbl[2]->set_parent($rsbl[1]);
+        $rsbl[2]->set_deprel('punct');
+        $rsbl[1]->set_parent($node);
+        $rsbl[1]->set_deprel('fixed');
     }
 }
 
@@ -1625,6 +1690,23 @@ sub fix_annotation_errors
         my @subtree = $self->get_node_subtree($node);
         $subtree[12]->set_parent($subtree[14]);
         $subtree[13]->set_parent($subtree[14]);
+    }
+    elsif($spanstring =~ m/^Konec pravopisných bojů \( \? \)$/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[4]->set_parent($subtree[0]);
+        $subtree[3]->set_parent($subtree[4]);
+        $subtree[5]->set_parent($subtree[4]);
+    }
+    elsif($spanstring =~ m/^My , národ slovenský , \. \. \. společně/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        if(scalar(@subtree)>=25 && $subtree[24]->form() eq ',')
+        {
+            $subtree[21]->set_parent($subtree[0]);
+            $subtree[22]->set_parent($subtree[0]);
+            $subtree[23]->set_parent($subtree[0]);
+        }
     }
     # The following annotation errors have been found in Czech CAC.
     elsif($spanstring =~ m/mnohý z nich v sobě určitou naději živí , ale jen několik vyvolených může být o své síle přesvědčeno/i)

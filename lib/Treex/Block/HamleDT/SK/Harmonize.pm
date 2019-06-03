@@ -309,10 +309,67 @@ sub fix_morphology
                 if($form !~ m/l[aoiy]?$/i)
                 {
                     $iset->set('pos', 'adj');
+                    # Participles other than the l-participle are tagged ADJ in Slovak UD.
+                    # They have a special category in the original treebank and their lemma
+                    # should be the masculine singular nominative form of the participle,
+                    # not the infinitive of the verb. However, there are a few errors. Fix them.
+                    # NOTE: We will repeat this block below for nodes that are not tagged as participles
+                    # but as ordinary adjectives.
+                    ###!!! This should probably be done at one place.
+                    if($node->lemma() =~ m/ť$/)
+                    {
+                        my $lderiv = $node->lemma();
+                        my $lemma = lc($node->form());
+                        # Check that the form has an expected suffix, and replace it with the canonical suffix.
+                        # If the suffix is not there, maybe we have a different problem (e.g. "plávajú" tagged ADJ + VerbForm=Part is a tagging error).
+                        unless($lemma =~ m/^(tuhnú)$/)
+                        {
+                            if($lemma =~ s/([nt])(ý|á|é|í|ého|ému|om|ým|ej|ú|ou|ých|ými)$/${1}ý/ ||
+                               $lemma =~ s/c(i|a|e|eho|emu|om|im|ej|u|ou|ich|imi)$/ci/)
+                            {
+                                $node->set_misc_attr('LDeriv', $lderiv);
+                                $node->set_lemma($lemma);
+                            }
+                        }
+                    }
                 }
                 # We do not annotate person with Slavic participles because it is not expressed morphologically.
                 # However, the l-participles in Slovak seem to have the person feature.
                 $iset->clear('person');
+            }
+        }
+        # Fix lemmas of deverbal adjectives.
+        if($node->is_adjective() && $node->lemma() =~ m/ť$/)
+        {
+            my $lderiv = $node->lemma();
+            my $lemma = lc($node->form());
+            # Check that the form has an expected suffix, and replace it with the canonical suffix.
+            # If the suffix is not there, maybe we have a different problem (e.g. "plávajú" tagged ADJ + VerbForm=Part is a tagging error).
+            unless($lemma =~ m/^(tuhnú)$/)
+            {
+                if($lemma =~ s/([nt])(ý|á|é|í|ého|ému|om|ým|ej|ú|ou|ých|ými)$/${1}ý/ ||
+                   $lemma =~ s/c(i|a|e|eho|emu|om|im|ej|u|ou|ich|imi)$/ci/)
+                {
+                    $node->set_misc_attr('LDeriv', $lderiv);
+                    $node->set_lemma($lemma);
+                }
+            }
+            # Fix tags and features of verbs that are mistakenly tagged as participles.
+            my $lcform = lc($node->form());
+            if($lcform eq 'trúfa')
+            {
+                $node->set_tag('VERB');
+                $node->iset()->set_hash({'pos' => 'verb', 'aspect' => 'imp', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'number' => 'sing', 'person' => '3', 'polarity' => 'pos'});
+            }
+            elsif($lcform =~ m/^(plávajú|tuhnú)$/)
+            {
+                $node->set_tag('VERB');
+                $node->iset()->set_hash({'pos' => 'verb', 'aspect' => 'imp', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'number' => 'plur', 'person' => '3', 'polarity' => 'pos'});
+            }
+            elsif($lcform eq 'nestoja')
+            {
+                $node->set_tag('VERB');
+                $node->iset()->set_hash({'pos' => 'verb', 'aspect' => 'imp', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'number' => 'plur', 'person' => '3', 'polarity' => 'neg'});
             }
         }
         # Distinguish coordinating and subordinating conjunctions.

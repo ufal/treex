@@ -21,7 +21,7 @@ sub log_sentence
     # get_position() returns numbers from 0 but Tred numbers sentences from 1.
     my $i = $root->get_bundle()->get_position() + 1;
     my $sentence = $root->get_zone()->sentence() // '';
-    log_info( "\#$i $sentence" );
+    log_warn( "\#$i $sentence" );
 }
 
 

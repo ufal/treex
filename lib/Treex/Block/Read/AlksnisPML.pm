@@ -93,24 +93,32 @@ sub _convert_tree
     my $self = shift;
     my $pml_node = shift;
     my $treex_node = shift;
-    $self->_copy_attr($pml_node, $treex_node, 'word_ref', 'ord');
-    if(!$treex_node->is_root())
+    # Unlike some other PML applications, Alksnis does not have a PML element
+    # corresponding to the artificial root node. Therefore if we are in the
+    # Treex rood, we must create a child but keep the Alksnis root as the
+    # source for the child.
+    my $root_here = 0;
+    if($treex_node->is_root())
     {
-        if($self->schema_version() eq 'antisDplus_schema')
-        {
-            $self->_copy_attr($pml_node, $treex_node, 'form', 'form');
-            $self->_copy_attr($pml_node, $treex_node, 'lemma', 'lemma');
-            $self->_copy_attr($pml_node, $treex_node, 'ana', 'tag');
-            $self->_copy_attr($pml_node, $treex_node, 'syfun', 'deprel');
-        }
-        else # AlksnisSchema-1.3
-        {
-            $self->_copy_attr($pml_node, $treex_node, 'token', 'form');
-            $self->_copy_attr($pml_node, $treex_node, 'lemma', 'lemma');
-            $self->_copy_attr($pml_node, $treex_node, 'morph', 'tag');
-            $self->_copy_attr($pml_node, $treex_node, 'synt', 'deprel');
-        }
-        #$self->_copy_attr($pml_node, $treex_node, 'role', 'functor');
+        $root_here = 1;
+        $treex_node->set_attr('ord', 0);
+        my $treex_child = $treex_node->create_child();
+        $treex_node = $treex_child;
+    }
+    $self->_copy_attr($pml_node, $treex_node, 'word_ref', 'ord');
+    if($self->schema_version() eq 'antisDplus_schema')
+    {
+        $self->_copy_attr($pml_node, $treex_node, 'form', 'form');
+        $self->_copy_attr($pml_node, $treex_node, 'lemma', 'lemma');
+        $self->_copy_attr($pml_node, $treex_node, 'ana', 'tag');
+        $self->_copy_attr($pml_node, $treex_node, 'syfun', 'deprel');
+    }
+    else # AlksnisSchema-1.3
+    {
+        $self->_copy_attr($pml_node, $treex_node, 'token', 'form');
+        $self->_copy_attr($pml_node, $treex_node, 'lemma', 'lemma');
+        $self->_copy_attr($pml_node, $treex_node, 'morph', 'tag');
+        $self->_copy_attr($pml_node, $treex_node, 'synt', 'deprel');
     }
     foreach my $pml_child ($pml_node->children())
     {
@@ -118,9 +126,9 @@ sub _convert_tree
         $self->_convert_tree($pml_child, $treex_child);
     }
     # It is not guaranteed that the ord values in the input tree form a 1..N sequence.
-    if($treex_node->is_root())
+    if($root_here)
     {
-        $treex_node->_normalize_node_ordering();
+        $treex_node->get_root()->_normalize_node_ordering();
     }
 }
 

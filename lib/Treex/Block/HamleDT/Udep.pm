@@ -503,6 +503,11 @@ sub convert_deprels
             {
                 $deprel = 'discourse';
             }
+            # Also in Lithuanian Alksnis, numbers of paragraphs are attached as AuxZ.
+            elsif($node->is_numeral())
+            {
+                $deprel = 'dep';
+            }
             # AuxZ is an emphasizing word (“especially on Monday”).
             # It also occurs with numbers (“jen čtyři firmy”, “jen několik procent”).
             # The word "jen" ("only") is not necessarily a restriction. It rather emphasizes that the number is a restriction.
