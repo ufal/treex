@@ -44,6 +44,7 @@ sub next_document {
         my $fuform;
         my @funodes = ();
         my $funspaf; # no space after the fused token?
+        my $fumisc; # MISC column of fused token line, except SpaceAfter=No, which is stored in $funspaf
 
         LINE:
         foreach my $line (@lines) {
@@ -101,11 +102,21 @@ sub next_document {
                 $fuform = $form;
                 $printed_up_to = $2;
                 $sentence .= $form if defined $form;
-                if ($misc =~ m/SpaceAfter=No/)
+                # MISC may contain other information than SpaceAfter=No and we must preserve it.
+                unless($misc eq '_')
                 {
-                    $funspaf = 1;
+                    my @misc = split(/\|/, $misc);
+                    if(any {$_ eq 'SpaceAfter=No'} (@misc))
+                    {
+                        $funspaf = 1;
+                    }
+                    @misc = grep {$_ ne 'SpaceAfter=No'} (@misc);
+                    if (scalar(@misc) > 0)
+                    {
+                        $fumisc = join('|', @misc);
+                    }
                 }
-                else
+                unless($funspaf)
                 {
                     $sentence .= ' ';
                 }
@@ -114,7 +125,7 @@ sub next_document {
             elsif ($id > $printed_up_to)
             {
                 $sentence .= $form if defined $form;
-                $sentence .= ' ' if $misc !~ /SpaceAfter=No/;
+                $sentence .= ' ' if(any {$_ eq 'SpaceAfter=No'} (split(/\|/, $misc)));
             }
 
             my $newnode = $aroot->create_child();
@@ -134,6 +145,7 @@ sub next_document {
                     if (scalar(@funodes) >= 2)
                     {
                         $funodes[0]->set_fused_form($fuform);
+                        $funodes[0]->set_fused_misc($fumisc);
                         for (my $i = 0; $i < $#funodes; $i++)
                         {
                             $funodes[$i]->set_fused_with_next(1);
@@ -152,6 +164,7 @@ sub next_document {
                     $fuform = undef;
                     splice(@funodes);
                     $funspaf = undef;
+                    $fumisc = undef;
                 }
             }
             $newnode->set_form($form);
@@ -164,41 +177,57 @@ sub next_document {
             $newnode->set_deprel($deprel);
             $newnode->set_conll_deprel($deprel);
 
-            $newnode->iset->set_upos($upos);
-            if ($feats ne '_') {
-                $newnode->iset->add_ufeatures(split(/\|/, $feats));
+            $newnode->iset()->set_upos($upos);
+            if ($feats ne '_')
+            {
+                $newnode->iset()->add_ufeatures(split(/\|/, $feats));
+                # UD features that are not defined in Interset are now stored
+                # as subfeatures of the 'other' feature of Interset. Unfortunately,
+                # the 'other' feature will not be saved with the Treex document.
+                # In order to save it, we must make it a wild attribute of the node.
+                my $other = $newnode->iset()->other();
+                if(defined($other) && ref($other) eq 'HASH')
+                {
+                    $newnode->wild()->{iset_other} = $other;
+                }
             }
-            if ($misc && $misc ne '_') {
+            if ($misc && $misc ne '_')
+            {
                 my @misc = split(/\|/, $misc);
                 # Check whether MISC contains SpaceAfter=No.
                 my $n0 = scalar(@misc);
                 @misc = grep {$_ ne 'SpaceAfter=No'} (@misc);
                 my $n1 = scalar(@misc);
-                if ($n1 < $n0) {
+                if ($n1 < $n0)
+                {
                     $newnode->set_no_space_after(1);
                 }
                 # Check whether MISC contains transliteration of the word form.
                 my @translit = map {my $x = $_; $x =~ s/^Translit=//; $x} (grep {m/^Translit=(.+)$/} (@misc));
-                if (scalar(@translit) > 0) {
+                if (scalar(@translit) > 0)
+                {
                     $newnode->set_translit($translit[0]);
                     @misc = grep {!m/^Translit=/} (@misc);
                 }
                 # Check whether MISC contains transliteration of the lemma.
                 my @ltranslit = map {my $x = $_; $x =~ s/^LTranslit=//; $x} (grep {m/^LTranslit=(.+)$/} (@misc));
-                if (scalar(@ltranslit) > 0) {
+                if (scalar(@ltranslit) > 0)
+                {
                     $newnode->set_ltranslit($ltranslit[0]);
                     @misc = grep {!m/^LTranslit=/} (@misc);
                 }
                 # Check whether MISC contains gloss of the word form.
                 my @gloss = map {my $x = $_; $x =~ s/^Gloss=//; $x} (grep {m/^Gloss=(.+)$/} (@misc));
-                if (scalar(@gloss) > 0) {
+                if (scalar(@gloss) > 0)
+                {
                     $newnode->set_gloss($gloss[0]);
                     @misc = grep {!m/^Gloss=/} (@misc);
                 }
                 # Remaining MISC attributes (those that we don't have special fields for) will be stored as wild attributes.
                 $newnode->set_misc(@misc);
             }
-            if ($deps && $deps ne '_'){
+            if ($deps && $deps ne '_')
+            {
                 $newnode->wild->{deps} = $deps;
             }
 

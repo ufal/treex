@@ -227,11 +227,17 @@ sub detect_counted_noun_in_genitive
             # We may not be able to just set the counted noun as the new head. If it is a Coordination, there are other rules for finding the head.
             ###!!! Maybe we should extend the set_head() method to special nonterminals? It would create an extra NTerm phrase, move the dependents
             ###!!! there and set the core as its head? That's what we will do here anyway, and it has been needed repeatedly.
-            # Detach the counted noun but not the other dependents. If there is anything else attached directly to the numeral,
-            # it should probably stay there. Example [cs]: "ze 128 křesel jich 94 připadne..." "jich" is the counted nominal, "94" is the number
-            # and "ze 128 křesel" ("out of 128 seats") modifies the number, not the nominal.
-            # Unfortunately there are also counterexamples and from the original Prague annotation we cannot decide what modifies the numeral and what the counted noun.
-            # If the noun is "procent" or "kilometrů", then it is quite likely that the modifier should be attached to the nominal ("31.5 kilometru od pobřeží").
+            # Detach the counted noun but not the other dependents. If there is
+            # anything else attached directly to the numeral, it should probably
+            # stay there. Example [cs]:
+            # "ze 128 křesel jich 94 připadne..." "jich" is the counted nominal,
+            # "94" is the number and "ze 128 křesel" ("out of 128 seats")
+            # modifies the number, not the nominal.
+            # Unfortunately there are also counterexamples and from the original
+            # Prague annotation we cannot decide what modifies the numeral and
+            # what the counted noun. If the noun is "procent" or "kilometrů",
+            # then it is quite likely that the modifier should be attached to the nominal
+            # ("31.5 kilometru od pobřeží").
             $counted_noun->set_parent(undef);
             my $deprel = $phrase->deprel();
             my $member = $phrase->is_member();
@@ -239,16 +245,16 @@ sub detect_counted_noun_in_genitive
             # If the deprel convertor returned nummod or its relatives, it means that the whole phrase (numeral+nominal)
             # originally modified another nominal as Atr. Since the counted noun is now going to head the phrase, we
             # have to change the deprel to nmod. We would not change the deprel if it was nsubj, obj, appos etc.
-            if($self->is_deprel($deprel, 'nummod'))
+            # Note: for indefinite quantifiers such as "několik" ("some"), the current deprel may be 'det:numgov'.
+            if($deprel =~ m/^(nummod|det)(:|$)/)
             {
-                ###!!! We must translate the label to the current dialect!
-                $deprel = 'nmod';
+                $deprel = $self->map_deprel('nmod');
             }
             # Create a new nonterminal phrase with the counted noun as the head.
             my $ntphrase = new Treex::Core::Phrase::NTerm('head' => $counted_noun);
             # Attach the numeral also as a dependent to the new phrase.
             $phrase->set_parent($ntphrase);
-            ###!!! We must translate the labels to the current dialect!
+            ###!!! We must translate the labels to the current dialect! (And we must add these subtypes to all dialects first.)
             $phrase->set_deprel($phrase->node()->iset()->prontype() eq '' ? 'nummod:gov' : 'det:numgov');
             $phrase->set_is_member(0);
             $phrase = $ntphrase;

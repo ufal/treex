@@ -4,7 +4,7 @@ use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
 use Treex::Tool::PhraseBuilder::StanfordToUD;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::HamleDT::Base'; # provides get_node_spanstring()
 
 
 
@@ -280,37 +280,6 @@ sub regenerate_upos
     {
         $node->set_tag($node->iset()->get_upos());
     }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Collects all nodes in a subtree of a given node. Useful for fixing known
-# annotation errors, see also get_node_spanstring(). Returns ordered list.
-#------------------------------------------------------------------------------
-sub get_node_subtree
-{
-    my $self = shift;
-    my $node = shift;
-    my @nodes = $node->get_descendants({'add_self' => 1, 'ordered' => 1});
-    return @nodes;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Collects word forms of all nodes in a subtree of a given node. Useful to
-# uniquely identify sentences or their parts that are known to contain
-# annotation errors. (We do not want to use node IDs because they are not fixed
-# enough in all treebanks.) Example usage:
-# if($self->get_node_spanstring($node) =~ m/^peça a URV em a sua mesada$/)
-#------------------------------------------------------------------------------
-sub get_node_spanstring
-{
-    my $self = shift;
-    my $node = shift;
-    my @nodes = $self->get_node_subtree($node);
-    return join(' ', map {$_->form() // ''} (@nodes));
 }
 
 

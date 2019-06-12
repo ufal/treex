@@ -12,7 +12,37 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
-    $self->fix_features($root);
+    # DZ: I used the method fix_features() in 2015 to perform the initial conversion
+    # of morphological features from the Romanian Multext-East tagset. Re-running
+    # it now might damage later changes done by the Romanian team.
+    #$self->fix_features($root);
+    $self->decide_between_det_and_num($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# When exporting Interset to UPOS and features, nonempty PronType co-occurring
+# with NumType=Card is taken to mark a pronominal quantifier and causes the
+# UPOS to be DET instead of NUM. However, the word "ambii" ("both") in Romanian
+# has NumType=Card|PronType=Tot and it is treated as a numeral there, including
+# the deprel 'nummod' (instead of 'det'). Therefore we should correct the tag
+# to NUM (but we won't touch the features and we hope that nobody will
+# regenerate UPOS from Interset again).
+#------------------------------------------------------------------------------
+sub decide_between_det_and_num
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->is_cardinal() && $node->is_total() && $node->deprel() !~ m/^det(:|$)/ && $node->tag() ne 'NUM')
+        {
+            #log_warn("Changing tag of node '".$node->form()."' from '".$node->tag()."' to 'NUM'");
+            $node->set_tag('NUM');
+        }
+    }
 }
 
 

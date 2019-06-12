@@ -73,6 +73,36 @@ sub convert_deprels
             $deprel = 'det';
             $node->set_deprel($deprel);
         }
+        # The pattern "etwas *es" (e.g. "etwas Besseres") is annotated inconsistently.
+        # We make "etwas" always the head.
+        if($node->lemma() eq 'etwas' && $node->parent()->ord() > $node->ord() && $node->parent()->form() =~ m/es$/i)
+        {
+            my $noun = $node->parent();
+            $node->set_parent($noun->parent());
+            $node->set_deprel($noun->deprel());
+            $noun->set_parent($node);
+            $noun->set_deprel('nmod');
+            # Some instances have even a bad tag, such as PROPN or ADJ.
+            $noun->set_tag('NOUN');
+            $noun->iset()->set('pos' => 'noun');
+            $noun->iset()->set('nountype' => 'com');
+            $noun->iset()->set('gender' => 'neut');
+            $noun->iset()->set('number' => 'sing');
+            foreach my $child ($noun->children())
+            {
+                $child->set_parent($node);
+            }
+        }
+        elsif($node->form() =~ m/es$/i && !$node->parent()->is_root() && $node->parent()->ord() < $node->ord() && $node->parent()->lemma() eq 'etwas')
+        {
+            $node->set_deprel('nmod');
+            # Some instances have even a bad tag, such as PROPN or ADJ.
+            $node->set_tag('NOUN');
+            $node->iset()->set('pos' => 'noun');
+            $node->iset()->set('nountype' => 'com');
+            $node->iset()->set('gender' => 'neut');
+            $node->iset()->set('number' => 'sing');
+        }
         # In "auch wenn", "wenn" is 'mark' or 'cc' and "auch" is wrongly attached as 'advmod' to "wenn".
         if($node->deprel() =~ m/^advmod(:|$)/ && $parent->deprel() =~ m/^(cc|mark)(:|$)/)
         {
@@ -85,6 +115,19 @@ sub convert_deprels
             $deprel = 'nmod';
             $node->set_deprel($deprel);
         }
+        # Phrases like "ein wenig", "ein paar", "zwei Jahre" are tagged NOUN but attached as advmod. They have to be obl or nmod.
+        if($node->is_noun() && $node->deprel() =~ m/^advmod(:|$)/)
+        {
+            if($parent->is_noun())
+            {
+                $deprel = 'nmod';
+            }
+            else
+            {
+                $deprel = 'obl';
+            }
+            $node->set_deprel($deprel);
+        }
         # Adjectives cannot be attached as det. They have to be amod.
         if($node->is_adjective() && !$node->is_pronominal() && $node->deprel() eq 'det')
         {
@@ -92,7 +135,10 @@ sub convert_deprels
             $node->set_deprel($deprel);
         }
         # Nouns attached as cop should in fact be nsubj (they are subjects of nonverbal predicates in sentences where copula is missing).
-        if($node->is_noun() && !$node->is_pronominal() && $node->deprel() eq 'cop')
+        # The same holds for pronouns, such as "alles" ("everything"). In general pronouns can be copulas, but not in German.
+        # (In Interset, is_noun() will catch pronouns as well.)
+        # Another case is "ein" ("one") but it is tagged as determiner, not pronoun.
+        if(($node->is_noun() || $node->lemma() eq 'ein') && $node->deprel() eq 'cop')
         {
             $deprel = 'nsubj';
             $node->set_deprel($deprel);
@@ -143,7 +189,12 @@ sub fix_auxiliary_verb
     my $node = shift;
     if($node->tag() eq 'AUX')
     {
-        if($node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(bekommen|bleiben|brauchen|lassen)$/)
+        if($node->deprel() =~ m/^(root|acl|xcomp)(:|$)/ && $node->lemma() =~ m/^(ansehen|auftreten|betrachten|bezeichnen|bleiben|funktionieren|lassen|sehen)$/)
+        {
+            $node->iset()->clear('verbtype');
+            $node->set_tag('VERB');
+        }
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(bekommen|bleiben|brauchen|lassen)$/)
         {
             # We assume that the "auxiliary" verb is attached to an infinitive
             # which in fact should depend on the "auxiliary" (as xcomp).
@@ -152,6 +203,11 @@ sub fix_auxiliary_verb
             # If there were other spuriious auxiliaries, it would matter
             # in which order we reattach them.
             my $infinitive = $node->parent();
+            # The VerbForm=Inf feature is often missing in German PUD.
+            if($infinitive->iset()->verbform() eq '' && $infinitive->is_verb() && $infinitive->form() =~ m/(^sein$|en$)/i)
+            {
+                $infinitive->iset()->set('verbform', 'inf');
+            }
             # In some cases it is not infinitive but participle: "bekommt angeboten".
             if($infinitive->is_infinitive() || $infinitive->is_participle())
             {
@@ -177,12 +233,18 @@ sub fix_auxiliary_verb
                 $node->set_tag('VERB');
             }
         }
-        elsif($node->deprel() eq 'cop' &&
-              $node->lemma() =~ m/^(abkürzen|amtieren|anerkennen|anfühlen|ansehen|aufbauen|auftreten|bedeuten|befinden|befördern|benennen|berufen|beschimpfen|bestehen|bestimmen|betiteln|betragen|bezeichnen|bilden|bleiben|darstellen|degradieren|deuten|dienen|duften|einstufen|empfinden|entlarven|entwickeln|entziffern|erachten|erheben|erklären|ernennen|eröffnen|erscheinen|erwähnen|erweisen|erweitern|feiern|feststellen|finden|folgen|fungieren|gehen|gelten|gestalten|glauben|gründen|halten|handeln|heißen|identifizieren|kosten|küren|lauten|liegen|listen|machen|messen|nehmen|nennen|nominieren|prägen|scheinen|schlagen|schmecken|sehen|stehen|stellen|überzeugen|umbauen|umbenennen|umbilden|umwandeln|verarbeiten|vereidigen|verhaften|verlegen|versterben|vorstellen|wählen|wandeln|wirken|wissen)$/)
+        elsif($node->lemma() =~ m/^(abkürzen|amtieren|anerkennen|anfühlen|ansehen|aufbauen|auftreten|ausmachen|bedeuten|befinden|befördern|bekannt|benennen|berufen|beschimpfen|beschreiben|bestehen|bestimmen|betiteln|betragen|bezeichnen|bilden|bleiben|darstellen|degradieren|deuten|dienen|duften|einstufen|empfinden|entlarven|entwickeln|entziffern|erachten|erheben|erklären|ernennen|eröffnen|erscheinen|erwähnen|erweisen|erweitern|feiern|feststellen|finden|folgen|fungieren|gehen|gelten|gestalten|glauben|gründen|halten|handeln|heißen|identifizieren|interpretieren|kosten|küren|lauten|liegen|listen|machen|messen|nehmen|nennen|nominieren|prägen|scheinen|schlagen|schmecken|schreiben|sehen|stehen|stellen|überzeugen|umbauen|umbenennen|umbilden|umwandeln|verarbeiten|vereidigen|verhaften|verlegen|versterben|vestehen|vorstellen|wählen|wandeln|wirken|wissen)$/ &&
+              $node->deprel() =~ m/^cop(:|$)/)
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
             my $deprel = $pnom->deprel();
+            # The nominal predicate may have been attached as a non-clause;
+            # however, now we have definitely a clause.
+            $deprel =~ s/^nsubj/csubj/;
+            $deprel =~ s/^i?obj/ccomp/;
+            $deprel =~ s/^(advmod|obl)/advcl/;
+            $deprel =~ s/^(nmod|amod|appos)/acl/;
             $node->set_parent($parent);
             $node->set_deprel($deprel);
             $pnom->set_parent($node);
@@ -193,13 +255,73 @@ sub fix_auxiliary_verb
             my @children = $pnom->children();
             foreach my $child (@children)
             {
-                if($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
+                if($child->deprel() =~ m/^(([nc]subj|obj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
                    $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
                 {
                     $child->set_parent($node);
                 }
             }
             # We also need to change the part-of-speech tag from AUX to VERB.
+            $node->iset()->clear('verbtype');
+            $node->set_tag('VERB');
+        }
+        elsif($node->lemma() eq 'werden' && $node->deprel() =~ m/^cop(:|$)/)
+        {
+            # "Werden" ("to become") is not a copula in UD but it can be an auxiliary (of passive voice and of future tense).
+            # With nominal predicates however, it should be treated as the main verb.
+            if($node->parent()->is_participle())
+            {
+                $node->set_deprel('aux:pass');
+                my @siblings = $node->get_siblings();
+                foreach my $sibling (@siblings)
+                {
+                    my $odeprel = $sibling->deprel();
+                    my $ndeprel = $odeprel;
+                    $ndeprel =~ s/^([nc]subj)$/$1:pass/;
+                    $sibling->set_deprel($ndeprel) if($ndeprel ne $odeprel);
+                }
+            }
+            elsif($node->parent()->is_infinitive())
+            {
+                # Periphrastic future tense.
+                $node->set_deprel('aux');
+            }
+            else # probably a pseudo-copula with a secondary nominal predicate
+            {
+                my $pnom = $node->parent();
+                my $parent = $pnom->parent();
+                my $deprel = $pnom->deprel();
+                # The nominal predicate may have been attached as a non-clause;
+                # however, now we have definitely a clause.
+                $deprel =~ s/^nsubj/csubj/;
+                $deprel =~ s/^i?obj/ccomp/;
+                $deprel =~ s/^(advmod|obl)/advcl/;
+                $deprel =~ s/^(nmod|amod|appos)/acl/;
+                $node->set_parent($parent);
+                $node->set_deprel($deprel);
+                $pnom->set_parent($node);
+                $pnom->set_deprel('xcomp');
+                # Subject, adjuncts and other auxiliaries go up.
+                # We also have to raise conjunctions and punctuation, otherwise we risk nonprojectivities.
+                # Noun modifiers remain with the nominal predicate.
+                my @children = $pnom->children();
+                foreach my $child (@children)
+                {
+                    if($child->deprel() =~ m/^(([nc]subj|obj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
+                       $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
+                    {
+                        $child->set_parent($node);
+                    }
+                }
+                # We also need to change the part-of-speech tag from AUX to VERB.
+                $node->iset()->clear('verbtype');
+                $node->set_tag('VERB');
+            }
+        }
+        # Some verbs were tagged AUX and appeared in coordination with other pseudo-auxiliaries.
+        # Their deprel is 'conj'. Therefore the above branches did not catch them.
+        elsif($node->deprel() =~ m/^conj(:|$)/ && $node->parent()->deprel() !~ m/^(aux|cop)(:|$)/)
+        {
             $node->iset()->clear('verbtype');
             $node->set_tag('VERB');
         }

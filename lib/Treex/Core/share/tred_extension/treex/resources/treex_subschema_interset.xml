@@ -80,6 +80,7 @@
       <member name="tense"><cdata format="any"/></member>
       <member name="voice"><cdata format="any"/></member>
       <member name="aspect"><cdata format="any"/></member>
+      <member name="strength"><cdata format="any"/></member>
       <member name="variant"><cdata format="any"/></member>
       <member name="style"><cdata format="any"/></member>
     </structure>

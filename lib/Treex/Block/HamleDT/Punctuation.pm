@@ -16,8 +16,8 @@ sub process_atree
     ###!!! Add ‘single’ quotes, but make sure these symbols are not used e.g. as apostrophes.
     ###!!! We need to know the language, there are many other quotation styles,
     ###!!! e.g. Finnish and Swedish uses the same symbol for opening and closing: ”X”.
-    ###!!! Danish uses the French quotes but swapped: »X«.
-    my %pairs =
+    ###!!! Danish uses the French quotes but swapped: »X«; the same appears in PADT (Arabic).
+    my %pairs = # opening symbol => closing symbol
     (
         '(' => ')',
         '[' => ']',
@@ -26,6 +26,8 @@ sub process_atree
         '„' => '“', # Czech, German, Russian,...
         '«' => '»', # French, Russian, Spanish,...
         '‹' => '›', # ditto
+        '»' => '«', # Danish, Arabic,...
+        '›' => '‹', # ditto
         '《' => '》', # Korean, Chinese
         '「' => '」', # Chinese, Japanese
         '『' => '』'  # ditto
@@ -73,14 +75,28 @@ sub process_atree
             {
                 $rcand = $self->climb($rcand, $node, +1, \@rcrumbs);
             }
+            # If we could not find any suitable parent, relax the condition on parent's deprel and try again.
+            if(!defined($lcand) && !defined($rcand))
+            {
+                $lcand = $self->find_candidate_left($node, \@nodes, 1);
+                $rcand = $self->find_candidate_right($node, \@nodes, 1);
+            }
             my $winner = $self->decide_left_or_right($node->form(), $pord, $lcand, \@lcrumbs, $rcand, \@rcrumbs);
+            my $old_pord = $node->parent()->ord();
+            my $old_pform = $node->parent()->is_root() ? 'ROOT' : $node->parent()->form();
             if(defined($winner))
             {
+                # Debugging: save the decision in wild attributes.
+                my $new_pord = $winner->ord();
+                my $new_pform = $winner->is_root() ? 'ROOT' : $winner->form();
+                $node->wild()->{debug_punctuation} = "$old_pord:$old_pform --> $new_pord:$new_pform";
                 $node->set_parent($winner);
                 $node->set_deprel('punct');
             }
             else
             {
+                # Debugging: save the decision in wild attributes.
+                $node->wild()->{debug_punctuation} = "$old_pord:$old_pform -->  nothing better found";
                 log_warn("Failed to find better attachment for punctuation node ".$node->form());
             }
         }
@@ -138,11 +154,15 @@ sub process_atree
                             {
                                 # We expect at least one of the brackets to be already attached to the head (and the other probably higher).
                                 # If it is not the case, maybe there are projectivity issues and we should not enforce attachment to the head.
-                                if($n0->parent() == $head)
+                                if($n0->parent() == $head &&
+                                   !$self->would_be_nonprojective($head, $n1) &&
+                                   !$self->would_cause_nonprojectivity($head, $n1))
                                 {
                                     $n1->set_parent($head);
                                 }
-                                elsif($n1->parent() == $head)
+                                elsif($n1->parent() == $head &&
+                                      !$self->would_be_nonprojective($head, $n0) &&
+                                      !$self->would_cause_nonprojectivity($head, $n0))
                                 {
                                     $n0->set_parent($head);
                                 }
@@ -232,6 +252,7 @@ sub find_candidate_left
     my $self = shift;
     my $node = shift;
     my $nodes = shift; # array reference, ordered list of tree nodes including $node
+    my $relax = shift; # if set, relax restriction on suitable parents because nothing better was available in the first attempt
     # We do not know the index of $node in @{$nodes}. We cannot rely on ord() being always the index+1.
     my $in;
     for(my $i = 0; $i <= $#{$nodes}; $i++)
@@ -248,14 +269,18 @@ sub find_candidate_left
     # Certain types of nodes are not good candidates because they normally do not take dependents.
     # We cannot skip them because that could cause nonprojectivity.
     # But we can climb to their ancestors, as long as these lie to the left of the original node.
-    while($candidate->is_punctuation() || $candidate->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
+    # We also have to check for nonprojectivity because the left neighbor may
+    # be currently attached nonprojectively and if we attach to its parent we will be nonprojective too.
+    while($candidate->is_punctuation() || !$relax && $candidate->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
     {
         my $parent = $candidate->parent();
         if($parent->is_root())
         {
             return $parent;
         }
-        elsif($parent->ord() < $node->ord())
+        elsif($parent->ord() < $node->ord() &&
+              !$self->would_be_nonprojective($parent, $node) &&
+              !$self->would_cause_nonprojectivity($parent, $node))
         {
             $candidate = $parent;
         }
@@ -277,6 +302,7 @@ sub find_candidate_right
     my $self = shift;
     my $node = shift;
     my $nodes = shift; # array reference, ordered list of tree nodes including $node
+    my $relax = shift; # if set, relax restriction on suitable parents because nothing better was available in the first attempt
     # We do not know the index of $node in @{$nodes}. We cannot rely on ord() being always the index+1.
     my $in;
     for(my $i = 0; $i <= $#{$nodes}; $i++)
@@ -292,15 +318,19 @@ sub find_candidate_right
     my $candidate = $nodes->[$in+1];
     # Certain types of nodes are not good candidates because they normally do not take dependents.
     # We cannot skip them because that could cause nonprojectivity.
-    # But we can climb to their ancestors, as long as these lie to the left of the original node.
-    while($candidate->is_punctuation() || $candidate->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
+    # But we can climb to their ancestors, as long as these lie to the right of the original node.
+    # We also have to check for nonprojectivity because the right neighbor may
+    # be currently attached nonprojectively and if we attach to its parent we will be nonprojective too.
+    while($candidate->is_punctuation() || !$relax && $candidate->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
     {
         my $parent = $candidate->parent();
         if($parent->is_root())
         {
             return $parent;
         }
-        elsif($parent->ord() > $node->ord())
+        elsif($parent->ord() > $node->ord() &&
+              !$self->would_be_nonprojective($parent, $node) &&
+              !$self->would_cause_nonprojectivity($parent, $node))
         {
             $candidate = $parent;
         }
@@ -333,13 +363,40 @@ sub climb
     # There could be a node that we skipped on the other side (because it is aux, cc etc.)
     # and that node might be attached somewhere to our side; if we climb above that node's parent,
     # it will make that node's attachment nonprojective.
-    while(!$candidate->parent()->is_root() && ($candidate->parent()->ord() <=> $child->ord()) == $side &&
+    while(!$candidate->is_root() && !$candidate->parent()->is_root() && ($candidate->parent()->ord() <=> $child->ord()) == $side &&
+          !$self->would_be_nonprojective($candidate->parent(), $child) &&
           !$self->would_cause_nonprojectivity($candidate->parent(), $child))
     {
         $candidate = $candidate->parent();
         $crumbs->[$candidate->ord()]++;
     }
     return $candidate;
+}
+
+
+
+#------------------------------------------------------------------------------
+# For a candidate attachment, tells whether it would be nonprojective. We want
+# to use the relatively complex method Node->is_nonprojective(), which means
+# that we must temporarily attach the node to the candidate parent. This will
+# throw an exception if there is a cycle. But then we should not be considering
+# the parent anyways.
+#------------------------------------------------------------------------------
+sub would_be_nonprojective
+{
+    my $self = shift;
+    my $parent = shift;
+    my $child = shift;
+    # Remember the current attachment of the child so we can later restore it.
+    my $current_parent = $child->parent();
+    # We could now check for potential cycles by calling $parent->is_descendant_of($child).
+    # But it is not clear what we should do if the answer is yes. And at present,
+    # this module does not try to attach punctuation nodes that are not leaves.
+    $child->set_parent($parent);
+    my $nprj = $child->is_nonprojective();
+    # Restore the current parent.
+    $child->set_parent($current_parent);
+    return $nprj;
 }
 
 
@@ -399,7 +456,7 @@ sub decide_left_or_right
         return $rcand;
     }
     # If we stopped on the left because it jumps to the right, and we have passed through the parent on the right, attach left.
-    if(defined($lcand) && $lcand->parent()->ord() > $pord && defined($rcrumbs->[$lcand->parent()->ord()]) && $rcrumbs->[$lcand->parent()->ord()] > 0)
+    if(defined($lcand) && !$lcand->is_root() && $lcand->parent()->ord() > $pord && defined($rcrumbs->[$lcand->parent()->ord()]) && $rcrumbs->[$lcand->parent()->ord()] > 0)
     {
         return $lcand;
     }

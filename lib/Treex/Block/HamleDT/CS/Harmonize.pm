@@ -393,7 +393,7 @@ sub remove_features_from_lemmas
                     }
                     else
                     {
-                        $wild->{lderiv} = $lderiv;
+                        $node->set_misc_attr('LDeriv', $lderiv);
                     }
                 }
             }
@@ -491,6 +491,11 @@ sub fix_annotation_errors
             $comma->remove();
             last; ###!!! V těch třech větách, o kterých je řeč, stejně nevím o další chybě. Ale hlavně mi nějak nefunguje práce s polem @nodes po umazání těch dvou uzlů.
             # $i now points to the former decimal, now a merged number. No need to adjust $i; the number does not have to be considered for further error fixing.
+        }
+        # One occurrence of "když" in PDT 3.0 has Adv instead of AuxC.
+        elsif($deprel eq 'Adv' && $node->is_subordinator() && any {$_->is_verb()} ($node->children()))
+        {
+            $node->set_deprel('AuxC');
         }
         # Two occurrences of "se" in CAC 2.0 have AuxT instead of AuxP.
         elsif($deprel eq 'AuxT' && $node->is_adposition())
@@ -630,6 +635,157 @@ sub fix_annotation_errors
             # multi-word preposition "do souladu se"
             $subtree[6]->set_parent($subtree[8]);
             $subtree[7]->set_parent($subtree[8]);
+        }
+        elsif($spanstring =~ m/^PMC Personal - und Management - Beratung$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Original annotation uses wrong deprels (AuxY for non-punctuation, should be Atr).
+            foreach my $node (@subtree)
+            {
+                unless($node->is_punctuation())
+                {
+                    $node->iset()->set('foreign' => 'yes');
+                    unless($node->form() =~ m/^Beratung$/i)
+                    {
+                        $node->set_deprel('Atr');
+                    }
+                }
+            }
+        }
+        elsif($spanstring =~ m/^Hamburg Messe und Congres , GmbH$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Original annotation uses wrong deprels (AuxY).
+            my $parent = $node->parent();
+            my $deprel = $node->deprel();
+            my $member = $node->is_member();
+            $subtree[2]->set_parent($parent);
+            $subtree[2]->set_deprel('Coord');
+            $subtree[2]->set_is_member($member);
+            $subtree[0]->set_parent($subtree[2]);
+            $subtree[0]->set_deprel('Atr');
+            $subtree[0]->set_is_member(undef);
+            $subtree[1]->set_parent($subtree[2]);
+            $subtree[1]->set_deprel($deprel);
+            $subtree[1]->set_is_member(1);
+            $subtree[3]->set_parent($subtree[2]);
+            $subtree[3]->set_deprel($deprel);
+            $subtree[3]->set_is_member(1);
+            $subtree[5]->set_parent($subtree[2]);
+            $subtree[5]->set_deprel('Atr');
+            $subtree[5]->set_is_member(undef);
+        }
+        elsif($spanstring =~ m/^nejdelším On The Burial Ground/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Original annotation uses wrong deprels (AuxY).
+            for(my $i = 1; $i <= 3; $i++)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
+        elsif($spanstring =~ m/^NBA New Jersey Nets$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Original annotation uses wrong deprels (AuxY).
+            for(my $i = 0; $i <= 2; $i++)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
+        elsif($spanstring =~ m/^(JUMP OK|World News|Worldwide Update|CNN Newsroom|Business Morning|Business Day|Business Asia)$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Original annotation uses wrong deprels (AuxY).
+            for(my $i = 0; $i <= 0; $i++)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
+        elsif($spanstring =~ m/^(International Euromarket Award|Headline News Update|CNN Showbiz Today)$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Original annotation uses wrong deprels (AuxY).
+            for(my $i = 0; $i <= 1; $i++)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
+        elsif($spanstring =~ m/^Essay on the principle of population as it affects the future improvement of society/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            for(my $i = 1; $i <= 13; $i++)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
+        elsif($spanstring =~ m/^École Supérieure de Physique et Chimie , Paříž$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            for(my $i = 1; $i <= 5; $i++)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
+        elsif($spanstring =~ m/^, U \. S \. Department of energy$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # "U" is wrongly attached as AuxP (confusion with the Czech preposition).
+            $subtree[1]->set_deprel('Atr');
+        }
+        elsif($spanstring =~ m/^\( Dynamic Integrated Climate - Economy \)$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            for(my $i = 1; $i <= 3; $i++)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
+        elsif($spanstring =~ m/^Sin - kan$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_deprel('Atr');
+            $subtree[0]->set_lemma('Sin');
+            $subtree[0]->iset()->set_hash({'pos' => 'noun', 'nountype' => 'prop', 'gender' => 'masc', 'animacy' => 'inan', 'number' => 'sing', 'case' => 'nom', 'polarity' => 'pos'});
+            $subtree[2]->set_lemma('kan');
+            $subtree[2]->set_tag('PROPN');
+            $subtree[2]->iset()->set_hash({'pos' => 'noun', 'nountype' => 'prop', 'gender' => 'masc', 'animacy' => 'inan', 'number' => 'sing', 'case' => 'nom', 'polarity' => 'pos'});
+        }
+        elsif($spanstring =~ m/^2 : 15 min \. před Sabym \( .*? \) a 9 : 04 min \. před/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            my $num1 = $subtree[0];
+            my $num2 = $subtree[2];
+            my $colon = $subtree[1];
+            $colon->set_deprel('Coord');
+            $colon->set_is_member(1);
+            $num1->set_deprel('ExD');
+            $num1->set_is_member(1);
+            $num2->set_parent($colon);
+            $num2->set_deprel('ExD');
+            $num2->set_is_member(1);
+            $num1 = $subtree[14];
+            $num2 = $subtree[16];
+            $colon = $subtree[15];
+            $colon->set_deprel('Coord');
+            $colon->set_is_member(1);
+            $num1->set_deprel('ExD');
+            $num1->set_is_member(1);
+            $num2->set_parent($colon);
+            $num2->set_deprel('ExD');
+            $num2->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^nový nástup stran , které stály/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # "stran" has the wrong deprel 'AuxP' here.
+            $subtree[2]->set_deprel('Atr');
+        }
+        elsif($spanstring =~ m/^, " dokud všechny řady pozorování/i) #"
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # "dokud" has the wrong deprel 'Adv' here.
+            $subtree[2]->set_deprel('AuxC');
         }
     }
 }

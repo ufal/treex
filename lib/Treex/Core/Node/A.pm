@@ -10,7 +10,7 @@ with 'Treex::Core::Node::InClause';
 with 'Treex::Core::Node::EffectiveRelations';
 with 'Treex::Core::Node::Interset' => { interset_attribute => 'iset' };
 
-has [qw(form lemma tag no_space_after fused_with_next fused_form)] => ( is => 'rw' );
+has [qw(form lemma tag no_space_after fused_with_next fused_form fused_misc)] => ( is => 'rw' );
 
 has [
     qw(deprel afun is_parenthesis_root edge_to_collapse is_auxiliary translit ltranslit gloss)
@@ -210,7 +210,7 @@ sub copy_attributes
     # TODO: As a workaround, we list the attributes here directly.
     foreach my $attribute (
         'form', 'lemma', 'tag', 'no_space_after', 'translit', 'ltranslit', 'gloss',
-        'fused_with_next', 'fused_form',
+        'fused_with_next', 'fused_form', 'fused_misc',
         'ord', 'deprel', 'afun', 'is_member', 'is_parenthesis_root',
         'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat', 'is_shared_modifier', 'morphcat',
         'clause_number', 'is_clause_head',
@@ -425,6 +425,19 @@ sub get_fusion
 {
     my $self = shift;
     return $self->get_fusion_start()->fused_form();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the MISC attributes stored in the first node of the fusion (multiword
+# token). If this node is not part of any fusion, returns the fused_misc of
+# this node, which should be undefined.
+#------------------------------------------------------------------------------
+sub get_fused_misc
+{
+    my $self = shift;
+    return $self->get_fusion_start()->fused_misc();
 }
 
 

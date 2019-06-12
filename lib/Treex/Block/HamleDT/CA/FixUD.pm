@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::ES::FixUD;
+package Treex::Block::HamleDT::CA::FixUD;
 use utf8;
 use Moose;
 use List::MoreUtils qw(any);
@@ -67,47 +67,42 @@ sub fix_morphology
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants({ordered => 1});
+    my $ap = "'"; # Put the apostrofe to a variable to avoid syntax highlighting errors.
     foreach my $node (@nodes)
     {
         my $form = $node->form();
         my $iset = $node->iset();
         # Now the positive approach: Tag certain closed-class words regardless the context.
-        # For example, the forms of the personal pronoun "yo" occasionally appear as PROPN or X and we want to unify them.
-        if($form =~ m/^(yo|me|mí|conmigo)$/i)
+        # For example, the forms of the personal pronoun "jo" occasionally appear as PROPN or X and we want to unify them.
+        if($form =~ m/^(jo|em|m$ap|me|${ap}m|mi)$/i)
         {
             # "me" can be also reflexive but we cannot decide it here. We will later look at the parent verb whether it is 1st person.
             $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '1', 'number' => 'sing');
             $iset->clear('gender', 'degree', 'numtype');
-            if($form =~ m/^yo$/i)
+            if($form =~ m/^jo$/i)
             {
                 $iset->set('case', 'nom');
             }
-            elsif($form =~ m/^me$/i)
+            elsif($form =~ m/^(em|m$ap|me|${ap}m)$/i)
             {
                 $iset->add('case' => 'dat|acc', 'prepcase' => 'npr');
             }
-            elsif($form =~ m/^mí$/i)
+            elsif($form =~ m/^mi$/i)
             {
                 $iset->add('case' => 'acc', 'prepcase' => 'pre');
             }
-            else
-            {
-                # The comitative case semantically corresponds to "conmigo" but we normally do not speak about this case in Spanish.
-                # Alternatively we could split "conmigo" to "con" + "mí" and use accusative.
-                $iset->add('case' => 'com');
-            }
         }
-        elsif($form =~ m/^(tú|te|ti|contigo)$/i)
+        elsif($form =~ m/^(tu|et|t$ap|te|${ap}t|ti)$/i)
         {
-            $node->set_lemma('tú');
+            $node->set_lemma('tu');
             # "te" can be also reflexive but we cannot decide it here. We will later look at the parent verb whether it is 2nd person.
             $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '2', 'number' => 'sing');
             $iset->clear('gender', 'degree', 'numtype');
-            if($form =~ m/^tú$/i)
+            if($form =~ m/^tu$/i)
             {
                 $iset->set('case', 'nom');
             }
-            elsif($form =~ m/^te$/i)
+            elsif($form =~ m/^(et|t$ap|te|${ap}t)$/i)
             {
                 $iset->add('case' => 'dat|acc', 'prepcase' => 'npr');
             }
@@ -115,144 +110,163 @@ sub fix_morphology
             {
                 $iset->add('case' => 'acc', 'prepcase' => 'pre');
             }
-            else
-            {
-                # The comitative case semantically corresponds to "contigo" but we normally do not speak about this case in Spanish.
-                # Alternatively we could split "contigo" to "con" + "ti" and use accusative.
-                $iset->add('case' => 'com');
-            }
         }
-        # "sí" is ambiguous: either "yeas", or the prepositional case of reflexive "se".
-        elsif($form =~ m/^(él|ello|le|lo|ella|la|ellos|les|los|ellas|las|el|se|consigo)$/i ||
-              $form =~ m/^(sí)$/ && any {$_->is_adposition()} ($node->children()))
+        elsif($form =~ m/^(nosaltres|nós|ens|nos|${ap}ns)$/i)
         {
-            # Exclude DET because "la", "los" and "las" are ambiguous with definite articles.
-            if($form =~ m/^el$/i ||
-               $form =~ m/^(el|la|los|las)$/i && ($iset->is_adjective() || $node->deprel() eq 'det'))
-            {
-                $node->set_lemma('el');
-                $iset->add('pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def');
-                $iset->set('gender', $form =~ m/^(el|los)$/i ? 'masc' : 'fem');
-                $iset->set('number', $form =~ m/^(el|la)$/i ? 'sing' : 'plur');
-                $iset->clear('case', 'person', 'degree', 'numtype');
-            }
-            else
-            {
-                $node->set_lemma('él');
-                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3');
-                $iset->clear('degree', 'numtype');
-                if($form =~ m/^(él|ello)$/i)
-                {
-                    $iset->add('case' => 'nom|acc', 'gender' => 'masc', 'number' => 'sing');
-                }
-                elsif($form =~ m/^le$/i)
-                {
-                    $iset->add('case' => 'dat', 'number' => 'sing');
-                    $iset->clear('gender');
-                }
-                elsif($form =~ m/^lo$/i)
-                {
-                    $iset->add('case' => 'acc', 'prepcase' => 'npr', 'gender' => 'masc', 'number' => 'sing');
-                }
-                elsif($form =~ m/^(ella)$/i)
-                {
-                    $iset->add('case' => 'nom|acc', 'gender' => 'fem', 'number' => 'sing');
-                }
-                elsif($form =~ m/^(la)$/i)
-                {
-                    $iset->add('case' => 'acc', 'prepcase' => 'npr', 'gender' => 'fem', 'number' => 'sing');
-                }
-                elsif($form =~ m/^(ellos)$/i)
-                {
-                    $iset->add('case' => 'nom|acc', 'gender' => 'masc', 'number' => 'plur');
-                }
-                elsif($form =~ m/^les$/i)
-                {
-                    $iset->add('case' => 'dat', 'number' => 'plur');
-                    $iset->clear('gender');
-                }
-                elsif($form =~ m/^los$/i)
-                {
-                    $iset->add('case' => 'acc', 'prepcase' => 'npr', 'gender' => 'masc', 'number' => 'plur');
-                }
-                elsif($form =~ m/^(ellas)$/i)
-                {
-                    $iset->add('case' => 'nom|acc', 'gender' => 'fem', 'number' => 'plur');
-                }
-                elsif($form =~ m/^(las)$/i)
-                {
-                    $iset->add('case' => 'acc', 'prepcase' => 'npr', 'gender' => 'fem', 'number' => 'plur');
-                }
-                elsif($form =~ m/^(se)$/i)
-                {
-                    $iset->add('case' => 'dat|acc', 'prepcase' => 'npr', 'reflex' => 'reflex');
-                    $iset->clear('gender', 'number');
-                }
-                elsif($form =~ m/^(sí)$/i)
-                {
-                    $iset->add('case' => 'acc', 'prepcase' => 'pre', 'reflex' => 'reflex');
-                    $iset->clear('gender', 'number');
-                }
-                else
-                {
-                    # The comitative case semantically corresponds to "consigo" but we normally do not speak about this case in Spanish.
-                    # Alternatively we could split "consigo" to "con" + "sí" and use accusative.
-                    $iset->add('case' => 'com', 'reflex' => 'reflex');
-                    $iset->clear('gender', 'number');
-                }
-            }
-        }
-        elsif($form =~ m/^(nosotr[oa]s|nos)$/i)
-        {
-            $node->set_lemma('yo');
+            $node->set_lemma('jo');
             # "nos" can be also reflexive but we cannot decide it here. We will later look at the parent verb whether it is 1st person.
             $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '1', 'number' => 'plur');
-            $iset->clear('degree', 'numtype');
-            if($form =~ m/^(nosotros)$/i)
+            $iset->clear('gender', 'degree', 'numtype');
+            if($form =~ m/^(nosaltres)$/i)
             {
-                $iset->add('case' => 'nom|acc', 'gender' => 'masc');
-            }
-            elsif($form =~ m/^(nosotras)$/i)
-            {
-                $iset->add('case' => 'nom|acc', 'gender' => 'fem');
+                $iset->set('case' => 'nom');
             }
             else # nos
             {
-                $iset->add('case' => 'dat|acc', 'prepcase' => 'npr');
+                $iset->set('case' => 'dat|acc');
             }
         }
-        elsif($form =~ m/^(vosotr[oa]s|os)$/i)
+        elsif($form =~ m/^(vosaltres|vós|us|vos)$/i)
         {
-            $node->set_lemma('tú');
+            $node->set_lemma('tu');
             # "os" can be also reflexive but we cannot decide it here. We will later look at the parent verb whether it is 2nd person.
             $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '2', 'number' => 'plur');
-            $iset->clear('degree', 'numtype');
-            if($form =~ m/^(vosotros)$/i)
+            $iset->clear('gender', 'degree', 'numtype');
+            if($form =~ m/^(vosaltres)$/i)
             {
-                $iset->add('case' => 'nom|acc', 'gender' => 'masc');
-            }
-            elsif($form =~ m/^(vosotras)$/i)
-            {
-                $iset->add('case' => 'nom|acc', 'gender' => 'fem');
+                $iset->set('case' => 'nom');
             }
             else # os
             {
-                $iset->add('case' => 'dat|acc', 'prepcase' => 'npr');
+                $iset->set('case' => 'dat|acc');
             }
         }
-        elsif($form =~ m/^(usted(es)?)$/i)
+        elsif($form =~ m/^(vostès?)$/i)
         {
-            $node->set_lemma('tú');
+            $node->set_lemma('tu');
             $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '2', 'politeness' => 'pol');
             $iset->clear('degree', 'numtype', 'gender');
-            if($form =~ m/^(usted)$/i)
+            if($form =~ m/^(vostè)$/i)
             {
                 $iset->add('case' => 'nom|acc', 'number' => 'sing');
             }
-            else # ustedes
+            else # vostès
             {
                 $iset->add('case' => 'nom|acc', 'number' => 'plur');
             }
+        }
+        # In the 3rd person, exclude DET because "l'", "els", "la" etc. are ambiguous between pronouns and definite articles.
+        elsif(!$iset->is_adjective() && $node->deprel() !~ m/^det(:|$)/ &&
+              $form =~ m/^(ell|el|lo|${ap}l|ella|la|l$ap|ho|li|ells|elles|els|los|${ap}ls|les)$/i)
+        {
+            if($form =~ m/^(ell|el|lo|${ap}l)$/i) # see below for "l'"
+            {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing', 'gender' => 'masc');
+                $iset->clear('degree', 'numtype');
+                if($form =~ m/^ell$/i)
+                {
+                    $iset->set('case', 'nom');
+                }
+                elsif($form =~ m/^(el|l$ap|lo|${ap}l)$/i)
+                {
+                    $iset->set('case' => 'acc');
+                }
+            }
+            elsif($form =~ m/^(ella|la)$/i) # see below for "l'"
+            {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing', 'gender' => 'masc');
+                $iset->clear('degree', 'numtype');
+                if($form =~ m/^ell$/i)
+                {
+                    $iset->set('case', 'nom');
+                }
+                elsif($form =~ m/^(el|l$ap|lo|${ap}l)$/i)
+                {
+                    $iset->set('case' => 'acc');
+                }
+            }
+            # "l'" can be either masculine or feminine
+            elsif($form =~ m/^l$ap$/i)
+            {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing');
+                $iset->clear('gender', 'degree', 'numtype');
+                $iset->set('case' => 'acc');
+            }
+            # "ho" is the neuter direct object
+            elsif($form =~ m/^ho$/i)
+            {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing', 'gender' => 'neut', 'case' => 'acc');
+                $iset->clear('degree', 'numtype');
+            }
+            # The indirect object does not distinguish gender.
+            elsif($form =~ m/^li$/i)
+            {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'sing');
+                $iset->clear('gender', 'degree', 'numtype');
+                $iset->set('case' => 'dat');
+            }
+            elsif($form =~ m/^(ells)$/i)
+            {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'plur', 'gender' => 'masc', 'case' => 'nom');
+                $iset->clear('degree', 'numtype');
+            }
+            elsif($form =~ m/^(elles)$/i)
+            {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'plur', 'gender' => 'fem', 'case' => 'nom');
+                $iset->clear('degree', 'numtype');
+            }
+            # "els" can be masculine direct object, or indirect object in either gender
+            elsif($form =~ m/^(els|los|${ap}ls)$/i)
+            {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'plur', 'case' => 'acc|dat');
+                $iset->clear('gender', 'degree', 'numtype');
+            }
+            # "les" is the feminine direct object
+            elsif($form =~ m/^(les)$/i)
+            {
+                $node->set_lemma('ell');
+                $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'number' => 'plur', 'gender' => 'fem', 'case' => 'acc');
+                $iset->clear('degree', 'numtype');
+            }
+        }
+        elsif($form =~ m/^(es|s$ap)$/i)
+        {
+            $node->set_lemma('ell');
+            $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'reflex' => 'yes', 'case' => 'dat|acc', 'prepcase' => 'npr');
+            $iset->clear('gender', 'number', 'degree', 'numtype');
+        }
+        # "si" is ambiguous, it can be SCONJ ("if") and reflexive after preposition.
+        # We must not damage SCONJ.
+        elsif($form =~ m/^(si)$/i && !$iset->is_conjunction() && $node->deprel() !~ m/^mark(:|$)/)
+        {
+            $node->set_lemma('ell');
+            $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'reflex' => 'yes', 'case' => 'acc', 'prepcase' => 'pre');
+            $iset->clear('gender', 'number', 'degree', 'numtype');
+        }
+        # "hom" is an impersonal pronoun
+        elsif($form =~ m/^hom$/i)
+        {
+            $node->set_lemma('hom');
+            $iset->add('pos' => 'noun', 'prontype' => 'prs', 'poss' => '', 'person' => '3', 'case' => 'nom');
+            $iset->clear('gender', 'number', 'degree', 'numtype');
+        }
+        # There are also "adverbial personal pronouns":
+        # ablative/genitive "en", and locative "hi"
+        # But "en" is also a frequent preposition ("in").
+        # Moreover, "hi" is currently PRON and obl. If we change PRON to ADV, we will have to also change obl to advmod.
+        # Better do not touch it.
+        elsif(0 && $form =~ m/^(en|n$ap|hi)$/i && !$iset->is_adposition())
+        {
+            $iset->add('pos' => 'adv', 'prontype' => 'prs');
+            $iset->clear('person', 'gender', 'number', 'case', 'degree', 'numtype');
         }
         # Even after the comprehensive categorization above there are determiners
         # tagged PROPN, e.g. possessive determiners "mi", "nuestro", and foreign
@@ -303,118 +317,8 @@ sub fix_morphology
         {
             $iset->clear('mood', 'tense');
         }
-        # There are several issues with pronouns and determiners.
-        if($iset->prontype() ne '' && $iset->is_adjective())
-        {
-            if($form =~ m/^(el|la|los|las)$/i)
-            {
-                $node->set_lemma('el');
-                $iset->set('prontype', 'art');
-                $iset->set('definiteness', 'def');
-            }
-            elsif($form =~ m/^un([oa]s?)?$/i)
-            {
-                $node->set_lemma('uno');
-                $iset->set('prontype', 'art');
-                $iset->set('definiteness', 'ind');
-            }
-        }
-        # Do not touch the articles that we just recognized. Other determiners will be categorized together with pronouns.
-        if($iset->prontype() ne '' && !$iset->is_article())
-        {
-            # Figure out the type of pronoun.
-            if($form =~ m/^(yo|me|mí|conmigo|nosotros|nos|tú|te|ti|contigo|vosotros|vos|os|usted|ustedes|él|ella|ello|le|lo|la|ellos|ellas|les|los|las|se|sí|consigo)$/i)
-            {
-                $iset->set('prontype', 'prs');
-                # For some reason, the second person plural pronouns have wrong lemmas (os:os, vos:vo, vosotros:vosotro).
-                if($form =~ m/^(vosotros|vos|os)$/i)
-                {
-                    # The system used in the Spanish corpus: every person uses its own lemma. Just one lemma for both numbers and all forms in that person.
-                    $node->set_lemma('tú');
-                }
-                # Some of the non-nominative personal pronouns got lemma "el" instead of "él".
-                # The lemmatizer mistook them for definite articles.
-                elsif($form =~ m/^(la|las|los)$/)
-                {
-                    $node->set_lemma('él');
-                }
-                # Mark reflexive pronouns.
-                # In the first and the second persons, look whether the parent is a verb in the same person.
-                if($form =~ m/^se$/i ||
-                   $form =~ m/^(me|nos)$/i && defined($node->parent()) && $node->parent()->is_verb() && $node->parent()->iset()->is_first_person() ||
-                   $form =~ m/^(te|v?os)$/i && defined($node->parent()) && $node->parent()->is_verb() && $node->parent()->iset()->is_second_person())
-                {
-                    $iset->set('reflex', 'reflex');
-                }
-            }
-            elsif($form =~ m/^(mis?|nuestr[oa]s?|tus?|vuestr[oa]s?|sus?|suy[oa]s?)$/i)
-            {
-                $iset->set('prontype', 'prs');
-                $iset->set('poss', 'poss');
-            }
-            elsif($form =~ m/^(aqu[eé]l(l[oa]s?)?|aquél|[eé]st?[aeo]s?|mism[oa]s?|tal(es)?)$/i)
-            {
-                $iset->set('prontype', 'dem');
-            }
-            elsif($form =~ m/^(tant[oa]s?)$/i)
-            {
-                $iset->set('prontype', 'dem');
-                $iset->set('numtype', 'card');
-            }
-            elsif($form =~ m/^(cada|tod[oa]s?)$/i)
-            {
-                $iset->set('prontype', 'tot');
-            }
-            elsif($form =~ m/^(amb[oa]s)$/i)
-            {
-                $iset->set('prontype', 'tot');
-                $iset->set('numtype', 'card');
-            }
-            elsif($form =~ m/^(nada|nadie|ning[uú]n[ao]?|niguna)$/i)
-            {
-                $iset->set('prontype', 'neg');
-            }
-            elsif($form =~ m/^(cu[aá]l(es)?|qu[eé]|qui[eé]n(es)?)$/i)
-            {
-                $iset->set('prontype', 'int|rel');
-            }
-            elsif($form =~ m/^(cuy[oa]s?)$/i)
-            {
-                $iset->set('prontype', 'int|rel');
-                $iset->set('poss', 'poss');
-            }
-            elsif($form =~ m/^(cu[aá]n(t[oa]s?)?)$/i)
-            {
-                $iset->set('prontype', 'int|rel');
-                $iset->set('numtype', 'card');
-            }
-            elsif($form =~ m/^(bastantes?|demasiad[oa]s?|much[oa]s?|poc[oa]s?)$/i)
-            {
-                $iset->set('prontype', 'ind');
-                $iset->set('numtype', 'card');
-            }
-            elsif($form =~ m/^(menos|más)$/i)
-            {
-                $iset->set('prontype', 'ind');
-                $iset->set('numtype', 'card');
-                $iset->set('degree', 'cmp');
-            }
-            elsif($form =~ m/^(much[ií]simi?[oa]s?)$/i)
-            {
-                $iset->set('prontype', 'ind');
-                $iset->set('numtype', 'card');
-                $iset->set('degree', 'abs');
-            }
-            # algo alguien algun algún alguna algunas alguno algunos
-            # cierta ciertas cierto ciertos cualquier cualquiera dicha dichas dicho dichos demás (demas)
-            # diversas diversos otra otras otro otros sendas sendos un una unas uno unos varias varios
-            else
-            {
-                $iset->set('prontype', 'ind');
-            }
-        } # is pronoun
         # All numerals are tagged as cardinal. Distinguish ordinals.
-        if($iset->is_numeral())
+        if($iset->is_numeral()) ###!!! THIS BLOCK MUST BE CATALANIZED!
         {
             if($form =~ m/^((decimo|(vi|tri|octo)gésimo)?(primer([oa]s?)?|segund[oa]s?|ter?cer([oa]s?)?|cuart[oa]s?|quint[oa]s?|sext[oa]s?|séptim[oa]s?|octav[oa]s?|noven[oa]s?)|(un|duo)?décim[oa]s?|(vi|tri|octo)gésim[oa]s?)$/i ||
                $form =~ m/^(1r[oa]s?|3er|4t[oa]s?|6[oa]s?|8v[oa]s?|\d+[oa]s?)$/)
@@ -427,23 +331,16 @@ sub fix_morphology
         # Irregular comparison of adjectives.
         if($iset->is_adjective())
         {
-            if($form =~ m/^(mejor|peor|mayor|menor)(es)?$/i)
+            if($form =~ m/^(millor|pitjor|major|menor)(e?s)?$/i)
             {
                 $iset->set('degree', 'cmp');
             }
-            elsif($form =~ m/^(óptim|pésim|máxim|mínim)[oa]s?$/i)
-            {
-                $iset->set('degree', 'sup');
-            }
-            elsif($form =~ m/ísim[oa]s?$/i)
-            {
-                $iset->set('degree', 'abs');
-            }
         } # is adjective
         # Adverbs of comparison.
-        if($iset->is_adverb() && $form =~ m/^(más|menos)$/i)
+        if($iset->is_adverb() && $form =~ m/^(més|menys)$/i)
         {
             $iset->set('degree', 'cmp');
+            $iset->clear('adptype');
         }
         # Fix verbs including auxiliaries.
         if($iset->is_verb())
@@ -453,97 +350,18 @@ sub fix_morphology
             {
                 $iset->set('verbform', 'fin');
             }
-            # Spanish conditional is traditionally considered a tense rather than a mood.
+            # Catalan conditional is traditionally considered a tense rather than a mood.
             # Thus the morphological analysis did not know where to put it and lost the feature.
             # If the verb is tagged as indicative and does not have any tense, tag it as conditional.
             if($iset->is_indicative() && $iset->tense() eq '')
             {
                 $iset->set('mood', 'cnd');
             }
-            # There are occasional errors in lemmatization.
-            # The following hash maps lowercased forms to lemmas (assuming we know it is a verb).
-            my %form_to_lemma =
-            (
-                'acaba' => 'acabar',
-                'acabas' => 'acabar',
-                'acabo' => 'acabar',
-                'andaba' => 'andar',
-                'andabas' => 'andar',
-                'arrepentiréis' => 'arrepentir',
-                'continua' => 'continuar',
-                'continuo' => 'continuar',
-                'deberias' => 'deber',
-                'deje' => 'dejar',
-                'dejes' => 'dejar',
-                'dejéis' => 'dejar',
-                'dejeis' => 'dejar', # should be "dejéis"
-                'dejo' => 'dejar',
-                'echar' => 'echar', # lemma was "echar_leña"
-                'esta' => 'estar', # should be "está"
-                'estarías' => 'estar',
-                'estas' => 'estar', # should be "estás"
-                'este' => 'estar', # should be "esté"
-                'estoy' => 'estar',
-                'estuve' => 'estar',
-                'fue' => 'ser',
-                'fuera' => 'ser', # subjunctive imperfect; it could be also an adverb!
-                'fuero' => 'ser',
-                'fuerón' => 'ser', # should be "fueron"
-                'habéis' => 'haber',
-                'habeis' => 'haber', # should be "habéis"
-                'habiéndo' => 'haber', # should be "habiendo"
-                'haya' => 'haber',
-                'hayas' => 'haber',
-                'hincapié' => 'hincapié', # not 'hacer_hincapié'
-                'llevo' => 'llevar',
-                'negándo' => 'negar', # should be "negando"
-                'podeis' => 'poder',
-                'podes' => 'poder',
-                'podía' => 'poder',
-                'podra' => 'poder', # should be "podrá"
-                'podrás' => 'poder',
-                'podras' => 'poder',
-                'podre' => 'poder', # should be "podré"
-                'podréis' => 'poder',
-                'podriaís' => 'poder',
-                'podrían' => 'poder',
-                'pudiéndo' => 'poder', # should be "pudiendo"
-                'pudiera' => 'poder',
-                'pudieras' => 'poder',
-                'puede' => 'poder',
-                'pueden' => 'poder',
-                'puedes' => 'poder',
-                'recuerdo' => 'recordar',
-                'seguimos' => 'seguir',
-                'serás' => 'ser',
-                'serán' => 'ser',
-                'seréis' => 'ser',
-                'sigo' => 'seguir',
-                'solía' => 'soler',
-                'suelen' => 'soler',
-                'suelo' => 'soler',
-                'tendrian' => 'tener', # should be "tendrían"
-                'tenéis' => 'tener',
-                'tengo' => 'tener',
-                'tenia' => 'tener', # should be "tenía"
-                'terminó' => 'terminar',
-                'tuve' => 'tener',
-                'vino' => 'venir',
-                'volví' => 'volver',
-                'volvi' => 'volver',
-                'vuelve' => 'volver',
-                'vuelvo' => 'volver'
-            );
-            my $lemma = $node->lemma();
-            if($lemma !~ m/r$/ && exists($form_to_lemma{lc($form)}))
-            {
-                $lemma = $form_to_lemma{lc($form)};
-                $node->set_lemma($lemma);
-            }
             # Auxiliary verb must be tagged AUX, not VERB.
             # Copula must be tagged AUX, not VERB.
             # In lemmatized treebanks we want to do this only for approved auxiliary verbs.
             # However, we want it to work in unlemmatized treebanks too, so we add '_' as an approved lemma.
+            my $lemma = $node->lemma();
             if($lemma =~ m/^(ser|estar|haber|tener|ir|poder|saber|querer|deber|_)$/ && $node->deprel() =~ m/^aux(:|$)/ ||
                $lemma =~ m/^(ser|estar|_)$/ && $node->deprel() =~ m/^cop(:|$)/)
             {
@@ -616,7 +434,7 @@ sub fix_case_mark
             my $parent = $node->parent();
             # Most prepositions modify infinitives: para preparar, en ir, de retornar...
             # Some exceptions: desde hace cinco años
-            if($parent->is_infinitive() || $parent->form() =~ m/^hace$/i)
+            if($parent->is_infinitive() || $parent->form() =~ m/^hace$/i) ###!!! THE HACE PATTERN, IF PRESENT IN CATALAN AT ALL, WILL HAVE DIFFERENT LEMMA
             {
                 $node->set_deprel('mark');
             }
@@ -647,12 +465,6 @@ sub fix_specific_constructions
         {
             $node->set_deprel('nummod');
         }
-        elsif($node->form() =~ m/^sí$/i && $node->deprel() =~ m/^advmod(:|$)/)
-        {
-            $node->set_tag('INTJ');
-            $node->iset()->set('pos', 'int');
-            $node->set_deprel('advcl');
-        }
         # Relative prepositional adverbial phrase "ante lo cual" ("before which")
         # has the preposition "ante" as the head, which is wrong.
         elsif($node->is_adposition() && $node->deprel() =~ m/^advmod(:|$)/)
@@ -682,44 +494,6 @@ sub fix_specific_constructions
                     $node->set_parent($newhead);
                     $node->set_deprel('case');
                 }
-            }
-        }
-        # Adverbial clause starting with "como si" is sometimes headed by "como" while
-        # "si" is the 'mark' of the verb. Both "como" and "si" should be markers.
-        elsif($node->form() =~ m/^como$/i)
-        {
-            my @children = $node->get_children({'ordered' => 1});
-            my @verbs = grep {$_->is_verb()} (@children);
-            # One exception where "como" should actually head the sentence is
-            # when "como" is a nominal predicate:
-            # "No sé, como está Raúl." lit. "Not I-know, how is Raúl."
-            my @copulas = grep {$_->deprel() =~ m/^cop(:|$)/} (@verbs);
-            if(scalar(@verbs) >= 1 && scalar(@copulas) == 0)
-            {
-                my $verb = $verbs[0];
-                # We could now check for the presence of "si" under the verb but would its absence change anything?
-                $verb->set_parent($node->parent());
-                $verb->set_deprel('advcl');
-                # Reattach all other children of "como" under the verb.
-                foreach my $child (@children)
-                {
-                    unless($child == $verb)
-                    {
-                        $child->set_parent($verb);
-                    }
-                }
-                # Reattach "como" to the verb.
-                $node->set_parent($verb);
-                $node->set_deprel('mark');
-            }
-        }
-        # "Tanto" occurs in "tanto como", which functions as a compound conjunction.
-        # However, as a pronoun (quantifier), it cannot be 'cc': "de tanta paciencia como veneno"
-        elsif($node->lemma() eq 'tanto' && $node->is_pronoun() && $node->deprel() =~ m/^cc(:|$)/)
-        {
-            if($node->parent()->is_noun())
-            {
-                $node->set_deprel('det');
             }
         }
         # "Medio" is tagged 'NUM' but sometimes attached as 'det'; it should be 'nummod'.
@@ -876,13 +650,10 @@ sub fix_auxiliary_verb
     my $node = shift;
     if($node->tag() eq 'AUX')
     {
-        # Hacer often occurs in temporal expressions like "hace unos días" ("some days ago").
-        # hace 16 meses
-        # hace algunos días
-        # hace un par de días ("par" is the head)
-        # hace poco (meaning "recently"; "poco" is adverb, the phrase is advmod instead of obl)
-        # desde hacía tiempo
-        if($node->form() =~ m/^(hace|hacía)$/i && $node->parent()->tag() =~ m/^(NOUN|PRON|DET|NUM|ADV)$/)
+        # Fer often occurs in temporal expressions (analogy to Spanish "hacer"
+        # as in "hace unos días" ("some days ago")): "des de fa setmanes"
+        # ("since weeks ago").
+        if($node->form() =~ m/^(fa|feia)$/i && $node->parent()->tag() =~ m/^(NOUN|PRON|DET|NUM|ADV)$/)
         {
             $node->set_tag('VERB');
             $node->iset()->clear('verbtype');
@@ -898,12 +669,12 @@ sub fix_auxiliary_verb
             }
             else
             {
-                log_warn("Unexpected deprel '".$nphead->deprel()."' of a 'hace unos días'-type phrase");
+                log_warn("Unexpected deprel '".$nphead->deprel()."' of a 'des de fa setmanes'-type phrase");
             }
             $nphead->set_parent($node);
             $nphead->set_deprel('obj');
-            # If there were children of the NP head to the left of "hace" (e.g., punctuation),
-            # they are now nonprojective. Reattach them to "hace".
+            # If there were children of the NP head to the left of "fa" (e.g., punctuation),
+            # they are now nonprojective. Reattach them to "fa".
             my @leftchildren = grep {$_->ord() < $node->ord()} ($nphead->children());
             foreach my $child (@leftchildren)
             {
@@ -937,12 +708,12 @@ sub fix_auxiliary_verb
         # wrong (not exhaustive): $node->lemma() =~ m/^(acabar|colar|comenzar|continuar|dejar|empezar|hacer|lograr|llegar|pasar|preguntar|quedar|seguir|soler|sufrir|tender|terminar|tratar|volver)$/
         # correct auxiliaries:    $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/
         # We must also approve the empty lemma '_', otherwise this method would mess up unlemmatized treebanks.
-        my $approved_auxiliary = $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer|_)$/;
+        my $approved_auxiliary = $node->lemma() =~ m/^(ser|estar|haver|anar|deber|poder|saber|querer|_)$/;
         my $approved_copula    = $node->lemma() =~ m/^(ser|estar|_)$/;
-        # Warn if the lemma does not end in "-r". That could mean that we have
+        # Warn if the lemma does not end in "-r" or "-re". That could mean that we have
         # a genuine auxiliary which is just wrongly lemmatized (e.g., "habiendo").
         # Of course it could also mean that we have a correct lemma of a non-verb.
-        if($node->lemma() !~ m/r$/ && $node->lemma() ne '_')
+        if($node->lemma() !~ m/re?$/ && $node->lemma() ne '_')
         {
             log_warn("AUX lemma '".$node->lemma()."' of '".$node->form()."' does not look like an infinitive.");
         }
@@ -1061,17 +832,6 @@ sub fix_auxiliary_verb
             $node->set_tag('VERB');
             $node->iset()->clear('verbtype');
         }
-        # "como diciendo" ("like saying")
-        elsif($node->form() =~ m/^diciendo$/i && defined($node->get_left_neighbor()) && $node->get_left_neighbor()->form() =~ m/^como$/i)
-        {
-            my $como = $node->get_left_neighbor();
-            $como->set_parent($node);
-            $como->set_deprel('mark');
-            $node->set_deprel('parataxis');
-            # We also need to change the part-of-speech tag from AUX to VERB.
-            $node->set_tag('VERB');
-            $node->iset()->clear('verbtype');
-        }
     }
 }
 
@@ -1081,13 +841,18 @@ sub fix_auxiliary_verb
 
 =over
 
-=item Treex::Block::HamleDT::ES::FixUD
+=item Treex::Block::HamleDT::CA::FixUD
 
-This is a temporary block that should fix selected known problems in the Spanish UD 1.1 treebank.
+This is a temporary block that should fix selected known problems in the Catalan UD treebank.
 
 =back
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Daniel Zeman <zeman@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2019 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
