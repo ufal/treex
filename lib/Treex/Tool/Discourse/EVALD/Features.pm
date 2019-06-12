@@ -34,8 +34,12 @@ sub build_all_classes {
     if ($self->target eq 'L1') {
       return ['1', '2', '3', '4', '5'];
     }
-    else {
+    elsif ($self->target eq 'L2') {
       return ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    }
+    # referat
+    else {
+      return ['A', 'B', 'C'];
     }
 }
 

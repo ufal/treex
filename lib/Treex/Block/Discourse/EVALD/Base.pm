@@ -8,7 +8,7 @@ has 'target' => (
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
-    documentation => 'target classification set, two possible values: L1 for native speakers, L2 for second language learners',
+    documentation => 'target classification set, three possible values: L1 for native speakers, L2 for second language learners, referat for the referat dataset',
 );
 has 'ns_filter' => ( is => 'ro', isa => 'Str' );
 has '_feat_extractor' => ( is => 'ro', isa => 'Treex::Tool::Discourse::EVALD::Features', builder => '_build_feat_extractor', lazy => 1 );
