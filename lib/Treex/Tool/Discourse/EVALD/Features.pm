@@ -21,7 +21,7 @@ has 'language' => ( is => 'ro', isa => 'Str', required => 1 );
 has 'selector' => ( is => 'ro', isa => 'Str', default => '' );
 has 'all_classes' => ( is => 'ro', isa => 'ArrayRef[Str]', builder => 'build_all_classes', lazy => 1 );
 has 'weka_featlist' => ( is => 'ro', isa => 'ArrayRef[ArrayRef[Str]]', builder => 'build_weka_featlist', lazy => 1 );
-has 'kenlm_model' => ( is => 'ro', isa => 'Str', default => '/home/straka/students/naplava/kenlm-cs-syn_v4/cs-syn_v4_5.bin' );
+has 'kenlm_model' => ( is => 'ro', isa => 'Str', default => '/lnet/tspec/work/people/straka/kenlm/model-cs-syn_v4/cs-syn_v4_5.bin' );
 has '_kenlm_python' => ( is => 'ro', builder => '_build_kenlm_python', lazy => 1 );
 
 sub BUILD {
