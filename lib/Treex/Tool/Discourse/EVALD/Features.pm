@@ -53,6 +53,17 @@ sub build_weka_featlist {
       ["spell^accented_per_100chars",                       "NUMERIC"],
       ["spell^diphthons_per_100chars",                      "NUMERIC"],
       ["spell^capitals_at_sentence_beginnings_per_100sent", "NUMERIC"],
+      ["spell^capitals_per_100chars",                       "NUMERIC"],
+      ["spell^capitals_not_first_letter_per_100chars",      "NUMERIC"],
+      ["spell^long_u_per_100chars",                         "NUMERIC"],
+      ["spell^long_u_not_first_letter_per_100chars",        "NUMERIC"],
+      ["spell^two_wrong_vowels_per_100words",               "NUMERIC"],
+      ["spell^soft_consonants_and_y_per_100words",          "NUMERIC"],
+      ["spell^hard_consonants_and_i_per_100words",          "NUMERIC"],
+      ["spell^pje_per_100words",                            "NUMERIC"],
+      ["spell^two_long_syllables_per_100words",             "NUMERIC"],
+      ["spell^wrong_characters_per_100chars",               "NUMERIC"],
+
 
     # MORPHOLOGY FEATS
       ["morph^passive_vs_active_ratio_percent",       "NUMERIC"],
@@ -420,7 +431,7 @@ sub create_feat_hash {
         %$feats_coreference,
         %$feats_tfa,
         %$feats_readability,
-        %$feats_kenlm,
+	%$feats_kenlm,
     );
     return \%all_feats_hash;
 }
@@ -441,6 +452,17 @@ my $number_of_sentences;
 my $number_of_words;
 my $number_of_syllables;
 my $number_of_characters;
+
+my $number_of_capitals;
+my $number_of_capitals_not_first_letter;
+my $number_of_long_u;
+my $number_of_long_u_not_first_letter;
+my $number_of_two_wrong_vowels;
+my $number_of_soft_consonants_and_y;
+my $number_of_hard_consonants_and_i;
+my $number_of_pje;
+my $number_of_two_long_syllables;
+my $number_of_wrong_characters;
 
 my $number_of_polysyllables; # words with three or more syllables
 
@@ -656,6 +678,17 @@ sub collect_info_discourse {
     $number_of_typos = 0;
     $number_of_punctuation_marks = 0;
 
+    $number_of_capitals = 0;
+    $number_of_capitals_not_first_letter = 0;
+    $number_of_long_u = 0;
+    $number_of_long_u_not_first_letter = 0;
+    $number_of_two_wrong_vowels = 0;
+    $number_of_soft_consonants_and_y = 0;
+    $number_of_hard_consonants_and_i = 0;
+    $number_of_pje = 0;
+    $number_of_two_long_syllables = 0;
+    $number_of_wrong_characters = 0;
+
     $number_of_polysyllables = 0;
     $number_of_diphthongs = 0;
 
@@ -829,6 +862,22 @@ sub collect_info_discourse {
           if ($char =~ /[áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]/) {
             $number_of_accented_characters++;
           }
+          if ($char =~ /[Úú]/) {
+            $number_of_long_u++;
+            if ($i>0) {
+              $number_of_long_u_not_first_letter++;
+            }
+          }
+          if ($char !~ /[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZáčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ0-9% !?"'()+,:;.<>@“„…–\/-]/) {
+            $number_of_wrong_characters++;
+          }
+
+          if ($char =~ /[ÁČĎÉĚÍŇÓŘŠŤÚŮÝŽABCDEFGHIJKLMNOPQRSTUVWXYZ]/) {
+            $number_of_capitals++;
+            if ($i>0) {
+              $number_of_capitals_not_first_letter++;
+            }
+          }
         }
 
         my $ord = $anode->ord;
@@ -847,6 +896,29 @@ sub collect_info_discourse {
 
         if (lc($form) =~ /(au|ou|eu)/) {
           $number_of_diphthongs++;
+        }
+
+        if (lc($form) =~ /pje/) {
+          $number_of_pje++;
+        }
+
+        if (lc($form) =~ /[ŽŠČŘCJĎŤŇžščřcjďťň][yýYÝ]/) {
+          $number_of_soft_consonants_and_y++;
+        }
+
+        if (lc($form) =~ /([HKRhkr]|Ch|CH|cH|ch)[iíIÍ]/) {
+          $number_of_hard_consonants_and_i++;
+        }
+
+        if (lc($form) =~ /[aeiyouAEIYOUáéíýóúůÁÉÍÝÓÚŮ][aeiyoAEIYOáéíýóÁÉÍÝÓ]/) {
+          $number_of_two_wrong_vowels++;
+        }
+        if (lc($form) =~ /[iyuAIYUáéíýóúůÁÉÍÝÓÚŮ][uúůUÚŮ]/) {
+          $number_of_two_wrong_vowels++;
+        }
+
+        if (lc($form) =~ /[áéíýóúůÁÉÍÝÓÚŮ]([BCDFGHJKLMNPQRSTVWXZbcdfghjklmnpqrstvwxzČĎŘŠŤŽčďřšťž]|Ch|CH|cH|ch)+[áéíýóúůÁÉÍÝÓÚŮ]/) {
+          $number_of_two_long_syllables++;
         }
 
         if (lc($form) =~ /^(li|jsem|jsi|jsme|jste|bych|bys|by|bychom|byste|si|se|mi|ti|mu|mě|tě|ho|tu|to)$/) {
@@ -1361,6 +1433,16 @@ sub features_spelling {
     $feats{'spell^accented_per_100chars'} = ceil(100*$number_of_accented_characters/$number_of_characters);
     $feats{'spell^diphthons_per_100chars'} = ceil(100*$number_of_diphthongs/$number_of_characters);
     $feats{'spell^capitals_at_sentence_beginnings_per_100sent'} = ceil(100*$number_of_capitals_after_stops/$number_of_sentences);
+    $feats{'spell^capitals_per_100chars'} = ceil(100*$number_of_capitals/$number_of_characters);
+    $feats{'spell^capitals_not_first_letter_per_100chars'} = ceil(100*$number_of_capitals_not_first_letter/$number_of_characters);
+    $feats{'spell^long_u_per_100chars'} = ceil(100*$number_of_long_u/$number_of_characters);
+    $feats{'spell^long_u_not_first_letter_per_100chars'} = ceil(100*$number_of_long_u_not_first_letter/$number_of_characters);
+    $feats{'spell^two_wrong_vowels_per_100words'} = ceil(100*$number_of_two_wrong_vowels/$number_of_words);
+    $feats{'spell^soft_consonants_and_y_per_100words'} = ceil(100*$number_of_soft_consonants_and_y/$number_of_words);
+    $feats{'spell^hard_consonants_and_i_per_100words'} = ceil(100*$number_of_hard_consonants_and_i/$number_of_words);
+    $feats{'spell^pje_per_100words'} = ceil(100*$number_of_pje/$number_of_words);
+    $feats{'spell^two_long_syllables_per_100words'} = ceil(100*$number_of_two_long_syllables/$number_of_words);
+    $feats{'spell^wrong_characters_per_100chars'} = ceil(100*$number_of_wrong_characters/$number_of_characters);
 
     return \%feats;
 }
