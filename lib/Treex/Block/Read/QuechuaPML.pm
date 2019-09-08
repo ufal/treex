@@ -169,7 +169,7 @@ sub _convert_tree
         $self->_convert_tree($pml_child, $treex_child);
     }
     # It is not guaranteed that the ord values in the input tree form a 1..N sequence.
-    if($root_here)
+    if($root_here && 0) ###!!!
     {
         $treex_node->get_root()->_normalize_node_ordering();
     }
