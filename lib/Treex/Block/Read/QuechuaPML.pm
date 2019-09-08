@@ -133,11 +133,16 @@ sub _convert_tree
     if($treex_node->is_root())
     {
         $root_here = 1;
-        $treex_node->set_attr('ord', 0);
+        $treex_node->_set_ord(0);
     }
     else
     {
-        $self->_copy_attr($pml_node, $treex_node, 'order', 'ord');
+        # We cannot use the ordinary _copy_attr() method for the 'ord' attribute.
+        my $ord = $pml_node->attr('order');
+        if($ord =~ m/^\d+$/ && $ord > 0)
+        {
+            $treex_node->_set_ord($ord);
+        }
         $self->_copy_attr($pml_node, $treex_node, 'word', 'form');
         $self->_copy_attr($pml_node, $treex_node, 'pos', 'tag');
         # Besides <pos>, there is also <morph>. Elements of <morph> are <tag>
