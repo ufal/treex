@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<pml_schema version="1.1" xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/">
+ <revision>0.1</revision>
+ 
+ <root name="quechua_corpus">
+  <structure>
+   <member name="id" role="#ID" as_attribute="1">
+    <cdata format="ID" />
+   </member>
+   <member name="meta" type="meta.type" />
+   <member name="body" type="body.type" />
+  </structure>
+ </root>
+ 
+ <type name="meta.type">
+  <structure>
+   <member name="name">
+    <cdata format="any" />
+   </member>
+   <member name="author">
+    <cdata format="any" />
+   </member>
+   <member name="date">
+    <cdata format="any" />
+   </member>
+   <member name="description">
+    <cdata format="any" />
+   </member>
+   <member name="format">
+    <cdata format="any" />
+   </member>
+   <member name="history">
+    <cdata format="any" />
+   </member>
+  </structure>
+ </type>
+ 
+ <type name="body.type">
+  <sequence role="#TREES">
+   <element name="s" type="sentence.type" />
+  </sequence>
+ </type>
+ <type name="sentence.type">
+  <structure role="#NODE">
+   <member name="id" role="#ID" as_attribute="1">
+    <cdata format="ID" />
+   </member>
+   <member name="saphi" role="#CHILDNODES">
+    <sequence content_pattern="(nonterminal|terminal)">
+     <element name="nonterminal" type="nonterminal.type" />
+     <element name="terminal" type="terminal.type" />
+    </sequence>
+   </member>
+  </structure>
+ </type>
+ 
+ <type name="nonterminal.type">
+  <structure role="#NODE">
+   <member name="id" role="#ID" as_attribute="1">
+    <cdata format="ID" />
+   </member>
+   <member name="label" type="edgelabel.type" />
+   <member name="cat">
+    <choice>
+     <value>VROOT</value>
+    </choice>
+   </member>
+   <member name="comment">
+   <cdata format="any" />
+   </member>
+   <member name="children" role="#CHILDNODES">
+    <sequence content_pattern="(nonterminal|terminal)*">
+     <element name="nonterminal" type="nonterminal.type" />
+     <element name="terminal" type="terminal.type" />
+    </sequence>
+   </member>
+  </structure>
+ </type>
+ 
+ <type name="terminal.type">
+  <structure role="#NODE">
+   <member name="id" role="#ID" as_attribute="1">
+    <cdata format="ID" />
+   </member>
+   <member name="order" role="#ORDER">
+    <cdata format="nonNegativeInteger" />
+   </member>
+   <member name="label" type="edgelabel.type" />
+   <member name="word">
+    <cdata format="any" />
+   </member>
+   <member name="extHead">
+    <cdata format="any" />
+   </member>
+    <member name="secedges">
+              <sequence>
+                <element name="secedge" type="secedge.type"/>
+              </sequence>
+            </member>
+   <member name="pos" type="poslabel.type"/>
+   <member name="translation" type="translation.type"/>
+   <member name="morph">
+    <sequence>
+     <element name="tag" type="morphtag.type" />
+    </sequence>
+   </member>
+   <member name="discourse">
+    <choice>
+     <value>TOPIC</value>
+     <value>FOCUS</value>
+    </choice>
+   </member>
+   <member name="children" role="#CHILDNODES">
+    <sequence content_pattern="(nonterminal|terminal)*">
+     <element name="nonterminal" type="nonterminal.type" />
+     <element name="terminal" type="terminal.type" />
+    </sequence>
+   </member>
+  </structure>
+ </type>
+ 
+ <type name="edgelabel.type">
+  <choice>
+   <value>--</value>
+   <value>$</value>
+   <value>abbrev</value>
+   <value>acmp</value>
+   <value>adv</value>
+   <value>app</value>
+   <value>arg</value>
+   <value>aux</value>
+   <value>ben</value>
+   <value>caus</value>
+   <value>co</value>
+   <value>comp</value>
+   <value>det</value>
+   <value>distr</value>
+   <value>dm</value>
+   <value>dupl</value>
+   <value>epst</value>
+   <value>ev</value>
+   <value>flm</value>
+   <value>goal</value>
+   <value>hab</value>
+   <value>instr</value>
+   <value>intr</value>
+   <value>iobj</value>
+   <value>linker</value>
+   <value>loc</value>
+   <value>mod</value>
+   <value>neg</value>
+   <value>nme</value>
+   <value>ns</value>
+   <value>num</value>
+   <value>numord</value>
+   <value>obj</value>
+   <value>oblg</value>
+   <value>p.arg</value>
+   <value>par</value>
+   <value>poss</value>
+   <value>poss.subj</value>
+   <value>pred</value>
+   <value>punc</value>
+   <value>purp</value>
+   <value>qnt</value>
+   <value>quot</value>
+   <value>r.disl</value>
+   <value>rep</value>
+   <value>sntc</value>
+   <value>src</value>
+   <value>sub</value>
+   <value>subj</value>
+   <value>tmp</value>
+   <value>topic</value>
+   <value>s.arg</value>
+   <value>s.arg.claus</value>
+   <value>s.co</value>
+   <value>s.iobj</value>
+   <value>s.neg</value>
+   <value>s.obj</value>
+   <value>s.poss</value>
+   <value>s.poss.subj</value>
+   <value>s.subj</value>
+   <value>s.subj_obj</value>
+   <value>s.subj_iobj</value>
+   <value>voc</value>
+  <!-- <value>co:acmp</value>
+   <value>co:adv</value>
+   <value>co:arg</value>
+   <value>co:aux</value>
+   <value>co:ben</value>
+   <value>co:caus</value>
+   <value>co:comp</value>
+   <value>co:det</value>
+   <value>co:dm</value>
+   <value>co:epst</value>
+   <value>co:ev</value>
+   <value>co:goal</value>
+   <value>co:instr</value>
+   <value>co:intr</value>
+   <value>co:iobj</value>
+   <value>co:loc</value>
+   <value>co:mod</value>
+   <value>co:neg</value>
+   <value>co:obj</value>
+   <value>co:oblg</value>
+   <value>co:poss</value>
+   <value>co:poss.subj</value>
+   <value>co:purp</value>
+   <value>co:qnt</value>
+   <value>co:src</value>
+   <value>co:sub</value>
+   <value>co:subj</value>
+   <value>co:tmp</value>
+   <value>co:topic</value>-->
+  </choice>
+ </type>
+ 
+ <type name="morphtag.type">
+    <choice>
+     <value>--</value>
+     <value>NP</value>
+     <value>NRoot</value>
+     <value>NRootCMP</value>
+     <value>NRootES</value>
+     <value>NRootNUM</value>
+     <value>Part_Affir</value>
+     <value>Part_Cond</value>
+     <value>Part_Conec</value>
+     <value>Part_Contr</value>
+     <value>Part_Disc</value>
+     <value>Part_Neg</value>
+     <value>Part_Neg_Imp</value>
+     <value>Part_Sim</value>
+     <value>PrepES</value>
+     <value>PrnDem</value>
+     <value>PrnInterr</value>
+     <value>PrnPers+1.Pl.Excl</value>
+     <value>PrnPers+1.Pl.Incl</value>
+     <value>PrnPers+1.Sg</value>
+     <value>PrnPers+2.Sg</value>
+     <value>PrnPers+3.Sg</value>
+     <value>VRoot</value>
+     <value>VRootES</value>
+     <value>+Abl</value>
+     <value>+Abtmp</value>
+     <value>+Acc</value>
+     <value>+Add</value>
+     <value>+Aff</value>
+     <value>+Ag</value>
+     <value>+Aprx</value>
+     <value>+Asmp</value>
+     <value>+Asmp_Emph</value>
+     <value>+Ass</value>
+     <value>+Aug</value>
+     <value>+Autotrs</value>
+     <value>+Ben</value>
+     <value>+Caus</value>
+     <value>+Char</value>
+     <value>+Cis_Trs</value>
+     <value>+Cont</value>
+     <value>+Con_Inst</value>
+     <value>+Con_Intr</value>
+     <value>+DS</value>
+     <value>+Dat_Ill</value>
+     <value>+Def</value>
+     <value>+Des</value>
+     <value>+Desesp</value>
+     <value>+Dim</value>
+     <value>+Dir</value>
+     <value>+DirE</value>
+     <value>+DirE_Emph</value>
+     <value>+Disc</value>
+     <value>+Dist</value>
+     <value>+Distr</value>
+     <value>+Dub</value>
+     <value>+Emph</value>
+     <value>+Fact</value>
+     <value>+Gen</value>
+     <value>+IPst</value>
+     <value>+Iclsv</value>
+     <value>+Inch</value>
+     <value>+IndE</value>
+     <value>+IndE_Emph</value>
+     <value>+Inf</value>
+     <value>+Int</value>
+     <value>+Intrup</value>
+     <value>+Intr_Neg</value>
+     <value>+Intsoc</value>
+     <value>+Kaus</value>
+     <value>+Lim_Aff</value>
+     <value>+Loc</value>
+     <value>+MPoss</value>
+     <value>+MRep</value>
+     <value>+Multi</value>
+     <value>+NPst</value>
+     <value>+Neg</value>
+     <value>+NumOrd</value>
+     <value>+Obl</value>
+     <value>+Perdur</value>
+     <value>+Perf</value>
+     <value>+Pl</value>
+     <value>+Posi</value>
+     <value>+Poss</value>
+     <value>+Pot</value>
+     <value>+Priv</value>
+     <value>+Prog</value>
+     <value>+Proloc</value>
+     <value>+QTop</value>
+     <value>+Rel</value>
+     <value>+Rem</value>
+     <value>+Rep</value>
+     <value>+Res</value>
+     <value>+Reub</value>
+     <value>+Rflx_Int</value>
+     <value>+Rgr_Iprs</value>
+     <value>+Rptn</value>
+     <value>+Rzpr</value>
+     <value>+SS</value>
+     <value>+SS_Sim</value>
+     <value>+Sim</value>
+     <value>+Sml</value>
+     <value>+Soc</value>
+     <value>+Stat_Multi</value>
+     <value>+Term</value>
+     <value>+Top</value>
+     <value>+Trs</value>
+     <value>+Vdim</value>
+     <value>+1.Obj</value>
+     <value>+1.Poss</value>
+     <value>+1.Pl.Excl.Poss</value>
+     <value>+1.Pl.Excl.Subj</value>
+     <value>+1.Pl.Excl.Subj.Fut</value>
+     <value>+1.Pl.Excl.Subj_2.Sg.Obj</value>
+     <value>+1.Pl.Excl.Subj_2.Sg.Obj.Fut</value>
+     <value>+1.Pl.Incl.Poss</value>
+     <value>+1.Pl.Incl.Subj</value>
+     <value>+1.Pl.Incl.Subj.Fut</value>
+     <value>+1.Pl.Incl.Subj.Pot</value>
+     <value>+1.Pl.Incl.Subj.Imp</value>
+     <value>+1.Sg.Poss</value>
+     <value>+1.Sg.Subj</value>
+     <value>+1.Sg.Subj.Fut</value>
+     <value>+1.Sg.Subj.Pot</value>
+     <value>+1.Sg.Subj_2.Pl.Obj</value>
+     <value>+1.Sg.Subj_2.Pl.Obj.Fut</value>
+     <value>+1.Sg.Subj_2.Sg.Obj</value>
+     <value>+1.Sg.Subj_2.Sg.Obj.Fut</value>
+     <value>+2.Obj</value>
+     <value>+2.Pl.Poss</value>
+     <value>+2.Pl.Subj</value>
+     <value>+2.Pl.Subj.Pot</value>
+     <value>+2.Pl.Subj_1.Sg.Obj.Imp</value>
+     <value>+2.Sg.Subj.Imp</value>
+     <value>+2.Pl.Subj.Imp</value>
+     <value>+2.Sg.Poss</value>
+     <value>+2.Sg.Subj</value>
+     <value>+2.Sg.Subj.Pot</value>
+     <value>+2.Sg.Subj_1.Pl.Excl.Obj</value>
+     <value>+2.Sg.Subj_1.Pl.Obj.Imp</value>
+     <value>+3.Poss</value>
+     <value>+3.Pl.Subj.IPst</value>
+     <value>+3.Pl.Poss</value>
+     <value>+3.Pl.Subj</value>
+     <value>+3.Pl.Subj.Fut</value>
+     <value>+3.Pl.Subj.Hab</value>
+     <value>+3.Pl.Subj.Pot</value>
+     <value>+3.Pl.Subj_2.Sg.Obj</value>
+     <value>+3.Pl.Subj.NPst</value>
+     <value>+3.Pl.Subj.Imp</value>
+     <value>+3.Sg.Subj.IPst</value>
+     <value>+3.Sg.Subj.Imp</value>
+     <value>+3.Subj_1.Pl.Excl.Obj</value>
+     <value>+3.Sg.Subj.NPst</value>
+     <value>+3.Sg.Poss</value>
+     <value>+3.Sg.Subj</value>
+     <value>+3.Sg.Subj.Fut</value>
+     <value>+3.Subj_1.Pl.Excl.Obj.Fut</value>
+     <value>+3.Subj_1.Pl.Incl.Obj</value>
+     <value>+3.Subj_1.Pl.Incl.Obj.Fut</value>
+     <value>+3.Subj_2.Pl.Obj</value>
+     <value>+3.Subj_2.Sg.Obj</value>
+    </choice>
+ </type>
+ 
+   <type name="secedge.type">
+     <structure>
+       <member name="idref" required="1">
+         <cdata format="PMLREF"/>
+        </member>
+        <member name="secedgelabel" type="edgelabel.type" required="0">
+            </member>
+          </structure>
+        </type>
+	
+  <type name="poslabel.type">
+   <choice>
+     <value>DUMMY</value>
+     <value>--</value>
+     <value>ALFS</value>
+     <value>Amb</value>
+     <value>Amb_Num</value>
+     <value>Asp</value>
+     <value>CARD</value>
+     <value>Cas</value>
+     <value>Mod</value>
+     <value>NDeriv</value>
+     <value>NS</value>
+     <value>Num</value>
+     <value>Root</value>
+     <value>Tns</value>
+     <value>Tns_VPers</value>
+     <value>VDeriv</value>
+     <value>VPers</value>
+     <value>VS</value>
+     <value>SP</value>
+     <value>FLM</value>
+     <value>$.</value>
+     <value>Root_VDeriv</value>
+     <value>Root_VDeriv_VDeriv</value>
+     <value>Root_VDeriv_VDeriv_VDeriv</value>
+     <value>Root_VDeriv_Amb_VDeriv_VDeriv</value>
+     <value>Root_VDeriv_VDeriv_VDeriv_VDeriv</value>
+     <!-- Root_VPers: only with haku -> cannot split      -->
+     <value>Root_VPers</value>
+     <value>VDeriv_VDeriv_VDeriv</value>
+     <value>VDeriv_VDeriv</value>
+     <value>Asp</value>
+     <value>Asp_Amb</value>
+     <value>Asp_VPers</value>
+     <!-- Asp_Tns -> only possible if -lla between tense and person, e.g. ka -chka -rqa -lla -n -taq      -->
+     <value>Asp_Tns</value>
+     <value>Asp_Tns_VPers</value>
+     <value>Asp_Tns_VPers_Mod</value>
+     <value>Asp_VPers_Mod</value>
+     <value>Tns_VPers</value>
+     <value>Tns_VPers_Mod</value>
+     <value>VPers_Mod</value>
+     <value>Root_NDeriv</value>
+     <value>Root_NDeriv_NDeriv</value>
+     <value>Root_NDeriv_Num</value>
+     <value>Root_NDeriv_NDeriv_Num</value>
+     <value>Root_Num</value>
+     <value>NPers</value>
+     <value>NPers_Cas</value>
+     <value>NPers_Num</value>
+     <value>Root_VS</value>
+     <value>Root_VS_VDeriv</value>
+     <value>Root_VS_VDeriv_VDeriv</value>
+     <value>Root_VS_VDeriv_VDeriv_VDeriv</value>
+     <value>Root_NS_VS</value>
+     <value>Root_NS_VS_VDeriv</value>
+     <value>Root_NDeriv_VS</value>
+     <value>Root_NDeriv_VS_VDeriv</value>
+     <value>Root_NDeriv_VS_VDeriv_VDeriv</value>
+     <value>Root_NDeriv_VS_VDeriv_VDeriv_VDeriv</value>
+     <value>NDeriv_Num</value>
+     <value>NS_NDeriv</value>
+     <value>NS_NDeriv_Num</value>
+     <value>NS_Num</value>
+     <value>NS_VS</value>
+     <value>PrnPers+1.Sg_NDeriv</value>
+     <value>PrnPers+1.Sg_Num</value>
+     <value>PrnPers+2.Sg_NDeriv</value>
+     <value>PrnPers+2.Sg_Num</value>
+     <value>PrnPers+3.Sg_NDeriv</value>
+     <value>PrnPers+3.Sg_Num</value>
+     <value>PrnPers+1.Pl.Excl_NDeriv</value>
+     <value>PrnPers+1.Pl.Incl_NDeriv</value>
+     <value>Part_Sim_VS</value>
+     <value>Part_Sim_VS_VDeriv</value>
+     <value>Part_Sim_VS_VDeriv_VDeriv</value>
+     <value>Part_Sim_VS_VDeriv_VDeriv_VDeriv</value>
+     <value>Part_Neg_VS</value>
+     <value>Part_Neg_VS_VDeriv</value>
+     <value>Part_Neg_VS_VDeriv_VDeriv</value>
+     <value>Part_Neg_VS_VDeriv_VDeriv_VDeriv</value>
+     <value>Part_Neg_Imp_VS</value>
+     <value>Part_Neg_Imp_VS_VDeriv</value>
+     <value>Part_Neg_Imp_VS_VDeriv_VDeriv</value>
+     <value>Part_Neg_Imp_VS_VDeriv_VDeriv_VDeriv</value>
+     <value>Part_Conec_VS</value>
+     <value>Part_Conec_VS_VDeriv</value>
+     <value>Part_Conec_VS_VDeriv_VDeriv</value>
+     <value>Part_Conec_VS_VDeriv_VDeriv_VDeriv</value>
+     <value>Tns_Amb</value>
+    </choice>
+  </type>
+  
+  <type name="translation.type">
+ <cdata format="any" />
+  </type>
+</pml_schema>
+
+   
