@@ -127,13 +127,26 @@ sub _convert_tree
     # nonterminals. However, this does not mean that the tree is phrase-based.
     # The nonterminal type seems to be reserved solely for the artificial
     # sentence root. All other nodes are terminal, although they can have
-    # children.
-    ###!!! We are not prepared for multiple roots per sentence, although the
-    ###!!! schema does not exclude them!
+    # children. In addition, the PML element <sentence> is treated as the root
+    # node by PML. We must skip it and go to its <nonterminal> child.
     my $root_here = 0;
     if($treex_node->is_root())
     {
         $root_here = 1;
+        # The current $pml_node corresponds to the <sentence> element.
+        # Proceed to its <nonterminal> child and take it as our root.
+        ###!!! We are not prepared for multiple roots per sentence, although the
+        ###!!! schema does not exclude them! We always expect exactly one root.
+        my @pmlchildren = $pml_node->children();
+        if(scalar(@pmlchildren == 0)
+        {
+            log_fatal("The <sentence> element has no children.");
+        }
+        if(scalar(@pmlchildren) > 1)
+        {
+            log_warn("The <sentence> element has more than one child.");
+        }
+        $pml_node = $pmlchildren[0];
         $treex_node->_set_ord(0);
     }
     else
