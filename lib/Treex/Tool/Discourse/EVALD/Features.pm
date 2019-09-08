@@ -8,6 +8,7 @@ use Treex::Tool::Coreference::Utils;
 use Treex::Tool::Tagger::MorphoDiTa;
 use List::Util qw/sum/;
 use List::MoreUtils qw/uniq/;
+use Treex::Tool::Python::RunFunc;
 
 has 'target' => (
     is            => 'ro',
@@ -20,14 +21,25 @@ has 'language' => ( is => 'ro', isa => 'Str', required => 1 );
 has 'selector' => ( is => 'ro', isa => 'Str', default => '' );
 has 'all_classes' => ( is => 'ro', isa => 'ArrayRef[Str]', builder => 'build_all_classes', lazy => 1 );
 has 'weka_featlist' => ( is => 'ro', isa => 'ArrayRef[ArrayRef[Str]]', builder => 'build_weka_featlist', lazy => 1 );
+has 'kenlm_model' => ( is => 'ro', isa => 'Str', default => '/home/straka/students/naplava/kenlm-cs-syn_v4/cs-syn_v4_5.bin' );
+has '_kenlm_python' => ( is => 'ro', builder => '_build_kenlm_python', lazy => 1 );
+
+sub BUILD {
+    my ($self) = @_;
+    $self->_kenlm_python;
+}
 
 sub build_all_classes {
     my ($self) = @_;
     if ($self->target eq 'L1') {
       return ['1', '2', '3', '4', '5'];
     }
-    else {
+    elsif ($self->target eq 'L2') {
       return ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    }
+    # referat
+    else {
+      return ['A', 'B', 'C'];
     }
 }
 
@@ -41,6 +53,17 @@ sub build_weka_featlist {
       ["spell^accented_per_100chars",                       "NUMERIC"],
       ["spell^diphthons_per_100chars",                      "NUMERIC"],
       ["spell^capitals_at_sentence_beginnings_per_100sent", "NUMERIC"],
+      ["spell^capitals_per_100chars",                       "NUMERIC"],
+      ["spell^capitals_not_first_letter_per_100chars",      "NUMERIC"],
+      ["spell^long_u_per_100chars",                         "NUMERIC"],
+      ["spell^long_u_not_first_letter_per_100chars",        "NUMERIC"],
+      ["spell^two_wrong_vowels_per_100words",               "NUMERIC"],
+      ["spell^soft_consonants_and_y_per_100words",          "NUMERIC"],
+      ["spell^hard_consonants_and_i_per_100words",          "NUMERIC"],
+      ["spell^pje_per_100words",                            "NUMERIC"],
+      ["spell^two_long_syllables_per_100words",             "NUMERIC"],
+      ["spell^wrong_characters_per_100chars",               "NUMERIC"],
+
 
     # MORPHOLOGY FEATS
       ["morph^passive_vs_active_ratio_percent",       "NUMERIC"],
@@ -288,8 +311,29 @@ sub build_weka_featlist {
       ["readability^coleman_liau_index",          "NUMERIC"],
       ["readability^automated_readability_index", "NUMERIC"],
 
+    # KENLM FEATS
+      ["kenlm^sent_beos_avg_logprob",       "NUMERIC"],
+      ["kenlm^sent_avg_logprob",            "NUMERIC"],
+      ["kenlm^text_beos_avg_logprob",       "NUMERIC"],
+      ["kenlm^text_avg_logprob",            "NUMERIC"],
+
     ];
     return [ grep {$self->filter_namespace($_->[0])} @$weka_feats_types ];
+}
+
+my $KENLM_PYTHON_INTRO = <<KENLM;
+import kenlm
+import sys
+print >> sys.stderr, "Loading KenLM model..."
+model = kenlm.LanguageModel("%s")
+KENLM
+
+sub _build_kenlm_python {
+    my ($self) = @_;
+    my $python = Treex::Tool::Python::RunFunc->new();
+    my $cmd = sprintf $KENLM_PYTHON_INTRO, $self->kenlm_model;
+    $python->command($cmd);
+    return $python;
 }
 
 ############################################ MAIN FEATURE EXTRACTING METHODS ############################################
@@ -375,8 +419,20 @@ sub create_feat_hash {
     my $feats_coreference = $self->features_coreference($doc);
     my $feats_tfa = $self->features_tfa($doc);
     my $feats_readability = $self->features_readability($doc);
+    my $feats_kenlm = $self->features_kenlm($doc);
 
-    my %all_feats_hash = ( %$feats_spelling, %$feats_morphology, %$feats_vocabulary, %$feats_syntax, %$feats_connectives_quantity, %$feats_connectives_diversity, %$feats_coreference, %$feats_tfa, %$feats_readability );
+    my %all_feats_hash = (
+        %$feats_spelling,
+        %$feats_morphology,
+        %$feats_vocabulary,
+        %$feats_syntax,
+        %$feats_connectives_quantity,
+        %$feats_connectives_diversity,
+        %$feats_coreference,
+        %$feats_tfa,
+        %$feats_readability,
+	%$feats_kenlm,
+    );
     return \%all_feats_hash;
 }
 
@@ -396,6 +452,17 @@ my $number_of_sentences;
 my $number_of_words;
 my $number_of_syllables;
 my $number_of_characters;
+
+my $number_of_capitals;
+my $number_of_capitals_not_first_letter;
+my $number_of_long_u;
+my $number_of_long_u_not_first_letter;
+my $number_of_two_wrong_vowels;
+my $number_of_soft_consonants_and_y;
+my $number_of_hard_consonants_and_i;
+my $number_of_pje;
+my $number_of_two_long_syllables;
+my $number_of_wrong_characters;
 
 my $number_of_polysyllables; # words with three or more syllables
 
@@ -611,6 +678,17 @@ sub collect_info_discourse {
     $number_of_typos = 0;
     $number_of_punctuation_marks = 0;
 
+    $number_of_capitals = 0;
+    $number_of_capitals_not_first_letter = 0;
+    $number_of_long_u = 0;
+    $number_of_long_u_not_first_letter = 0;
+    $number_of_two_wrong_vowels = 0;
+    $number_of_soft_consonants_and_y = 0;
+    $number_of_hard_consonants_and_i = 0;
+    $number_of_pje = 0;
+    $number_of_two_long_syllables = 0;
+    $number_of_wrong_characters = 0;
+
     $number_of_polysyllables = 0;
     $number_of_diphthongs = 0;
 
@@ -784,6 +862,22 @@ sub collect_info_discourse {
           if ($char =~ /[áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]/) {
             $number_of_accented_characters++;
           }
+          if ($char =~ /[Úú]/) {
+            $number_of_long_u++;
+            if ($i>0) {
+              $number_of_long_u_not_first_letter++;
+            }
+          }
+          if ($char !~ /[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZáčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ0-9% !?"'()+,:;.<>@“„…–\/-]/) {
+            $number_of_wrong_characters++;
+          }
+
+          if ($char =~ /[ÁČĎÉĚÍŇÓŘŠŤÚŮÝŽABCDEFGHIJKLMNOPQRSTUVWXYZ]/) {
+            $number_of_capitals++;
+            if ($i>0) {
+              $number_of_capitals_not_first_letter++;
+            }
+          }
         }
 
         my $ord = $anode->ord;
@@ -802,6 +896,29 @@ sub collect_info_discourse {
 
         if (lc($form) =~ /(au|ou|eu)/) {
           $number_of_diphthongs++;
+        }
+
+        if (lc($form) =~ /pje/) {
+          $number_of_pje++;
+        }
+
+        if (lc($form) =~ /[ŽŠČŘCJĎŤŇžščřcjďťň][yýYÝ]/) {
+          $number_of_soft_consonants_and_y++;
+        }
+
+        if (lc($form) =~ /([HKRhkr]|Ch|CH|cH|ch)[iíIÍ]/) {
+          $number_of_hard_consonants_and_i++;
+        }
+
+        if (lc($form) =~ /[aeiyouAEIYOUáéíýóúůÁÉÍÝÓÚŮ][aeiyoAEIYOáéíýóÁÉÍÝÓ]/) {
+          $number_of_two_wrong_vowels++;
+        }
+        if (lc($form) =~ /[iyuAIYUáéíýóúůÁÉÍÝÓÚŮ][uúůUÚŮ]/) {
+          $number_of_two_wrong_vowels++;
+        }
+
+        if (lc($form) =~ /[áéíýóúůÁÉÍÝÓÚŮ]([BCDFGHJKLMNPQRSTVWXZbcdfghjklmnpqrstvwxzČĎŘŠŤŽčďřšťž]|Ch|CH|cH|ch)+[áéíýóúůÁÉÍÝÓÚŮ]/) {
+          $number_of_two_long_syllables++;
         }
 
         if (lc($form) =~ /^(li|jsem|jsi|jsme|jste|bych|bys|by|bychom|byste|si|se|mi|ti|mu|mě|tě|ho|tu|to)$/) {
@@ -1316,6 +1433,16 @@ sub features_spelling {
     $feats{'spell^accented_per_100chars'} = ceil(100*$number_of_accented_characters/$number_of_characters);
     $feats{'spell^diphthons_per_100chars'} = ceil(100*$number_of_diphthongs/$number_of_characters);
     $feats{'spell^capitals_at_sentence_beginnings_per_100sent'} = ceil(100*$number_of_capitals_after_stops/$number_of_sentences);
+    $feats{'spell^capitals_per_100chars'} = ceil(100*$number_of_capitals/$number_of_characters);
+    $feats{'spell^capitals_not_first_letter_per_100chars'} = ceil(100*$number_of_capitals_not_first_letter/$number_of_characters);
+    $feats{'spell^long_u_per_100chars'} = ceil(100*$number_of_long_u/$number_of_characters);
+    $feats{'spell^long_u_not_first_letter_per_100chars'} = ceil(100*$number_of_long_u_not_first_letter/$number_of_characters);
+    $feats{'spell^two_wrong_vowels_per_100words'} = ceil(100*$number_of_two_wrong_vowels/$number_of_words);
+    $feats{'spell^soft_consonants_and_y_per_100words'} = ceil(100*$number_of_soft_consonants_and_y/$number_of_words);
+    $feats{'spell^hard_consonants_and_i_per_100words'} = ceil(100*$number_of_hard_consonants_and_i/$number_of_words);
+    $feats{'spell^pje_per_100words'} = ceil(100*$number_of_pje/$number_of_words);
+    $feats{'spell^two_long_syllables_per_100words'} = ceil(100*$number_of_two_long_syllables/$number_of_words);
+    $feats{'spell^wrong_characters_per_100chars'} = ceil(100*$number_of_wrong_characters/$number_of_characters);
 
     return \%feats;
 }
@@ -1601,6 +1728,37 @@ sub features_readability {
     return \%feats;
 }
 
+#------------------------------- KenLM features ------------------------
+sub features_kenlm {
+    my ($self, $doc) = @_;
+    my %feats = ();
+
+    my @atrees = map {$_->get_tree($self->language, 'a', $self->selector)} $doc->get_bundles;
+    my $token_count = 0;
+    my $full_text = "";
+    my $sent_beos_avg_logprob = 0;
+    my $sent_avg_logprob = 0;
+    foreach my $atree (@atrees) {
+        my @anodes = $atree->get_descendants({ordered => 1});
+        my $sent = join " ", map {$_->form} @anodes;
+        $sent =~ s/"/\\"/g;
+        $sent_beos_avg_logprob += $self->_kenlm_python->command(sprintf 'print model.score("%s")', $sent) / (scalar @anodes + 1);
+        $sent_avg_logprob += $self->_kenlm_python->command(sprintf 'print model.score("%s", bos=False, eos=False)', $sent) / scalar @anodes;
+        $full_text .= "$sent ";
+        $token_count += scalar @anodes;
+    }
+    $full_text =~ s/ +$//;
+
+    my $text_beos_avg_logprob = $self->_kenlm_python->command(sprintf 'print model.score("%s")', $full_text);
+    my $text_avg_logprob = $self->_kenlm_python->command(sprintf 'print model.score("%s", bos=False, eos=False)', $full_text);
+
+    $feats{'kenlm^sent_beos_avg_logprob'} = sprintf "%.2f", 10**($sent_beos_avg_logprob / (scalar @atrees + 1)) * 10000;
+    $feats{'kenlm^sent_avg_logprob'} = sprintf "%.2f", 10**($sent_avg_logprob / scalar @atrees) * 10000;
+    $feats{'kenlm^text_beos_avg_logprob'} = sprintf "%.2f", 10**($text_beos_avg_logprob / ($token_count + 1)) * 10000;
+    $feats{'kenlm^text_avg_logprob'} = sprintf "%.2f", 10**($text_avg_logprob / $token_count) * 10000;
+
+    return \%feats;
+}
 
 # ==================== supporting functions =======================
 

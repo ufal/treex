@@ -10,6 +10,7 @@ extends 'Treex::Core::Block';
 has 'layer' => ( is => 'ro', isa => enum([qw/a t/]), default => 'a' );
 has 'only_heads' => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'clear' => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'only_intersent' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 has '_entities' => ( is => 'rw', isa => 'HashRef[Str]', default => sub {{}} );
 
@@ -39,6 +40,9 @@ before 'process_document' => sub {
 
     my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
     my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees);
+    if ($self->only_intersent) {
+        @chains = grep {spans_over_multiple_sents($_)} @chains;
+    }
     my $entity_idx = 1;
     foreach my $chain (@chains) {
         foreach my $node (@$chain) {
@@ -47,6 +51,12 @@ before 'process_document' => sub {
         $entity_idx++;
     }
 };
+
+sub spans_over_multiple_sents {
+    my ($chain) = @_;
+    my %roots = map {$_->root->id => 1} @$chain;
+    return (keys %roots > 1);
+}
 
 sub process_tnode {
     my ($self, $tnode) = @_;
@@ -128,6 +138,10 @@ the data in the format consumed by CoNLL coreference resolution scorer.
 =item C<layer>
 
 Which layer is taken as a basis (default "a").
+
+=item C<only_intersent>
+
+Mark only the entities that span over multiple sentences.
 
 =back
 
