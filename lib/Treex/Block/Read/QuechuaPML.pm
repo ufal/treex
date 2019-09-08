@@ -122,6 +122,7 @@ sub _convert_tree
     my $self = shift;
     my $pml_node = shift;
     my $treex_node = shift;
+    $self->_copy_attr($pml_node, $treex_node, 'id', 'id');
     # Somewhat misleadingly, the PML schema categorizes nodes as terminals and
     # nonterminals. However, this does not mean that the tree is phrase-based.
     # The nonterminal type seems to be reserved solely for the artificial
@@ -169,9 +170,11 @@ sub _convert_tree
         $self->_convert_tree($pml_child, $treex_child);
     }
     # It is not guaranteed that the ord values in the input tree form a 1..N sequence.
-    if($root_here && 0) ###!!!
+    if($root_here)
     {
-        $treex_node->get_root()->_normalize_node_ordering();
+        my $sentence = join(' ', map {$_->ord().':'.$_->form()} (sort {$a->ord() <=> $b->ord()} ($treex_node->get_descendants())));
+        log_info("SENTENCE\t$sentence);
+        # $treex_node->get_root()->_normalize_node_ordering();
     }
 }
 
