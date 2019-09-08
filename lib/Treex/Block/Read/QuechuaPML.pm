@@ -138,7 +138,7 @@ sub _convert_tree
         ###!!! We are not prepared for multiple roots per sentence, although the
         ###!!! schema does not exclude them! We always expect exactly one root.
         my @pmlchildren = $pml_node->children();
-        if(scalar(@pmlchildren == 0)
+        if(scalar(@pmlchildren) == 0)
         {
             log_fatal("The <sentence> element has no children.");
         }
