@@ -156,12 +156,12 @@ sub _convert_tree
     }
     else
     {
-        # We cannot use the ordinary _copy_attr() method for the 'ord' attribute.
+        # To be on the safe side, we do not use the ordinary _copy_attr() method
+        # for the ord attribute and make sure that it is defined and numerical.
         my $ord = $pml_node->attr('order');
         if(defined($ord) && $ord =~ m/^\d+$/ && $ord > 0)
         {
             $treex_node->_set_ord($ord);
-            $treex_node->set_attr('lemma', "order=$ord");
         }
         else
         {
@@ -185,7 +185,14 @@ sub _convert_tree
         {
             $treex_node->set_attr('conll/feat', join('|', $morph->values('tag')));
         }
-        $self->_copy_attr($pml_node, $treex_node, 'translation', 'gloss');
+        # The translation attribute seems to always start with an equals-to sign.
+        # This sign is not part of the actual translation.
+        my $gloss = $pml_node->attr('translation');
+        if(defined($gloss))
+        {
+            $gloss =~ s/^=(.+)$/$1/;
+            $treex_node->set_attr('gloss', $gloss);
+        }
         $self->_copy_attr($pml_node, $treex_node, 'label', 'deprel');
     }
     foreach my $pml_child ($pml_node->children())
