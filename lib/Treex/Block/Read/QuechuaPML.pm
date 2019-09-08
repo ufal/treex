@@ -142,6 +142,7 @@ sub _convert_tree
         if(defined($ord) && $ord =~ m/^\d+$/ && $ord > 0)
         {
             $treex_node->_set_ord($ord);
+            $treex_node->set_attr('lemma', "order=$ord");
         }
         $self->_copy_attr($pml_node, $treex_node, 'word', 'form');
         $self->_copy_attr($pml_node, $treex_node, 'pos', 'tag');
