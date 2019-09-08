@@ -139,7 +139,7 @@ sub _convert_tree
     {
         # We cannot use the ordinary _copy_attr() method for the 'ord' attribute.
         my $ord = $pml_node->attr('order');
-        if($ord =~ m/^\d+$/ && $ord > 0)
+        if(defined($ord) && $ord =~ m/^\d+$/ && $ord > 0)
         {
             $treex_node->_set_ord($ord);
         }
