@@ -196,9 +196,9 @@ sub _convert_tree
     # It is not guaranteed that the ord values in the input tree form a 1..N sequence.
     if($root_here)
     {
-        my $sentence = join(' ', map {$_->ord().':'.$_->form()} (sort {$a->ord() <=> $b->ord()} ($treex_node->get_descendants())));
-        log_info("SENTENCE\t$sentence");
-        # $treex_node->get_root()->_normalize_node_ordering();
+        #my $sentence = join(' ', map {$_->ord().':'.$_->form()} (sort {$a->ord() <=> $b->ord()} ($treex_node->get_descendants())));
+        #log_info("SENTENCE\t$sentence");
+        $treex_node->get_root()->_normalize_node_ordering();
     }
 }
 
