@@ -145,6 +145,10 @@ sub _convert_tree
             $treex_node->_set_ord($ord);
             $treex_node->set_attr('lemma', "order=$ord");
         }
+        else
+        {
+            log_warn("Missing <order>");
+        }
         $self->_copy_attr($pml_node, $treex_node, 'word', 'form');
         $self->_copy_attr($pml_node, $treex_node, 'pos', 'tag');
         # Besides <pos>, there is also <morph>. Elements of <morph> are <tag>
