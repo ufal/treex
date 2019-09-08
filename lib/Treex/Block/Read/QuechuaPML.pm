@@ -148,7 +148,8 @@ sub _convert_tree
         else
         {
             my $id = $pml_node->attr('id') // 'UNKNOWN';
-            log_warn("Missing <order> of node $id");
+            my $type = $pml_node->type() // 'UNKNOWN';
+            log_warn("Missing <order> of node $id of type $type");
         }
         $self->_copy_attr($pml_node, $treex_node, 'word', 'form');
         $self->_copy_attr($pml_node, $treex_node, 'pos', 'tag');
