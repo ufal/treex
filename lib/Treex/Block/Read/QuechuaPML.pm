@@ -122,7 +122,12 @@ sub _convert_tree
     my $self = shift;
     my $pml_node = shift;
     my $treex_node = shift;
-    $self->_copy_attr($pml_node, $treex_node, 'id', 'id');
+    my $id = $pml_node->attr('id');
+    # It is not allowed to set an undefined id.
+    if(defined($id))
+    {
+        $treex_node->set_attr('id', $id);
+    }
     # Somewhat misleadingly, the PML schema categorizes nodes as terminals and
     # nonterminals. However, this does not mean that the tree is phrase-based.
     # The nonterminal type seems to be reserved solely for the artificial
