@@ -12,6 +12,7 @@ use Treex::PML::Instance;
 
 has '+_layers'      => ( builder => '_build_layers', lazy_build => 1 );
 has '+_file_suffix' => ( default => '\.pml(\.gz)?$' );
+has '+schema_dir'   => ( required => 0, builder => '_build_schema_dir' );
 has 'language'      => ( is => 'ro', isa => 'Treex::Type::LangCode', required=>1 );
 
 has 'last_loaded_from' => ( is => 'rw', isa => 'Str', default => '' );
@@ -20,8 +21,25 @@ has 'sent_in_file'     => ( is => 'rw', isa => 'Int', default => 0 );
 
 
 #------------------------------------------------------------------------------
-# We must override this builder because we inherit from BasePMLReader. However,
-# the Quechua treebank operates on a single layer.
+# The parameter '_schema_dir' is required by BasePMLReader.
+###!!! Do we need it? We have a single schema file, not an entire folder.
+#------------------------------------------------------------------------------
+sub _build_schema_dir
+{
+    my ($self) = @_;
+    my $path = __FILE__;
+    $path =~ s/[^\/]+$//;
+    $path .= '/PDT_schema';
+    log_fatal "Cannot find schema in $path, please specify schema_dir explicitly" if !-d $path;
+    Treex::PML::AddResourcePath($path);
+    return $path;
+}
+
+
+
+#------------------------------------------------------------------------------
+# The parameter '_layers' is required by BasePMLReader. We do not need it as
+# the Quechua treebanks operates on a single layer but we must supply it.
 #------------------------------------------------------------------------------
 sub _build_layers
 {
