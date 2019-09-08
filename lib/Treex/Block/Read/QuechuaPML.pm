@@ -149,7 +149,7 @@ sub _convert_tree
         #     <tag>NRoot</tag>
         #     <tag>+Fact</tag>
         #   </morph>
-        my $morph_tags = join('|', $pml_node->morph());
+        my $morph_tags = join('|', $pml_node->attr('morph'));
         $treex_node->set_attr('conll/feat', $morph_tags);
         $self->_copy_attr($pml_node, $treex_node, 'translation', 'gloss');
         $self->_copy_attr($pml_node, $treex_node, 'label', 'deprel');
