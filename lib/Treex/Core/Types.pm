@@ -54,6 +54,7 @@ my %EXTRA_LANG_CODES = (
     'fro'     => "Old French",
     'got'     => "Gothic",        # ISO 639-2
     'grc'     => "Ancient Greek", # ISO 639-2
+    'gsw'     => "Swiss German",
     'gun'     => "Mbya Guarani",
     'hit'     => "Hittite",       # ISO 639-2
     'hsb'     => "Upper Sorbian",
