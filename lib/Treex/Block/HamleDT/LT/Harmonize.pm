@@ -412,6 +412,10 @@ sub convert_deprels
             {
                 $deprel = 'AuxG';
             }
+            elsif($node->is_numeral())
+            {
+                $deprel = 'Atr';
+            }
             elsif($node->is_adposition())
             {
                 $deprel = 'AuxP';
@@ -766,6 +770,25 @@ sub fix_annotation_errors
                     log_warn("DEBUG: Sąjūdis: nuo „Persitvarkymo “iki Kovo 11-osios, t. 12, d. 1. Vilnius: Baltos lankos, 2008.");
                 }
             }
+        }
+        # Smulkiojo_ir_vidutinio_verslo_pletros_istatymas-s22
+        # 10. Smulkiojo ir vidutinio verslo subjektas – labai maža įmonė, maža įmonė ar vidutinė įmonė, atitinkanti šio įstatymo 3 straipsnyje nustatytas sąlygas, ar verslininkas, atitinkantis šio įstatymo 4 straipsnyje nustatytas sąlygas.
+        # 10. "Small and medium-sized enterprise" means a micro, small or medium-sized enterprise fulfilling the conditions laid down in Article 3 of this Law or an entrepreneur meeting the conditions laid down in Article 4 of this Law.
+        # The dash after "subjektas" has three children: 10 (Aux), subjektas (Sub), and ar (Coord/PredN_Co).
+        # Our heuristics decide to make the dash also Coord but it is not a good idea here, so we should try to prevent it.
+        if($spanstring =~ m/10.*Smulkiojo ir vidutinio verslo subjektas – labai maža įmonė/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # $subtree[0] je '10'
+            # $subtree[7] je pomlčka
+            # $subtree[26] je druhe 'ar'
+            $subtree[26]->set_parent($subtree[7]->parent());
+            $subtree[7]->set_parent($subtree[26]);
+            $subtree[7]->set_deprel('AuxG');
+            $subtree[6]->set_parent($subtree[26]);
+            $subtree[0]->set_parent($subtree[26]);
+            $subtree[0]->set_deprel('Atr');
+            $subtree[36]->set_parent($subtree[26]);
         }
     }
 }
