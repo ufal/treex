@@ -714,7 +714,6 @@ sub fix_annotation_errors
             if(scalar(@after) > 0)
             {
                 my $winner = shift(@after);
-                log_warn("Reattaching extra children of 'už' to the first child after, i.e., '".$winner->form()."' (TEMPORARY DEBUGGING MESSAGE)");
                 foreach my $child (@before, @after)
                 {
                     $child->set_parent($winner);
@@ -727,6 +726,18 @@ sub fix_annotation_errors
         {
             my $grandparent = $node->parent()->parent();
             $node->set_parent($grandparent);
+        }
+        # pikti_tevai-s32
+        # Kai tėvai priima visus savo jausmus, jiems lengviau apie tai pranešti ir vaikui.
+        # When parents accept all their feelings, it is easier for them to communicate this to the child.
+        # The deprel of the subordinator "Kai" is wrongly "AuxZ", it should be "AuxC".
+        if($spanstring =~ m/^Kai tėvai priima visus savo jausmus/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            if($subtree[0]->form() eq 'Kai' && $subtree[0]->deprel() eq 'AuxZ')
+            {
+                $subtree[0]->set_deprel('AuxC');
+            }
         }
     }
 }
