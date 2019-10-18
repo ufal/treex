@@ -721,6 +721,13 @@ sub fix_annotation_errors
                 }
             }
         }
+        # In Kuncinas-s70, coordination headed by a comma is attached to a surrounding quotation mark
+        # instead of the preposition to which it belongs.
+        if(!$node->is_root() && $node->parent()->is_punctuation() && $node->parent()->deprel() !~ m/^(Coord|Apos)/ && !$node->parent()->is_root())
+        {
+            my $grandparent = $node->parent()->parent();
+            $node->set_parent($grandparent);
+        }
     }
 }
 
