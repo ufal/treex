@@ -378,6 +378,11 @@ sub convert_deprels
         {
             $deprel = 'Obj';
         }
+        # AuxF is a formula in brackets after a phrase or clause (p = 0,39).
+        if($deprel =~ m/^AuxF$/i)
+        {
+            $deprel = 'Pred';
+        }
         # AuxL is the first name attached to the last name.
         if($deprel =~ m/^AuxL$/i)
         {
@@ -662,9 +667,15 @@ sub fix_annotation_errors
         my $deprel = $node->deprel() // '';
         my @children = $node->children();
         my $spanstring = $self->get_node_spanstring($node);
+        if($deprel =~ m/^adv\.$/i)
+        {
+            $deprel = 'Adv';
+            $node->set_deprel($deprel);
+        }
         if($form eq 'apie' && $deprel eq 'AuxK')
         {
-            $node->set_deprel('AuxP');
+            $deprel = 'AuxP';
+            $node->set_deprel($deprel);
         }
         # There is a hyphen marked as conjunct in Jonuskaite_V2-s57.
         if($node->is_punctuation() && $node->is_member() && $deprel eq 'ExD' && $node->is_leaf())
