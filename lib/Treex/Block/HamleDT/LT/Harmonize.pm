@@ -708,6 +708,9 @@ sub fix_annotation_errors
         {
             my @before = grep {$_->ord() < $node->ord()} (@children);
             my @after = grep {$_->ord() > $node->ord()} (@children);
+            # Exclude leading and trailing punctuation from the transformation.
+            while(scalar(@before) > 0 && $before[0]->is_punctuation() && $before[0]->deprel() !~ m/^(Coord|Apos)/) {shift(@before)}
+            while(scalar(@after) > 0 && $after[-1]->is_punctuation() && $after[-1]->deprel() !~ m/^(Coord|Apos)/) {pop(@after)}
             if(scalar(@after) > 0)
             {
                 my $winner = shift(@after);
