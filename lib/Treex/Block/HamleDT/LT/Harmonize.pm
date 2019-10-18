@@ -750,6 +750,23 @@ sub fix_annotation_errors
                 $subtree[0]->set_deprel('AuxC');
             }
         }
+        # Antanaicio_rec_77s-s3
+        # Sąjūdis: nuo „Persitvarkymo “iki Kovo 11-osios, t. 12, d. 1. Vilnius: Baltos lankos, 2008.
+        # Large nested coordination of PredNs. My conversion fails when trying to find the subject of the nominal predicate.
+        # And it dismantles the coordination. Instead, let us replace all PredNs by Preds, which should be converted reasonably.
+        ###!!! This is a temporary hack. It would be better to fix the conversion of PredN!
+        if($spanstring =~ m/Sąjūdis.*Persitvarkymo.*Kovo.*osios.*Vilnius.*Baltos lankos.*2008/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            foreach my $subnode (@subtree)
+            {
+                if($subnode->deprel() eq 'PredN')
+                {
+                    $subnode->set_deprel('Pred');
+                    log_warn("DEBUG: Sąjūdis: nuo „Persitvarkymo “iki Kovo 11-osios, t. 12, d. 1. Vilnius: Baltos lankos, 2008.");
+                }
+            }
+        }
     }
 }
 
