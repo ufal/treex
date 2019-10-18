@@ -660,6 +660,7 @@ sub fix_annotation_errors
         my $form = $node->form() // '';
         my $lemma = $node->lemma() // '';
         my $deprel = $node->deprel() // '';
+        my @children = $node->children();
         my $spanstring = $self->get_node_spanstring($node);
         if($form eq 'apie' && $deprel eq 'AuxK')
         {
@@ -696,6 +697,25 @@ sub fix_annotation_errors
                $node->parent()->parent()->parent()->parent()->form() eq ',')
             {
                 $node->set_parent($node->parent()->parent()->parent()->parent());
+            }
+        }
+        # Nominal predicate (without copula) is a prepositional phrase.
+        # Other constituents (Sb, Adv) are wrongly attached to the preposition instead of the noun.
+        # Example: Jonuskaite#32 (Jonuskaite-s32)
+        # Bet dabar visi kraujo apytakos ratai už kadro.
+        # But now all the circulatory circles behind the frame.
+        if($form eq 'už' && scalar(@children) > 1)
+        {
+            my @before = grep {$_->ord() < $node->ord()} (@children);
+            my @after = grep {$_->ord() > $node->ord()} (@children);
+            if(scalar(@after) > 0)
+            {
+                my $winner = shift(@after);
+                log_warn("Reattaching extra children of 'už' to the first child after, i.e., '".$winner->form()."' (TEMPORARY DEBUGGING MESSAGE)");
+                foreach my $child (@before, @after)
+                {
+                    $child->set_parent($winner);
+                }
             }
         }
     }
