@@ -141,6 +141,9 @@ has 'uses_unlab_models' => ( is => 'ro', isa => 'Bool', builder => 'build_uses_u
 
 sub BUILD {
     my ($self) = @_;
+    $self->uses_unlab_models;
+    $self->all_classes;
+    $self->weka_featlist;
 }
 
 sub build_uses_unlab_models {
