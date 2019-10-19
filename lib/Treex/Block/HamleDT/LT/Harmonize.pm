@@ -378,6 +378,11 @@ sub convert_deprels
         {
             $deprel = 'Obj';
         }
+        # AuxF is a formula in brackets after a phrase or clause (p = 0,39).
+        if($deprel =~ m/^AuxF$/i)
+        {
+            $deprel = 'Pred';
+        }
         # AuxL is the first name attached to the last name.
         if($deprel =~ m/^AuxL$/i)
         {
@@ -406,6 +411,10 @@ sub convert_deprels
             elsif($node->is_punctuation())
             {
                 $deprel = 'AuxG';
+            }
+            elsif($node->is_numeral())
+            {
+                $deprel = 'Atr';
             }
             elsif($node->is_adposition())
             {
@@ -660,10 +669,17 @@ sub fix_annotation_errors
         my $form = $node->form() // '';
         my $lemma = $node->lemma() // '';
         my $deprel = $node->deprel() // '';
+        my @children = $node->children();
         my $spanstring = $self->get_node_spanstring($node);
+        if($deprel =~ m/^adv\.$/i)
+        {
+            $deprel = 'Adv';
+            $node->set_deprel($deprel);
+        }
         if($form eq 'apie' && $deprel eq 'AuxK')
         {
-            $node->set_deprel('AuxP');
+            $deprel = 'AuxP';
+            $node->set_deprel($deprel);
         }
         # There is a hyphen marked as conjunct in Jonuskaite_V2-s57.
         if($node->is_punctuation() && $node->is_member() && $deprel eq 'ExD' && $node->is_leaf())
@@ -697,6 +713,82 @@ sub fix_annotation_errors
             {
                 $node->set_parent($node->parent()->parent()->parent()->parent());
             }
+        }
+        # Nominal predicate (without copula) is a prepositional phrase.
+        # Other constituents (Sb, Adv) are wrongly attached to the preposition instead of the noun.
+        # Example: Jonuskaite#32 (Jonuskaite-s32)
+        # Bet dabar visi kraujo apytakos ratai už kadro.
+        # But now all the circulatory circles behind the frame.
+        if($form eq 'už' && scalar(@children) > 1)
+        {
+            my @before = grep {$_->ord() < $node->ord()} (@children);
+            my @after = grep {$_->ord() > $node->ord()} (@children);
+            # Exclude leading and trailing punctuation from the transformation.
+            while(scalar(@before) > 0 && $before[0]->is_punctuation() && $before[0]->deprel() !~ m/^(Coord|Apos)/) {shift(@before)}
+            while(scalar(@after) > 0 && $after[-1]->is_punctuation() && $after[-1]->deprel() !~ m/^(Coord|Apos)/) {pop(@after)}
+            if(scalar(@after) > 0)
+            {
+                my $winner = shift(@after);
+                foreach my $child (@before, @after)
+                {
+                    $child->set_parent($winner);
+                }
+            }
+        }
+        # In Kuncinas-s70, coordination headed by a comma is attached to a surrounding quotation mark
+        # instead of the preposition to which it belongs.
+        if(!$node->is_root() && $node->parent()->is_punctuation() && $node->parent()->deprel() !~ m/^(Coord|Apos)/ && !$node->parent()->is_root())
+        {
+            my $grandparent = $node->parent()->parent();
+            $node->set_parent($grandparent);
+        }
+        # pikti_tevai-s32
+        # Kai tėvai priima visus savo jausmus, jiems lengviau apie tai pranešti ir vaikui.
+        # When parents accept all their feelings, it is easier for them to communicate this to the child.
+        # The deprel of the subordinator "Kai" is wrongly "AuxZ", it should be "AuxC".
+        if($spanstring =~ m/^Kai tėvai priima visus savo jausmus/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            if($subtree[0]->form() eq 'Kai' && $subtree[0]->deprel() eq 'AuxZ')
+            {
+                $subtree[0]->set_deprel('AuxC');
+            }
+        }
+        # Antanaicio_rec_77s-s3
+        # Sąjūdis: nuo „Persitvarkymo “iki Kovo 11-osios, t. 12, d. 1. Vilnius: Baltos lankos, 2008.
+        # Large nested coordination of PredNs. My conversion fails when trying to find the subject of the nominal predicate.
+        # And it dismantles the coordination. Instead, let us replace all PredNs by Preds, which should be converted reasonably.
+        ###!!! This is a temporary hack. It would be better to fix the conversion of PredN!
+        if($spanstring =~ m/Sąjūdis.*Persitvarkymo.*Kovo.*osios.*Vilnius.*Baltos lankos.*2008/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            foreach my $subnode (@subtree)
+            {
+                if($subnode->deprel() eq 'PredN')
+                {
+                    $subnode->set_deprel('Pred');
+                    log_warn("DEBUG: Sąjūdis: nuo „Persitvarkymo “iki Kovo 11-osios, t. 12, d. 1. Vilnius: Baltos lankos, 2008.");
+                }
+            }
+        }
+        # Smulkiojo_ir_vidutinio_verslo_pletros_istatymas-s22
+        # 10. Smulkiojo ir vidutinio verslo subjektas – labai maža įmonė, maža įmonė ar vidutinė įmonė, atitinkanti šio įstatymo 3 straipsnyje nustatytas sąlygas, ar verslininkas, atitinkantis šio įstatymo 4 straipsnyje nustatytas sąlygas.
+        # 10. "Small and medium-sized enterprise" means a micro, small or medium-sized enterprise fulfilling the conditions laid down in Article 3 of this Law or an entrepreneur meeting the conditions laid down in Article 4 of this Law.
+        # The dash after "subjektas" has three children: 10 (Aux), subjektas (Sub), and ar (Coord/PredN_Co).
+        # Our heuristics decide to make the dash also Coord but it is not a good idea here, so we should try to prevent it.
+        if($spanstring =~ m/10.*Smulkiojo ir vidutinio verslo subjektas – labai maža įmonė/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # $subtree[0] je '10'
+            # $subtree[7] je pomlčka
+            # $subtree[26] je druhe 'ar'
+            $subtree[26]->set_parent($subtree[7]->parent());
+            $subtree[7]->set_parent($subtree[26]);
+            $subtree[7]->set_deprel('AuxG');
+            $subtree[6]->set_parent($subtree[26]);
+            $subtree[0]->set_parent($subtree[26]);
+            $subtree[0]->set_deprel('Atr');
+            $subtree[36]->set_parent($subtree[26]);
         }
     }
 }

@@ -47,6 +47,7 @@
       <value>fy</value> <!-- Frisian -->
       <value>lb</value> <!-- Luxemburgish -->
       <value>li</value> <!-- Limburgish -->
+      <value>gsw</value> <!-- Swiss German -->
       <value>yi</value> <!-- Yiddish -->
       <value>da</value> <!-- Danish -->
       <value>sv</value> <!-- Swedish -->
@@ -173,8 +174,10 @@
       <value>kv</value> <!-- Komi -->
       <value>kpv</value> <!-- Komi Zyrian -->
       <value>myv</value> <!-- Erzya -->
+      <value>mdf</value> <!-- Moksha -->
       <value>se</value> <!-- Northern Sami -->
       <value>sme</value> <!-- Northern Sami -->
+      <value>sms</value> <!-- Skolt Sami -->
       <!-- other European and Caucasian languages -->
       <value>eu</value> <!-- Basque -->
       <value>ka</value> <!-- Georgian -->
@@ -250,6 +253,7 @@
       <value>oj</value> <!-- Ojibwa -->
       <value>nv</value> <!-- Navajo -->
       <value>qu</value> <!-- Quechua -->
+      <value>quz</value> <!-- Cusco Quechua -->
       <value>ay</value> <!-- Aymara -->
       <value>gn</value> <!-- Guaraní -->
       <value>gun</value> <!-- Mbyá Guaraní -->

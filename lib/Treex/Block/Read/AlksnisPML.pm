@@ -95,7 +95,7 @@ sub _convert_tree
     my $treex_node = shift;
     # Unlike some other PML applications, Alksnis does not have a PML element
     # corresponding to the artificial root node. Therefore if we are in the
-    # Treex rood, we must create a child but keep the Alksnis root as the
+    # Treex root, we must create a child but keep the Alksnis root as the
     # source for the child.
     my $root_here = 0;
     if($treex_node->is_root())

@@ -290,8 +290,8 @@ sub process_atree {
             $x
         }
         (@values);
-        $values[1] = $form;
-        $values[2] = $lemma;
+        $values[1] = defined($form) && $form ne '' ? $form : '_';
+        $values[2] = defined($lemma) && $lemma ne '' ? $lemma : '_';
         $self->print_nfc(join("\t", @values)."\n");
     }
     $self->print_nfc("\n") if $tree->get_descendants();
