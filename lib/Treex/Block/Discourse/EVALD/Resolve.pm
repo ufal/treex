@@ -86,6 +86,18 @@ sub process_document {
     $zone->set_attr('set_' . $set . '_evald_class', $class);
     $zone->set_attr('set_' . $set . '_evald_class_prob', $prob);
 
+    my $feat_hash = $doc->wild->{evald_feat_hash};
+    if (defined $feat_hash) {
+        $zone->set_attr('readability^flesch_reading_ease', $feat_hash->{'readability^flesch_reading_ease'}) if (defined $feat_hash->{'readability^flesch_reading_ease'});
+        $zone->set_attr('readability^flesch_kincaid_grade_level', $feat_hash->{'readability^flesch_kincaid_grade_level'}) if (defined $feat_hash->{'readability^flesch_kincaid_grade_level'});
+        $zone->set_attr('readability^smog_index', $feat_hash->{'readability^smog_index'}) if (defined $feat_hash->{'readability^smog_index'});
+        $zone->set_attr('readability^coleman_liau_index', $feat_hash->{'readability^coleman_liau_index'}) if (defined $feat_hash->{'readability^coleman_liau_index'});
+        $zone->set_attr('readability^automated_readability_index', $feat_hash->{'readability^automated_readability_index'}) if (defined $feat_hash->{'readability^automated_readability_index'});
+        
+        $zone->set_attr('vocab^simpson_index', $feat_hash->{'vocab^simpson_index'}) if (defined $feat_hash->{'vocab^simpson_index'});
+        $zone->set_attr('vocab^george_udny_yule_index', $feat_hash->{'vocab^george_udny_yule_index'}) if (defined $feat_hash->{'vocab^george_udny_yule_index'});
+    }
+
     #log_info "EVALD RESOLVE: END";
 }
 
