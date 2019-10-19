@@ -31,7 +31,8 @@ has classifier => (
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
-    default       => 'weka.classifiers.trees.RandomForest',
+#    default       => 'weka.classifiers.trees.RandomForest',
+    default       => 'weka.classifiers.functions.SMO',
     documentation => 'Weka classifier to be used, e.g. weka.classifiers.trees.RandomForest',
 );
 
@@ -46,6 +47,7 @@ my %filters_to_featset = (
   '+conn_qua,+conn_div' => 'connectives',
   '+pron,+coref' => 'coreference',
   '+tfa' => 'tfa',
+  '+readability' => 'readability',
 );
 
 
@@ -77,7 +79,7 @@ sub process_document {
 
     #log_info "EVALD RESOLVE: PREDICTIONS RETURNED";
   
-    my $zone = $doc->get_zone($self->language);
+    my $zone = $doc->get_zone($self->language, $self->selector);
 
     my $set = $filters_to_featset{$self->ns_filter} // $self->ns_filter;
     
@@ -91,6 +93,10 @@ sub evaluate_weka {
     my ($self, $evald_features_file_name) = @_;
 
     my $model_name = $self->model;
+    # try finding a model trained without unlabeled data features
+    if (!$self->_feat_extractor->uses_unlab_models) {
+        $model_name =~ s/_all\./_no_unlab./;
+    }
     log_debug("Evaluating using model '$model_name'\n");
     
     my $weka_jar = Treex::Core::Resource::require_file_from_share('installed_tools/ml-process/lib/weka-3.8.0.jar');
@@ -100,6 +106,7 @@ sub evaluate_weka {
     # my $class_name = 'weka.classifiers.trees.RandomForest';
     my $class_name = $self->classifier;
     my $java_cmd = "java -Dfile.encoding=UTF8 -cp $weka_jar $class_name -l $weka_model -T $evald_features_file_name -p 0";
+    print STDERR "$java_cmd\n";
     
     my @prediction = qx($java_cmd);
     log_debug("Result: @prediction");

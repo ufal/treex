@@ -1,3 +1,117 @@
+package Treex::Tool::Discourse::EVALD::KenLMModel {
+    use Moose;
+    use MooseX::Singleton;
+    use Treex::Core::Common;
+
+    has 'model_path' => ( is => 'ro', isa => 'Str' );
+    has '_python_handle' => ( is => 'ro', builder => '_build_python_handle', lazy => 1 );
+
+my $PYTHON_INTRO = <<KENLM;
+import kenlm
+import sys
+print >> sys.stderr, "Loading KenLM model..."
+try:
+    model = kenlm.LanguageModel("%s")
+    print >> sys.stderr, "KenLM loaded!"
+except Exception as e:
+    print "Cannot parse and import model"
+KENLM
+    
+    sub BUILD {
+        my ($self) = @_;
+        $self->_python_handle;
+    }
+
+    sub _build_python_handle {
+        my ($self) = @_;
+        my $python = Treex::Tool::Python::RunFunc->new();
+        my $cmd = sprintf $PYTHON_INTRO, $self->model_path;
+        my $res = $python->command($cmd);
+        if ($res) {
+            log_warn(sprintf "Cannot load a KenLM model from %s. Proceeding without using unlabeled models. Detailed error message: %s", $self->model_path, $res);
+            return;
+        }
+        return $python;
+    }
+    
+    sub is_ok {
+        my ($self) = @_;
+        return (defined $self->_python_handle);
+    }
+
+    sub get_score {
+        my ($self, $text, $no_beos) = @_;
+        my $beos_str = "";
+        if ($no_beos) {
+            $beos_str = ", bos=False, eos=False";
+        }
+        return $self->_python_handle->command(sprintf 'print model.score("%s"%s)', $text, $beos_str);
+    }
+}
+
+package Treex::Tool::Discourse::EVALD::DensitiesModel {
+    use Moose;
+    use MooseX::Singleton;
+    use Treex::Core::Common;
+
+    has 'model_path' => ( is => 'ro', isa => 'Str' );
+    has '_python_handle' => ( is => 'ro', builder => '_build_python_handle', lazy => 1 );
+
+my $PYTHON_INTRO = <<DENSITIES_INTRO;
+from sklearn.externals import joblib
+import numpy as np
+import sys
+print >> sys.stderr, "Loading densities model..."
+try:
+    densities = joblib.load("%s")
+    print >> sys.stderr, "Densities loaded!"
+except Exception as e:
+    print "Cannot parse and import model"
+DENSITIES_INTRO
+
+my $PYTHON_QUERY = <<DENSITIES_QUERY;
+feat_name = "%s"
+feat_value = np.array([[%f]])
+if feat_name in densities:
+    kde = densities[feat_name]
+    res = np.exp(kde.score_samples(feat_value)) * 100
+    print res[0]
+DENSITIES_QUERY
+
+    
+    sub BUILD {
+        my ($self) = @_;
+        $self->_python_handle;
+    }
+
+    sub _build_python_handle {
+        my ($self) = @_;
+        my $python = Treex::Tool::Python::RunFunc->new();
+        my $cmd = sprintf $PYTHON_INTRO, $self->model_path;
+        my $res = $python->command($cmd);
+        if ($res) {
+            log_warn sprintf "Cannot load a Densities model from %s. Proceeding without using unlabeled models. Detailed error message: %s", $self->model_path, $res;
+            return;
+        }
+        return $python;
+    }
+
+    sub is_ok {
+        my ($self) = @_;
+        return (defined $self->_python_handle);
+    }
+
+    sub get_score {
+        my ($self, $feat_name, $feat_value) = @_;
+        my $cmd = sprintf $PYTHON_QUERY, $feat_name, $feat_value;
+        my $res = $self->_python_handle->command($cmd);
+        # print STDERR "Result from Densities python: $res\t=\tP($feat_name=$feat_value)\n";
+        $res = undef if ($res eq "");
+        return $res;
+    }
+}
+
+
 package Treex::Tool::Discourse::EVALD::Features;
 use Moose;
 use Treex::Core::Common;
@@ -22,11 +136,23 @@ has 'selector' => ( is => 'ro', isa => 'Str', default => '' );
 has 'all_classes' => ( is => 'ro', isa => 'ArrayRef[Str]', builder => 'build_all_classes', lazy => 1 );
 has 'weka_featlist' => ( is => 'ro', isa => 'ArrayRef[ArrayRef[Str]]', builder => 'build_weka_featlist', lazy => 1 );
 has 'kenlm_model' => ( is => 'ro', isa => 'Str', default => '/lnet/tspec/work/people/straka/kenlm/model-cs-syn_v4/cs-syn_v4_5.bin' );
-has '_kenlm_python' => ( is => 'ro', builder => '_build_kenlm_python', lazy => 1 );
+has 'densities_model' => ( is => 'ro', isa => 'Str', default => '/home/mnovak/projects/evald/tools/cnk_feats/syn_v4.docs/data.batches_05-06.python2_7.model' );
+has 'uses_unlab_models' => ( is => 'ro', isa => 'Bool', builder => 'build_uses_unlab_models', lazy => 1 );
 
 sub BUILD {
     my ($self) = @_;
-    $self->_kenlm_python;
+}
+
+sub build_uses_unlab_models {
+    my ($self) = @_;
+    return 0 if (!defined $self->kenlm_model || !defined $self->densities_model || !-f $self->kenlm_model || !-f $self->densities_model);
+    eval { Treex::Tool::Discourse::EVALD::KenLMModel->initialize({model_path => $self->kenlm_model}) };
+    my $kenlm_model = Treex::Tool::Discourse::EVALD::KenLMModel->instance();
+    return 0 if (!$kenlm_model->is_ok());
+    eval { Treex::Tool::Discourse::EVALD::DensitiesModel->initialize({model_path => $self->densities_model}) };
+    my $densities_model = Treex::Tool::Discourse::EVALD::DensitiesModel->instance();
+    return 0 if (!$densities_model->is_ok());
+    return 1;
 }
 
 sub build_all_classes {
@@ -45,7 +171,7 @@ sub build_all_classes {
 
 sub build_weka_featlist {
     my ($self) = @_;
-    my $weka_feats_types = [
+    my @weka_feats_types = (
 
     # SPELLING FEATS
       ["spell^typos_per_100words",                          "NUMERIC"],
@@ -168,26 +294,26 @@ sub build_weka_featlist {
       ["conn_qua^avg_connective_words_subord_per_100sent", "NUMERIC"],
       ["conn_qua^avg_connective_words_per_100sent",        "NUMERIC"],
 
-      ["conn_qua^avg_intra_per_100sent ",                  "NUMERIC"],
+      ["conn_qua^avg_intra_per_100sent",                   "NUMERIC"],
       ["conn_qua^avg_inter_per_100sent",                   "NUMERIC"],
-      ["conn_qua^avg_discourse_per_100sent ",              "NUMERIC"],
+      ["conn_qua^avg_discourse_per_100sent",               "NUMERIC"],
 
     # CONNECTIVES_DIVERSITY FEATS
       ["conn_div^different_connectives",                    "NUMERIC"],
-      ["conn_div^percentage_a ",                            "NUMERIC"],
-      ["conn_div^percentage_ale ",                          "NUMERIC"],
-      ["conn_div^percentage_protoze ",                      "NUMERIC"],
-      ["conn_div^percentage_take_taky ",                    "NUMERIC"],
-      ["conn_div^percentage_potom_pak ",                    "NUMERIC"],
-      ["conn_div^percentage_kdyz ",                         "NUMERIC"],
-      ["conn_div^percentage_nebo ",                         "NUMERIC"],
-      ["conn_div^percentage_proto ",                        "NUMERIC"],
-      ["conn_div^percentage_tak ",                          "NUMERIC"],
-      ["conn_div^percentage_aby ",                          "NUMERIC"],
-      ["conn_div^percentage_totiz ",                        "NUMERIC"],
+      ["conn_div^percentage_a",                             "NUMERIC"],
+      ["conn_div^percentage_ale",                           "NUMERIC"],
+      ["conn_div^percentage_protoze",                       "NUMERIC"],
+      ["conn_div^percentage_take_taky",                     "NUMERIC"],
+      ["conn_div^percentage_potom_pak",                     "NUMERIC"],
+      ["conn_div^percentage_kdyz",                          "NUMERIC"],
+      ["conn_div^percentage_nebo",                          "NUMERIC"],
+      ["conn_div^percentage_proto",                         "NUMERIC"],
+      ["conn_div^percentage_tak",                           "NUMERIC"],
+      ["conn_div^percentage_aby",                           "NUMERIC"],
+      ["conn_div^percentage_totiz",                         "NUMERIC"],
 
-      ["conn_div^percentage_first_connective ",             "NUMERIC"],
-      ["conn_div^percentage_first_and_second_connectives ", "NUMERIC"],
+      ["conn_div^percentage_first_connective",              "NUMERIC"],
+      ["conn_div^percentage_first_and_second_connectives",  "NUMERIC"],
 
       ["conn_div^percentage_temporal",                      "NUMERIC"],
       ["conn_div^percentage_contingency",                   "NUMERIC"],
@@ -317,23 +443,33 @@ sub build_weka_featlist {
       ["kenlm^text_beos_avg_logprob",       "NUMERIC"],
       ["kenlm^text_avg_logprob",            "NUMERIC"],
 
-    ];
-    return [ grep {$self->filter_namespace($_->[0])} @$weka_feats_types ];
-}
+    );
 
-my $KENLM_PYTHON_INTRO = <<KENLM;
-import kenlm
-import sys
-print >> sys.stderr, "Loading KenLM model..."
-model = kenlm.LanguageModel("%s")
-KENLM
-
-sub _build_kenlm_python {
-    my ($self) = @_;
-    my $python = Treex::Tool::Python::RunFunc->new();
-    my $cmd = sprintf $KENLM_PYTHON_INTRO, $self->kenlm_model;
-    $python->command($cmd);
-    return $python;
+    # exclude KenLM and Densities features if any of the corresponding models is not available
+    if (!$self->uses_unlab_models) {
+        @weka_feats_types = grep {$_->[0] !~ /^kenlm/} @weka_feats_types;
+    }
+    else {
+        my %cnk_exclude = map {$_ => 1} qw/
+            spell^capitals_per_100chars
+            spell^capitals_not_first_letter_per_100chars
+            spell^long_u_per_100chars
+            spell^long_u_not_first_letter_per_100chars
+            spell^two_wrong_vowels_per_100words
+            spell^soft_consonants_and_y_per_100words
+            spell^hard_consonants_and_i_per_100words
+            spell^pje_per_100words
+            spell^two_long_syllables_per_100words
+            spell^wrong_characters_per_100chars
+            kenlm^sent_beos_avg_logprob
+            kenlm^sent_avg_logprob
+            kenlm^text_beos_avg_logprob
+            kenlm^text_avg_logprob
+        /;
+        my @cnk_density_feat_types = map {['cnk_'.$_->[0], $_->[1]]} grep {!$cnk_exclude{$_->[0]}} @weka_feats_types;
+        @weka_feats_types = (@weka_feats_types, @cnk_density_feat_types);
+    }
+    return [ grep {$self->filter_namespace($_->[0])} @weka_feats_types ];
 }
 
 ############################################ MAIN FEATURE EXTRACTING METHODS ############################################
@@ -419,9 +555,8 @@ sub create_feat_hash {
     my $feats_coreference = $self->features_coreference($doc);
     my $feats_tfa = $self->features_tfa($doc);
     my $feats_readability = $self->features_readability($doc);
-    my $feats_kenlm = $self->features_kenlm($doc);
 
-    my %all_feats_hash = (
+    my %no_unlab_feats_hash = (
         %$feats_spelling,
         %$feats_morphology,
         %$feats_vocabulary,
@@ -431,7 +566,17 @@ sub create_feat_hash {
         %$feats_coreference,
         %$feats_tfa,
         %$feats_readability,
-	%$feats_kenlm,
+    );
+    
+    return \%no_unlab_feats_hash if (!$self->uses_unlab_models);
+    
+    my $feats_kenlm = $self->features_kenlm($doc);
+    my $feats_densities = $self->features_densities(\%no_unlab_feats_hash);
+
+    my %all_feats_hash = (
+        %no_unlab_feats_hash,
+        %$feats_kenlm,
+        %$feats_densities,
     );
     return \%all_feats_hash;
 }
@@ -1568,9 +1713,9 @@ sub features_connectives_quantity {
     $feats{'conn_qua^avg_connective_words_coord_per_100sent'} = ceil(100*$count_connective_words_coord/$number_of_sentences);
     $feats{'conn_qua^avg_connective_words_subord_per_100sent'} = ceil(100*$count_connective_words_subord/$number_of_sentences);
     $feats{'conn_qua^avg_connective_words_per_100sent'} = ceil(100*$count_connective_words_subord/$number_of_sentences);
-    $feats{'conn_qua^avg_intra_per_100sent '} = ceil(100*$number_of_discourse_relations_intra/$number_of_sentences);
+    $feats{'conn_qua^avg_intra_per_100sent'} = ceil(100*$number_of_discourse_relations_intra/$number_of_sentences);
     $feats{'conn_qua^avg_inter_per_100sent'} = ceil(100*$number_of_discourse_relations_inter/$number_of_sentences);
-    $feats{'conn_qua^avg_discourse_per_100sent '} = ceil(100*($number_of_discourse_relations_inter + $number_of_discourse_relations_intra)/$number_of_sentences);
+    $feats{'conn_qua^avg_discourse_per_100sent'} = ceil(100*($number_of_discourse_relations_inter + $number_of_discourse_relations_intra)/$number_of_sentences);
 
     return \%feats;
 }
@@ -1581,17 +1726,17 @@ sub features_connectives_diversity {
     my %feats = ();
 
     $feats{'conn_div^different_connectives'} = scalar(keys(%connectives));
-    $feats{'conn_div^percentage_a '} = ceil(100*(scalar($connectives{'a'}) ? scalar($connectives{'a'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'conn_div^percentage_ale '} = ceil(100*(scalar($connectives{'ale'}) ? scalar($connectives{'ale'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'conn_div^percentage_protoze '} = ceil(100*(scalar($connectives{'protože'}) ? scalar($connectives{'protože'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'conn_div^percentage_take_taky '} = ceil(100*((scalar($connectives{'také'}) or scalar($connectives{'taky'})) ? scalar($connectives{'také'}//0 + $connectives{'taky'}//0) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'conn_div^percentage_potom_pak '} = ceil(100*((scalar($connectives{'potom'}) or scalar($connectives{'pak'})) ? scalar($connectives{'potom'}//0 + $connectives{'pak'}//0) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'conn_div^percentage_kdyz '} = ceil(100*(scalar($connectives{'když'}) ? scalar($connectives{'když'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'conn_div^percentage_nebo '} = ceil(100*(scalar($connectives{'nebo'}) ? scalar($connectives{'nebo'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'conn_div^percentage_proto '} = ceil(100*(scalar($connectives{'proto'}) ? scalar($connectives{'proto'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'conn_div^percentage_tak '} = ceil(100*(scalar($connectives{'tak'}) ? scalar($connectives{'tak'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'conn_div^percentage_aby '} = ceil(100*(scalar($connectives{'aby'}) ? scalar($connectives{'aby'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'conn_div^percentage_totiz '} = ceil(100*(scalar($connectives{'totiž'}) ? scalar($connectives{'totiž'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_a'} = ceil(100*(scalar($connectives{'a'}) ? scalar($connectives{'a'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_ale'} = ceil(100*(scalar($connectives{'ale'}) ? scalar($connectives{'ale'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_protoze'} = ceil(100*(scalar($connectives{'protože'}) ? scalar($connectives{'protože'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_take_taky'} = ceil(100*((scalar($connectives{'také'}) or scalar($connectives{'taky'})) ? scalar($connectives{'také'}//0 + $connectives{'taky'}//0) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_potom_pak'} = ceil(100*((scalar($connectives{'potom'}) or scalar($connectives{'pak'})) ? scalar($connectives{'potom'}//0 + $connectives{'pak'}//0) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_kdyz'} = ceil(100*(scalar($connectives{'když'}) ? scalar($connectives{'když'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_nebo'} = ceil(100*(scalar($connectives{'nebo'}) ? scalar($connectives{'nebo'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_proto'} = ceil(100*(scalar($connectives{'proto'}) ? scalar($connectives{'proto'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_tak'} = ceil(100*(scalar($connectives{'tak'}) ? scalar($connectives{'tak'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_aby'} = ceil(100*(scalar($connectives{'aby'}) ? scalar($connectives{'aby'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_totiz'} = ceil(100*(scalar($connectives{'totiž'}) ? scalar($connectives{'totiž'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
 
     my @connective_usages_sorted = sort {$b <=> $a} map {$connectives{$_}} keys (%connectives); # sort numbers of usages of the connectives in the decreasing order (disregard the connectives themselves)
     my $percent_most_frequent_connectives_first = 0;
@@ -1599,7 +1744,7 @@ sub features_connectives_diversity {
       my $most_frequent_connectives_first = $connective_usages_sorted[0];
       $percent_most_frequent_connectives_first = ceil(100*$most_frequent_connectives_first/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
     }
-    $feats{'conn_div^percentage_first_connective '} = $percent_most_frequent_connectives_first;
+    $feats{'conn_div^percentage_first_connective'} = $percent_most_frequent_connectives_first;
 
     my $percent_most_frequent_connectives_first_and_second = 0;
     if (scalar(@connective_usages_sorted) >= 2) {
@@ -1609,7 +1754,7 @@ sub features_connectives_diversity {
     else {
       $percent_most_frequent_connectives_first_and_second = $percent_most_frequent_connectives_first;
     }
-    $feats{'conn_div^percentage_first_and_second_connectives '} = $percent_most_frequent_connectives_first_and_second;
+    $feats{'conn_div^percentage_first_and_second_connectives'} = $percent_most_frequent_connectives_first_and_second;
     $feats{'conn_div^percentage_temporal'} = ceil(100*$count_temporal/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
     $feats{'conn_div^percentage_contingency'} = ceil(100*$count_contingency/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
     $feats{'conn_div^percentage_contrast'} = ceil(100*$count_contrast/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
@@ -1622,6 +1767,7 @@ sub features_connectives_diversity {
 
 my @ALL_PRON_SUBPOS = qw/0 1 4 5 6 7 8 9 D E H J K L O P Q S W Y Z/;
 my @ALL_PRON_SEMPOS = qw/n.pron.def.pers n.pron.indef adj.pron.indef n.pron.def.demon adj.pron.def.demon adv.pron.def adv.pron.indef/;
+my @ALL_PERSPRON_ACT_T_LEMMAS = qw/já jeho můj on se svůj tvůj ty undef/;
 my @ALL_CHAIN_LENGTHS = 2 .. 5;
 
 sub features_coreference {
@@ -1647,7 +1793,7 @@ sub features_coreference {
         my $sempos_count = $pron_t_sempos_counts{$sempos} // 0;
         $feats->{"pron^prons_t_".$sempos."_perc_prons"} = ceil($pron_t_count ? 100*$sempos_count/$pron_t_count : 0);
     }
-    foreach my $lemma (keys %perspron_act_t_lemmas) {
+    foreach my $lemma (@ALL_PERSPRON_ACT_T_LEMMAS) {
         my $lemma_count = $perspron_act_t_lemmas{$lemma} // 0;
         $feats->{"pron^perspron_t_".$lemma."_perc_persprons"} = ceil($perspron_act_t_count ? 100*$lemma_count/$perspron_act_t_count : 0);
     }
@@ -1742,15 +1888,15 @@ sub features_kenlm {
         my @anodes = $atree->get_descendants({ordered => 1});
         my $sent = join " ", map {$_->form} @anodes;
         $sent =~ s/"/\\"/g;
-        $sent_beos_avg_logprob += $self->_kenlm_python->command(sprintf 'print model.score("%s")', $sent) / (scalar @anodes + 1);
-        $sent_avg_logprob += $self->_kenlm_python->command(sprintf 'print model.score("%s", bos=False, eos=False)', $sent) / scalar @anodes;
+        $sent_beos_avg_logprob += Treex::Tool::Discourse::EVALD::KenLMModel->instance->get_score($sent) / (scalar @anodes + 1);
+        $sent_avg_logprob += Treex::Tool::Discourse::EVALD::KenLMModel->instance->get_score($sent, 1) / scalar @anodes;
         $full_text .= "$sent ";
         $token_count += scalar @anodes;
     }
     $full_text =~ s/ +$//;
 
-    my $text_beos_avg_logprob = $self->_kenlm_python->command(sprintf 'print model.score("%s")', $full_text);
-    my $text_avg_logprob = $self->_kenlm_python->command(sprintf 'print model.score("%s", bos=False, eos=False)', $full_text);
+    my $text_beos_avg_logprob = Treex::Tool::Discourse::EVALD::KenLMModel->instance->get_score($full_text);
+    my $text_avg_logprob = Treex::Tool::Discourse::EVALD::KenLMModel->instance->get_score($full_text, 1);
 
     $feats{'kenlm^sent_beos_avg_logprob'} = sprintf "%.2f", 10**($sent_beos_avg_logprob / (scalar @atrees + 1)) * 10000;
     $feats{'kenlm^sent_avg_logprob'} = sprintf "%.2f", 10**($sent_avg_logprob / scalar @atrees) * 10000;
@@ -1758,6 +1904,20 @@ sub features_kenlm {
     $feats{'kenlm^text_avg_logprob'} = sprintf "%.2f", 10**($text_avg_logprob / $token_count) * 10000;
 
     return \%feats;
+}
+
+#------------------------------- densities features ------------------------
+sub features_densities {
+    my ($self, $feats) = @_;
+
+    my %density_feats = ();
+
+    foreach my $feat_name (keys %$feats) {
+        my $feat_value = $feats->{$feat_name};
+        my $score = Treex::Tool::Discourse::EVALD::DensitiesModel->instance->get_score($feat_name, $feat_value);
+        $density_feats{"cnk_".$feat_name} = $score if (defined $score);
+    }
+    return \%density_feats;
 }
 
 # ==================== supporting functions =======================

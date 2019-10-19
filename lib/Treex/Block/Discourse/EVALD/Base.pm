@@ -1,6 +1,7 @@
 package Treex::Block::Discourse::EVALD::Base;
 use Moose::Role;
 use Treex::Core::Common;
+use Data::Printer;
 
 use Treex::Tool::Discourse::EVALD::Features;
 
@@ -10,6 +11,8 @@ has 'target' => (
     required      => 1,
     documentation => 'target classification set, three possible values: L1 for native speakers, L2 for second language learners, referat for the referat dataset',
 );
+has 'kenlm_model' => ( is => 'ro', isa => 'Str' );
+has 'densities_model' => ( is => 'ro', isa => 'Str' );
 has 'ns_filter' => ( is => 'ro', isa => 'Str' );
 has '_feat_extractor' => ( is => 'ro', isa => 'Treex::Tool::Discourse::EVALD::Features', builder => '_build_feat_extractor', lazy => 1 );
 
@@ -20,7 +23,15 @@ sub BUILD {
 
 sub _build_feat_extractor {
     my ($self) = @_;
-    return Treex::Tool::Discourse::EVALD::Features->new({ target => $self->target, language => $self->language, selector => $self->selector, ns_filter => $self->ns_filter });
+    my $args = {
+        target => $self->target,
+        language => $self->language,
+        selector => $self->selector,
+        ns_filter => $self->ns_filter
+    };
+    $args->{kenlm_model} = $self->kenlm_model if (defined $self->kenlm_model);
+    $args->{densities_model} = $self->densities_model if (defined $self->densities_model);
+    return Treex::Tool::Discourse::EVALD::Features->new($args);
 }
 
 1;

@@ -15,7 +15,7 @@ sub print_footer {
     print {$self->_file_handle} "EVALD RESULTS\n";
     print {$self->_file_handle} "----------------------------\n";
 
-    my @SETS = qw(all spelling morphology vocabulary syntax connectives_quantity connectives_diversity coreference);
+    my @SETS = qw(all spelling morphology vocabulary syntax connectives_quantity connectives_diversity coreference tfa readability);
     foreach my $set (@SETS) {
         printf {$self->_file_handle} "feature set: %s\tclass:%s\tprobability: %.2f\n", $set, $doczone->get_attr("set_".$set."_evald_class"), $doczone->get_attr("set_".$set."_evald_class_prob");
     }
