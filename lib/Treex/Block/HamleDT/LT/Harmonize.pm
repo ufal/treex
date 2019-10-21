@@ -797,11 +797,14 @@ sub fix_annotation_errors
             # $subtree[26] je druhe 'ar'
             # $subtree[36] by byla tečka za větou, ale tu jsme zřejmě už dříve posunuli o patro výš
             $subtree[26]->set_parent($subtree[7]->parent());
+            $subtree[26]->set_is_member(undef);
             $subtree[7]->set_parent($subtree[26]);
             $subtree[7]->set_deprel('AuxG');
             $subtree[6]->set_parent($subtree[26]);
+            $subtree[6]->set_is_member(undef);
             $subtree[0]->set_parent($subtree[26]);
             $subtree[0]->set_deprel('Atr');
+            $subtree[0]->set_is_member(undef);
         }
     }
 }
