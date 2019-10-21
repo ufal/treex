@@ -779,9 +779,17 @@ sub fix_annotation_errors
         if($spanstring =~ m/10.*Smulkiojo ir vidutinio verslo subjektas – labai maža įmonė/)
         {
             my @subtree = $self->get_node_subtree($node);
+            # Sanity check: did we find what we think we found?
+            unless(scalar(@subtree)==37)
+            {
+                log_warn("Spanstring = $spanstring\n");
+                my $n = scalar(@subtree);
+                log_warn("Subtree has $n nodes.\n");
+            }
             # $subtree[0] je '10'
             # $subtree[7] je pomlčka
             # $subtree[26] je druhe 'ar'
+            # $subtree[36] je tečka za větou
             $subtree[26]->set_parent($subtree[7]->parent());
             $subtree[7]->set_parent($subtree[26]);
             $subtree[7]->set_deprel('AuxG');
