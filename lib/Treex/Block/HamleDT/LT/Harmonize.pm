@@ -779,12 +779,16 @@ sub fix_annotation_errors
         if($spanstring =~ m/10.*Smulkiojo ir vidutinio verslo subjektas – labai maža įmonė/)
         {
             my @subtree = $self->get_node_subtree($node);
+            ### DEBUGGING
+            my $debug = join('; ', map {$_.':'.$subtree[$_]->form().'<--'.($subtree[$_]->parent()->ord()-1).':'.$subtree[$_]->parent()->form()} (0, 6, 7, 14, 25, 26, 27));
+            log_warn($spanstring);
+            log_warn($debug);
             # Sanity check: did we find what we think we found?
             unless(scalar(@subtree)>=36)
             {
-                log_warn("Spanstring = $spanstring\n");
+                log_warn("Spanstring = $spanstring");
                 my $n = scalar(@subtree);
-                log_warn("Subtree has $n nodes.\n");
+                log_warn("Subtree has $n nodes.");
             }
             # $subtree[0] je '10'
             # $subtree[7] je pomlčka
