@@ -776,7 +776,9 @@ sub fix_annotation_errors
         # 10. "Small and medium-sized enterprise" means a micro, small or medium-sized enterprise fulfilling the conditions laid down in Article 3 of this Law or an entrepreneur meeting the conditions laid down in Article 4 of this Law.
         # The dash after "subjektas" has three children: 10 (Aux), subjektas (Sub), and ar (Coord/PredN_Co).
         # Our heuristics decide to make the dash also Coord but it is not a good idea here, so we should try to prevent it.
-        if($spanstring =~ m/10.*Smulkiojo ir vidutinio verslo subjektas – labai maža įmonė/)
+        # Beware: After we transform the tree, we will see the same spanstring again when examining the new head, the conjunction "ar".
+        # Therefore we must check the node and the spanstring.
+        if($form eq '–' && $spanstring =~ m/10.*Smulkiojo ir vidutinio verslo subjektas – labai maža įmonė/)
         {
             my @subtree = $self->get_node_subtree($node);
             ### DEBUGGING
