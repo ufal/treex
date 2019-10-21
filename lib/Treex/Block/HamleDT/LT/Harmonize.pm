@@ -780,7 +780,7 @@ sub fix_annotation_errors
         {
             my @subtree = $self->get_node_subtree($node);
             # Sanity check: did we find what we think we found?
-            unless(scalar(@subtree)==37)
+            unless(scalar(@subtree)>=36)
             {
                 log_warn("Spanstring = $spanstring\n");
                 my $n = scalar(@subtree);
@@ -789,14 +789,13 @@ sub fix_annotation_errors
             # $subtree[0] je '10'
             # $subtree[7] je pomlčka
             # $subtree[26] je druhe 'ar'
-            # $subtree[36] je tečka za větou
+            # $subtree[36] by byla tečka za větou, ale tu jsme zřejmě už dříve posunuli o patro výš
             $subtree[26]->set_parent($subtree[7]->parent());
             $subtree[7]->set_parent($subtree[26]);
             $subtree[7]->set_deprel('AuxG');
             $subtree[6]->set_parent($subtree[26]);
             $subtree[0]->set_parent($subtree[26]);
             $subtree[0]->set_deprel('Atr');
-            $subtree[36]->set_parent($subtree[26]);
         }
     }
 }
