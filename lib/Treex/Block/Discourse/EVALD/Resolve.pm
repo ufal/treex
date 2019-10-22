@@ -88,14 +88,19 @@ sub process_document {
 
     my $feat_hash = $doc->wild->{evald_feat_hash};
     if (defined $feat_hash) {
-        $zone->set_attr('readability^flesch_reading_ease', $feat_hash->{'readability^flesch_reading_ease'}) if (defined $feat_hash->{'readability^flesch_reading_ease'});
-        $zone->set_attr('readability^flesch_kincaid_grade_level', $feat_hash->{'readability^flesch_kincaid_grade_level'}) if (defined $feat_hash->{'readability^flesch_kincaid_grade_level'});
-        $zone->set_attr('readability^smog_index', $feat_hash->{'readability^smog_index'}) if (defined $feat_hash->{'readability^smog_index'});
-        $zone->set_attr('readability^coleman_liau_index', $feat_hash->{'readability^coleman_liau_index'}) if (defined $feat_hash->{'readability^coleman_liau_index'});
-        $zone->set_attr('readability^automated_readability_index', $feat_hash->{'readability^automated_readability_index'}) if (defined $feat_hash->{'readability^automated_readability_index'});
-        
-        $zone->set_attr('vocab^simpson_index', $feat_hash->{'vocab^simpson_index'}) if (defined $feat_hash->{'vocab^simpson_index'});
-        $zone->set_attr('vocab^george_udny_yule_index', $feat_hash->{'vocab^george_udny_yule_index'}) if (defined $feat_hash->{'vocab^george_udny_yule_index'});
+        my @feats_to_present = qw/
+            readability^flesch_reading_ease
+            readability^flesch_kincaid_grade_level
+            readability^smog_index
+            readability^coleman_liau_index
+            readability^automated_readability_index
+            vocab^simpson_index
+            vocab^george_udny_yule_index
+            vocab^lemmas_count
+        /;
+        foreach my $feat_name (@feats_to_present) {
+            $zone->set_attr($feat_name, $feat_hash->{$feat_name}) if (defined $feat_hash->{$feat_name});
+        }
     }
 
     #log_info "EVALD RESOLVE: END";

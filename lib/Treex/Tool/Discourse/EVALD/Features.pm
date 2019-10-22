@@ -1657,6 +1657,8 @@ sub features_vocabulary {
     }
     $feats{'vocab^most_frequent_lemma_percent'} = ceil(100*$max_lemma_frequency/($number_of_words+0.01));
 
+    $feats{'vocab^lemmas_count'} = scalar(keys %lemmas_counts);
+
     return \%feats;
 }
 
