@@ -50,6 +50,11 @@ my %filters_to_featset = (
   '+readability' => 'readability',
 );
 
+my %old_to_new_l2b_labels = (
+    'A' => '0',
+    'B' => 'b-line',
+    'C' => 'A1',
+);
 
 sub process_document {
     my ($self, $doc) = @_;
@@ -75,6 +80,10 @@ sub process_document {
 
     my @prediction = $self->evaluate_weka($evald_features_file_name);
     my ($class, $prob) = Treex::Tool::ML::Weka::Util::parse_output(@prediction);
+    # hacky solution of transforming old L2b labels (A, B, C) to the new ones (0, b-line, A1) - no need to retrain models
+    if ($self->target eq "L2b") {
+        $class = $old_to_new_l2b_labels{$class} // $class;
+    }
     log_info "EVALD Weka model results:\tfeature set: ".$self->ns_filter."\tclass: $class\tprobability: $prob";
 
     #log_info "EVALD RESOLVE: PREDICTIONS RETURNED";

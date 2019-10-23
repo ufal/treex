@@ -128,7 +128,7 @@ has 'target' => (
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
-    documentation => 'target classification set, two possible values: L1 for native speakers, L2 for second language learners',
+    documentation => 'target classification set, three possible values: L1 for native speakers, L2 for second language learners, L2b for beginning foreign learners',
 );
 has 'ns_filter' => ( is => 'ro', isa => 'Str' );
 has 'language' => ( is => 'ro', isa => 'Str', required => 1 );
@@ -166,7 +166,7 @@ sub build_all_classes {
     elsif ($self->target eq 'L2') {
       return ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
     }
-    # referat
+    # L2b
     else {
       return ['A', 'B', 'C'];
     }

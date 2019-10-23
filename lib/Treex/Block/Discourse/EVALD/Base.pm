@@ -9,7 +9,7 @@ has 'target' => (
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
-    documentation => 'target classification set, three possible values: L1 for native speakers, L2 for second language learners, referat for the referat dataset',
+    documentation => 'target classification set, three possible values: L1 for native speakers, L2 for second language learners, L2b for the L2b dataset',
 );
 has 'kenlm_model' => ( is => 'ro', isa => 'Str' );
 has 'densities_model' => ( is => 'ro', isa => 'Str' );
