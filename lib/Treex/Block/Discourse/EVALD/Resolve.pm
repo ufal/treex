@@ -1,8 +1,11 @@
 package Treex::Block::Discourse::EVALD::Resolve;
 use Moose;
 use Treex::Core::Common;
+use Data::Printer;
+use Treex::Tool::Python::RunFunc;
 
 use Treex::Tool::ML::Weka::Util;
+use Treex::Tool::ML::ScikitLearn::Classifier;
 
 extends 'Treex::Core::Block';
 with 'Treex::Block::Discourse::EVALD::Base';
@@ -32,9 +35,12 @@ has classifier => (
     isa           => 'Str',
     required      => 1,
 #    default       => 'weka.classifiers.trees.RandomForest',
-    default       => 'weka.classifiers.functions.SMO',
-    documentation => 'Weka classifier to be used, e.g. weka.classifiers.trees.RandomForest',
+#    default       => 'weka.classifiers.functions.SMO',
+    default       => 'sklearn.SVC',
+    documentation => 'classifier to be used, e.g. sklearn.SVC, weka.classifiers.trees.RandomForest',
 );
+
+has _classifier => ( is => 'ro', builder => '_build_classifier', lazy => 1 );
 
 my %filters_to_featset = (
   '' => 'all',
@@ -56,35 +62,44 @@ my %old_to_new_l2b_labels = (
     'C' => 'A1',
 );
 
+sub BUILD {
+    my ($self) = @_;
+    $self->_classifier if ($self->classifier =~ /^sklearn/);
+}
+
+sub _build_classifier {
+    my ($self) = @_;
+    my $model_name = $self->model;
+    # try finding a model trained without unlabeled data features
+    if (!$self->_feat_extractor->uses_unlab_models) {
+        $model_name =~ s/_all\./_no_unlab./;
+    }
+    log_debug("Evaluating using model '$model_name'\n");
+    my $model_path = Treex::Core::Resource::require_file_from_share($self->model_dir . '/' . $model_name);
+    return Treex::Tool::ML::ScikitLearn::Classifier->new({model_path => $model_path});
+}
+
 sub process_document {
     my ($self, $doc) = @_;
 
     #log_info "EVALD RESOLVE: START";
-
-    # obtaining the feature structure in a multiline format not supported yet
-    my $instance_str = Treex::Tool::ML::Weka::Util::format_header($self->_feat_extractor->weka_featlist, $self->_feat_extractor->all_classes);
     my $feats = $self->_feat_extractor->extract_features($doc, 0);
-    $instance_str .= Treex::Tool::ML::Weka::Util::format_instance($feats, undef, $self->_feat_extractor->weka_featlist, $self->_feat_extractor->all_classes);
-    print STDERR $instance_str;
-    print STDERR "\n";
-
-    #log_info "EVALD RESOLVE: INSTANCES READY";
-
-    # write it to a file to allow Weka to read it
-    my $evald_features_file_name = $doc->full_filename . ($self->ns_filter ? ".".$self->ns_filter : "") . ".arff";
-    open my $fh, '>:utf8', $evald_features_file_name or die "Could not open file '$evald_features_file_name' $!";
-    print $fh $instance_str;
-    close $fh;
 
     #log_info "EVALD RESOLVE: INSTANCES STORED TO AN ARFF FILE";
 
-    my @prediction = $self->evaluate_weka($evald_features_file_name);
-    my ($class, $prob) = Treex::Tool::ML::Weka::Util::parse_output(@prediction);
+    my ($class, $prob);
+    if ($self->classifier =~ /^sklearn/) {
+        ($class, $prob) = $self->evaluate_sklearn($feats, $doc);
+    }
+    else {
+        ($class, $prob) = $self->evaluate_weka($feats, $doc);
+    }
+
     # hacky solution of transforming old L2b labels (A, B, C) to the new ones (0, b-line, A1) - no need to retrain models
     if ($self->target eq "L2b") {
         $class = $old_to_new_l2b_labels{$class} // $class;
     }
-    log_info "EVALD Weka model results:\tfeature set: ".$self->ns_filter."\tclass: $class\tprobability: $prob";
+    log_info "EVALD model results:\tfeature set: ".$self->ns_filter."\tclass: $class\tprobability: $prob";
 
     #log_info "EVALD RESOLVE: PREDICTIONS RETURNED";
   
@@ -115,8 +130,38 @@ sub process_document {
     #log_info "EVALD RESOLVE: END";
 }
 
+my $PYTHON_QUERY = <<DENSITIES_QUERY;
+feat_name = "%s"
+feat_value = np.array([[%f]])
+if feat_name in densities:
+    kde = densities[feat_name]
+    res = np.exp(kde.score_samples(feat_value)) * 100
+    print res[0]
+DENSITIES_QUERY
+
+sub evaluate_sklearn {
+    my ($self, $feats) = @_;
+
+    my ($class_idx, $prob) = $self->_classifier->predict($feats);
+    return ($self->_feat_extractor->all_classes->[$class_idx], $prob);
+}
+
 sub evaluate_weka {
-    my ($self, $evald_features_file_name) = @_;
+    my ($self, $feats, $doc) = @_;
+
+    # obtaining the feature structure in a multiline format not supported yet
+    my $instance_str = Treex::Tool::ML::Weka::Util::format_header($self->_feat_extractor->weka_featlist, $self->_feat_extractor->all_classes);
+    $instance_str .= Treex::Tool::ML::Weka::Util::format_instance($feats, undef, $self->_feat_extractor->weka_featlist, $self->_feat_extractor->all_classes);
+    print STDERR $instance_str;
+    print STDERR "\n";
+
+    #log_info "EVALD RESOLVE: INSTANCES READY";
+
+    # write it to a file to allow Weka to read it
+    my $evald_features_file_name = $doc->full_filename . ($self->ns_filter ? ".".$self->ns_filter : "") . ".arff";
+    open my $fh, '>:utf8', $evald_features_file_name or die "Could not open file '$evald_features_file_name' $!";
+    print $fh $instance_str;
+    close $fh;
 
     my $model_name = $self->model;
     # try finding a model trained without unlabeled data features
@@ -133,11 +178,13 @@ sub evaluate_weka {
     my $class_name = $self->classifier;
     my $java_cmd = "java -Dfile.encoding=UTF8 -cp $weka_jar $class_name -l $weka_model -T $evald_features_file_name -p 0";
     print STDERR "$java_cmd\n";
-    
+
     my @prediction = qx($java_cmd);
     log_debug("Result: @prediction");
-    
-    return @prediction;
+
+    my ($class, $prob) = Treex::Tool::ML::Weka::Util::parse_output(@prediction);
+
+    return ($class, $prob);
 }
 
 
