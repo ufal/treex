@@ -168,7 +168,8 @@ sub build_all_classes {
     }
     # L2b
     else {
-      return ['A', 'B', 'C'];
+#      return ['A', 'B', 'C'];
+      return ['A', 'C'];
     }
 }
 
