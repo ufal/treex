@@ -35,8 +35,8 @@ has classifier => (
     isa           => 'Str',
     required      => 1,
 #    default       => 'weka.classifiers.trees.RandomForest',
-#    default       => 'weka.classifiers.functions.SMO',
-    default       => 'sklearn.SVC',
+    default       => 'weka.classifiers.functions.SMO',
+#    default       => 'sklearn.SVC',
     documentation => 'classifier to be used, e.g. sklearn.SVC, weka.classifiers.trees.RandomForest',
 );
 
@@ -64,6 +64,7 @@ my %old_to_new_l2b_labels = (
 
 sub BUILD {
     my ($self) = @_;
+    $self->_feat_extractor;
     $self->_classifier if ($self->classifier =~ /^sklearn/);
 }
 

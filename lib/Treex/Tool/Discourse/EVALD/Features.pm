@@ -9,9 +9,10 @@ package Treex::Tool::Discourse::EVALD::KenLMModel {
 my $PYTHON_INTRO = <<KENLM;
 import kenlm
 import sys
-print >> sys.stderr, "Loading KenLM model..."
+path = "%s"
+print >> sys.stderr, "Loading KenLM model from {:s}...".format(path)
 try:
-    model = kenlm.LanguageModel("%s")
+    model = kenlm.LanguageModel(path)
     print >> sys.stderr, "KenLM loaded!"
 except Exception as e:
     print "Cannot parse and import model"
@@ -61,9 +62,10 @@ my $PYTHON_INTRO = <<DENSITIES_INTRO;
 from sklearn.externals import joblib
 import numpy as np
 import sys
-print >> sys.stderr, "Loading densities model..."
+path = "%s"
+print >> sys.stderr, "Loading densities model from {:s}...".format(path)
 try:
-    densities = joblib.load("%s")
+    densities = joblib.load(path)
     print >> sys.stderr, "Densities loaded!"
 except Exception as e:
     print "Cannot parse and import model"
@@ -168,8 +170,8 @@ sub build_all_classes {
     }
     # L2b
     else {
-#      return ['A', 'B', 'C'];
-      return ['A', 'C'];
+      return ['A', 'B', 'C'];
+#      return ['A', 'C'];
     }
 }
 
