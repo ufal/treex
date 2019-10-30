@@ -57,9 +57,9 @@ my %filters_to_featset = (
 );
 
 my %old_to_new_l2b_labels = (
-    'A' => '0',
+    'A' => 'A1',
     'B' => 'b-line',
-    'C' => 'A1',
+    'C' => '0',
 );
 
 sub BUILD {
