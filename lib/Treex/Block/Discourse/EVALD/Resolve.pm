@@ -34,8 +34,8 @@ has classifier => (
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
-#    default       => 'weka.classifiers.trees.RandomForest',
-    default       => 'weka.classifiers.functions.SMO',
+    default       => 'weka.classifiers.trees.RandomForest',
+#    default       => 'weka.classifiers.functions.SMO',
 #    default       => 'sklearn.SVC',
     documentation => 'classifier to be used, e.g. sklearn.SVC, weka.classifiers.trees.RandomForest',
 );
