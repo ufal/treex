@@ -12,6 +12,10 @@ sub print_footer {
       
     my $doczone = $doc->get_zone($self->language);
 
+    if ($doczone->get_attr("lang_id") ne "ces") {
+        log_warn "The text is most likely written in a language different from Czech. The presented results of evaluation may be unreliable."
+    }
+
     print {$self->_file_handle} "EVALD RESULTS\n";
     print {$self->_file_handle} "----------------------------\n";
 
