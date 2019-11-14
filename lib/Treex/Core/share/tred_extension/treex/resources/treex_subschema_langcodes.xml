@@ -109,6 +109,7 @@
       <value>ur</value> <!-- Urdu -->
       <value>hi</value> <!-- Hindi -->
       <value>bh</value> <!-- Bihari -->
+      <value>bho</value> <!-- Bhojpuri -->
       <value>ne</value> <!-- Nepali -->
       <value>or</value> <!-- Oriya -->
       <value>bn</value> <!-- Bengali -->
@@ -170,8 +171,10 @@
       <value>hu</value> <!-- Hungarian -->
       <value>fi</value> <!-- Finnish -->
       <value>krl</value> <!-- Karelian -->
+      <value>olo</value> <!-- Livvi -->
       <value>et</value> <!-- Estonian -->
       <value>kv</value> <!-- Komi -->
+      <value>koi</valud> <!-- Komi Permyak -->
       <value>kpv</value> <!-- Komi Zyrian -->
       <value>myv</value> <!-- Erzya -->
       <value>mdf</value> <!-- Moksha -->
