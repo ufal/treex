@@ -158,7 +158,7 @@ sub add_enhanced_case_deprel
         {
             $l = undef;
         }
-        if(defined($l)
+        if(defined($l))
         {
             $l = lc($l);
             if(scalar(@fixed) > 0)
