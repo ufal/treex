@@ -944,17 +944,34 @@ sub fix_a_to
     elsif($node->form() =~ m/^(to|sice)$/i && $deprel =~ m/^(det|cc|mark|advmod|discourse|dep)(:|$)/ && defined($lnbr) &&
           $lnbr->form() =~ m/^(a)$/i && $lnbr->ord() == $node->ord()-1)
     {
-        $node->set_parent($lnbr);
-        $node->set_deprel('fixed');
-        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
-        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
-        if(lc($node->form()) eq 'to')
+        # There is an exception when "a to" are siblings and should stay so.
+        # FicTree sent_id = train-laskaneX218-s2
+        # text = A to, že jsem jídlo neměla zaplacené, za to také nemohu.
+        # The main clause is "za to také nemohu"; the root word is "nemohu" (ord 13).
+        # Both "a" and "to" depend on "nemohu". The clause ", že jsem jídlo neměla zaplacené" depends on "to".
+        my $ok = 1;
+        if($node->ord() == 2 && $node->parent()->ord() == 13)
         {
-            $node->set_lemma('to');
-            $node->set_tag('PART');
-            $node->iset()->set_hash({'pos' => 'part'});
+            my @nodes = $node->get_root()->get_descendants({'ordered' => 1});
+            if($nodes[2]->form() eq ',' && $nodes[3]->form() eq 'že')
+            {
+                $ok = 0;
+            }
         }
-        $fixedto = $node;
+        if($ok)
+        {
+            $node->set_parent($lnbr);
+            $node->set_deprel('fixed');
+            # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
+            # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
+            if(lc($node->form()) eq 'to')
+            {
+                $node->set_lemma('to');
+                $node->set_tag('PART');
+                $node->iset()->set_hash({'pos' => 'part'});
+            }
+            $fixedto = $node;
+        }
     }
     # "a tím i" ("and this way also")
     elsif(lc($node->form()) eq 'tím' && $deprel =~ m/^(cc|advmod)(:|$)/)
