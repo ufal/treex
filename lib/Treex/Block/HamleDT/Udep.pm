@@ -677,22 +677,35 @@ sub is_core_argument
     my $self = shift;
     my $node = shift;
     my $language = $self->language();
-    my @adp = grep {$_->deprel() =~ m/^case(:|$)/} ($node->get_children({'ordered' => 1}));
+    my @children = $node->get_children({'ordered' => 1});
+    # Are there adpositions or other case markers among the children?
+    my @adp = grep {$_->deprel() =~ m/^case(:|$)/} (@children);
+    my $adp = scalar(@adp);
+    # In Slavic and some other languages, the case of a quantified phrase may
+    # be determined by the quantifier rather than by the quantified head noun.
+    # We can recognize such quantifiers by the relation nummod:gov or det:numgov.
+    my @qgov = grep {$_->deprel() =~ m/^(nummod:gov|det:numgov)$/} (@children);
+    my $qgov = scalar(@qgov);
+    # Case-governing quantifier even neutralizes the oblique effect of adpositions
+    # because there are adpositional quantified phrases such as this Czech one:
+    # Výbuch zranil kolem padesáti lidí.
+    # ("Kolem padesáti lidí" = "around fifty people" acts externally
+    # as neuter singular accusative, but internally its head "lidí"
+    # is masculine plural genitive and has a prepositional child.)
+    $adp = 0 if($qgov);
+    # There is probably just one quantifier. We do not have any special rule
+    # for the possibility that there are more than one.
+    my $caseiset = $qgov ? $qgov[0]->iset() : $node->iset();
     # Tamil: dative, instrumental and prepositional objects are oblique.
+    # Note: nominals with unknown case will be treated as possible core arguments.
     if($language eq 'ta')
     {
-        return !$node->is_dative() && !$node->is_instrumental() && scalar(@adp) == 0;
+        return !$caseiset->is_dative() && !$caseiset->is_instrumental() && !$adp;
     }
     # Default: prepositional objects are oblique.
-    ###!!! In Slavic languages, this condition does not work well with
-    ###!!! some quantified noun phrases, e.g. in Czech:
-    ###!!! Výbuch zranil kolem padesáti lidí.
-    ###!!! ("Kolem padesáti lidí" = "around fifty people" acts externally
-    ###!!! as neuter singular accusative, but internally its head "lidí"
-    ###!!! is masculine plural genitive and has a prepositional child.)
     else
     {
-        return scalar(@adp) == 0;
+        return !$adp;
     }
 }
 
