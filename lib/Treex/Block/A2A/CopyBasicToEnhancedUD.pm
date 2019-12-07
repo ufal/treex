@@ -26,6 +26,7 @@ sub process_anode
     # We assume that $wild->{enhanced} does not exist yet. If it does, we overwrite it!
     $wild->{enhanced} = \@deps;
     ###!!! This should later go to its own block.
+    $self->add_enhanced_case_deprel($node); # call this before coordination and relative clauses
     $self->add_enhanced_parent_of_coordination($node);
     $self->add_enhanced_shared_dependent_of_coordination($node);
 }
@@ -126,6 +127,86 @@ sub recursively_collect_conjuncts
 
 
 
+#------------------------------------------------------------------------------
+# Adds case information to selected relation types. This function should be
+# called before we propagate dependencies across coordination, as some of the
+# labels that we enhance here will be later copied to new dependencies. For the
+# same reason this function should be also called before adding relations back
+# from a relative clause to the modified nominal. Interaction with gapping is
+# less clear. The gapping-resolving algorithm will tell us that an orphan is
+# "obl" or "advcl", but its case information may actually differ from that
+# found at the overtly represented predicate.
+#------------------------------------------------------------------------------
+sub add_enhanced_case_deprel
+{
+    my $self = shift;
+    my $node = shift;
+    my $deprel = $node->deprel();
+    # The guidelines allow enhancing nmod, acl, obl and advcl.
+    # If it makes sense in the language, core relations obj, iobj and ccomp can be enhanced too.
+    # Sebastian's enhancer further enhances conj relations with the lemma of the conjunction, but it is not supported in the guidelines.
+    return unless($deprel =~ m/^(nmod|acl|obl|advcl)(:|$)/);
+    # Collect case and mark children.
+    my @casemark = grep {$_->deprel() =~ m/^(case|mark)(:|$)/} ($node->children({'ordered' => 1}));
+    # For each of the markers check whether it heads a fixed expression.
+    my @cmlemmas = grep {defined($_)} map
+    {
+        my $x = $_;
+        my @fixed = grep {$_->deprel() =~ m/^(fixed)(:|$)/} ($x->children({'ordered' => 1}));
+        my $l = lc($x->lemma());
+        if(defined($l) && ($l eq '' || $l eq '_'))
+        {
+            $l = undef;
+        }
+        if(defined($l)
+        {
+            $l = lc($l);
+            if(scalar(@fixed) > 0)
+            {
+                $l .= '_' . join('_', map {lc($_->lemma())} (@fixed));
+            }
+        }
+        $l;
+    }
+    (@casemark);
+    my $cmlemmas = join('_', @cmlemmas);
+    # Only selected characters are allowed in lemmas of case markers.
+    # For example, digits and punctuation symbols (except underscore) are not allowed.
+    $cmlemmas =~ s/[^\p{Ll}\p{Lm}\p{Lo}\p{M}_]//g;
+    $cmlemmas =~ s/^_+//;
+    $cmlemmas =~ s/_+$//;
+    $cmlemmas =~ s/_+/_/g;
+    $cmlemmas = undef if($l eq '');
+    if(defined($cmlemmas))
+    {
+        $deprel .= ":$cmlemmas";
+    }
+    # Look for morphological case only if this is a nominal and not a clause.
+    if($deprel =~ m/^(nmod|obl)(:|$)/)
+    {
+        # In Slavic and some other languages, the case of a quantified phrase may
+        # be determined by the quantifier rather than by the quantified head noun.
+        # We can recognize such quantifiers by the relation nummod:gov or det:numgov.
+        my @qgov = grep {$_->deprel() =~ m/^(nummod:gov|det:numgov)$/} (@children);
+        my $qgov = scalar(@qgov);
+        # There is probably just one quantifier. We do not have any special rule
+        # for the possibility that there are more than one.
+        my $caseiset = $qgov ? $qgov[0]->iset() : $node->iset();
+        my $case = $caseiset->case();
+        if(ref($case) eq 'ARRAY')
+        {
+            $case = $case->[0];
+        }
+        if(defined($case) && $case ne '')
+        {
+            $deprel .= ':'.lc($case);
+        }
+    }
+    $node->set_deprel($deprel);
+}
+
+
+
 1;
 
 __END__
@@ -155,6 +236,6 @@ Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2018 by Institute of Formal and Applied Linguistics, Charles University, Prague
+Copyright © 2018, 2019 by Institute of Formal and Applied Linguistics, Charles University, Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
