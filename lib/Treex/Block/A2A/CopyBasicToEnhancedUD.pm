@@ -52,7 +52,13 @@ sub add_enhanced_parent_of_coordination
         }
         if(defined($inode) && defined($inode->parent()) && $inode->deprel() !~ m/^conj(:|$)/)
         {
-            push(@{$node->wild()->{enhanced}}, [$inode->parent()->ord(), $inode->deprel()]);
+            # Although we mostly look at the basic tree for input, we must copy
+            # the deprel from the enhanced graph because it may have been enhanced
+            # with case information.
+            my $edeprel = $inode->deprel();
+            my @edeprels = map {$_->[1]} (grep {$_->[0] == $inode->parent()->ord()} (@{$inode->wild()->{enhanced}}));
+            $edeprel = $edeprels[0] if(scalar(@edeprels) > 0);
+            push(@{$node->wild()->{enhanced}}, [$inode->parent()->ord(), $edeprel]);
             # The coordination may function as a shared dependent of other coordination.
             # In that case, make me depend on every conjunct in the parent coordination.
             if($inode->is_shared_modifier())
@@ -60,7 +66,7 @@ sub add_enhanced_parent_of_coordination
                 my @conjuncts = $self->recursively_collect_conjuncts($inode->parent());
                 foreach my $conjunct (@conjuncts)
                 {
-                    push(@{$node->wild()->{enhanced}}, [$conjunct->ord(), $inode->deprel()]);
+                    push(@{$node->wild()->{enhanced}}, [$conjunct->ord(), $edeprel]);
                 }
             }
         }
@@ -96,7 +102,13 @@ sub add_enhanced_shared_dependent_of_coordination
             my @conjuncts = $self->recursively_collect_conjuncts($node->parent());
             foreach my $conjunct (@conjuncts)
             {
-                push(@{$node->wild()->{enhanced}}, [$conjunct->ord(), $node->deprel()]);
+                # Although we mostly look at the basic tree for input, we must copy
+                # the deprel from the enhanced graph because it may have been enhanced
+                # with case information.
+                my $edeprel = $node->deprel();
+                my @edeprels = map {$_->[1]} (grep {$_->[0] == $node->parent()->ord()} (@{$node->wild()->{enhanced}}));
+                $edeprel = $edeprels[0] if(scalar(@edeprels) > 0);
+                push(@{$node->wild()->{enhanced}}, [$conjunct->ord(), $edeprel]);
             }
         }
     }
