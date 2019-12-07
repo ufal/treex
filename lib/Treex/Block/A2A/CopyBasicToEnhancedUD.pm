@@ -147,7 +147,8 @@ sub add_enhanced_case_deprel
     # Sebastian's enhancer further enhances conj relations with the lemma of the conjunction, but it is not supported in the guidelines.
     return unless($deprel =~ m/^(nmod|acl|obl|advcl)(:|$)/);
     # Collect case and mark children.
-    my @casemark = grep {$_->deprel() =~ m/^(case|mark)(:|$)/} ($node->children({'ordered' => 1}));
+    my @children = $node->children({'ordered' => 1});
+    my @casemark = grep {$_->deprel() =~ m/^(case|mark)(:|$)/} (@children);
     # For each of the markers check whether it heads a fixed expression.
     my @cmlemmas = grep {defined($_)} map
     {
