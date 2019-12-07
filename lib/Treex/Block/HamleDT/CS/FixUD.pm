@@ -900,6 +900,7 @@ sub fix_a_to
     my $parent = $node->parent();
     my $deprel = $node->deprel();
     my $lnbr = $node->get_left_neighbor();
+    my $fixedto;
     # Depending on the original annotation and on the order of processing, "to"
     # may be already attached as 'det', or it may be still 'cc', 'mark' or 'advmod'.
     if($node->form() =~ m/^a$/i && $deprel =~ m/^cc(:|$)/ &&
@@ -916,6 +917,7 @@ sub fix_a_to
         $parent->set_lemma('to');
         $parent->set_tag('PART');
         $parent->iset()->set_hash({'pos' => 'part'});
+        $fixedto = $parent;
         $parent = $grandparent;
     }
     # Sometimes "to" is already attached to "a", and we only change the relation type.
@@ -932,6 +934,7 @@ sub fix_a_to
             $node->set_tag('PART');
             $node->iset()->set_hash({'pos' => 'part'});
         }
+        $fixedto = $node;
     }
     # Occasionally "a" and "to" are attached as siblings rather than one to the other.
     # Note: If "to" was originally attached to "a" and "a" had a functional deprel
@@ -951,12 +954,24 @@ sub fix_a_to
             $node->set_tag('PART');
             $node->iset()->set_hash({'pos' => 'part'});
         }
+        $fixedto = $node;
     }
     # "a tím i" ("and this way also")
     elsif(lc($node->form()) eq 'tím' && $deprel =~ m/^(cc|advmod)(:|$)/)
     {
         $deprel = 'obl';
         $node->set_deprel($deprel);
+    }
+    # If "to" is now attached as "fixed" (and not as "obl", as in the last branch),
+    # it must not have children. They must be reattached to the head of the fixed
+    # expression.
+    if(defined($fixedto))
+    {
+        my @children = $fixedto->children();
+        foreach my $child (@children)
+        {
+            $child->set_parent($fixedto->parent());
+        }
     }
 }
 
