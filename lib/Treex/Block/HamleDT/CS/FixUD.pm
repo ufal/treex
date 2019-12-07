@@ -20,6 +20,10 @@ sub process_atree
     # Do not call syntactic fixes from the previous loop. First make sure that
     # all nodes have correct morphology, then do syntax (so that you can rely
     # on the morphology you see at the parent node).
+    # Oblique objects should be correctly identified during conversion from
+    # Prague in Udep.pm. We repeat it here because of Czech-PUD, which is not
+    # converted.
+    $self->relabel_oblique_objects($root);
     foreach my $node (@nodes)
     {
         $self->fix_constructions($node);
@@ -142,6 +146,92 @@ sub classify_numerals
     elsif($node->is_adjective() && $iset->contains('numtype', 'ord') && $node->lemma() eq 'nejeden')
     {
         $iset->add('pos' => 'num', 'numtype' => 'card', 'prontype' => 'ind');
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Prepositional objects are considered oblique in many languages, although this
+# is not a universal rule. They should be labeled "obl:arg" instead of "obj".
+# This function (and the following one) is also defined in Udep.pm but we need
+# a copy here so we can apply it to Czech-PUD, which is not converted from
+# a Prague-style annotation.
+#------------------------------------------------------------------------------
+sub relabel_oblique_objects
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() =~ m/^i?obj(:|$)/)
+        {
+            if(!$self->is_core_argument($node))
+            {
+                $node->set_deprel('obl:arg');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Tells for a noun phrase in a given language whether it can be a core argument
+# of a verb, based on its morphological case and adposition, if any. This
+# method must be called after tree transformations because we look for the
+# adposition among children of the current node, and we do not expect
+# coordination to step in our way.
+#------------------------------------------------------------------------------
+sub is_core_argument
+{
+    my $self = shift;
+    my $node = shift;
+    my $language = $self->language();
+    my @children = $node->get_children({'ordered' => 1});
+    # Are there adpositions or other case markers among the children?
+    my @adp = grep {$_->deprel() =~ m/^case(:|$)/} (@children);
+    my $adp = scalar(@adp);
+    # In Slavic and some other languages, the case of a quantified phrase may
+    # be determined by the quantifier rather than by the quantified head noun.
+    # We can recognize such quantifiers by the relation nummod:gov or det:numgov.
+    my @qgov = grep {$_->deprel() =~ m/^(nummod:gov|det:numgov)$/} (@children);
+    my $qgov = scalar(@qgov);
+    # Case-governing quantifier even neutralizes the oblique effect of some adpositions
+    # because there are adpositional quantified phrases such as this Czech one:
+    # Výbuch zranil kolem padesáti lidí.
+    # ("Kolem padesáti lidí" = "around fifty people" acts externally
+    # as neuter singular accusative, but internally its head "lidí"
+    # is masculine plural genitive and has a prepositional child.)
+    ###!!! We currently ignore all adpositions if we see a quantified phrase
+    ###!!! where the quantifier governs the case. However, not all adpositions
+    ###!!! should be neutralized. In Czech, the prepositions "okolo", "kolem",
+    ###!!! "na", "přes", and perhaps also "pod" can be neutralized,
+    ###!!! although there may be contexts in which they should not.
+    ###!!! Other prepositions may govern the quantified phrase and force it
+    ###!!! into accusative, but the whole prepositional phrase is oblique:
+    ###!!! "za třicet let", "o šest atletů".
+    $adp = 0 if($qgov);
+    # There is probably just one quantifier. We do not have any special rule
+    # for the possibility that there are more than one.
+    my $caseiset = $qgov ? $qgov[0]->iset() : $node->iset();
+    # Tamil: dative, instrumental and prepositional objects are oblique.
+    # Note: nominals with unknown case will be treated as possible core arguments.
+    if($language eq 'ta')
+    {
+        return !$caseiset->is_dative() && !$caseiset->is_instrumental() && !$adp;
+    }
+    # Default: prepositional objects are oblique.
+    # Balto-Slavic languages: genitive, dative, locative and instrumental cases are oblique.
+    else
+    {
+        return !$adp
+          && !$caseiset->is_genitive()
+          && !$caseiset->is_dative()
+          && !$caseiset->is_locative()
+          && !$caseiset->is_ablative()
+          && !$caseiset->is_instrumental();
     }
 }
 
