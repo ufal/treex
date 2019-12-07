@@ -176,7 +176,7 @@ sub add_enhanced_case_deprel
     $cmlemmas =~ s/^_+//;
     $cmlemmas =~ s/_+$//;
     $cmlemmas =~ s/_+/_/g;
-    $cmlemmas = undef if($l eq '');
+    $cmlemmas = undef if($cmlemmas eq '');
     if(defined($cmlemmas))
     {
         $deprel .= ":$cmlemmas";
