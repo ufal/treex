@@ -686,12 +686,20 @@ sub is_core_argument
     # We can recognize such quantifiers by the relation nummod:gov or det:numgov.
     my @qgov = grep {$_->deprel() =~ m/^(nummod:gov|det:numgov)$/} (@children);
     my $qgov = scalar(@qgov);
-    # Case-governing quantifier even neutralizes the oblique effect of adpositions
+    # Case-governing quantifier even neutralizes the oblique effect of some adpositions
     # because there are adpositional quantified phrases such as this Czech one:
     # Výbuch zranil kolem padesáti lidí.
     # ("Kolem padesáti lidí" = "around fifty people" acts externally
     # as neuter singular accusative, but internally its head "lidí"
     # is masculine plural genitive and has a prepositional child.)
+    ###!!! We currently ignore all adpositions if we see a quantified phrase
+    ###!!! where the quantifier governs the case. However, not all adpositions
+    ###!!! should be neutralized. In Czech, the prepositions "okolo", "kolem",
+    ###!!! "na", "přes", and perhaps also "pod" can be neutralized,
+    ###!!! although there may be contexts in which they should not.
+    ###!!! Other prepositions may govern the quantified phrase and force it
+    ###!!! into accusative, but the whole prepositional phrase is oblique:
+    ###!!! "za třicet let", "o šest atletů".
     $adp = 0 if($qgov);
     # There is probably just one quantifier. We do not have any special rule
     # for the possibility that there are more than one.
@@ -703,9 +711,15 @@ sub is_core_argument
         return !$caseiset->is_dative() && !$caseiset->is_instrumental() && !$adp;
     }
     # Default: prepositional objects are oblique.
+    # Balto-Slavic languages: genitive, dative, locative and instrumental cases are oblique.
     else
     {
-        return !$adp;
+        return !$adp
+          && !$caseiset->is_genitive()
+          && !$caseiset->is_dative()
+          && !$caseiset->is_locative()
+          && !$caseiset->is_ablative()
+          && !$caseiset->is_instrumental();
     }
 }
 
