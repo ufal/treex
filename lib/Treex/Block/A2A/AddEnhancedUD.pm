@@ -183,7 +183,7 @@ sub add_enhanced_relative_clause
     # We refer to the parent of the clause as the modified $noun, although it may be a pronoun.
     my $noun = $node->parent();
     # Add an enhanced relation 'ref' from the modified noun to the relativizer.
-    push(@{$relativizer->wild()->{enhanced}}, [$noun->ord(), 'ref']);
+    $self->add_enhanced_dependency($relativizer, $noun, 'ref');
     # If the relativizer is the root of the relative clause, there is no other
     # node in the relative clause from which a new relation should go to the
     # modified noun. However, the relative clause has a nominal predicate,
@@ -194,7 +194,7 @@ sub add_enhanced_relative_clause
         my @subjects = grep {$_->deprel() =~ m/^[nc]subj(:|$)/} ($node->children());
         foreach my $subject (@subjects)
         {
-            push(@{$subject->wild()->{enhanced}}, [$noun->ord(), $subject->deprel()]);
+            $self->add_enhanced_dependency($subject, $noun, $subject->deprel());
         }
     }
     # If the relativizer is not the root of the relative clause, we remove its
@@ -207,7 +207,7 @@ sub add_enhanced_relative_clause
         # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
         $reldeprel =~ s/^advmod(:|$)/obl$1/;
         $reldeprel =~ s/^det(:|$)/nmod$1/;
-        push(@{$noun->wild()->{enhanced}}, [$relparent->ord(), $reldeprel]);
+        $self->add_enhanced_dependency($noun, $relparent, $reldeprel);
     }
 }
 
@@ -244,7 +244,7 @@ sub add_enhanced_parent_of_coordination
         {
             foreach my $edep (@edeps_to_propagate)
             {
-                push(@{$node->wild()->{enhanced}}, $edep);
+                $self->add_enhanced_dependency($node, $self->get_node_by_ord($node, $edep->[0]), $edep->[1]);
                 # The coordination may function as a shared dependent of other coordination.
                 # In that case, make me depend on every conjunct in the parent coordination.
                 if($inode->is_shared_modifier())
@@ -252,7 +252,7 @@ sub add_enhanced_parent_of_coordination
                     my @conjuncts = $self->recursively_collect_conjuncts($self->get_node_by_ord($node, $edep->[0]));
                     foreach my $conjunct (@conjuncts)
                     {
-                        push(@{$node->wild()->{enhanced}}, [$conjunct->ord(), $edep->[1]]);
+                        $self->add_enhanced_dependency($node, $conjunct, $edep->[1]);
                     }
                 }
             }
@@ -291,7 +291,7 @@ sub add_enhanced_shared_dependent_of_coordination
             my @conjuncts = $self->recursively_collect_conjuncts($parent);
             foreach my $conjunct (@conjuncts)
             {
-                push(@{$node->wild()->{enhanced}}, [$conjunct->ord(), $edeprel]);
+                $self->add_enhanced_dependency($node, $conjunct, $edeprel);
             }
         }
     }
@@ -346,6 +346,26 @@ sub get_enhanced_deps
         log_fatal("Wild attribute 'enhanced' does not exist or is not an array reference.");
     }
     return @{$wild->{enhanced}};
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds a new enhanced edge incoming to a node, unless the same relation with
+# the same parent already exists.
+#------------------------------------------------------------------------------
+sub add_enhanced_dependency
+{
+    my $self = shift;
+    my $child = shift;
+    my $parent = shift;
+    my $deprel = shift;
+    my $pord = $parent->ord();
+    my @edeps = $self->get_enhanced_deps($node);
+    unless(any {$_->[0] == $pord && $_->[1] eq $deprel} (@edeps))
+    {
+        push(@{$node->wild()->{enhanced}}, [$pord, $deprel]);
+    }
 }
 
 
