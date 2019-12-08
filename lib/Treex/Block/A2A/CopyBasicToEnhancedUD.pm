@@ -258,7 +258,7 @@ sub add_enhanced_relative_clause
     # We refer to the parent of the clause as the modified $noun, although it may be a pronoun.
     my $noun = $node->parent();
     # Add an enhanced relation 'ref' from the modified noun to the relativizer.
-    push(@{$node->wild()->{enhanced}}, [$noun->ord(), 'ref']);
+    push(@{$relativizer->wild()->{enhanced}}, [$noun->ord(), 'ref']);
     my $deprel = $relativizer->deprel();
     # If the relativizer is the root of the relative clause, there is no other
     # node in the relative clause from which a new relation should go to the
