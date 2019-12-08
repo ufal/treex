@@ -27,6 +27,7 @@ sub process_anode
     $wild->{enhanced} = \@deps;
     ###!!! This should later go to its own block.
     $self->add_enhanced_case_deprel($node); # call this before coordination and relative clauses
+    $self->add_enhanced_relative_clause($node); # calling this before coordination has advantages but calling it after coordination might have other advantages (if we looked at the enhanced graph when doing relative clauses)
     $self->add_enhanced_parent_of_coordination($node);
     $self->add_enhanced_shared_dependent_of_coordination($node);
 }
@@ -231,6 +232,59 @@ sub add_enhanced_case_deprel
         }
         # Store the modified enhanced deprel back to the wild attributes.
         $edep->[1] = $edeprel;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Transforms the enhanced dependencies between a relative clause, its
+# relativizer, and the modified noun.
+#------------------------------------------------------------------------------
+sub add_enhanced_relative_clause
+{
+    my $self = shift;
+    my $node = shift;
+    ###!!! We should take input from the enhanced graph when it already has
+    ###!!! dependencies propagated across coordination. There could be
+    ###!!! coordinate relative clauses and they may or may not share the
+    ###!!! relativizer. The modified noun can be also coordinate and then we
+    ###!!! should link to all conjuncts (or do this relative clause enhancement
+    ###!!! first and leave the rest on the conjunct propagation).
+    return unless($node->deprel() eq 'acl:relcl' && exists($node->wild()->{'relativizer'}));
+    my @relativizers = grep {$_->ord() == $node->wild()->{'relativizer'}} ($node->get_descendants({'add_self' => 1}));
+    return unless(scalar(@relativizers) > 0);
+    my $relativizer = $relativizers[0];
+    # We refer to the parent of the clause as the modified $noun, although it may be a pronoun.
+    my $noun = $node->parent();
+    # Add an enhanced relation 'ref' from the modified noun to the relativizer.
+    push(@{$node->wild()->{enhanced}}, [$noun->ord(), 'ref']);
+    my $deprel = $relativizer->deprel();
+    # If the relativizer is the root of the relative clause, there is no other
+    # node in the relative clause from which a new relation should go to the
+    # modified noun. However, the relative clause has a nominal predicate,
+    # which corefers with the modified noun, and we can draw a new relation
+    # from the modified noun to the subject of the relative clause.
+    if($relativizer == $node)
+    {
+        my @subjects = grep {$_->deprel() =~ m/^[nc]subj(:|$)/} ($node->children());
+        foreach my $subject (@subjects)
+        {
+            push(@{$subject->wild()->{enhanced}}, [$noun->ord(), $subject->deprel()]);
+        }
+    }
+    # If the relativizer is not the root of the relative clause, we remove its
+    # current relation to its current and instead we add an analogous relation
+    # between the parent and the modified noun.
+    else
+    {
+        my $relparentord = $relativizer->parent()->ord();
+        my @relenhanced = grep {$_->[0] != $relparentord} (@{$relativizer->wild()->{enhanced}});
+        $relativizer->wild()->{enhanced} = \@relenhanced;
+        # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
+        $deprel =~ s/^advmod(:|$)/obl$1/;
+        $deprel =~ s/^det(:|$)/nmod$1/;
+        push(@{$noun->wild()->{enhanced}}, [$relparentord, $deprel]);
     }
 }
 

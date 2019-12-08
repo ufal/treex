@@ -303,6 +303,9 @@ sub identify_acl_relcl
     ###!!! with the bad noun, the clause is recognized as relative, otherwise
     ###!!! it is not.
     $node->set_deprel('acl:relcl');
+    # Remember the node we identified as the relativizer. We will need it when
+    # we will be building the enhanced dependency graph.
+    $node->wild()->{'relativizer'} = $subordinator->ord();
 }
 
 
