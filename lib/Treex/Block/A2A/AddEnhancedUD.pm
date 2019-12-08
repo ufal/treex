@@ -361,10 +361,10 @@ sub add_enhanced_dependency
     my $parent = shift;
     my $deprel = shift;
     my $pord = $parent->ord();
-    my @edeps = $self->get_enhanced_deps($node);
+    my @edeps = $self->get_enhanced_deps($child);
     unless(any {$_->[0] == $pord && $_->[1] eq $deprel} (@edeps))
     {
-        push(@{$node->wild()->{enhanced}}, [$pord, $deprel]);
+        push(@{$child->wild()->{enhanced}}, [$pord, $deprel]);
     }
 }
 
