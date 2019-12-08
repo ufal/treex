@@ -252,7 +252,8 @@ sub identify_acl_relcl
     # necessarily the first word in the subtree: there can be punctuation and
     # preposition. The relative pronoun can be even the root of the clause,
     # i.e., the current node, if the clause is copular.
-    my @subordinators = grep {$_->is_subordinator() || $_->is_relative()} ($node->get_descendants({'ordered' => 1, 'preceding_only' => 1, 'add_self' => 1}));
+    # Specifying (first|last|preceding|following)_only implies ordered.
+    my @subordinators = grep {$_->is_subordinator() || $_->is_relative()} ($node->get_descendants({'preceding_only' => 1, 'add_self' => 1}));
     return unless(scalar(@subordinators) > 0);
     my $subordinator = $subordinators[0];
     # If there is a subordinating conjunction, the clause is not relative even
