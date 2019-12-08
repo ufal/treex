@@ -270,18 +270,17 @@ sub add_enhanced_shared_dependent_of_coordination
     # lies one or more levels further up. However, we solve this in the
     # function add_enhanced_parent_of_coordination(). Therefore, we do nothing
     # for non-first conjuncts in coordinate shared dependents here.
-    if($node->is_shared_modifier() && $node->deprel() !~ m/^(conj|cc|punct)(:|$)/)
+    if($node->is_shared_modifier())
     {
-        # Presumably the parent node is a head of coordination but better check it.
-        if(defined($node->parent()))
+        # Get all suitable incoming enhanced relations.
+        my @iedges = grep {$_->[1] !~ m/^(conj|cc|punct)(:|$)/} ($self->get_enhanced_deps($node));
+        foreach my $iedge (@iedges)
         {
-            my @conjuncts = $self->recursively_collect_conjuncts($node->parent());
+            my $parent = $self->get_node_by_ord($node, $iedge->[0]);
+            my $edeprel = $iedge->[1];
+            my @conjuncts = $self->recursively_collect_conjuncts($parent);
             foreach my $conjunct (@conjuncts)
             {
-                # Although we mostly look at the basic tree for input, we must copy
-                # the deprel from the enhanced graph because it may have been enhanced
-                # with case information.
-                my $edeprel = $self->get_first_edeprel_to_parent_n($node, $node->parent()->ord());
                 push(@{$node->wild()->{enhanced}}, [$conjunct->ord(), $edeprel]);
             }
         }
@@ -298,17 +297,97 @@ sub recursively_collect_conjuncts
 {
     my $self = shift;
     my $node = shift;
-    my @conjuncts = grep {$_->deprel() =~ m/^conj(:|$)/} ($node->children());
+    my $visited = shift;
+    # Keep track of visited nodes. Avoid endless loops.
+    my @_dummy;
+    if(!defined($visited))
+    {
+        $visited = \@_dummy;
+    }
+    return () if($visited->[$node->ord()]);
+    $visited->[$node->ord()]++;
+    my @echildren = $self->get_enhanced_children($node);
+    my @conjuncts = grep {my $x = $_; any {$_->[0] == $node->ord() && $_->[1] =~ m/^conj(:|$)/} ($self->get_enhanced_deps($x))} (@echildren);
     my @conjuncts2;
     foreach my $c (@conjuncts)
     {
-        my @c2 = $self->recursively_collect_conjuncts($c);
+        my @c2 = $self->recursively_collect_conjuncts($c, $visited);
         if(scalar(@c2) > 0)
         {
             push(@conjuncts2, @c2);
         }
     }
     return (@conjuncts, @conjuncts2);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of incoming enhanced edges for a node. Each element of the
+# list is a pair: 1. ord of the parent node; 2. relation label.
+#------------------------------------------------------------------------------
+sub get_enhanced_deps
+{
+    my $self = shift;
+    my $node = shift;
+    my $wild = $node->wild();
+    if(!exists($wild->{enhanced}) || !defined($wild->{enhanced}) || ref($wild->{enhanced}) ne 'ARRAY')
+    {
+        log_fatal("Wild attribute 'enhanced' does not exist or is not an array reference.");
+    }
+    return @{$wild->{enhanced}};
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds a node with a given ord in the same tree. This is useful if we are
+# looking at the list of incoming enhanced edges and need to actually access
+# one of the parents listed there by ord. We assume that if the method is
+# called, the caller is confident that the node should exist. The method will
+# throw an exception if there is no node or multiple nodes with the given ord.
+#------------------------------------------------------------------------------
+sub get_node_by_ord
+{
+    my $self = shift;
+    my $node = shift; # some node in the same tree
+    my $ord = shift;
+    my @results = grep {$_->ord() == $ord} ($node->get_root()->get_descendants());
+    if(scalar(@results) == 0)
+    {
+        log_fatal("No node with ord '$ord' found.");
+    }
+    if(scalar(@results) > 1)
+    {
+        log_fatal("There are multiple nodes with ord '$ord'.");
+    }
+    return $results[0];
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of children of a node in the enhanced graph, i.e., the list
+# of nodes that have at least one incoming edge from the given start node.
+# The list is ordered by their ord value.
+#------------------------------------------------------------------------------
+sub get_enhanced_children
+{
+    my $self = shift;
+    my $node = shift;
+    # We do not maintain an up-to-date list of outgoing enhanced edges, only
+    # the incoming ones. Therefore we must search all nodes of the sentence.
+    my @nodes = $node->get_root()->get_descendants({'ordered' => 1});
+    my @children;
+    foreach my $n (@nodes)
+    {
+        my @edeps = $self->get_enhanced_deps($n);
+        if(any {$_->[0] == $node->ord()} (@edeps))
+        {
+            push(@children, $n);
+        }
+    }
+    return @children;
 }
 
 
@@ -325,12 +404,8 @@ sub get_first_edeprel_to_parent_n
     my $self = shift;
     my $node = shift;
     my $parentord = shift;
-    my $wild = $node->wild();
-    if(!exists($wild->{enhanced}) || !defined($wild->{enhanced}) || ref($wild->{enhanced}) ne 'ARRAY')
-    {
-        log_fatal("Wild attribute 'enhanced' does not exist or is not an array reference.");
-    }
-    my @edges_from_n = grep {$_->[0] == $parentord} (@{$wild->{enhanced}});
+    my @edeps = $self->get_enhanced_deps($node);
+    my @edges_from_n = grep {$_->[0] == $parentord} (@edeps);
     if(scalar(@edges_from_n) == 0)
     {
         log_fatal("No relation to parent with ord '$parentord' found.");
