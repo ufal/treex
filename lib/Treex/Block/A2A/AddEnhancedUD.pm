@@ -362,6 +362,7 @@ sub get_node_by_ord
     my $self = shift;
     my $node = shift; # some node in the same tree
     my $ord = shift;
+    return $node->get_root() if($ord == 0);
     my @results = grep {$_->ord() == $ord} ($node->get_root()->get_descendants());
     if(scalar(@results) == 0)
     {
