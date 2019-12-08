@@ -403,7 +403,7 @@ sub get_enhanced_parents
     }
     # Remove duplicates.
     my %epmap; map {$epmap{$_->[0]}++} (@edeps);
-    my @parents = sort {$a->ord() <=> $b->ord()} (map {get_node_by_ord($_)} (keys(%epmap)));
+    my @parents = sort {$a->ord() <=> $b->ord()} (map {$self->get_node_by_ord($node, $_)} (keys(%epmap)));
     return @parents;
 }
 
