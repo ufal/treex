@@ -220,30 +220,40 @@ sub add_enhanced_parent_of_coordination
 {
     my $self = shift;
     my $node = shift;
-    if($node->deprel() =~ m/^conj(:|$)/)
+    my @edeps = $self->get_enhanced_deps($node);
+    if(any {$_->[1] =~ m/^conj(:|$)/} (@edeps))
     {
+        my @edeps_to_propagate;
         # Find the nearest non-conj ancestor, i.e., the first conjunct.
-        my $inode = $node->parent();
+        my @eparents = $self->get_enhanced_parents($node, '^conj(:|$)');
+        # There should be normally at most one conj parent for any node. So we take the first one and assume it is the only one.
+        log_fatal("Did not find the 'conj' enhanced parent.") if(scalar(@eparents) == 0);
+        my $inode = $eparents[0];
         while(defined($inode))
         {
-            last if($inode->deprel() !~ m/^conj(:|$)/);
-            $inode = $inode->parent();
-        }
-        if(defined($inode) && defined($inode->parent()) && $inode->deprel() !~ m/^conj(:|$)/)
-        {
-            # Although we mostly look at the basic tree for input, we must copy
-            # the deprel from the enhanced graph because it may have been enhanced
-            # with case information.
-            my $edeprel = $self->get_first_edeprel_to_parent_n($inode, $inode->parent()->ord());
-            push(@{$node->wild()->{enhanced}}, [$inode->parent()->ord(), $edeprel]);
-            # The coordination may function as a shared dependent of other coordination.
-            # In that case, make me depend on every conjunct in the parent coordination.
-            if($inode->is_shared_modifier())
+            @eparents = $self->get_enhanced_parents($inode, '^conj(:|$)');
+            if(scalar(@eparents) == 0)
             {
-                my @conjuncts = $self->recursively_collect_conjuncts($inode->parent());
-                foreach my $conjunct (@conjuncts)
+                # There are no higher conj parents. So we will now look for the non-conj parents. Those are the relations we want to propagate.
+                @edeps_to_propagate = grep {$_->[1] !~ m/^conj(:|$)/} ($self->get_enhanced_deps($inode));
+                last;
+            }
+            $inode = $eparents[0];
+        }
+        if(defined($inode))
+        {
+            foreach my $edep (@edeps_to_propagate)
+            {
+                push(@{$node->wild()->{enhanced}}, $edep);
+                # The coordination may function as a shared dependent of other coordination.
+                # In that case, make me depend on every conjunct in the parent coordination.
+                if($inode->is_shared_modifier())
                 {
-                    push(@{$node->wild()->{enhanced}}, [$conjunct->ord(), $edeprel]);
+                    my @conjuncts = $self->recursively_collect_conjuncts($self->get_node_by_ord($node, $edep->[0]));
+                    foreach my $conjunct (@conjuncts)
+                    {
+                        push(@{$node->wild()->{enhanced}}, [$conjunct->ord(), $edep->[1]]);
+                    }
                 }
             }
         }
@@ -362,6 +372,39 @@ sub get_node_by_ord
         log_fatal("There are multiple nodes with ord '$ord'.");
     }
     return $results[0];
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of parents of a node in the enhanced graph, i.e., the list
+# of nodes from which there is at least one edge incoming to the given node.
+# The list is ordered by their ord value.
+#
+# Optionally the parents will be filtered by regex on relation type.
+#------------------------------------------------------------------------------
+sub get_enhanced_parents
+{
+    my $self = shift;
+    my $node = shift;
+    my $relregex = shift;
+    my $negate = shift; # return parents that do not match $relregex
+    my @edeps = $self->get_enhanced_deps($node);
+    if(defined($relregex))
+    {
+        if($negate)
+        {
+            @edeps = grep {$_->[1] !~ m/$relregex/} (@edeps);
+        }
+        else
+        {
+            @edeps = grep {$_->[1] =~ m/$relregex/} (@edeps);
+        }
+    }
+    # Remove duplicates.
+    my %epmap; map {$epmap{$_->[0]}++} (@edeps);
+    my @parents = sort {$a->ord() <=> $b->ord()} (map {get_node_by_ord($_)} (keys(%epmap)));
+    return @parents;
 }
 
 
