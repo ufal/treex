@@ -304,7 +304,10 @@ enhanced structure).
 
 This block adds the enhancements defined in the UD v2 guidelines based on the
 basic dependencies. The block must be called after the basic dependencies have
-been copied to the enhanced graph (see the block CopyBasicToEnhancedUD).
+been copied to the enhanced graph (see the block CopyBasicToEnhancedUD). It is
+important because here we access multiple nodes from one process_node() method
+and we need to be sure that all the other nodes already have their enhanced
+attribute.
 
 =head1 AUTHOR
 
