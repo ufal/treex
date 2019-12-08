@@ -145,7 +145,7 @@ sub add_enhanced_relative_clause
     return unless(scalar(@relativizers) > 0);
     my $relativizer = $relativizers[0];
     my $relparent = $relativizer->parent();
-    my $reldeprel = $relativizer->deprel();
+    my $reldeprel = $self->get_first_edeprel_to_parent_n($relativizer, $relparent->ord());
     # We refer to the parent of the clause as the modified $noun, although it may be a pronoun.
     my $noun = $node->parent();
     # Add an enhanced relation 'ref' from the modified noun to the relativizer.
@@ -200,9 +200,7 @@ sub add_enhanced_parent_of_coordination
             # Although we mostly look at the basic tree for input, we must copy
             # the deprel from the enhanced graph because it may have been enhanced
             # with case information.
-            my $edeprel = $inode->deprel();
-            my @edeprels = map {$_->[1]} (grep {$_->[0] == $inode->parent()->ord()} (@{$inode->wild()->{enhanced}}));
-            $edeprel = $edeprels[0] if(scalar(@edeprels) > 0);
+            my $edeprel = $self->get_first_edeprel_to_parent_n($inode, $inode->parent()->ord());
             push(@{$node->wild()->{enhanced}}, [$inode->parent()->ord(), $edeprel]);
             # The coordination may function as a shared dependent of other coordination.
             # In that case, make me depend on every conjunct in the parent coordination.
@@ -249,9 +247,7 @@ sub add_enhanced_shared_dependent_of_coordination
                 # Although we mostly look at the basic tree for input, we must copy
                 # the deprel from the enhanced graph because it may have been enhanced
                 # with case information.
-                my $edeprel = $node->deprel();
-                my @edeprels = map {$_->[1]} (grep {$_->[0] == $node->parent()->ord()} (@{$node->wild()->{enhanced}}));
-                $edeprel = $edeprels[0] if(scalar(@edeprels) > 0);
+                my $edeprel = $self->get_first_edeprel_to_parent_n($node, $node->parent()->ord());
                 push(@{$node->wild()->{enhanced}}, [$conjunct->ord(), $edeprel]);
             }
         }
@@ -279,6 +275,33 @@ sub recursively_collect_conjuncts
         }
     }
     return (@conjuncts, @conjuncts2);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the relation from a node to parent with ord N. Returns the first
+# relation if there are multiple relations to the same parent (this method is
+# intended only for situations where we are confident that there is exactly one
+# such relation). Throws an exception if the wild attribute 'enhanced' does not
+# exist or if there is no relation to the given parent.
+#------------------------------------------------------------------------------
+sub get_first_edeprel_to_parent_n
+{
+    my $self = shift;
+    my $node = shift;
+    my $parentord = shift;
+    my $wild = $node->wild();
+    if(!exists($wild->{enhanced}) || !defined($wild->{enhanced}) || ref($wild->{enhanced}) ne 'ARRAY')
+    {
+        log_fatal("Wild attribute 'enhanced' does not exist or is not an array reference.");
+    }
+    my @edges_from_n = grep {$_->[0] == $parentord} (@{$wild->{enhanced}});
+    if(scalar(@edges_from_n) == 0)
+    {
+        log_fatal("No relation to parent with ord '$parentord' found.");
+    }
+    return $edges_from_n[0][1];
 }
 
 
