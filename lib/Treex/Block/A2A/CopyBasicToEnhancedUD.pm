@@ -261,6 +261,7 @@ sub add_enhanced_relative_clause
     my $noun = $node->parent();
     # Add an enhanced relation 'ref' from the modified noun to the relativizer.
     push(@{$relativizer->wild()->{enhanced}}, [$noun->ord(), 'ref']);
+    log_warn('DEBUG: RELATIVIZER '.$relativizer->form().' '.join('|', map {$_->[0].':'.$_->[1]} (@{$relativizer->wild()->{enhanced}})));
     # If the relativizer is the root of the relative clause, there is no other
     # node in the relative clause from which a new relation should go to the
     # modified noun. However, the relative clause has a nominal predicate,
