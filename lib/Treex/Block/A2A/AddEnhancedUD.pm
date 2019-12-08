@@ -144,6 +144,25 @@ sub add_enhanced_case_deprel
 #------------------------------------------------------------------------------
 # Transforms the enhanced dependencies between a relative clause, its
 # relativizer, and the modified noun.
+#
+# Interactions with propagation of dependencies across coordination:
+# If we do relative clauses before coordination:
+# * coordinate parent nominals: new incoming (nsubj/obj/...) and outgoing (ref)
+#   edges will be later propagated to/from the other conjuncts. We actually
+#   do not know whether the relative clause is shared among the conjuncts. If
+#   it is, then we should mark the relevant nodes as shared dependents.
+# * coordinate relative clauses: the second clause does not know it is a
+#   relative clause, so it does nothing.
+# If we do relative clauses after coordination:
+# * if the relative clause is shared among coordinate parent nominals, by now
+#   we have a separate acl:relcl dependency to each of them. And if we actually
+#   look at the enhanced graph (which we currently don't, we look at the basic
+#   graph), we will get all the transformations.
+# * coordinate relative clauses: we could transform each of them and the parent
+#   nominal could even have a different function in each of them. If they share
+#   the relativizer, we could see it as well.
+# * problem: we use the wild attribute 'relativizer'; while the coordination
+#   enhancement copied the relation acl:relcl, it did not touch this attribute.
 #------------------------------------------------------------------------------
 sub add_enhanced_relative_clause
 {
