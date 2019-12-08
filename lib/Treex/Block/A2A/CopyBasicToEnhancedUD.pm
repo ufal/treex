@@ -167,6 +167,14 @@ sub add_enhanced_case_deprel
         ###!!! Finding it would need more work anyways, because we call this function before we propagate dependencies across coordination.
         my @children = $node->children({'ordered' => 1});
         my @casemark = grep {$_->deprel() =~ m/^(case|mark)(:|$)/} (@children);
+        # If the current constituent is a clause, take mark dependents but not case dependents.
+        # This may not work the same way in all languages, as e.g. in Swedish Joakim uses case even with clauses.
+        # However, in Czech-PUD this will help us to skip prepositions under a nominal predicate, which modify the nominal but not the clause:
+        # "kandidáta, který byl v pořadí za ním" ("candidate who was after him"): avoid the preposition "za"
+        if($edeprel =~ m/^(acl|advcl)(:|$)/)
+        {
+            @casemark = grep {$_->deprel() !~ m/^case(:|$)/} (@casemark);
+        }
         # For each of the markers check whether it heads a fixed expression.
         my @cmlemmas = grep {defined($_)} map
         {
