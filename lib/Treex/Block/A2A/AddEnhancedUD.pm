@@ -6,10 +6,10 @@ extends 'Treex::Core::Block';
 
 
 
-sub process_anode
+sub process_atree
 {
     my $self = shift;
-    my $node = shift;
+    my $root = shift;
     # We assume that the basic tree has been copied to the enhanced graph
     # (see the block A2A::CopyBasicToEnhanced). The enhanced graph is stored
     # in the wild attributes of nodes. Each node should now have the wild
@@ -17,14 +17,29 @@ sub process_anode
     # - the ord of the parent node
     # - the type of the relation between the parent node and this node
     # We do not store the Perl reference to the parent node in order to prevent cyclic references and issues with garbage collection.
-    if(!exists($node->wild()->{enhanced}))
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    # First enhance all oblique relations with case information. If we later
+    # copy those relations in other transformations, we want to be sure that
+    # it all have been enhanced.
+    foreach my $node (@nodes)
     {
-        log_fatal("The wild attribute 'enhanced' does not exist.");
+        if(!exists($node->wild()->{enhanced}))
+        {
+            log_fatal("The wild attribute 'enhanced' does not exist.");
+        }
+        $self->add_enhanced_case_deprel($node); # call this before coordination and relative clauses
     }
-    $self->add_enhanced_case_deprel($node); # call this before coordination and relative clauses
-    $self->add_enhanced_relative_clause($node); # calling this before coordination has advantages but calling it after coordination might have other advantages (if we looked at the enhanced graph when doing relative clauses)
-    $self->add_enhanced_parent_of_coordination($node);
-    $self->add_enhanced_shared_dependent_of_coordination($node);
+    # Process all relations affected by relative clauses before proceeding to the next enhancement type.
+    foreach my $node (@nodes)
+    {
+        $self->add_enhanced_relative_clause($node); # calling this before coordination has advantages but calling it after coordination might have other advantages (if we looked at the enhanced graph when doing relative clauses)
+    }
+    # Process all relations that shall be propagated across coordination.
+    foreach my $node (@nodes)
+    {
+        $self->add_enhanced_parent_of_coordination($node);
+        $self->add_enhanced_shared_dependent_of_coordination($node);
+    }
 }
 
 
