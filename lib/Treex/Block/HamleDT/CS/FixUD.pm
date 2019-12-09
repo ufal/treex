@@ -259,11 +259,6 @@ sub identify_acl_relcl
     # If there is a subordinating conjunction, the clause is not relative even
     # if there is later also a relative pronoun.
     return if($subordinator->is_subordinator() || $subordinator->deprel() =~ m/^mark(:|$)/);
-    # There is an example of an acl clause that should not be acl:relcl but we
-    # cannot rule it out based on general criteria.
-    # Example FicTree train-laskaneX003-s6 ("kdo" belongs to a nested csubj clause; the inscription text is acl (but not acl:relcl) of the word "inscription"):
-    # "s nápisem "Kdo se chce milovat, ať se usměje"" ("with the inscription "Who wants to make love, please smile"")
-    ###!!!$parent
     # Many words can be both relative and interrogative and the two functions are
     # not disambiguated in morphological features, i.e., they get PronType=Int,Rel
     # regardless of context. We only want to label a clause as relative if there
@@ -282,7 +277,7 @@ sub identify_acl_relcl
     # An incomplete list of nouns that can occur with an adnominal clause which
     # resembles but is not a relative clause. Of course, all of them can also be
     # modified by a genuine relative clause.
-    my $badnouns = 'argument|dotaz|důkaz|kombinace|kritérium|možnost|myšlenka|nařízení|nápis|názor|otázka|pochopení|pochyba|pomyšlení|pravda|problém|projekt|průzkum|představa|přehled|příklad|rada|uvedení|východisko|zkoumání|způsob';
+    my $badnouns = 'argument|dotaz|důkaz|kombinace|kritérium|možnost|myšlenka|nařízení|nápis|názor|otázka|pochopení|pochyba|pomyšlení|pravda|problém|projekt|průzkum|představa|přehled|příklad|rada|úsloví|uvedení|východisko|zkoumání|způsob';
     # The interrogative-relative pronouns "kdo" ("who") and "co" ("what") usually
     # occur with one of the "bad nouns". We will keep only the remaining cases
     # where they occur with a different noun or pronoun. This is an approximation
@@ -467,6 +462,20 @@ sub fix_constructions
     {
         $parent = $parent->parent();
         $node->set_parent($parent);
+    }
+    # The expression "nejen že" ("not only") functions as a multi-word first part of a multi-word conjunction.
+    # It is often written as one word ("nejenže"). When it is written as two words, "že" should not be a sibling "mark"; it should be "fixed".
+    elsif(lc($node->form()) eq 'nejen' && defined($node->get_right_neighbor()) &&
+          $node->get_right_neighbor()->ord() == $node->ord()+1 &&
+          lc($node->get_right_neighbor()->form()) eq 'že')
+    {
+        my $ze = $node->get_right_neighbor();
+        $ze->set_parent($node);
+        $ze->set_deprel('fixed');
+        foreach my $child ($ze->children())
+        {
+            $child->set_parent($node);
+        }
     }
     # The expression "více než" ("more than") functions as an adverb.
     elsif(lc($node->form()) eq 'než' && $parent->ord() == $node->ord()-1 &&
