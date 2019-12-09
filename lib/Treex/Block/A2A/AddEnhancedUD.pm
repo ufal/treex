@@ -178,8 +178,6 @@ sub add_enhanced_relative_clause
     my @relativizers = grep {$_->ord() == $node->wild()->{'relativizer'}} ($node->get_descendants({'add_self' => 1}));
     return unless(scalar(@relativizers) > 0);
     my $relativizer = $relativizers[0];
-    my $relparent = $relativizer->parent();
-    my $reldeprel = $self->get_first_edeprel_to_parent_n($relativizer, $relparent->ord());
     # We refer to the parent of the clause as the modified $noun, although it may be a pronoun.
     my $noun = $node->parent();
     # Add an enhanced relation 'ref' from the modified noun to the relativizer.
@@ -202,12 +200,20 @@ sub add_enhanced_relative_clause
     # between the parent and the modified noun.
     else
     {
-        my @relenhanced = grep {$_->[0] != $relparent->ord()} (@{$relativizer->wild()->{enhanced}});
-        $relativizer->wild()->{enhanced} = \@relenhanced;
-        # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
-        $reldeprel =~ s/^advmod(:|$)/obl$1/;
-        $reldeprel =~ s/^det(:|$)/nmod$1/;
-        $self->add_enhanced_dependency($noun, $relparent, $reldeprel);
+        my @edeps = $self->get_enhanced_deps($relativizer);
+        # All relations other than 'ref' will be moved to the noun.
+        my @reldeps = grep {$_->[1] eq 'ref'} (@edeps);
+        my @noundeps = grep {$_->[1] ne 'ref'} (@edeps);
+        $relativizer->wild()->{enhanced} = \@reldeps;
+        foreach my $nd (@noundeps)
+        {
+            my $relparent = $nd->[0];
+            my $reldeprel = $nd->[1];
+            # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
+            $reldeprel =~ s/^advmod(:|$)/obl$1/;
+            $reldeprel =~ s/^det(:|$)/nmod$1/;
+            $self->add_enhanced_dependency($noun, $relparent, $reldeprel);
+        }
     }
 }
 
