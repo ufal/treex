@@ -49,6 +49,19 @@ sub fix_morphology
     my $lemma = $node->lemma();
     my $iset = $node->iset();
     my $deprel = $node->deprel();
+    # The word "proto" (lit. "for that") is etymologically a demonstrative
+    # adverb but it is often used as a discourse connective: a coordinating
+    # conjunction with a consecutive meaning. In either case it does not seem
+    # appropriate to tag it as a subordinating conjunction – but it occurs in
+    # the data.
+    if($lform eq 'proto' && $iset->is_subordinator())
+    {
+        $iset->set_hash({'pos' => 'adv', 'prontype' => 'dem'});
+        if($node->deprel() =~ m/^mark(:|$))
+        {
+            $node->set_deprel('advmod');
+        }
+    }
     # In PDT, the word "přičemž" ("and/where/while") is tagged as SCONJ but attached as Adv (advmod).
     # Etymologically, it is a preposition fused with a pronoun ("při+čemž"). We will re-tag it as adverb.
     # Similar cases: "zato" ("in exchange for what", literally "za+to" = "for+it").
@@ -57,7 +70,7 @@ sub fix_morphology
     # But that is not a problem, other adverbs have grammaticalized to conjunctions too.
     # On the other hand, the following should stay SCONJ and the relation should change to mark:
     # "jakoby" ("as if"), "dokud" ("while")
-    if($lform =~ m/^(přičemž|zato)$/)
+    elsif($lform =~ m/^(přičemž|zato)$/)
     {
         $iset->set_hash({'pos' => 'adv', 'prontype' => 'rel'});
     }
