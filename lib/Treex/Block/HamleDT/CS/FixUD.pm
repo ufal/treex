@@ -1936,6 +1936,14 @@ sub fix_annotation_errors
             $subtree[22]->set_deprel('punct');
         }
     }
+    # CAC train s62w-s128
+    elsif($spanstring =~ m/, do které se na přimísí asi/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        # Missing noun after the preposition "na". The preposition should be
+        # promoted as the head of an "obl" phrase. It should not be "case" or "mark".
+        $subtree[4]->set_deprel('obl');
+    }
 }
 
 
