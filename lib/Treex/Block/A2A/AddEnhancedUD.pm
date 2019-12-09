@@ -212,7 +212,7 @@ sub add_enhanced_relative_clause
             # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
             $reldeprel =~ s/^advmod(:|$)/obl$1/;
             $reldeprel =~ s/^det(:|$)/nmod$1/;
-            $self->add_enhanced_dependency($noun, $relparent, $reldeprel);
+            $self->add_enhanced_dependency($noun, $self->get_node_by_ord($node, $relparent), $reldeprel);
         }
     }
 }
