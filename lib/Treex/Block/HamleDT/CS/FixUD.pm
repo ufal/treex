@@ -57,7 +57,7 @@ sub fix_morphology
     if($lform eq 'proto' && $iset->is_subordinator())
     {
         $iset->set_hash({'pos' => 'adv', 'prontype' => 'dem'});
-        if($node->deprel() =~ m/^mark(:|$))
+        if($node->deprel() =~ m/^mark(:|$)/)
         {
             $node->set_deprel('advmod');
         }
