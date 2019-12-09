@@ -27,10 +27,10 @@ sub process_atree
     foreach my $node (@nodes)
     {
         $self->fix_constructions($node);
+        $self->fix_jak_znamo($root);
         $self->fix_annotation_errors($node);
         $self->identify_acl_relcl($node);
     }
-    $self->fix_jak_znamo($root);
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
     #$root->get_zone()->set_sentence($root->collect_sentence_text());
@@ -259,6 +259,11 @@ sub identify_acl_relcl
     # If there is a subordinating conjunction, the clause is not relative even
     # if there is later also a relative pronoun.
     return if($subordinator->is_subordinator() || $subordinator->deprel() =~ m/^mark(:|$)/);
+    # There is an example of an acl clause that should not be acl:relcl but we
+    # cannot rule it out based on general criteria.
+    # Example FicTree train-laskaneX003-s6 ("kdo" belongs to a nested csubj clause; the inscription text is acl (but not acl:relcl) of the word "inscription"):
+    # "s nápisem "Kdo se chce milovat, ať se usměje"" ("with the inscription "Who wants to make love, please smile"")
+    ###!!!$parent
     # Many words can be both relative and interrogative and the two functions are
     # not disambiguated in morphological features, i.e., they get PronType=Int,Rel
     # regardless of context. We only want to label a clause as relative if there
@@ -277,7 +282,7 @@ sub identify_acl_relcl
     # An incomplete list of nouns that can occur with an adnominal clause which
     # resembles but is not a relative clause. Of course, all of them can also be
     # modified by a genuine relative clause.
-    my $badnouns = 'argument|dotaz|důkaz|kombinace|kritérium|možnost|myšlenka|nařízení|názor|otázka|pochopení|pochyba|pomyšlení|pravda|problém|projekt|průzkum|představa|přehled|příklad|rada|uvedení|východisko|zkoumání|způsob';
+    my $badnouns = 'argument|dotaz|důkaz|kombinace|kritérium|možnost|myšlenka|nařízení|nápis|názor|otázka|pochopení|pochyba|pomyšlení|pravda|problém|projekt|průzkum|představa|přehled|příklad|rada|uvedení|východisko|zkoumání|způsob';
     # The interrogative-relative pronouns "kdo" ("who") and "co" ("what") usually
     # occur with one of the "bad nouns". We will keep only the remaining cases
     # where they occur with a different noun or pronoun. This is an approximation
@@ -1211,30 +1216,28 @@ sub fix_to_jest
 sub fix_jak_znamo
 {
     my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants({'ordered' => 1});
-    for(my $i = 0; $i<$#nodes; $i++)
+    my $node = shift;
+    my $rnbr = $node->get_right_neighbor();
+    if(defined($node->form()) && $node->form() =~ m/^jak$/i && defined($rnbr) &&
+       defined($rnbr->form()) && $rnbr->form() =~ m/^známo$/i && $rnbr->ord() == $node->ord()+1)
     {
-        my $n0 = $nodes[$i];
-        my $n1 = $nodes[$i+1];
-        if(defined($n0->form()) && lc($n0->form()) eq 'jak' &&
-           defined($n1->form()) && lc($n1->form()) eq 'známo' &&
-           $n0->parent() == $n1->parent())
+        my $n0 = $node;
+        my $n1 = $rnbr;
+        $n0->set_parent($n1);
+        $n0->set_deprel('mark');
+        $n1->set_deprel('advcl') if(!defined($n1->deprel()) || $n1->deprel() eq 'dep');
+        # If the expression is delimited by commas (or hyphens), the commas should be attached to "známo".
+        my $lnbr = $n1->get_left_neighbor();
+        if(defined($lnbr) && defined($lnbr->form()) && $lnbr->form() =~ m/^[-,]$/)
         {
-            $n0->set_parent($n1);
-            $n0->set_deprel('mark');
-            $n1->set_deprel('advcl') if(!defined($n1->deprel()) || $n1->deprel() eq 'dep');
-            # If the expression is delimited by commas, the commas should be attached to "známo".
-            if($i>0 && $nodes[$i-1]->parent() == $n1->parent() && defined($nodes[$i-1]->form()) && $nodes[$i-1]->form() =~ m/^[-,]$/)
-            {
-                $nodes[$i-1]->set_parent($n1);
-                $nodes[$i-1]->set_deprel('punct');
-            }
-            if($i+2<=$#nodes && $nodes[$i+2]->parent() == $n1->parent() && defined($nodes[$i+2]->form()) && $nodes[$i+2]->form() =~ m/^[-,]$/)
-            {
-                $nodes[$i+2]->set_parent($n1);
-                $nodes[$i+2]->set_deprel('punct');
-            }
+            $lnbr->set_parent($n1);
+            $lnbr->set_deprel('punct');
+        }
+        $rnbr = $n1->get_right_neighbor();
+        if(defined($rnbr) && defined($rnbr->form()) && $rnbr->form() =~ m/^[-,]$/)
+        {
+            $rnbr->set_parent($n1);
+            $rnbr->set_deprel('punct');
         }
     }
 }
