@@ -311,23 +311,23 @@ sub convert_deprels
                 # If this is an infinitive then it is an xcomp (controlled clausal complement).
                 # If this is a verb form other than infinitive then it is a ccomp.
                 ###!!! TODO: But if the infinitive is part of periphrastic future, then it is ccomp, not xcomp!
-                # If the infinitival clause starts with an interrogative/relative word, it may be ccomp: "věděl, co dělat" ("he knew what to do")
+                ###!!! TODO: If the infinitival clause starts with an interrogative/relative word, it may be ccomp: "věděl, co dělat" ("he knew what to do")
                 # Indo-European bias: We expect the subordinator to precede the infinitive. Some Czech examples:
                 # ccomp: věděl, co dělat (he knew what to do)
                 # ccomp: co dělat, věděl (he knew what to do)
                 # xcomp: toho, kdo nespolupracoval, museli umlčet (they had to silence those who did not cooperate)
                 # xcomp: nevím, koho museli umlčet (I do not know whom they had to silence)
-                # xcomp: umlčet toho, kdo nespolupracoval, museli
-                # It is difficult to recognize ccomp infinitives without a language-specific database of the parent verbs.
-                # Tentative criteria:
-                # If the infinitive follows the parent verb and the subordinator lies between them, the infinitive is not xcomp.
-                # If the infinitive precedes the parent verb, we simply do not know.
+                # xcomp: umlčet toho, kdo nespolupracoval, museli (they had to silence those who did not cooperate)
+                # xcomp: neměla co příst / kam jít / o čem vyprávět (she did not have what to spin / where to go / what to tell)
+                # It seems impossible to recognize ccomp infinitives without a
+                # language-specific database of the parent verbs. Thus we
+                # should fix it in a language-specific FixUD module.
                 my $xcomp = $node->is_infinitive();
-                if($xcomp && $node->ord() > $parent->ord())
-                {
-                    my @subordinators = grep {$_->ord() > $parent->ord() && ($_->is_subordinator() || $_->is_relative() || $_->is_interrogative)} ($node->get_descendants({'preceding_only' => 1}));
-                    $xcomp = 0 if(scalar(@subordinators) > 0);
-                }
+                #if($xcomp && $node->ord() > $parent->ord())
+                #{
+                #    my @subordinators = grep {$_->ord() > $parent->ord() && ($_->is_subordinator() || $_->is_relative() || $_->is_interrogative)} ($node->get_descendants({'preceding_only' => 1}));
+                #    $xcomp = 0 if(scalar(@subordinators) > 0);
+                #}
                 $deprel = $xcomp ? 'xcomp' : 'ccomp';
             }
             else # nominal object
