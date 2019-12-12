@@ -429,9 +429,14 @@ sub add_enhanced_external_subject
             (@objects);
             foreach my $object (@objects)
             {
-                ###!!! We should switch to 'nsubj:pass' if the controlled infinitive is passive!
-                ###!!! Example: Zákon mu umožňuje být zvolen.
-                $self->add_enhanced_dependency($object, $node, 'nsubj');
+                # Switch to 'nsubj:pass' if the controlled infinitive is passive.
+                # Example: Zákon mu umožňuje být zvolen.
+                my $edeprel = 'nsubj';
+                if($node->is_passive() || scalar($self->get_enhanced_children($node, '^(aux|expl):pass(:|$)')) > 0)
+                {
+                    $edeprel = 'nsubj:pass';
+                }
+                $self->add_enhanced_dependency($object, $node, $edeprel);
             }
         }
     }
