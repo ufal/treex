@@ -387,7 +387,11 @@ sub add_enhanced_external_subject
             # by another verb? (This means that we will call the method multiple
             # times on some verbs. But it should be rare enough so we can afford it.
             # And there should be no danger of cycles if we only traverse xcomp edges.
-            ###!!! RECURSIVE HERE! $self->add_enhanced_external_subject($gv);
+            if(scalar(@subjects) == 0)
+            {
+                $self->add_enhanced_external_subject($gv);
+                @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
+            }
             foreach my $subject (@subjects)
             {
                 my @edeps = grep {$_->[0] == $gv->ord() && $_->[1] =~ m/^[nc]subj(:|$)/} ($self->get_enhanced_deps($subject));
@@ -402,6 +406,10 @@ sub add_enhanced_external_subject
                     log_warn("Multiple subject relations between the same two nodes: ".join(', ', map {$_->[1]} (@edeps)));
                 }
                 my $edeprel = $edeps[0][1];
+                # We could now add the ':xsubj' subtype to the relation label.
+                # But we would first have to remove the previous subtype, if any.
+                # And replacing ':pass' by ':xsubj' would do more harm than good,
+                # so we just keep it as it is.
                 $self->add_enhanced_dependency($subject, $node, $edeprel);
             }
         }
