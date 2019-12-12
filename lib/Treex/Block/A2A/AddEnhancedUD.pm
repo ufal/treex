@@ -371,6 +371,40 @@ sub add_enhanced_external_subject
     );
     foreach my $gv (@gverbs)
     {
+        my $lemma = $gv->lemma();
+        if(!defined($lemma))
+        {
+            my $form = $gv->form() // '';
+            log_warn("Skipping control verb '$form' because its lemma is undefined.");
+            next;
+        }
+        # Is this a subject-control verb?
+        if(any {$_ eq $lemma} (@nomcontrol))
+        {
+            # Does the control verb have an overt subject?
+            my @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
+            # If there are no subjects, maybe the control verb is itself controlled
+            # by another verb? (This means that we will call the method multiple
+            # times on some verbs. But it should be rare enough so we can afford it.
+            # And there should be no danger of cycles if we only traverse xcomp edges.
+            ###!!! RECURSIVE HERE! $self->add_enhanced_external_subject($gv);
+            foreach my $subject (@subjects)
+            {
+                my @edeps = grep {$_->[0] == $gv->ord() && $_->[1] =~ m/^[nc]subj(:|$)/} ($self->get_enhanced_deps($subject));
+                if(scalar(@edeps) == 0)
+                {
+                    # This should not happen, as we explicitly asked for nodes that are in the subject relation.
+                    log_fatal("Subject relation disappeared.");
+                }
+                elsif(scalar(@edeps) > 1)
+                {
+                    # This should not happen either, although it is not forbidden. But the same two nodes should not be connected simultaneously via nsubj, csubj, and/or nsubj:pass...
+                    log_warn("Multiple subject relations between the same two nodes: ".join(', ', map {$_->[1]} (@edeps)));
+                }
+                my $edeprel = $edeps[0][1];
+                $self->add_enhanced_dependency($subject, $node, $edeprel);
+            }
+        }
     }
 }
 
@@ -615,11 +649,15 @@ sub get_enhanced_parents
 # Returns the list of children of a node in the enhanced graph, i.e., the list
 # of nodes that have at least one incoming edge from the given start node.
 # The list is ordered by their ord value.
+#
+# Optionally the children will be filtered by regex on relation type.
 #------------------------------------------------------------------------------
 sub get_enhanced_children
 {
     my $self = shift;
     my $node = shift;
+    my $relregex = shift;
+    my $negate = shift; # return children that do not match $relregex
     # We do not maintain an up-to-date list of outgoing enhanced edges, only
     # the incoming ones. Therefore we must search all nodes of the sentence.
     my @nodes = $node->get_root()->get_descendants({'ordered' => 1});
@@ -627,11 +665,25 @@ sub get_enhanced_children
     foreach my $n (@nodes)
     {
         my @edeps = $self->get_enhanced_deps($n);
+        if(defined($relregex))
+        {
+            if($negate)
+            {
+                @edeps = grep {$_->[1] !~ m/$relregex/} (@edeps);
+            }
+            else
+            {
+                @edeps = grep {$_->[1] =~ m/$relregex/} (@edeps);
+            }
+        }
         if(any {$_->[0] == $node->ord()} (@edeps))
         {
             push(@children, $n);
         }
     }
+    # Remove duplicates.
+    my %ecmap; map {$ecmap{$_->ord()} = $_ unless(exists($ecmap{$_->ord()}))} (@children);
+    @children = map {$ecmap{$_}} (sort {$a <=> $b} (keys(%ecmap)));
     return @children;
 }
 
