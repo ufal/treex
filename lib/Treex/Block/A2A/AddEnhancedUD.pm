@@ -156,65 +156,107 @@ sub add_enhanced_case_deprel
 # If we do relative clauses after coordination:
 # * if the relative clause is shared among coordinate parent nominals, by now
 #   we have a separate acl:relcl dependency to each of them. And if we actually
-#   look at the enhanced graph (which we currently don't, we look at the basic
-#   graph), we will get all the transformations.
+#   look at the enhanced graph, we will get all the transformations.
 # * coordinate relative clauses: we could transform each of them and the parent
 #   nominal could even have a different function in each of them. If they share
 #   the relativizer, we could see it as well.
-# * problem: we use the wild attribute 'relativizer'; while the coordination
-#   enhancement copied the relation acl:relcl, it did not touch this attribute.
 #------------------------------------------------------------------------------
 sub add_enhanced_relative_clause
 {
     my $self = shift;
     my $node = shift;
-    ###!!! We should take input from the enhanced graph when it already has
-    ###!!! dependencies propagated across coordination. There could be
-    ###!!! coordinate relative clauses and they may or may not share the
-    ###!!! relativizer. The modified noun can be also coordinate and then we
-    ###!!! should link to all conjuncts (or do this relative clause enhancement
-    ###!!! first and leave the rest on the conjunct propagation).
-    return unless($node->deprel() eq 'acl:relcl' && exists($node->wild()->{'relativizer'}));
-    my @relativizers = grep {$_->ord() == $node->wild()->{'relativizer'}} ($node->get_descendants({'add_self' => 1}));
+    # This node is the root of a relative clause if at least one of its parents
+    # is connected via the acl:relcl relation. We refer to the parent of the
+    # clause as the modified $noun, although it may be a pronoun.
+    my @nouns = $self->get_enhanced_parents($node, '^acl:relcl(:|$)');
+    return if(scalar(@nouns)==0);
+    my @relativizers = sort {$a->ord() <=> $b->ord()}
+    (
+        grep {$_->ord() <= $node->ord() && $_->is_relative()}
+        (
+            $node,
+            $self->get_enhanced_descendants($node)
+        )
+    );
     return unless(scalar(@relativizers) > 0);
+    ###!!! Assume that the leftmost relativizer is the one that relates to the
+    ###!!! current relative clause. This is an Indo-European bias.
     my $relativizer = $relativizers[0];
-    # We refer to the parent of the clause as the modified $noun, although it may be a pronoun.
-    my $noun = $node->parent();
-    # Add an enhanced relation 'ref' from the modified noun to the relativizer.
-    $self->add_enhanced_dependency($relativizer, $noun, 'ref');
-    # If the relativizer is the root of the relative clause, there is no other
-    # node in the relative clause from which a new relation should go to the
-    # modified noun. However, the relative clause has a nominal predicate,
-    # which corefers with the modified noun, and we can draw a new relation
-    # from the modified noun to the subject of the relative clause.
-    if($relativizer == $node)
+    my @edeps = $self->get_enhanced_deps($relativizer);
+    foreach my $noun (@nouns)
     {
-        my @subjects = grep {$_->deprel() =~ m/^[nc]subj(:|$)/} ($node->children());
-        foreach my $subject (@subjects)
+        # Add an enhanced relation 'ref' from the modified noun to the relativizer.
+        $self->add_enhanced_dependency($relativizer, $noun, 'ref');
+        # If the relativizer is the root of the relative clause, there is no other
+        # node in the relative clause from which a new relation should go to the
+        # modified noun. However, the relative clause has a nominal predicate,
+        # which corefers with the modified noun, and we can draw a new relation
+        # from the modified noun to the subject of the relative clause.
+        if($relativizer == $node)
         {
-            $self->add_enhanced_dependency($subject, $noun, $subject->deprel());
+            my @subjects = grep {$_->deprel() =~ m/^[nc]subj(:|$)/} ($node->children());
+            foreach my $subject (@subjects)
+            {
+                $self->add_enhanced_dependency($subject, $noun, $subject->deprel());
+            }
+        }
+        # If the relativizer is not the root of the relative clause, we remove its
+        # current relation to its current and instead we add an analogous relation
+        # between the parent and the modified noun.
+        else
+        {
+            # All relations other than 'ref' will be copied to the noun.
+            my @noundeps = grep {$_->[1] ne 'ref'} (@edeps);
+            foreach my $nd (@noundeps)
+            {
+                my $relparent = $nd->[0];
+                my $reldeprel = $nd->[1];
+                # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
+                $reldeprel =~ s/^advmod(:|$)/obl$1/;
+                $reldeprel =~ s/^det(:|$)/nmod$1/;
+                $self->add_enhanced_dependency($noun, $self->get_node_by_ord($node, $relparent), $reldeprel);
+            }
         }
     }
-    # If the relativizer is not the root of the relative clause, we remove its
-    # current relation to its current and instead we add an analogous relation
-    # between the parent and the modified noun.
-    else
+    # Now that the non-ref relations have been copied to all nouns, we can
+    # remove them from the relativizer. But do not do this if the relativizer
+    # is the head of the relative clause! Then the incoming edges are acl:relcl
+    # and we want to keep them!
+    if($relativizer != $node)
     {
-        my @edeps = $self->get_enhanced_deps($relativizer);
-        # All relations other than 'ref' will be moved to the noun.
         my @reldeps = grep {$_->[1] eq 'ref'} (@edeps);
-        my @noundeps = grep {$_->[1] ne 'ref'} (@edeps);
         $relativizer->wild()->{enhanced} = \@reldeps;
-        foreach my $nd (@noundeps)
-        {
-            my $relparent = $nd->[0];
-            my $reldeprel = $nd->[1];
-            # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
-            $reldeprel =~ s/^advmod(:|$)/obl$1/;
-            $reldeprel =~ s/^det(:|$)/nmod$1/;
-            $self->add_enhanced_dependency($noun, $self->get_node_by_ord($node, $relparent), $reldeprel);
-        }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Looks for an external, grammatically coreferential subject of an open clausal
+# complement (xcomp). Adds a subject relation if it finds it.
+#
+# Interactions with propagation of dependencies across coordination:
+# If we do external subjects after coordination:
+# * if the source argument for the subject is coordination (as in "John and
+#   Mary wanted to do it"), by now we have a separate nsubj relation to each of
+#   the conjuncts, and we can copy each of them as an xsubj.
+# * if the control verb is coordination with a shared subject (as in "John
+#   promised and succeeded to do it"), nothing new happens because we have the
+#   xsubj relation from "do" to "John" anyway. However, if the conjuncts share
+#   the xcomp but not the subject (as in "John promised and Mary succeeded to
+#   do it"), we can now draw an xsubj from "do" to both "John" and "Mary".
+# * if the controlled complement is coordination (as in "John promised to come
+#   and clean up"), we can draw an xsubj from each of them.
+# If we do external subjects before coordination:
+# * an xsubj shared among coordinate xcomps could still be multiplied but only
+#   if we mark it as a shared dependent when drawing the first xsubj.
+# * coordinate control verbs with private control arguments will not propagate
+# * coordinate control arguments will propagate via shared parent.
+#------------------------------------------------------------------------------
+sub add_enhanced_external_subject
+{
+    my $self = shift;
+    my $node = shift;
 }
 
 
@@ -458,6 +500,46 @@ sub get_enhanced_children
         }
     }
     return @children;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of nodes to which there is a path from the current node in
+# the enhanced graph.
+#------------------------------------------------------------------------------
+sub get_enhanced_descendants
+{
+    my $self = shift;
+    my $node = shift;
+    my $visited = shift;
+    # Keep track of visited nodes. Avoid endless loops.
+    my @_dummy;
+    if(!defined($visited))
+    {
+        $visited = \@_dummy;
+    }
+    return () if($visited->[$node->ord()]);
+    $visited->[$node->ord()]++;
+    my @echildren = $self->get_enhanced_children($node);
+    my @echildren2;
+    foreach my $ec (@echildren)
+    {
+        my @ec2 = $self->get_enhanced_descendants($ec, $visited);
+        if(scalar(@ec2) > 0)
+        {
+            push(@echildren2, @ec2);
+        }
+    }
+    # Unlike the method Node::get_descendants(), we currently do not support
+    # the parameters add_self, ordered, preceding_only etc. The caller has
+    # to take care of sort and grep themselves. (We could do sorting but it
+    # would be inefficient to do it in each step of the recursion. And in any
+    # case we would not know whether to add self or not; if yes, then the
+    # sorting would have to be repeated again.)
+    #my @result = sort {$a->ord() <=> $b->ord()} (@echildren, @echildren2);
+    my @result = (@echildren, @echildren2);
+    return @result;
 }
 
 
