@@ -432,7 +432,7 @@ sub add_enhanced_external_subject
                 # Switch to 'nsubj:pass' if the controlled infinitive is passive.
                 # Example: Zákon mu umožňuje být zvolen.
                 my $edeprel = 'nsubj';
-                if($node->is_passive() || scalar($self->get_enhanced_children($node, '^(aux|expl):pass(:|$)')) > 0)
+                if($node->iset()->is_passive() || scalar($self->get_enhanced_children($node, '^(aux|expl):pass(:|$)')) > 0)
                 {
                     $edeprel = 'nsubj:pass';
                 }
