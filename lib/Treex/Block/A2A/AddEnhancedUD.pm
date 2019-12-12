@@ -454,7 +454,7 @@ sub add_enhanced_external_subject
             }
         }
         # Is this an accusative-control verb?
-        elsif(0 && any {$_ eq $lemma} (@acccontrol)) ###!!!
+        elsif(any {$_ eq $lemma} (@acccontrol))
         {
             # Does the control verb have an overt accusative argument?
             my @objects = $self->get_enhanced_children($gv, '^(i?obj|obl:arg)(:|$)');
