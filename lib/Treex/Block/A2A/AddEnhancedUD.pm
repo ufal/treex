@@ -417,7 +417,6 @@ sub add_enhanced_external_subject
         elsif(any {$_ eq $lemma} (@datcontrol))
         {
             # Does the control verb have an overt dative argument?
-            ###!!! BEWARE OF REFLEXIVE EXPLETIVES!
             my @objects = $self->get_enhanced_children($gv, '^(i?obj|obl:arg)(:|$)');
             # Select those arguments that are dative nominals without adpositions.
             @objects = grep
@@ -427,6 +426,25 @@ sub add_enhanced_external_subject
                 $_->is_dative() && scalar(@casechildren) == 0
             }
             (@objects);
+            # If there are no dative objects, maybe there are reflexive dative expletives ("si").
+            if(scalar(@objects) == 0)
+            {
+                my @expletives = grep {$_->is_dative() && $_->is_reflexive()} ($self->get_enhanced_children($gv, '^expl(:|$)'));
+                # We will not mark coreference with the expletive. It is
+                # reflexive, so we have also a coreference with the subject;
+                # let's look for the subject then.
+                my @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
+                # If there are no subjects, maybe the control verb is itself controlled
+                # by another verb? (This means that we will call the method multiple
+                # times on some verbs. But it should be rare enough so we can afford it.
+                # And there should be no danger of cycles if we only traverse xcomp edges.)
+                if(scalar(@subjects) == 0)
+                {
+                    $self->add_enhanced_external_subject($gv);
+                    @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
+                }
+                @objects = @subjects;
+            }
             foreach my $object (@objects)
             {
                 # Switch to 'nsubj:pass' if the controlled infinitive is passive.
