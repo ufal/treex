@@ -183,6 +183,8 @@ sub add_enhanced_relative_clause
     ###!!! current relative clause. This is an Indo-European bias.
     my $relativizer = $relativizers[0];
     my @edeps = $self->get_enhanced_deps($relativizer);
+    # All relations other than 'ref' will be copied to the noun.
+    my @noundeps = grep {$_->[1] ne 'ref'} (@edeps);
     foreach my $noun (@nouns)
     {
         # Add an enhanced relation 'ref' from the modified noun to the relativizer.
@@ -205,8 +207,6 @@ sub add_enhanced_relative_clause
         # between the parent and the modified noun.
         else
         {
-            # All relations other than 'ref' will be copied to the noun.
-            my @noundeps = grep {$_->[1] ne 'ref'} (@edeps);
             foreach my $nd (@noundeps)
             {
                 my $relparent = $nd->[0];
@@ -224,6 +224,9 @@ sub add_enhanced_relative_clause
     # and we want to keep them!
     if($relativizer != $node)
     {
+        # We must refresh @edeps because at the time we got it, it did not
+        # contain the 'ref' relations yet.
+        @edeps = $self->get_enhanced_deps($relativizer);
         my @reldeps = grep {$_->[1] eq 'ref'} (@edeps);
         $relativizer->wild()->{enhanced} = \@reldeps;
     }
