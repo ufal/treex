@@ -37,9 +37,10 @@ sub process_atree
         $self->add_enhanced_shared_dependent_of_coordination($node);
     }
     # Add external subject relations in control verb constructions.
+    my @visited_xsubj;
     foreach my $node (@nodes)
     {
-        $self->add_enhanced_external_subject($node);
+        $self->add_enhanced_external_subject($node, \@visited_xsubj);
     }
     # Process all relations affected by relative clauses before proceeding to
     # the next enhancement type. Calling this after the coordination enhancement
@@ -311,9 +312,19 @@ sub add_enhanced_external_subject
 {
     my $self = shift;
     my $node = shift;
+    my $visited = shift; # to avoid processing the same verb twice if we need to look at it early
+    return if($visited->[$node->ord()]);
+    $visted->[$node->ord()]++;
     # Are there any incoming xcomp edges?
     my @gverbs = $self->get_enhanced_parents($node, '^xcomp(:|$)');
     return if(scalar(@gverbs) == 0);
+    # The governing verb may itself be an infinitive controlled by another verb.
+    # Make sure it is processed before myself, otherwise we may not be able to
+    # reach to its enhanced subject.
+    foreach my $gv (@gverbs)
+    {
+        $self->add_enhanced_external_subject($gv, $visited);
+    }
     ###!!! This part is language-dependent, hence it should be moved to a
     ###!!! language-specific block!
     # Czech verbs whose subject can control an open complement (infinitive).
@@ -361,7 +372,7 @@ sub add_enhanced_external_subject
     my @acccontrol =
     (
         # Enabling or request:
-        qw(nechat nechávat oprávnit opravňovat zmocnit zmocňovat prosit),
+        qw(oprávnit opravňovat zmocnit zmocňovat prosit),
         # Order, enforcement:
         qw(donutit přinutit nutit přimět zavázat zavazovat pověřit pověřovat přesvědčit přesvědčovat odsoudit odsuzovat),
         # Teaching:
@@ -383,15 +394,6 @@ sub add_enhanced_external_subject
         {
             # Does the control verb have an overt subject?
             my @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
-            # If there are no subjects, maybe the control verb is itself controlled
-            # by another verb? (This means that we will call the method multiple
-            # times on some verbs. But it should be rare enough so we can afford it.
-            # And there should be no danger of cycles if we only traverse xcomp edges.)
-            if(scalar(@subjects) == 0)
-            {
-                $self->add_enhanced_external_subject($gv);
-                @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
-            }
             foreach my $subject (@subjects)
             {
                 my @edeps = grep {$_->[0] == $gv->ord() && $_->[1] =~ m/^[nc]subj(:|$)/} ($self->get_enhanced_deps($subject));
@@ -423,7 +425,7 @@ sub add_enhanced_external_subject
             {
                 my $x = $_;
                 my @casechildren = $self->get_enhanced_children($x, '^case(:|$)');
-                $_->is_dative() && scalar(@casechildren) == 0
+                $x->is_dative() && scalar(@casechildren) == 0
             }
             (@objects);
             # If there are no dative objects, maybe there are reflexive dative expletives ("si").
@@ -436,15 +438,6 @@ sub add_enhanced_external_subject
                     # reflexive, so we have also a coreference with the subject;
                     # let's look for the subject then.
                     my @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
-                    # If there are no subjects, maybe the control verb is itself controlled
-                    # by another verb? (This means that we will call the method multiple
-                    # times on some verbs. But it should be rare enough so we can afford it.
-                    # And there should be no danger of cycles if we only traverse xcomp edges.)
-                    if(scalar(@subjects) == 0)
-                    {
-                        $self->add_enhanced_external_subject($gv);
-                        @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
-                    }
                     @objects = @subjects;
                 }
             }
@@ -452,6 +445,52 @@ sub add_enhanced_external_subject
             {
                 # Switch to 'nsubj:pass' if the controlled infinitive is passive.
                 # Example: Zákon mu umožňuje být zvolen.
+                my $edeprel = 'nsubj';
+                if($node->iset()->is_passive() || scalar($self->get_enhanced_children($node, '^(aux|expl):pass(:|$)')) > 0)
+                {
+                    $edeprel = 'nsubj:pass';
+                }
+                $self->add_enhanced_dependency($object, $node, $edeprel);
+            }
+        }
+        # Is this an accusative-control verb?
+        elsif(0 && any {$_ eq $lemma} (@acccontrol)) ###!!!
+        {
+            # Does the control verb have an overt accusative argument?
+            my @objects = $self->get_enhanced_children($gv, '^(i?obj|obl:arg)(:|$)');
+            # Select those arguments that are accusative nominals without adpositions.
+            @objects = grep
+            {
+                my $x = $_;
+                my @casechildren = $self->get_enhanced_children($x, '^case(:|$)');
+                # In Slavic and some other languages, the case of a quantified phrase may
+                # be determined by the quantifier rather than by the quantified head noun.
+                # We can recognize such quantifiers by the relation nummod:gov or det:numgov.
+                my @qgov = $self->get_enhanced_children($x, '^(nummod:gov|det:numgov)$');
+                my $qgov = scalar(@qgov);
+                # There is probably just one quantifier. We do not have any special rule
+                # for the possibility that there are more than one.
+                my $caseiset = $qgov ? $qgov[0]->iset() : $node->iset();
+                $caseiset->is_accusative() && scalar(@casechildren) == 0
+            }
+            (@objects);
+            # If there are no accusative objects, maybe there are reflexive accusative expletives ("se").
+            if(scalar(@objects) == 0)
+            {
+                my @expletives = grep {$_->is_accusative() && $_->is_reflexive()} ($self->get_enhanced_children($gv, '^expl(:|$)'));
+                if(scalar(@expletives) > 0)
+                {
+                    # We will not mark coreference with the expletive. It is
+                    # reflexive, so we have also a coreference with the subject;
+                    # let's look for the subject then.
+                    my @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
+                    @objects = @subjects;
+                }
+            }
+            foreach my $object (@objects)
+            {
+                # Switch to 'nsubj:pass' if the controlled infinitive is passive.
+                # Example: Zákon ho opravňuje být zvolen.
                 my $edeprel = 'nsubj';
                 if($node->iset()->is_passive() || scalar($self->get_enhanced_children($node, '^(aux|expl):pass(:|$)')) > 0)
                 {
