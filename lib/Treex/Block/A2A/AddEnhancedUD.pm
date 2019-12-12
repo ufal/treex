@@ -459,8 +459,10 @@ sub add_enhanced_relative_clause
                 my $relparent = $nd->[0];
                 my $reldeprel = $nd->[1];
                 # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
-                $reldeprel =~ s/^advmod(:|$)/obl$1/;
-                $reldeprel =~ s/^det(:|$)/nmod$1/;
+                # Discard subtypes of the original relation, if present. Such subtypes may not be available
+                # for the substitute relation.
+                $reldeprel =~ s/^advmod(:.+)?$/obl/;
+                $reldeprel =~ s/^det(:.+)?$/nmod/;
                 $self->add_enhanced_dependency($noun, $self->get_node_by_ord($node, $relparent), $reldeprel);
             }
         }
