@@ -419,8 +419,14 @@ sub add_enhanced_external_subject
             # Does the control verb have an overt dative argument?
             ###!!! BEWARE OF REFLEXIVE EXPLETIVES!
             my @objects = $self->get_enhanced_children($gv, '^(i?obj|obl:arg)(:|$)');
-            ###!!! Not only we require dative. We should also check that there is no adposition.
-            @objects = grep {$_->is_dative()} (@objects);
+            # Select those arguments that are dative nominals without adpositions.
+            @objects = grep
+            {
+                my $x = $_;
+                my @casechildren = $self->get_enhanced_children($x, '^case(:|$)');
+                $_->is_dative() && scalar(@casechildren) == 0
+            }
+            (@objects);
             foreach my $object (@objects)
             {
                 ###!!! We should switch to 'nsubj:pass' if the controlled infinitive is passive!
