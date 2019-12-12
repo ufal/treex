@@ -43,6 +43,10 @@ sub process_atree
     {
         $self->add_enhanced_relative_clause($node);
     }
+    foreach my $node (@nodes)
+    {
+        $self->remove_enhanced_non_ref_relations($node);
+    }
 }
 
 
@@ -340,18 +344,34 @@ sub add_enhanced_relative_clause
             }
         }
     }
-    # Now that the non-ref relations have been copied to all nouns, we can
-    # remove them from the relativizer. But do not do this if the relativizer
-    # is the head of the relative clause! Then the incoming edges are acl:relcl
-    # and we want to keep them!
-    if($relativizer != $node)
-    {
-        # We must refresh @edeps because at the time we got it, it did not
-        # contain the 'ref' relations yet.
-        @edeps = $self->get_enhanced_deps($relativizer);
-        my @reldeps = grep {$_->[1] eq 'ref'} (@edeps);
-        $relativizer->wild()->{enhanced} = \@reldeps;
-    }
+    # We have to wait with removing the non-ref relations until all relative
+    # clauses in the sentence have been processed, so it will be done in a
+    # separate function.
+}
+
+
+
+#------------------------------------------------------------------------------
+# Removes non-ref incoming edges of all relativizers except those that are
+# heads of their relative clauses. We must do this after all edges from all
+# relative clauses to their nouns have been added. If we do this earlier and
+# if a relativizer is shared among coordinate relative clauses (or coordinate
+# modified nouns), we will not be able to find the relativizer from the other
+# relative clauses.
+#------------------------------------------------------------------------------
+sub remove_enhanced_non_ref_relations
+{
+    my $self = shift;
+    my $node = shift;
+    # Only do this to relativizers. Every relativizer has at least one incoming
+    # ref edge by now.
+    my @edeps = $self->get_enhanced_deps($node);
+    return if(!any {$_->[1] =~ m/^ref(:|$)/} (@edeps));
+    # Do not do this to relativizers that are heads of their relative clauses,
+    # i.e., they also have an acl:relcl incoming edge.
+    return if(any {$_->[1] =~ m/^acl:relcl(:|$)/} (@edeps));
+    my @reldeps = grep {$_->[1] =~ m/^ref(:|$)/} (@edeps);
+    $node->wild()->{enhanced} = \@reldeps;
 }
 
 
