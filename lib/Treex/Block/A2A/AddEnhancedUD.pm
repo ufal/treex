@@ -29,16 +29,19 @@ sub process_atree
         }
         $self->add_enhanced_case_deprel($node); # call this before coordination and relative clauses
     }
-    # Process all relations affected by relative clauses before proceeding to the next enhancement type.
-    foreach my $node (@nodes)
-    {
-        $self->add_enhanced_relative_clause($node); # calling this before coordination has advantages but calling it after coordination might have other advantages (if we looked at the enhanced graph when doing relative clauses)
-    }
-    # Process all relations that shall be propagated across coordination.
+    # Process all relations that shall be propagated across coordination before
+    # proceeding to the next enhancement type.
     foreach my $node (@nodes)
     {
         $self->add_enhanced_parent_of_coordination($node);
         $self->add_enhanced_shared_dependent_of_coordination($node);
+    }
+    # Process all relations affected by relative clauses before proceeding to
+    # the next enhancement type. Calling this after the coordination enhancement
+    # enables us to transform also coordinate relative clauses or modified nouns.
+    foreach my $node (@nodes)
+    {
+        $self->add_enhanced_relative_clause($node);
     }
 }
 
@@ -137,6 +140,125 @@ sub add_enhanced_case_deprel
         # Store the modified enhanced deprel back to the wild attributes.
         $edep->[1] = $edeprel;
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Propagates parent of coordination to all conjuncts.
+#------------------------------------------------------------------------------
+sub add_enhanced_parent_of_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my @edeps = $self->get_enhanced_deps($node);
+    if(any {$_->[1] =~ m/^conj(:|$)/} (@edeps))
+    {
+        my @edeps_to_propagate;
+        # Find the nearest non-conj ancestor, i.e., the first conjunct.
+        my @eparents = $self->get_enhanced_parents($node, '^conj(:|$)');
+        # There should be normally at most one conj parent for any node. So we take the first one and assume it is the only one.
+        log_fatal("Did not find the 'conj' enhanced parent.") if(scalar(@eparents) == 0);
+        my $inode = $eparents[0];
+        while(defined($inode))
+        {
+            @eparents = $self->get_enhanced_parents($inode, '^conj(:|$)');
+            if(scalar(@eparents) == 0)
+            {
+                # There are no higher conj parents. So we will now look for the non-conj parents. Those are the relations we want to propagate.
+                @edeps_to_propagate = grep {$_->[1] !~ m/^conj(:|$)/} ($self->get_enhanced_deps($inode));
+                last;
+            }
+            $inode = $eparents[0];
+        }
+        if(defined($inode))
+        {
+            foreach my $edep (@edeps_to_propagate)
+            {
+                $self->add_enhanced_dependency($node, $self->get_node_by_ord($node, $edep->[0]), $edep->[1]);
+                # The coordination may function as a shared dependent of other coordination.
+                # In that case, make me depend on every conjunct in the parent coordination.
+                if($inode->is_shared_modifier())
+                {
+                    my @conjuncts = $self->recursively_collect_conjuncts($self->get_node_by_ord($node, $edep->[0]));
+                    foreach my $conjunct (@conjuncts)
+                    {
+                        $self->add_enhanced_dependency($node, $conjunct, $edep->[1]);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Propagates shared dependent of coordination to all conjuncts.
+#------------------------------------------------------------------------------
+sub add_enhanced_shared_dependent_of_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    # Exclude shared "modifiers" whose deprel is 'cc'. They probably just help
+    # delimit the coordination. (In nested coordination "A - B and C - D", the
+    # conjunction 'and' would come out as a shared 'cc' dependent of 'C' and 'D'.)
+    # Note: If the shared dependent itself is coordination, all conjuncts
+    # should have the flag is_shared_modifier. (At least I have now checked
+    # that there are nodes that have the flag and their deprel is 'conj'.
+    # Of course that is not a proof that it happens always when it should.)
+    # In that case, the parent is the first conjunct, and the effective parent
+    # lies one or more levels further up. However, we solve this in the
+    # function add_enhanced_parent_of_coordination(). Therefore, we do nothing
+    # for non-first conjuncts in coordinate shared dependents here.
+    if($node->is_shared_modifier())
+    {
+        # Get all suitable incoming enhanced relations.
+        my @iedges = grep {$_->[1] !~ m/^(conj|cc|punct)(:|$)/} ($self->get_enhanced_deps($node));
+        foreach my $iedge (@iedges)
+        {
+            my $parent = $self->get_node_by_ord($node, $iedge->[0]);
+            my $edeprel = $iedge->[1];
+            my @conjuncts = $self->recursively_collect_conjuncts($parent);
+            foreach my $conjunct (@conjuncts)
+            {
+                $self->add_enhanced_dependency($node, $conjunct, $edeprel);
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of conj children of a given node. If there is nested
+# coordination, returns the nested conjuncts too.
+#------------------------------------------------------------------------------
+sub recursively_collect_conjuncts
+{
+    my $self = shift;
+    my $node = shift;
+    my $visited = shift;
+    # Keep track of visited nodes. Avoid endless loops.
+    my @_dummy;
+    if(!defined($visited))
+    {
+        $visited = \@_dummy;
+    }
+    return () if($visited->[$node->ord()]);
+    $visited->[$node->ord()]++;
+    my @echildren = $self->get_enhanced_children($node);
+    my @conjuncts = grep {my $x = $_; any {$_->[0] == $node->ord() && $_->[1] =~ m/^conj(:|$)/} ($self->get_enhanced_deps($x))} (@echildren);
+    my @conjuncts2;
+    foreach my $c (@conjuncts)
+    {
+        my @c2 = $self->recursively_collect_conjuncts($c, $visited);
+        if(scalar(@c2) > 0)
+        {
+            push(@conjuncts2, @c2);
+        }
+    }
+    return (@conjuncts, @conjuncts2);
 }
 
 
@@ -264,122 +386,9 @@ sub add_enhanced_external_subject
 
 
 
-#------------------------------------------------------------------------------
-# Propagates parent of coordination to all conjuncts.
-#------------------------------------------------------------------------------
-sub add_enhanced_parent_of_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my @edeps = $self->get_enhanced_deps($node);
-    if(any {$_->[1] =~ m/^conj(:|$)/} (@edeps))
-    {
-        my @edeps_to_propagate;
-        # Find the nearest non-conj ancestor, i.e., the first conjunct.
-        my @eparents = $self->get_enhanced_parents($node, '^conj(:|$)');
-        # There should be normally at most one conj parent for any node. So we take the first one and assume it is the only one.
-        log_fatal("Did not find the 'conj' enhanced parent.") if(scalar(@eparents) == 0);
-        my $inode = $eparents[0];
-        while(defined($inode))
-        {
-            @eparents = $self->get_enhanced_parents($inode, '^conj(:|$)');
-            if(scalar(@eparents) == 0)
-            {
-                # There are no higher conj parents. So we will now look for the non-conj parents. Those are the relations we want to propagate.
-                @edeps_to_propagate = grep {$_->[1] !~ m/^conj(:|$)/} ($self->get_enhanced_deps($inode));
-                last;
-            }
-            $inode = $eparents[0];
-        }
-        if(defined($inode))
-        {
-            foreach my $edep (@edeps_to_propagate)
-            {
-                $self->add_enhanced_dependency($node, $self->get_node_by_ord($node, $edep->[0]), $edep->[1]);
-                # The coordination may function as a shared dependent of other coordination.
-                # In that case, make me depend on every conjunct in the parent coordination.
-                if($inode->is_shared_modifier())
-                {
-                    my @conjuncts = $self->recursively_collect_conjuncts($self->get_node_by_ord($node, $edep->[0]));
-                    foreach my $conjunct (@conjuncts)
-                    {
-                        $self->add_enhanced_dependency($node, $conjunct, $edep->[1]);
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Propagates shared dependent of coordination to all conjuncts.
-#------------------------------------------------------------------------------
-sub add_enhanced_shared_dependent_of_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    # Exclude shared "modifiers" whose deprel is 'cc'. They probably just help
-    # delimit the coordination. (In nested coordination "A - B and C - D", the
-    # conjunction 'and' would come out as a shared 'cc' dependent of 'C' and 'D'.)
-    # Note: If the shared dependent itself is coordination, all conjuncts
-    # should have the flag is_shared_modifier. (At least I have now checked
-    # that there are nodes that have the flag and their deprel is 'conj'.
-    # Of course that is not a proof that it happens always when it should.)
-    # In that case, the parent is the first conjunct, and the effective parent
-    # lies one or more levels further up. However, we solve this in the
-    # function add_enhanced_parent_of_coordination(). Therefore, we do nothing
-    # for non-first conjuncts in coordinate shared dependents here.
-    if($node->is_shared_modifier())
-    {
-        # Get all suitable incoming enhanced relations.
-        my @iedges = grep {$_->[1] !~ m/^(conj|cc|punct)(:|$)/} ($self->get_enhanced_deps($node));
-        foreach my $iedge (@iedges)
-        {
-            my $parent = $self->get_node_by_ord($node, $iedge->[0]);
-            my $edeprel = $iedge->[1];
-            my @conjuncts = $self->recursively_collect_conjuncts($parent);
-            foreach my $conjunct (@conjuncts)
-            {
-                $self->add_enhanced_dependency($node, $conjunct, $edeprel);
-            }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Returns the list of conj children of a given node. If there is nested
-# coordination, returns the nested conjuncts too.
-#------------------------------------------------------------------------------
-sub recursively_collect_conjuncts
-{
-    my $self = shift;
-    my $node = shift;
-    my $visited = shift;
-    # Keep track of visited nodes. Avoid endless loops.
-    my @_dummy;
-    if(!defined($visited))
-    {
-        $visited = \@_dummy;
-    }
-    return () if($visited->[$node->ord()]);
-    $visited->[$node->ord()]++;
-    my @echildren = $self->get_enhanced_children($node);
-    my @conjuncts = grep {my $x = $_; any {$_->[0] == $node->ord() && $_->[1] =~ m/^conj(:|$)/} ($self->get_enhanced_deps($x))} (@echildren);
-    my @conjuncts2;
-    foreach my $c (@conjuncts)
-    {
-        my @c2 = $self->recursively_collect_conjuncts($c, $visited);
-        if(scalar(@c2) > 0)
-        {
-            push(@conjuncts2, @c2);
-        }
-    }
-    return (@conjuncts, @conjuncts2);
-}
+#==============================================================================
+# Helper functions for manipulation of the enhanced graph.
+#==============================================================================
 
 
 
