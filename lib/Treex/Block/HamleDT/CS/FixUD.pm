@@ -290,7 +290,7 @@ sub identify_acl_relcl
     # An incomplete list of nouns that can occur with an adnominal clause which
     # resembles but is not a relative clause. Of course, all of them can also be
     # modified by a genuine relative clause.
-    my $badnouns = 'argument|dotaz|důkaz|kombinace|kritérium|možnost|myšlenka|nařízení|nápis|názor|otázka|pochopení|pochyba|pomyšlení|pravda|problém|projekt|průzkum|představa|přehled|příklad|rada|úsloví|uvedení|východisko|zkoumání|způsob';
+    my $badnouns = 'argument|dotaz|důkaz|kombinace|kritérium|možnost|myšlenka|nařízení|nápis|názor|otázka|pochopení|pochyba|pomyšlení|pravda|problém|projekt|průzkum|představa|přehled|příklad|rada|údaj|úsloví|uvedení|východisko|zkoumání|způsob';
     # The interrogative-relative pronouns "kdo" ("who") and "co" ("what") usually
     # occur with one of the "bad nouns". We will keep only the remaining cases
     # where they occur with a different noun or pronoun. This is an approximation
