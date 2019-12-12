@@ -472,7 +472,7 @@ sub add_enhanced_external_subject
                 my $qgov = scalar(@qgov);
                 # There is probably just one quantifier. We do not have any special rule
                 # for the possibility that there are more than one.
-                my $caseiset = $qgov ? $qgov[0]->iset() : $node->iset();
+                my $caseiset = $qgov ? $qgov[0]->iset() : $x->iset();
                 $caseiset->is_accusative() && scalar(@casechildren) == 0
             }
             (@objects);
