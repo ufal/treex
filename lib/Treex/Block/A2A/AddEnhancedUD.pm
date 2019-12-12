@@ -378,7 +378,9 @@ sub add_enhanced_external_subject
         # Teaching:
         qw(učit naučit odnaučit odnaučovat),
         # Seeing (viděl umírat lidi):
-        qw(vidět)
+        qw(vidět),
+        # Pseudocopulas:
+        qw(činit učinit)
     );
     foreach my $gv (@gverbs)
     {
