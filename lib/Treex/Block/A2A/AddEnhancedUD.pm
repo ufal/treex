@@ -386,7 +386,7 @@ sub add_enhanced_external_subject
             # If there are no subjects, maybe the control verb is itself controlled
             # by another verb? (This means that we will call the method multiple
             # times on some verbs. But it should be rare enough so we can afford it.
-            # And there should be no danger of cycles if we only traverse xcomp edges.
+            # And there should be no danger of cycles if we only traverse xcomp edges.)
             if(scalar(@subjects) == 0)
             {
                 $self->add_enhanced_external_subject($gv);
@@ -411,6 +411,21 @@ sub add_enhanced_external_subject
                 # And replacing ':pass' by ':xsubj' would do more harm than good,
                 # so we just keep it as it is.
                 $self->add_enhanced_dependency($subject, $node, $edeprel);
+            }
+        }
+        # Is this a dative-control verb?
+        elsif(any {$_ eq $lemma} (@datcontrol))
+        {
+            # Does the control verb have an overt dative argument?
+            ###!!! BEWARE OF REFLEXIVE EXPLETIVES!
+            my @objects = $self->get_enhanced_children($gv, '^(i?obj|obl:arg)(:|$)');
+            ###!!! Not only we require dative. We should also check that there is no adposition.
+            @objects = grep {$_->is_dative()} (@objects);
+            foreach my $object (@objects)
+            {
+                ###!!! We should switch to 'nsubj:pass' if the controlled infinitive is passive!
+                ###!!! Example: Zákon mu umožňuje být zvolen.
+                $self->add_enhanced_dependency($subject, $node, 'nsubj');
             }
         }
     }
