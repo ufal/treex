@@ -314,7 +314,7 @@ sub add_enhanced_external_subject
     my $node = shift;
     my $visited = shift; # to avoid processing the same verb twice if we need to look at it early
     return if($visited->[$node->ord()]);
-    $visted->[$node->ord()]++;
+    $visited->[$node->ord()]++;
     # Are there any incoming xcomp edges?
     my @gverbs = $self->get_enhanced_parents($node, '^xcomp(:|$)');
     return if(scalar(@gverbs) == 0);
