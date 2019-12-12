@@ -410,6 +410,12 @@ sub add_enhanced_relative_clause
     # relative clause. However, we do not want to traverse it when looking for
     # the relativizer! Hence we mark it as visited before collecting the
     # descendants.
+    # Example:
+    # máme povědomí, jaké to bude těleso, se kterým by se Země mohla či měla srazit
+    # The noun is "těleso", the coordinate relative clauses are headed by
+    # "mohla" and "měla", and the unwanted relativizer is "jaké", attached to
+    # "těleso" (the correct relativizer is "kterým" and it is shared by both
+    # relative clauses).
     my @visited; map {$visited[$_->ord()]++} (@nouns);
     my @relativizers = sort {$a->ord() <=> $b->ord()}
     (
@@ -528,7 +534,7 @@ sub add_enhanced_dependency
     # Self-loops are not allowed in enhanced dependencies.
     # We could silently ignore the call but there is probably something wrong
     # at the caller's side, so we will throw an exception.
-    if($pattern == $child)
+    if($parent == $child)
     {
         my $ord = $child->ord();
         log_fatal("Self-loops are not allowed in the enhanced graph but we are attempting to attach the node no. $ord to itself.");
