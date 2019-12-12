@@ -36,6 +36,11 @@ sub process_atree
         $self->add_enhanced_parent_of_coordination($node);
         $self->add_enhanced_shared_dependent_of_coordination($node);
     }
+    # Add external subject relations in control verb constructions.
+    foreach my $node (@nodes)
+    {
+        $self->add_enhanced_external_subject($node);
+    }
     # Process all relations affected by relative clauses before proceeding to
     # the next enhancement type. Calling this after the coordination enhancement
     # enables us to transform also coordinate relative clauses or modified nouns.
@@ -268,6 +273,110 @@ sub recursively_collect_conjuncts
 
 
 #------------------------------------------------------------------------------
+# Looks for an external, grammatically coreferential subject of an open clausal
+# complement (xcomp). Adds a subject relation if it finds it.
+#
+# Interactions with propagation of dependencies across coordination:
+# If we do external subjects after coordination:
+# * if the source argument for the subject is coordination (as in "John and
+#   Mary wanted to do it"), by now we have a separate nsubj relation to each of
+#   the conjuncts, and we can copy each of them as an xsubj.
+# * if the control verb is coordination with a shared subject (as in "John
+#   promised and succeeded to do it"), nothing new happens because we have the
+#   xsubj relation from "do" to "John" anyway. However, if the conjuncts share
+#   the xcomp but not the subject (as in "John promised and Mary succeeded to
+#   do it"), we can now draw an xsubj from "do" to both "John" and "Mary".
+# * if the controlled complement is coordination (as in "John promised to come
+#   and clean up"), we can draw an xsubj from each of them.
+# If we do external subjects before coordination:
+# * an xsubj shared among coordinate xcomps could still be multiplied but only
+#   if we mark it as a shared dependent when drawing the first xsubj.
+# * coordinate control verbs with private control arguments will not propagate
+# * coordinate control arguments will propagate via shared parent.
+#
+# Interactions with transformation of relative clauses:
+# * žák, kterého chci přinutit naučit se počítat
+#   (student whom I want to force to learn how to calculate)
+# If we do relative clauses first
+# * the controlled verb can point directly to the modified noun instead of the
+#   relative pronoun. But it will not see that the relative pronoun was in the
+#   accusative, hence it will not recognize the noun (which is in nominative)
+#   as a suitable controller.
+# If we do external subjects first
+# * the xcomp infinitive will have the relative pronoun as its nsubj:xsubj.
+#   A copy of this relation will be drawn to the noun, regardless of that the
+#   parent is not the root of the relative clause.
+#------------------------------------------------------------------------------
+sub add_enhanced_external_subject
+{
+    my $self = shift;
+    my $node = shift;
+    # Are there any incoming xcomp edges?
+    my @gverbs = $self->get_enhanced_parents($node, '^xcomp(:|$)');
+    return if(scalar(@gverbs) == 0);
+    ###!!! This part is language-dependent, hence it should be moved to a
+    ###!!! language-specific block!
+    # Czech verbs whose subject can control an open complement (infinitive).
+    my @nomcontrol =
+    (
+        # Modality / external circumstances:
+        qw(moci mít muset musit smět potřebovat),
+        # Modality / will of the actor:
+        # Weak positive:
+        qw(chtít hodlat mínit plánovat zamýšlet toužit troufnout troufat odvážit odvažovat odhodlat odhodlávat zvyknout zvykat),
+        # Strong positive:
+        qw(rozhodnout rozhodovat zavázat zavazovat přislíbit slíbit slibovat),
+        # Strong negative:
+        qw(odmítnout odmítat),
+        # Weak negative:
+        qw(bát obávat stydět zdráhat ostýchat rozmyslit rozpakovat váhat),
+        # Ability:
+        qw(umět dokázat dovést snažit namáhat usilovat pokusit pokoušet zkusit zkoušet stačit stihnout stíhat zvládnout zvládat),
+        # Aspect and phase:
+        qw(chystat začít začínat jmout počít počínat zůstat vydržet přestat přestávat končit skončit),
+        # Movement (to go somewhere to do something):
+        qw(jít chodit jet jezdit odejít odcházet odjet odjíždět přijít přicházet přijet přijíždět),
+        # Other action than movement:
+        qw(vzít),
+        # Attitude of the speaker:
+        qw(zdát hrozit),
+        # Pseudocopulas: (not "znamenat", there is no coreference!)
+        qw(působit pracovat cítit ukazovat ukázat)
+    );
+    # Czech verbs whose dative argument can control an open complement (infinitive).
+    my @datcontrol =
+    (
+        # Enabling:
+        qw(umožnit umožňovat dovolit dovolovat povolit povolovat dát dávat příslušet),
+        # Recommendation:
+        qw(doporučit doporučovat navrhnout navrhovat poradit radit),
+        # Order:
+        qw(uložit ukládat přikázat přikazovat nařídit nařizovat velet klást kázat),
+        # Negative order, disabling:
+        qw(bránit zabránit zabraňovat znemožnit znemožňovat zakázat zakazovat zapovědět zapovídat),
+        # Success:
+        qw(podařit dařit)
+    );
+    # Czech verbs whose accusative argument can control an open complement (infinitive).
+    my @acccontrol =
+    (
+        # Enabling or request:
+        qw(nechat nechávat oprávnit opravňovat zmocnit zmocňovat prosit),
+        # Order, enforcement:
+        qw(donutit přinutit nutit přimět zavázat zavazovat pověřit pověřovat přesvědčit přesvědčovat odsoudit odsuzovat),
+        # Teaching:
+        qw(učit naučit odnaučit odnaučovat),
+        # Seeing (viděl umírat lidi):
+        qw(vidět)
+    );
+    foreach my $gv (@gverbs)
+    {
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Transforms the enhanced dependencies between a relative clause, its
 # relativizer, and the modified noun.
 #
@@ -296,12 +405,18 @@ sub add_enhanced_relative_clause
     # clause as the modified $noun, although it may be a pronoun.
     my @nouns = $self->get_enhanced_parents($node, '^acl:relcl(:|$)');
     return if(scalar(@nouns)==0);
+    # If there are coordinate relative clauses, we may have already added a
+    # cycle, meaning that the modified noun is now also a descendant of the
+    # relative clause. However, we do not want to traverse it when looking for
+    # the relativizer! Hence we mark it as visited before collecting the
+    # descendants.
+    my @visited; map {$visited[$_->ord()]++} (@nouns);
     my @relativizers = sort {$a->ord() <=> $b->ord()}
     (
         grep {$_->ord() <= $node->ord() && $_->is_relative()}
         (
             $node,
-            $self->get_enhanced_descendants($node)
+            $self->get_enhanced_descendants($node, \@visited)
         )
     );
     return unless(scalar(@relativizers) > 0);
@@ -376,36 +491,6 @@ sub remove_enhanced_non_ref_relations
 
 
 
-#------------------------------------------------------------------------------
-# Looks for an external, grammatically coreferential subject of an open clausal
-# complement (xcomp). Adds a subject relation if it finds it.
-#
-# Interactions with propagation of dependencies across coordination:
-# If we do external subjects after coordination:
-# * if the source argument for the subject is coordination (as in "John and
-#   Mary wanted to do it"), by now we have a separate nsubj relation to each of
-#   the conjuncts, and we can copy each of them as an xsubj.
-# * if the control verb is coordination with a shared subject (as in "John
-#   promised and succeeded to do it"), nothing new happens because we have the
-#   xsubj relation from "do" to "John" anyway. However, if the conjuncts share
-#   the xcomp but not the subject (as in "John promised and Mary succeeded to
-#   do it"), we can now draw an xsubj from "do" to both "John" and "Mary".
-# * if the controlled complement is coordination (as in "John promised to come
-#   and clean up"), we can draw an xsubj from each of them.
-# If we do external subjects before coordination:
-# * an xsubj shared among coordinate xcomps could still be multiplied but only
-#   if we mark it as a shared dependent when drawing the first xsubj.
-# * coordinate control verbs with private control arguments will not propagate
-# * coordinate control arguments will propagate via shared parent.
-#------------------------------------------------------------------------------
-sub add_enhanced_external_subject
-{
-    my $self = shift;
-    my $node = shift;
-}
-
-
-
 #==============================================================================
 # Helper functions for manipulation of the enhanced graph.
 #==============================================================================
@@ -440,6 +525,14 @@ sub add_enhanced_dependency
     my $child = shift;
     my $parent = shift;
     my $deprel = shift;
+    # Self-loops are not allowed in enhanced dependencies.
+    # We could silently ignore the call but there is probably something wrong
+    # at the caller's side, so we will throw an exception.
+    if($pattern == $child)
+    {
+        my $ord = $child->ord();
+        log_fatal("Self-loops are not allowed in the enhanced graph but we are attempting to attach the node no. $ord to itself.");
+    }
     my $pord = $parent->ord();
     my @edeps = $self->get_enhanced_deps($child);
     unless(any {$_->[0] == $pord && $_->[1] eq $deprel} (@edeps))
