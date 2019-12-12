@@ -425,7 +425,7 @@ sub add_enhanced_external_subject
             {
                 ###!!! We should switch to 'nsubj:pass' if the controlled infinitive is passive!
                 ###!!! Example: Zákon mu umožňuje být zvolen.
-                $self->add_enhanced_dependency($subject, $node, 'nsubj');
+                $self->add_enhanced_dependency($object, $node, 'nsubj');
             }
         }
     }
