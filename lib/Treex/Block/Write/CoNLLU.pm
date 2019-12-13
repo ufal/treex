@@ -165,7 +165,6 @@ sub process_atree
                 my $edeprel = $edep->[1];
                 if($edeprel =~ m/>\d+\.\d+>/)
                 {
-                    $modified++;
                     # There is at least one empty node embedded in the edge/path.
                     # Decompose the path to parent-type-child triplets.
                     my @path = split(/>/, $edeprel);
