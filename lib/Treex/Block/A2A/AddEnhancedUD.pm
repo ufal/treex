@@ -690,7 +690,7 @@ sub add_enhanced_empty_node
     my @nodeiedges;
     foreach my $pord (sort {$a <=> $b} (keys(%nodeiedges)))
     {
-        foreach my $edeprel (sort {$a cmp $b} (keys(%{$nodeiedges->{$pord}})))
+        foreach my $edeprel (sort {$a cmp $b} (keys(%{$nodeiedges{$pord}})))
         {
             push(@nodeiedges, [$pord, $edeprel]);
         }
@@ -731,7 +731,7 @@ sub add_enhanced_empty_node
         my @childiedges;
         foreach my $pord (sort {$a <=> $b} (keys(%childiedges)))
         {
-            foreach my $edeprel (sort {$a cmp $b} (keys(%{$childiedges->{$pord}})))
+            foreach my $edeprel (sort {$a cmp $b} (keys(%{$childiedges{$pord}})))
             {
                 push(@childiedges, [$pord, $edeprel]);
             }
