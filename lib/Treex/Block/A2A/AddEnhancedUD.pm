@@ -707,7 +707,7 @@ sub add_enhanced_empty_node
             }
             else
             {
-                push(@childiedges, $cie);
+                push(@childiedges, [$cie->[0], $cie->[1]]);
             }
         }
         $child->wild()->{enhanced} = \@childiedges;
