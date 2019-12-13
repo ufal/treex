@@ -701,8 +701,18 @@ sub add_enhanced_empty_node
                 foreach my $pie (@origiedges)
                 {
                     my $cdeprel = $cie->[1];
-                    $cdeprel =~ s/^orphan(:|$)/dep$1/;
-                    push(@childiedges, [$pie->[0], $pie->[1].">$emppos>".$cdeprel]);
+                    # Only redirect selected relations via the empty node:
+                    # orphan, cc, mark, punct. Keep the others (in particular
+                    # nominal modifiers) attached directly to $node.
+                    if($cdeprel =~ m/^(orphan|cc|mark|punct)(:|$)/)
+                    {
+                        $cdeprel =~ s/^orphan(:|$)/dep$1/;
+                        push(@childiedges, [$pie->[0], $pie->[1].">$emppos>".$cdeprel]);
+                    }
+                    else
+                    {
+                        push(@childiedges, [$cie->[0], $cie->[1]]);
+                    }
                 }
             }
             else
