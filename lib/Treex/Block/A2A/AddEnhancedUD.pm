@@ -681,11 +681,13 @@ sub add_enhanced_empty_node
     }
     # Create the paths to $node via the empty node. We do not know what the
     # relation between the empty node and $node should be. We just use 'dep'
-    # for now.
+    # for now, unless the node is an adverb, when it is probably safe to say
+    # that it is 'advmod'.
     my %nodeiedges;
+    my $cdeprel = $node->is_adverb() ? 'advmod' : 'dep';
     foreach my $ie (@origiedges)
     {
-        $nodeiedges{$ie->[0]}{$ie->[1].">$emppos>dep"}++;
+        $nodeiedges{$ie->[0]}{$ie->[1].">$emppos>".$cdeprel}++;
     }
     my @nodeiedges;
     foreach my $pord (sort {$a <=> $b} (keys(%nodeiedges)))
@@ -697,11 +699,13 @@ sub add_enhanced_empty_node
     }
     $node->wild()->{enhanced} = \@nodeiedges;
     # Create the path to each child via the empty node. Also use just 'dep' for
-    # now.
+    # now, unless the node is an adverb, when it is probably safe to say
+    # that it is 'advmod'.
     foreach my $child (@children)
     {
         my @origchildiedges = $self->get_enhanced_deps($child);
         my %childiedges;
+        my $ccdeprel = $child->is_adverb() ? 'advmod' : 'dep';
         foreach my $cie (@origchildiedges)
         {
             if($cie->[0] == $node->ord())
@@ -714,7 +718,7 @@ sub add_enhanced_empty_node
                     # nominal modifiers) attached directly to $node.
                     if($cdeprel =~ m/^(orphan|cc|mark|punct)(:|$)/)
                     {
-                        $cdeprel =~ s/^orphan(:|$)/dep$1/;
+                        $cdeprel =~ s/^orphan(:.+)?$/$ccdeprel/;
                         $childiedges{$pie->[0]}{$pie->[1].">$emppos>".$cdeprel}++;
                     }
                     else
