@@ -216,7 +216,7 @@ sub process_atree
             {
                 foreach my $edeprel (sort {$a cmp $b} (keys(%{$edeps_to_write{$major}{$minor}{$epord}})))
                 {
-                    push(@edeps, [$epord, $edeprel]);
+                    push(@edeps, "$epord:$edeprel");
                 }
             }
             if(scalar(@edeps) > 0)
@@ -273,7 +273,7 @@ sub process_atree
             {
                 foreach my $edeprel (sort {$a cmp $b} (keys(%{$edeps_to_write{$node->ord()}{0}{$epord}})))
                 {
-                    push(@edeps, [$epord, $edeprel]);
+                    push(@edeps, "$epord:$edeprel");
                 }
             }
             if(scalar(@edeps) > 0)
@@ -385,7 +385,7 @@ sub process_atree
                 {
                     foreach my $edeprel (sort {$a cmp $b} (keys(%{$edeps_to_write{$major}{$minor}{$epord}})))
                     {
-                        push(@edeps, [$epord, $edeprel]);
+                        push(@edeps, "$epord:$edeprel");
                     }
                 }
                 if(scalar(@edeps) > 0)
