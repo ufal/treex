@@ -682,10 +682,18 @@ sub add_enhanced_empty_node
     # Create the paths to $node via the empty node. We do not know what the
     # relation between the empty node and $node should be. We just use 'dep'
     # for now.
-    my @nodeiedges;
+    my %nodeiedges;
     foreach my $ie (@origiedges)
     {
-        push(@nodeiedges, [$ie->[0], $ie->[1].">$emppos>dep"]);
+        $nodeiedges{$ie->[0]}{$ie->[1].">$emppos>dep"}++;
+    }
+    my @nodeiedges;
+    foreach my $pord (sort {$a <=> $b} (keys(%nodeiedges)))
+    {
+        foreach my $edeprel (sort {$a cmp $b} (keys(%{$nodeiedges->{$pord}})))
+        {
+            push(@nodeiedges, [$pord, $edeprel]);
+        }
     }
     $node->wild()->{enhanced} = \@nodeiedges;
     # Create the path to each child via the empty node. Also use just 'dep' for
@@ -693,7 +701,7 @@ sub add_enhanced_empty_node
     foreach my $child (@children)
     {
         my @origchildiedges = $self->get_enhanced_deps($child);
-        my @childiedges;
+        my %childiedges;
         foreach my $cie (@origchildiedges)
         {
             if($cie->[0] == $node->ord())
@@ -707,17 +715,25 @@ sub add_enhanced_empty_node
                     if($cdeprel =~ m/^(orphan|cc|mark|punct)(:|$)/)
                     {
                         $cdeprel =~ s/^orphan(:|$)/dep$1/;
-                        push(@childiedges, [$pie->[0], $pie->[1].">$emppos>".$cdeprel]);
+                        $childiedges{$pie->[0]}{$pie->[1].">$emppos>".$cdeprel}++;
                     }
                     else
                     {
-                        push(@childiedges, [$cie->[0], $cie->[1]]);
+                        $childiedges{$cie->[0]}{$cie->[1]}++;
                     }
                 }
             }
             else
             {
-                push(@childiedges, [$cie->[0], $cie->[1]]);
+                $childiedges{$cie->[0]}{$cie->[1]}++;
+            }
+        }
+        my @childiedges;
+        foreach my $pord (sort {$a <=> $b} (keys(%childiedges)))
+        {
+            foreach my $edeprel (sort {$a cmp $b} (keys(%{$childiedges->{$pord}})))
+            {
+                push(@childiedges, [$pord, $edeprel]);
             }
         }
         $child->wild()->{enhanced} = \@childiedges;
