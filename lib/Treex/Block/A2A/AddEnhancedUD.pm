@@ -53,6 +53,12 @@ sub process_atree
     {
         $self->remove_enhanced_non_ref_relations($node);
     }
+    # Generate empty nodes instead of orphan relations.
+    my %emptynodes;
+    foreach my $node (@nodes)
+    {
+        $self->add_enhanced_empty_node($node, \%emptynodes);
+    }
 }
 
 
@@ -625,6 +631,87 @@ sub remove_enhanced_non_ref_relations
     return if(any {$_->[1] =~ m/^acl:relcl(:|$)/} (@edeps));
     my @reldeps = grep {$_->[1] =~ m/^ref(:|$)/} (@edeps);
     $node->wild()->{enhanced} = \@reldeps;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Transforms gapping constructions to structures with empty nodes. The a-layer
+# in Treex does not really support empty nodes so we will model them using
+# concatenations of incoming and outgoing edges. For example, suppose that
+# an empty node should have position 5.1, that it has one conj parent X, one
+# nsubj child Y and one obj child Z. Then we will draw an edge from X to Y and
+# label it "conj>5.1>nsubj", and an edge from X to Z labeled "conj>5.1>obj".
+# We will assume that the block Write::CoNLLU is able to use this information
+# to produce the desired CoNLL-U representation of the graph with empty nodes.
+#------------------------------------------------------------------------------
+sub add_enhanced_empty_node
+{
+    my $self = shift;
+    my $node = shift;
+    my $emptynodes = shift; # hash ref
+    # We have to generate an empty node if a node has one or more orphan children.
+    my @orphans = $self->get_enhanced_children($node, '^orphan(:|$)');
+    return if(scalar(@orphans) == 0);
+    # The current node and all its current children will become children of the
+    # empty node.
+    my @children = $self->get_enhanced_children($node);
+    my @empchildren = sort {$a->ord() <=> $b->ord()} ($node, @children);
+    # For the moment we will position the empty node right before its first child.
+    # There might be better heuristics but the position does not matter much.
+    # However, we must not pick a position that is already taken by another
+    # empty node. For that we need the hash of all empty nodes generated in this
+    # sentence so far.
+    my $posmajor = $empchildren[0]->ord() - 1;
+    my $posminor = 1;
+    while(exists($emptynodes->{"$posmajor.$posminor"}))
+    {
+        $posminor++;
+    }
+    my $emppos = "$posmajor.$posminor";
+    $emptynodes->{$emppos}++;
+    # All current parents of $node will become parents of the empty node.
+    ###!!! There should not be any 'orphan' among the relations to the parents.
+    ###!!! If there is one, we should process the parent first. However, for now
+    ###!!! we simply ignore the 'orphan' and change it to 'dep'.
+    my @origiedges = $self->get_enhanced_deps($node);
+    foreach my $ie (@origiedges)
+    {
+        $ie->[1] =~ s/^orphan(:|$)/dep$1/;
+    }
+    # Create the paths to $node via the empty node. We do not know what the
+    # relation between the empty node and $node should be. We just use 'dep'
+    # for now.
+    my @nodeiedges = @origiedges;
+    foreach my $ie (@nodeiedges)
+    {
+        $ie->[1] .= ">$emppos>dep";
+    }
+    $node->wild()->{enhanced} = \@nodeiedges;
+    # Create the path to each child via the empty node. Also use just 'dep' for
+    # now.
+    foreach my $child (@children)
+    {
+        my @origchildiedges = $self->get_enhanced_deps($child);
+        my @childiedges;
+        foreach my $cie (@origchildiedges)
+        {
+            if($cie->[0] == $node->ord())
+            {
+                foreach my $pie (@origiedges)
+                {
+                    my $cdeprel = $cie->[1];
+                    $cdeprel =~ s/^orphan(:|$)/dep$1/;
+                    push(@childiedges, [$pie->[0], $pie->[1].">$emppos>".$cdeprel]);
+                }
+            }
+            else
+            {
+                push(@childiedges, $cie);
+            }
+        }
+        $child->wild()->{enhanced} = \@childiedges;
+    }
 }
 
 
