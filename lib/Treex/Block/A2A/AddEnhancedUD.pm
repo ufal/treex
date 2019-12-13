@@ -682,10 +682,10 @@ sub add_enhanced_empty_node
     # Create the paths to $node via the empty node. We do not know what the
     # relation between the empty node and $node should be. We just use 'dep'
     # for now.
-    my @nodeiedges = @origiedges;
-    foreach my $ie (@nodeiedges)
+    my @nodeiedges;
+    foreach my $ie (@origiedges)
     {
-        $ie->[1] .= ">$emppos>dep";
+        push(@nodeiedges, [$ie->[0], $ie->[1].">$emppos>dep"]);
     }
     $node->wild()->{enhanced} = \@nodeiedges;
     # Create the path to each child via the empty node. Also use just 'dep' for
