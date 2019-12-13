@@ -93,7 +93,8 @@ sub _get_deprel {
 }
 
 
-sub process_atree {
+sub process_atree
+{
     my ($self, $tree) = @_;
 
     # if only random sentences are printed
@@ -148,6 +149,85 @@ sub process_atree {
             }
         }
     }
+    # Before writing any nodes, search the wild attributes for enhanced dependencies.
+    # If the enhanced graph involves empty nodes, they will be encoded in the deps:
+    # '0:root>34.1>cc' means that there should be a root edge from 0 to 34.1,
+    # and a cc edge from 34.1 to the actual node.
+    my %edeps_to_write;
+    foreach my $node (@nodes)
+    {
+        if(exists($node->wild()->{enhanced}))
+        {
+            my @edeps = @{$node->wild()->{enhanced}};
+            foreach my $edep (@edeps)
+            {
+                my $epord = $edep->[0];
+                my $edeprel = $edep->[1];
+                if($edeprel =~ m/>\d+\.\d+>/)
+                {
+                    $modified++;
+                    # There is at least one empty node embedded in the edge/path.
+                    # Decompose the path to parent-type-child triplets.
+                    my @path = split(/>/, $edeprel);
+                    unshift(@path, $epord);
+                    push(@path, $node->ord());
+                    for(my $i = 0; $i <= $#path-2; $i += 2)
+                    {
+                        my $p = $path[$i];
+                        my $t = $path[$i+1];
+                        my $c = $path[$i+2];
+                        log_fatal("Ord is not numeric in '$edeprel'.") if($p !~ m/^\d+(\.\d+)?$/ || $c !~ m/^\d+(\.\d+)?$/);
+                        # Store edeps of empty nodes in a temporary hash.
+                        if($c =~ m/^(\d+)\.(\d+)$/)
+                        {
+                            my $major = $1;
+                            my $minor = $2;
+                            $edeps_to_write{$major}{$minor}{$p}{$t}++;
+                        }
+                        # Store my modified edeps in a temporary hash.
+                        elsif($c == $node->ord())
+                        {
+                            $edeps_to_write{$c}{0}{$p}{$t}++;
+                        }
+                        else
+                        {
+                            log_fatal("Unexpected child ord 'c' in '$edeprel'.");
+                        }
+                    }
+                }
+                else
+                {
+                    $edeps_to_write{$node->ord()}{0}{$epord}{$edeprel}++;
+                }
+            }
+        }
+    }
+
+    # If there are any empty nodes positioned before the first real node,
+    # write them now.
+    my $major = 0;
+    if(exists($edeps_to_write{$major}))
+    {
+        my @minors = grep {$_ != 0} (sort {$a <=> $b} (keys(%{$edeps_to_write{$major}})));
+        foreach my $minor (@minors)
+        {
+            my $deps = '_';
+            my @edeps;
+            foreach my $epord (sort {$a <=> $b} (keys(%{$edeps_to_write{$major}{$minor}})))
+            {
+                foreach my $edeprel (sort {$a cmp $b} (keys(%{$edeps_to_write{$major}{$minor}{$epord}})))
+                {
+                    push(@edeps, [$epord, $edeprel]);
+                }
+            }
+            if(scalar(@edeps) > 0)
+            {
+                $deps = join('|', @edeps);
+            }
+            $self->print_nfc("$major.$minor\t_\t_\t_\t_\t_\t_\t_\t$deps\t_\n");
+        }
+    }
+
     for(my $i = 0; $i<=$#nodes; $i++)
     {
         my $node = $nodes[$i];
@@ -185,24 +265,21 @@ sub process_atree {
         my $deprel = $self->_get_deprel($node);
         my $feats = $self->_get_feats($node);
 
-        # Enhanced dependencies may be stored in a wild attribute.
-        my $wild = $node->wild();
+        # Enhanced dependencies have been prepared in a temporary hash.
         my $deps = '_';
-        if(exists($wild->{enhanced}))
+        if(exists($edeps_to_write{$node->ord()}{0}))
         {
-            my @e = map {"$_->[0]:$_->[1]"} sort
+            my @edeps;
+            foreach my $epord (sort {$a <=> $b} (keys(%{$edeps_to_write{$node->ord()}{0}})))
             {
-                my $result = $a->[0] <=> $b->[0];
-                unless($result)
+                foreach my $edeprel (sort {$a cmp $b} (keys(%{$edeps_to_write{$node->ord()}{0}{$epord}})))
                 {
-                    $result = $a->[1] cmp $b->[1];
+                    push(@edeps, [$epord, $edeprel]);
                 }
-                $result;
             }
-            (@{$wild->{enhanced}});
-            if(scalar(@e) > 0)
+            if(scalar(@edeps) > 0)
             {
-                $deps = join('|', @e);
+                $deps = join('|', @edeps);
             }
         }
 
@@ -229,6 +306,7 @@ sub process_atree {
         ###!!! (Czech)-specific wild attributes that have been cut off the lemma.
         ###!!! In the future we will want to make them normal attributes.
         ###!!! Note: the {lid} attribute is now also collected for other treebanks, e.g. AGDT and LDT.
+        my $wild = $node->wild();
         if(exists($wild->{lid}) && defined($wild->{lid}))
         {
             if(defined($lemma))
@@ -293,6 +371,31 @@ sub process_atree {
         $values[1] = defined($form) && $form ne '' ? $form : '_';
         $values[2] = defined($lemma) && $lemma ne '' ? $lemma : '_';
         $self->print_nfc(join("\t", @values)."\n");
+
+        # If there are any empty nodes positioned after the current real node,
+        # write them now.
+        my $major = $node->ord();
+        if(exists($edeps_to_write{$major}))
+        {
+            my @minors = grep {$_ != 0} (sort {$a <=> $b} (keys(%{$edeps_to_write{$major}})));
+            foreach my $minor (@minors)
+            {
+                my $deps = '_';
+                my @edeps;
+                foreach my $epord (sort {$a <=> $b} (keys(%{$edeps_to_write{$major}{$minor}})))
+                {
+                    foreach my $edeprel (sort {$a cmp $b} (keys(%{$edeps_to_write{$major}{$minor}{$epord}})))
+                    {
+                        push(@edeps, [$epord, $edeprel]);
+                    }
+                }
+                if(scalar(@edeps) > 0)
+                {
+                    $deps = join('|', @edeps);
+                }
+                $self->print_nfc("$major.$minor\t_\t_\t_\t_\t_\t_\t_\t$deps\t_\n");
+            }
+        }
     }
     $self->print_nfc("\n") if $tree->get_descendants();
     return;
