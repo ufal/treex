@@ -333,61 +333,126 @@ sub add_enhanced_external_subject
     }
     ###!!! This part is language-dependent, hence it should be moved to a
     ###!!! language-specific block!
-    # Czech verbs whose subject can control an open complement (infinitive).
-    my @nomcontrol =
-    (
-        # Modality / external circumstances:
-        qw(moci mít muset musit smět potřebovat),
-        # Modality / will of the actor:
-        # Weak positive:
-        qw(chtít hodlat mínit plánovat zamýšlet toužit troufnout troufat odvážit odvažovat odhodlat odhodlávat zvyknout zvykat),
-        # Strong positive:
-        qw(rozhodnout rozhodovat zavázat zavazovat přislíbit slíbit slibovat),
-        # Strong negative:
-        qw(odmítnout odmítat),
-        # Weak negative:
-        qw(bát obávat stydět zdráhat ostýchat rozmyslit rozpakovat váhat),
-        # Ability:
-        qw(umět dokázat dovést snažit namáhat usilovat pokusit pokoušet zkusit zkoušet stačit stihnout stíhat zvládnout zvládat),
-        # Aspect and phase:
-        qw(chystat začít začínat jmout počít počínat zůstat vydržet přestat přestávat končit skončit),
-        # Movement (to go somewhere to do something):
-        qw(jít chodit jet jezdit odejít odcházet odjet odjíždět přijít přicházet přijet přijíždět),
-        # Other action than movement:
-        qw(vzít),
-        # Attitude of the speaker:
-        qw(zdát hrozit),
-        # Pseudocopulas: (not "znamenat", there is no coreference!)
-        qw(působit pracovat cítit ukazovat ukázat)
-    );
-    # Czech verbs whose dative argument can control an open complement (infinitive).
-    my @datcontrol =
-    (
-        # Enabling:
-        qw(umožnit umožňovat dovolit dovolovat povolit povolovat dát dávat příslušet),
-        # Recommendation:
-        qw(doporučit doporučovat navrhnout navrhovat poradit radit),
-        # Order:
-        qw(uložit ukládat přikázat přikazovat nařídit nařizovat velet klást kázat),
-        # Negative order, disabling:
-        qw(bránit zabránit zabraňovat znemožnit znemožňovat zakázat zakazovat zapovědět zapovídat),
-        # Success:
-        qw(podařit dařit)
-    );
-    # Czech verbs whose accusative argument can control an open complement (infinitive).
-    my @acccontrol =
-    (
-        # Enabling or request:
-        qw(oprávnit opravňovat zmocnit zmocňovat prosit),
-        # Order, enforcement:
-        qw(donutit přinutit nutit přimět zavázat zavazovat pověřit pověřovat přesvědčit přesvědčovat odsoudit odsuzovat),
-        # Teaching:
-        qw(učit naučit odnaučit odnaučovat),
-        # Seeing (viděl umírat lidi):
-        qw(vidět),
-        # Pseudocopulas:
-        qw(činit učinit)
-    );
+    if($self->language() eq 'cs')
+    {
+        # Czech verbs whose subject can control an open complement (infinitive).
+        my @nomcontrol =
+        (
+            # Modality / external circumstances:
+            qw(moci mít muset musit smět potřebovat),
+            # Modality / will of the actor:
+            # Weak positive:
+            qw(chtít hodlat mínit plánovat zamýšlet toužit troufnout troufat odvážit odvažovat odhodlat odhodlávat zvyknout zvykat),
+            # Strong positive:
+            qw(rozhodnout rozhodovat zavázat zavazovat přislíbit slíbit slibovat),
+            # Strong negative:
+            qw(odmítnout odmítat),
+            # Weak negative:
+            qw(bát obávat stydět zdráhat ostýchat rozmyslit rozpakovat váhat),
+            # Passive negative:
+            qw(zapomenout zapomínat opomenout opomíjet),
+            # Ability:
+            qw(umět dokázat dovést snažit namáhat usilovat pokusit pokoušet zkusit zkoušet stačit stihnout stíhat zvládnout zvládat),
+            # Aspect and phase:
+            qw(chystat začít začínat jmout počít počínat zůstat vydržet přestat přestávat končit skončit),
+            # Movement (to go somewhere to do something):
+            qw(jít chodit utíkat spěchat jet jezdit odejít odcházet odjet odjíždět přijít přicházet přijet přijíždět),
+            # Other action than movement:
+            qw(vzít),
+            # Attitude of the speaker:
+            qw(zdát hrozit ráčit),
+            # Pseudocopulas: (not "znamenat", there is no coreference!)
+            qw(působit pracovat cítit ukazovat ukázat)
+        );
+        # Czech verbs whose dative argument can control an open complement (infinitive).
+        my @datcontrol =
+        (
+            # Enabling:
+            qw(umožnit umožňovat dovolit dovolovat povolit povolovat dát dávat příslušet),
+            # Recommendation:
+            qw(doporučit doporučovat navrhnout navrhovat poradit radit),
+            # Order:
+            qw(uložit ukládat přikázat přikazovat nařídit nařizovat velet klást kázat),
+            # Negative order, disabling:
+            qw(bránit zabránit zabraňovat znemožnit znemožňovat zakázat zakazovat zapovědět zapovídat),
+            # Success:
+            qw(podařit dařit)
+        );
+        # Czech verbs whose accusative argument can control an open complement (infinitive).
+        my @acccontrol =
+        (
+            # Enabling or request:
+            qw(oprávnit opravňovat zmocnit zmocňovat prosit),
+            # Order, enforcement:
+            qw(donutit přinutit nutit přimět zavázat zavazovat pověřit pověřovat přesvědčit přesvědčovat odsoudit odsuzovat),
+            # Teaching:
+            qw(učit naučit odnaučit odnaučovat),
+            # Seeing (viděl umírat lidi):
+            qw(vidět),
+            # Pseudocopulas:
+            qw(činit učinit)
+        );
+    }
+    else #------------------------------------------------------------------------------------------------------------------
+    {
+        # Slovak verbs whose subject can control an open complement (infinitive).
+        my @nomcontrol =
+        (
+            # Modality / external circumstances:
+            qw(môcť mať musieť smieť potrebovať),
+            # Modality / will of the actor:
+            # Weak positive:
+            qw(chcieť hodlať mieniť plánovať zamýšľať túžiť trúfnuť trúfať odvážiť odvažovať odhodlať odhodlávať želať),
+            # Strong positive:
+            qw(rozhodnúť rozhodovať zaviazať zaväzovať prisľúbiť sľúbiť sľubovať),
+            # Strong negative:
+            qw(odmietnuť odmietať),
+            # Weak negative:
+            qw(báť obávať hanbiť zdráhať ostýchať rozmyslieť rozpakovať váhať),
+            # Passive negative:
+            qw(zabudnúť zabúdať opomenúť),
+            # Ability:
+            qw(vedieť dokázať doviesť snažiť namáhať usilovať pokúsiť pokúšať skúsiť skúšať stačiť stihnúť stíhať zvládnuť vládať),
+            # Aspect and phase:
+            qw(chystať začať začínať počať počínať zostať ostať vytrvať prestať prestávať končiť skončiť),
+            # Movement (to go somewhere to do something):
+            qw(ísť chodiť utekať ponáhľať jet jazdiť odísť odchádzať prísť přichádzať),
+            # Other action than movement:
+            qw(vziať),
+            # Attitude of the speaker:
+            qw(zdať hroziť ráčiť),
+            # Pseudocopulas: (not "znamenať", there is no coreference!)
+            qw(pôsobiť pracovať cítiť ukazovať ukázať)
+        );
+        # Slovak verbs whose dative argument can control an open complement (infinitive).
+        my @datcontrol =
+        (
+            # Enabling:
+            qw(umožniť umožňovať dovoliť dovoľovať povoliť povoľovať dať dávať prináležať),
+            # Recommendation:
+            qw(odporučiť odporúčať navrhnúť navrhovať poradiť radiť hovoriť povedať pobádať),
+            # Order:
+            qw(uložiť ukladať prikázať prikazovať nariadiť nariaďovať veliť klásť kázať),
+            # Negative order, disabling:
+            qw(brániť zabrániť zabraňovať znemožniť znemožňovať zakázať zakazovať),
+            # Success:
+            qw(podariť dariť postačiť)
+        );
+        # Slovak verbs whose accusative argument can control an open complement (infinitive).
+        my @acccontrol =
+        (
+            # Enabling or request:
+            qw(oprávniť opravňovať zmocniť zmocňovať prosiť poprosiť pustiť),
+            # Order, enforcement:
+            qw(donútiť prinútiť nútiť zaviazať zaväzovať poveriť poverovať presvedčiť presviedčať odsúdiť odsudzovať),
+            # Teaching:
+            qw(učiť naučiť odnaučiť odučovať),
+            # Seeing (viděl umírat lidi):
+            qw(vidieť),
+            # Pseudocopulas:
+            qw(činiť urobiť)
+        );
+    }
     foreach my $gv (@gverbs)
     {
         my $lemma = $gv->lemma();
