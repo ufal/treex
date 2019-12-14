@@ -267,6 +267,11 @@ sub convert_deprels
             {
                 $deprel = 'AuxP';
             }
+            # AuxM is also used with rhematizer إِلَّا (ʾillā) "except, however"
+            elsif ( $node->lemma() eq 'إِلَّا' )
+            {
+                $deprel = 'AuxZ';
+            }
             # AuxM is also used with negative particles لَا (lā), لَم (lam) and لَن (lan).
             elsif ( $node->is_particle() && $node->form() =~ m/^لَ?[امن]/ )
             {
