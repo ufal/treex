@@ -152,7 +152,7 @@ sub fix_morphology
             elsif($lemma =~ m/^(kas|kuris|koks|kelintas|katras)$/)
             {
                 $node->iset()->set('pos', 'adj') unless($lemma eq 'kas');
-                $node->iset()->set('prontype', 'int');
+                $node->iset()->set('prontype', 'int', 'rel');
             }
             # Total pronouns.
             # visas = all: inflects for gender
@@ -187,6 +187,21 @@ sub fix_morphology
             else
             {
                 $node->iset()->set('prontype', 'ind');
+            }
+        }
+        # Pronominal adverbs were not previously tagged as pronominal, so they
+        # were not caught in the previous branch (is_pronominal()) and we must
+        # do them here.
+        if($node->is_adverb())
+        {
+            # Interrogative/relative adverbs.
+            # kur = where
+            # kada = when
+            # kaip = how
+            # kodėl = why
+            if($lemma =~ m/^(kur|kada|kaip|kodėl)$/)
+            {
+                $node->iset()->set('prontype', 'int', 'rel');
             }
         }
         # The definiteness feature seems to be relevant for ordinal but not for cardinal numerals.
