@@ -23,6 +23,7 @@ sub process_atree
     {
         $self->fix_constructions($node);
         $self->fix_annotation_errors($node);
+        $self->identify_acl_relcl($node);
     }
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
@@ -135,6 +136,72 @@ sub fix_morphology
     }
     # Make sure that the UPOS tag still matches Interset features.
     $node->set_tag($node->iset()->get_upos());
+}
+
+
+
+#------------------------------------------------------------------------------
+# Figures out whether an adnominal clause is a relative clause, and changes the
+# relation accordingly.
+#------------------------------------------------------------------------------
+sub identify_acl_relcl
+{
+    my $self = shift;
+    my $node = shift;
+    return unless($node->deprel() =~ m/^acl(:|$)/);
+    # Look for a relative pronoun or a subordinating conjunction. The first
+    # such word from the left is the one that matters. However, it is not
+    # necessarily the first word in the subtree: there can be punctuation and
+    # preposition. The relative pronoun can be even the root of the clause,
+    # i.e., the current node, if the clause is copular.
+    # Specifying (first|last|preceding|following)_only implies ordered.
+    my @subordinators = grep {$_->is_subordinator() || $_->is_relative()} ($node->get_descendants({'preceding_only' => 1, 'add_self' => 1}));
+    return unless(scalar(@subordinators) > 0);
+    my $subordinator = $subordinators[0];
+    # If there is a subordinating conjunction, the clause is not relative even
+    # if there is later also a relative pronoun.
+    return if($subordinator->is_subordinator() || $subordinator->deprel() =~ m/^mark(:|$)/);
+    # Many words can be both relative and interrogative and the two functions are
+    # not disambiguated in morphological features, i.e., they get PronType=Int,Rel
+    # regardless of context. We only want to label a clause as relative if there
+    # is coreference between the relative word and the nominal modified by the clause.
+    # For example, 1. is a relative clause and 2. is not:
+    # 1. otázka, ktorá sa stále vracia (question that recurs all the time)
+    # 2. otázka, ktorá strana vyhrá voľby (question which party wins the elections)
+    # Certain interrogative-relative words seem to never participate in a proper
+    # relative clause.
+    return if($subordinator->lemma() =~ m/^(ako|koľko)$/);
+    # The interrogative-relative adverb "prečo" ("why") could be said to corefer with a few
+    # selected nouns but not with others. Note that the parent can be also a
+    # pronoun (typically the demonstrative/correlative "to"), which is also OK.
+    my $parent = $node->parent();
+    return if($subordinator->lemma() eq 'proč' && $parent->lemma() !~ m/^(dôvod|príčina|ten|to)$/);
+    # An incomplete list of nouns that can occur with an adnominal clause which
+    # resembles but is not a relative clause. Of course, all of them can also be
+    # modified by a genuine relative clause.
+    my $badnouns = 'argument|definícia|dôkaz|dotaz|kombinácia|kritérium|možnosť|myšlenka|nariadenie|nápis|názor|otázka|pochopenie|pochyba|pomyšlenie|právda|problém|projekt|prieskum|predstava|prehľad|príklad|rada|skúmanie|spôsob|údaj|úslovie|uvedenie|východisko|vysvetlenie';
+    # The interrogative-relative pronouns "kto" ("who") and "čo" ("what") usually
+    # occur with one of the "bad nouns". We will keep only the remaining cases
+    # where they occur with a different noun or pronoun. This is an approximation
+    # that will not always give correct results.
+    return if($subordinator->lemma() =~ m/^(kto|čo)$/ && $parent->lemma() =~ m/^($badnouns)$/);
+    # The relative words are expected only with certain grammatical relations.
+    # The acceptable relations vary depending on the depth of the relative word.
+    # In depth 0, the relation is acl, which is not acceptable anywhere deeper.
+    my $depth = 0;
+    for(my $i = $subordinator; $i != $node; $i = $i->parent())
+    {
+        $depth++;
+    }
+    return if($depth > 0 && $subordinator->lemma() =~ m/^(kto|čo|ktorý|aký)$/ && $subordinator->deprel() !~ m/^(nsubj|obj|iobj|obl)(:|$)/);
+    return if($subordinator->lemma() =~ m/^(kam|kde|kedy|kudy|odkiaľ|prečo)$/ && $subordinator->deprel() !~ m/^advmod(:|$)/);
+    ###!!! We do not rule out the "bad nouns" for the most widely used relative
+    ###!!! word "ktorý" ("which"). However, this word can actually occur in
+    ###!!! fake relative (interrogative) clauses. We may want to check the bad
+    ###!!! nouns and agreement in gender and number; if the relative word agrees
+    ###!!! with the bad noun, the clause is recognized as relative, otherwise
+    ###!!! it is not.
+    $node->set_deprel('acl:relcl');
 }
 
 
