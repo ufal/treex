@@ -333,10 +333,13 @@ sub add_enhanced_external_subject
     }
     ###!!! This part is language-dependent, hence it should be moved to a
     ###!!! language-specific block!
+    my @nomcontrol = ();
+    my @datcontrol = ();
+    my @acccontrol = ();
     if($self->language() eq 'cs')
     {
         # Czech verbs whose subject can control an open complement (infinitive).
-        my @nomcontrol =
+        @nomcontrol =
         (
             # Modality / external circumstances:
             qw(moci mít muset musit smět potřebovat),
@@ -365,7 +368,7 @@ sub add_enhanced_external_subject
             qw(působit pracovat cítit ukazovat ukázat)
         );
         # Czech verbs whose dative argument can control an open complement (infinitive).
-        my @datcontrol =
+        @datcontrol =
         (
             # Enabling:
             qw(umožnit umožňovat dovolit dovolovat povolit povolovat dát dávat příslušet),
@@ -379,7 +382,7 @@ sub add_enhanced_external_subject
             qw(podařit dařit)
         );
         # Czech verbs whose accusative argument can control an open complement (infinitive).
-        my @acccontrol =
+        @acccontrol =
         (
             # Enabling or request:
             qw(oprávnit opravňovat zmocnit zmocňovat prosit),
@@ -396,7 +399,7 @@ sub add_enhanced_external_subject
     else #------------------------------------------------------------------------------------------------------------------
     {
         # Slovak verbs whose subject can control an open complement (infinitive).
-        my @nomcontrol =
+        @nomcontrol =
         (
             # Modality / external circumstances:
             qw(môcť mať musieť smieť potrebovať),
@@ -425,7 +428,7 @@ sub add_enhanced_external_subject
             qw(pôsobiť pracovať cítiť ukazovať ukázať)
         );
         # Slovak verbs whose dative argument can control an open complement (infinitive).
-        my @datcontrol =
+        @datcontrol =
         (
             # Enabling:
             qw(umožniť umožňovať dovoliť dovoľovať povoliť povoľovať dať dávať prináležať),
@@ -439,7 +442,7 @@ sub add_enhanced_external_subject
             qw(podariť dariť postačiť)
         );
         # Slovak verbs whose accusative argument can control an open complement (infinitive).
-        my @acccontrol =
+        @acccontrol =
         (
             # Enabling or request:
             qw(oprávniť opravňovať zmocniť zmocňovať prosiť poprosiť pustiť),
