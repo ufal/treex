@@ -214,16 +214,28 @@ sub fix_morphology
         # The original Lithuanian Multext tagset does not distinguish coordinating and subordinating conjunctions.
         if($node->is_conjunction())
         {
+            # "ar" can be both coordinating ("or") and subordinating ("if")
+            if($lemma eq 'ar')
+            {
+                if($node->deprel() eq 'AuxC')
+                {
+                    $node->iset()->set('conjtype', 'sub');
+                }
+                else
+                {
+                    $node->iset()->set('conjtype', 'coor');
+                }
+            }
             # ir, o, bei = and
             # bet = but
-            # ar, arba = or
+            # ar, arba = or (but see above for "ar")
             # tačiau, vis dėlto = however
             # tad, tai, taigi = so, therefore, thus
             # kuo = wherewith
             # kadangi = whereas
             # ne = no??? (neither-no?)
             # tegul = let's???
-            if($lemma =~ m/^(ir|bet|o|ar|arba|bei|beigi|tačiau|vis dėlto|tai|taigi|kuo|kadangi|tad)$/)
+            elsif($lemma =~ m/^(ir|bet|o|arba|bei|beigi|tačiau|vis dėlto|tai|taigi|kuo|kadangi|tad)$/)
             {
                 $node->iset()->set('conjtype', 'coor');
             }
