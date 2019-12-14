@@ -129,6 +129,21 @@ sub fix_morphology
     {
         $iset->set_hash({'pos' => 'conj', 'conjtype' => 'oper'});
     }
+    # "akoby" ("as if") is SCONJ/mark in sentences like
+    # "O'Brien sa zastavil, akoby Winston vyslovil tú myšlienku nahlas."
+    # But in sentences like
+    # "Zaburácal silný výbuch, ktorý akoby zodvihol chodník."
+    # the national tagset classifies it as a particle. In UD it should rather
+    # be an adverb.
+    elsif($lform eq 'akoby' && $iset->is_particle())
+    {
+        $iset->set_hash({'pos' => 'adv'});
+        if($deprel =~ m/^mark(:|$)/)
+        {
+            $deprel = 'advmod';
+            $node->set_deprel($deprel);
+        }
+    }
     # These are symbols, not punctuation.
     elsif($lform =~ m/^[<>]$/)
     {
