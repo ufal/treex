@@ -396,7 +396,7 @@ sub add_enhanced_external_subject
             qw(činit učinit)
         );
     }
-    else #------------------------------------------------------------------------------------------------------------------
+    elsif($self->language() eq 'sk') #------------------------------------------------------------------------------------------------------------------
     {
         # Slovak verbs whose subject can control an open complement (infinitive).
         @nomcontrol =
@@ -454,6 +454,66 @@ sub add_enhanced_external_subject
             qw(vidieť),
             # Pseudocopulas:
             qw(činiť urobiť)
+        );
+    }
+    else #------------------------------------------------------------------------------------------------------------------
+    {
+        # Lithuanian verbs whose subject can control an open complement (infinitive).
+        @nomcontrol =
+        (
+            # Modality / external circumstances:
+            qw(galėti turėti reikėti privalėti tekti),
+            # Modality / will of the actor:
+            # Weak positive:
+            qw(siekti norėti norėtis planuoti ketinti numatyti mėgti),
+            # Strong positive:
+            qw(nuspręsti),
+            # Strong negative:
+            #qw(odmietnuť odmietať),
+            # Weak negative:
+            qw(atsisakyti bijoti),
+            # Passive negative:
+            #qw(zabudnúť zabúdať opomenúť),
+            # Ability:
+            qw(bandyti pabandyti stengtis mėginti pasistengti sugebėti išmokti mokytis pavykti),
+            # Aspect and phase:
+            qw(pradėti belikti telikti),
+            # Movement (to go somewhere to do something):
+            #qw(ísť chodiť utekať ponáhľať jet jazdiť odísť odchádzať prísť přichádzať),
+            # Other action than movement:
+            qw(imti),
+            # Attitude of the speaker:
+            qw(rizikuoti),
+            # Pseudocopulas: (not "znamenať", there is no coreference!)
+            #qw(pôsobiť pracovať cítiť ukazovať ukázať)
+        );
+        # Lithuanian verbs whose dative argument can control an open complement (infinitive).
+        @datcontrol =
+        (
+            # Enabling:
+            qw(leisti),
+            # Recommendation:
+            qw(siūlyti pasiūlyti patarti raginti rekomenduoti),
+            # Order:
+            #qw(uložiť ukladať prikázať prikazovať nariadiť nariaďovať veliť klásť kázať),
+            # Negative order, disabling:
+            #qw(brániť zabrániť zabraňovať znemožniť znemožňovať zakázať zakazovať),
+            # Success:
+            #qw(podariť dariť postačiť)
+        );
+        # Lithuanian verbs whose accusative argument can control an open complement (infinitive).
+        @acccontrol =
+        (
+            # Enabling or request:
+            qw(prašyti paprašyti),
+            # Order, enforcement:
+            qw(priversti),
+            # Teaching:
+            qw(mokyti),
+            # Seeing (viděl umírat lidi):
+            #qw(vidieť),
+            # Pseudocopulas:
+            #qw(činiť urobiť)
         );
     }
     foreach my $gv (@gverbs)
