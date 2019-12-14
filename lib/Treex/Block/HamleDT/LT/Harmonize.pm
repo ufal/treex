@@ -833,6 +833,15 @@ sub fix_annotation_errors
             $subtree[0]->set_deprel('Atr');
             $subtree[0]->set_is_member(undef);
         }
+        # Veiklos_ataskaita-s107
+        # Buvo aiškinamasi, kokią asmeninę informaciją šios bendrovės renka ir tvarko, ar asmenys yra informuojami apie jų asmens duomenų tvarkymą, ar tinkamai užtikrinama duomenų apsauga ir kt.
+        # It was inquired what kind of personal information these companies collect and manage, whether individuals are informed about the processing of their personal data, whether data protection is properly ensured and so on.
+        if($form eq 'ir' && $spanstring =~ m/, kokią asmeninę informaciją šios bendrovės renka ir tvarko/)
+        {
+            # my @subtree = $self->get_node_subtree($node);
+            # The phrase is headed by a 'Coord' but it should be 'Coord_Co'.
+            $node->set_is_member(1);
+        }
     }
 }
 
