@@ -268,7 +268,7 @@ sub convert_deprels
                 $deprel = 'AuxP';
             }
             # AuxM is also used with rhematizer إِلَّا (ʾillā) "except, however"
-            elsif ( $node->lemma() eq 'إِلَّا' )
+            elsif ( $node->is_particle() && $node->form() =~ m/^إلا$/ )
             {
                 $deprel = 'AuxZ';
             }
