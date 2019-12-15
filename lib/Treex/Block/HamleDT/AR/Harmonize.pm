@@ -458,7 +458,7 @@ sub fix_annotation_errors
         if($node->is_verb() && $node->parent()->deprel() =~ m/^AuxP/ && $node->parent()->ord() > $node->ord())
         {
             my $rnbr = $node->get_right_neighbor();
-            if(defined($nrbr))
+            if(defined($rnbr))
             {
                 $node->set_parent($rnbr);
             }
