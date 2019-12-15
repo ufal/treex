@@ -268,7 +268,14 @@ sub convert_deprels
                 $deprel = 'AuxP';
             }
             # AuxM is also used with rhematizer إِلَّا (ʾillā) "except, however"
-            elsif ( $node->is_particle() && $node->form() =~ m/^إلا$/ )
+            # There is also one occurrence of والا, i.e. a multi-word token starting
+            # with the conjunction و wa "and" and followed by أَلَا ʾalā "neglect, desist from"
+            # but I suspect that it may be a typo or bad analysis and that it may
+            # be another instance of ʾillā. Especially when it is the only occurrence
+            # of this word form with the AuxM relation. (Google translates the
+            # token والا as "otherwise".) Note that while ʾillā is tagged as a particle,
+            # ʾalā is tagged as a verb.
+            elsif ( $node->form() =~ m/^(إلا|الا|ألا)$/ || $node->lemma() =~ m/^(إِلَّا|أَلَا)$/ )
             {
                 $deprel = 'AuxZ';
             }
