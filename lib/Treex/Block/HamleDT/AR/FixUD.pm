@@ -243,6 +243,19 @@ sub fix_constructions
         }
         $node->set_deprel($deprel);
     }
+    # Subordinating conjunction cannot be adverbial modifier.
+    elsif($node->is_subordinator() && $deprel =~ m/^advmod(:|$)/)
+    {
+        if($parent->is_noun())
+        {
+            $deprel = 'case';
+        }
+        else
+        {
+            $deprel = 'mark';
+        }
+        $node->set_deprel($deprel);
+    }
     # Conjunction cannot be copula, punctuation.
     elsif($node->is_conjunction() && $deprel =~ m/^(aux|cop|punct)(:|$)/)
     {
