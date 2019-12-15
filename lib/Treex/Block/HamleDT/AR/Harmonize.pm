@@ -201,7 +201,15 @@ sub fix_morphology
             log_warn("Conjunction found: '$lemma'.") unless($lemma eq 'وَ');
             # أَنَّ ʾanna "that"
             # إِنَّ ʾinna "that"
-            if($lemma =~ m/^(أَنَّ|إِنَّ)$/)
+            # We may not see whether the Unicode string is normalized and/or vocalized, which may complicate identifying the lemmas.
+            my $ala = "\x{623}"; # ARABIC LETTER ALEF WITH HAMZA ABOVE
+            my $alb = "\x{625}"; # ARABIC LETTER ALEF WITH HAMZA BELOW
+            my $a = "\x{64E}"; # ARABIC FATHA
+            my $i = "\x{650}"; # ARABIC KASRA
+            my $n = "\x{646}"; # ARABIC LETTER NOON
+            my $gg = "\x{651}"; # ARABIC SHADDA
+            if($lemma =~ m/^($ala$a?|$alb$i?)$n[$gg$a]*$/)
+            #if($lemma =~ m/^(أَنَّ|إِنَّ)$/)
             {
                 log_warn("... setting the conjunction type to subordinating.");
                 $node->iset()->set('conjtype', 'sub');
