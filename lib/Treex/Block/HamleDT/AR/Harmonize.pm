@@ -208,7 +208,7 @@ sub fix_morphology
             my $i = "\x{650}"; # ARABIC KASRA
             my $n = "\x{646}"; # ARABIC LETTER NOON
             my $gg = "\x{651}"; # ARABIC SHADDA
-            if($lemma =~ m/^($ala$a?|$alb$i?)$n[$gg$a]*$/)
+            if($lemma =~ m/^($ala$a?|$alb$i?)${n}[$gg$a]*$/)
             #if($lemma =~ m/^(أَنَّ|إِنَّ)$/)
             {
                 log_warn("... setting the conjunction type to subordinating.");
