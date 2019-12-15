@@ -186,6 +186,22 @@ sub fix_morphology
             $node->set_lemma($node->form());
         }
     }
+    # Part-of-speech categories.
+    foreach my $node (@nodes)
+    {
+        # The original tagset does not distinguish between coordinating and
+        # subordinating conjunctions. All conjunctions will come out as coordinating
+        # unless we try to distinguish them based on their lemmas.
+        if($node->is_conjunction())
+        {
+            # أَنَّ ʾanna "that"
+            # إِنَّ ʾinna "that"
+            if($node->lemma() =~ m/^(أَنَّ|إِنَّ)$/)
+            {
+                $node->iset()->set('conjtype', 'sub');
+            }
+        }
+    }
 }
 
 
@@ -332,7 +348,23 @@ sub convert_deprels
             # We can ask whether the parent is preposition (based on POS tag). We better not query the deprel (because it may still be in the afun attribute or elsewhere).
             elsif ( $node->parent()->is_preposition() )
             {
-                $deprel = 'AuxP';
+                # However, there is also an example where the child of the preposition
+                # is actually a personal pronoun! This may be an annotation error.
+                if ($node->is_pronominal())
+                {
+                    if($node->parent()->parent()->is_noun())
+                    {
+                        $deprel = 'Atr';
+                    }
+                    else
+                    {
+                        $deprel = 'Adv';
+                    }
+                }
+                else
+                {
+                    $deprel = 'AuxP';
+                }
             }
         }
 
@@ -383,13 +415,13 @@ sub fix_annotation_errors
     # This must also be solved before the parent block applies any of its transformations.
     # If the landscape is changed, we will no longer recognize the context for laysa.
     $self->fix_laysa($root);
-    # sent_id = afp.20000815.0110:p5u1
-    # orig_file_sentence AFP_ARB_20000815.0110#5
-    # Long complement clause is enclosed in quotation marks but the closing mark
-    # is attached to the immediately preceding word and the first mark is inserted
-    # to the path between the subordinating conjunction (which is AuxY instead of AuxC).
     foreach my $node (@nodes)
     {
+        # sent_id = afp.20000815.0110:p5u1
+        # orig_file_sentence AFP_ARB_20000815.0110#5
+        # Long complement clause is enclosed in quotation marks but the closing mark
+        # is attached to the immediately preceding word and the first mark is inserted
+        # to the path between the subordinating conjunction (which is AuxY instead of AuxC).
         if($node->form() eq '"')
         {
             my @children = $node->children();
@@ -411,6 +443,24 @@ sub fix_annotation_errors
                     $quotes[0]->set_parent($children[0]);
                     $quotes[0]->set_deprel('AuxG');
                 }
+            }
+        }
+        ###!!! It seems that despite our efforts in other functions, some occurrences
+        # of "laysa" are still attached to the preposition on their right hand.
+        # Here we simply re-attach them non-projectively to the other child of the
+        # preposition. This is only a temporary hack. We need a more principled
+        # solution to this construction.
+        ###!!! Example:
+        # sent_id = ummah.20040705.0015:p10u1
+        # text = 2 ـ إن عنوان محاربة الإرهاب أعطى إسرائيل ورقة ذهبية للوصول إلى كل الأهداف التي تطمح إليها ليس في ضرب منظمات فلسطينية أو غير فلسطينية بل ربما في إحداث تغيير استراتيجي عاجل في عواصم عربية لا تزال تشكل مصدر خطر على إسرائيل.
+        # text_en = 2- The title of combating terrorism gave Israel a golden card to reach all the goals it aspires to, not to hit Palestinian or non-Palestinian organizations, but perhaps to bring about urgent strategic change in Arab capitals that still pose a threat to Israel.
+        # orig_file_sentence UMH_ARB_20040705.0015#13
+        if($node->is_verb() && $node->parent()->deprel() =~ m/^AuxP/ && $node->parent()->ord() > $node->ord())
+        {
+            my $rnbr = $node->get_right_neighbor();
+            if(defined($nrbr))
+            {
+                $node->set_parent($rnbr);
             }
         }
     }
