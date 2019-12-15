@@ -31,6 +31,10 @@ sub process_atree
     {
         $self->fix_leaves($node);
     }
+    foreach my $node (@nodes)
+    {
+        $self->identify_acl_relcl($node);
+    }
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
     #$root->get_zone()->set_sentence($root->collect_sentence_text());
@@ -56,6 +60,42 @@ sub fix_morphology
     }
     # Make sure that the UPOS tag still matches Interset features.
     $node->set_tag($node->iset()->get_upos());
+}
+
+
+
+#------------------------------------------------------------------------------
+# Figures out whether an adnominal clause is a relative clause, and changes the
+# relation accordingly.
+#------------------------------------------------------------------------------
+sub identify_acl_relcl
+{
+    my $self = shift;
+    my $node = shift;
+    return unless($node->deprel() =~ m/^acl(:|$)/);
+    # Look for a relative pronoun or a subordinating conjunction. The first
+    # such word from the left is the one that matters. However, it is not
+    # necessarily the first word in the subtree: there can be punctuation and
+    # preposition. The relative pronoun can be even the root of the clause,
+    # i.e., the current node, if the clause is copular.
+    # Specifying (first|last|preceding|following)_only implies ordered.
+    my @subordinators = grep {$_->is_subordinator() || $_->is_relative()} ($node->get_descendants({'preceding_only' => 1, 'add_self' => 1}));
+    return unless(scalar(@subordinators) > 0);
+    my $subordinator = $subordinators[0];
+    # If there is a subordinating conjunction, the clause is not relative even
+    # if there is later also a relative pronoun.
+    return if($subordinator->is_subordinator() || $subordinator->deprel() =~ m/^mark(:|$)/);
+    # The relative words are expected only with certain grammatical relations.
+    # The acceptable relations vary depending on the depth of the relative word.
+    # In depth 0, the relation is acl, which is not acceptable anywhere deeper.
+    my $depth = 0;
+    for(my $i = $subordinator; $i != $node; $i = $i->parent())
+    {
+        $depth++;
+    }
+    # PADT currently contains only forms of one relative pronoun: اَلَّذِي allaḏī "that, which"
+    return if($depth > 0 && $subordinator->lemma() =~ m/^(اَلَّذِي)$/ && $subordinator->deprel() !~ m/^(nsubj|obj|iobj|obl|nmod|det)(:|$)/);
+    $node->set_deprel('acl:relcl');
 }
 
 
