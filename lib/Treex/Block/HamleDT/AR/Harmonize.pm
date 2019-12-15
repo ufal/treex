@@ -195,16 +195,22 @@ sub fix_morphology
         # The original tagset does not distinguish between coordinating and
         # subordinating conjunctions. All conjunctions will come out as coordinating
         # unless we try to distinguish them based on their lemmas.
+        my $lemma = $node->lemma();
         if($node->is_conjunction())
         {
-            log_warn("Conjunction found: '".$node->lemma()."'");
+            log_warn("Conjunction found: '$lemma'.") unless($lemma eq 'وَ');
             # أَنَّ ʾanna "that"
             # إِنَّ ʾinna "that"
-            if($node->lemma() =~ m/^(أَنَّ|إِنَّ)$/)
+            if($lemma =~ m/^(أَنَّ|إِنَّ)$/)
             {
                 log_warn("... setting the conjunction type to subordinating.");
                 $node->iset()->set('conjtype', 'sub');
             }
+        }
+        elsif($lemma =~ m/^(أَنَّ|إِنَّ)$/)
+        {
+            my $tag = $node->tag();
+            log_warn("Found '$lemma' but its tag is '$tag'.");
         }
     }
 }
