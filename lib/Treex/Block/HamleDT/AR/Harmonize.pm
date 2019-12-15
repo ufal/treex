@@ -383,6 +383,37 @@ sub fix_annotation_errors
     # This must also be solved before the parent block applies any of its transformations.
     # If the landscape is changed, we will no longer recognize the context for laysa.
     $self->fix_laysa($root);
+    # sent_id = afp.20000815.0110:p5u1
+    # orig_file_sentence AFP_ARB_20000815.0110#5
+    # Long complement clause is enclosed in quotation marks but the closing mark
+    # is attached to the immediately preceding word and the first mark is inserted
+    # to the path between the subordinating conjunction (which is AuxY instead of AuxC).
+    foreach my $node (@nodes)
+    {
+        if($node->form() eq '"')
+        {
+            my @children = $node->children();
+            if(scalar(@children)==1)
+            {
+                # The parent is the conjunction ان ʾanna "that".
+                my $parent = $node->parent();
+                if($parent->deprel() eq 'AuxY')
+                {
+                    $parent->set_deprel('AuxC');
+                }
+                $children[0]->set_parent($parent);
+                $node->set_parent($children[0]);
+                $node->set_deprel('AuxG');
+                my @following = $children[0]->get_descendants({'following_only' => 1});
+                my @quotes = grep {$_->form() eq '"'} (@following);
+                if(scalar(@quotes) > 0)
+                {
+                    $quotes[0]->set_parent($children[0]);
+                    $quotes[0]->set_deprel('AuxG');
+                }
+            }
+        }
+    }
     # Fix coordination without conjuncts.
     foreach my $node (@nodes)
     {
