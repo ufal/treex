@@ -54,6 +54,9 @@ sub get_input_tag_for_interset
 # Copies to wild/misc attributes that we want to preserve in the CoNLL-U file.
 # Perhaps this task would be better match for Prague-to-UD conversion but it is
 # specific for PADT and Udep.pm is used for all treebanks.
+#
+# This method is called from HamleDT::Harmonize::process_zone() after the
+# method convert_tags() is called, and before the PDT tag is generated.
 #------------------------------------------------------------------------------
 sub fix_morphology
 {
@@ -194,10 +197,12 @@ sub fix_morphology
         # unless we try to distinguish them based on their lemmas.
         if($node->is_conjunction())
         {
+            log_warn("Conjunction found: '".$node->lemma()."'");
             # أَنَّ ʾanna "that"
             # إِنَّ ʾinna "that"
             if($node->lemma() =~ m/^(أَنَّ|إِنَّ)$/)
             {
+                log_warn("... setting the conjunction type to subordinating.");
                 $node->iset()->set('conjtype', 'sub');
             }
         }
