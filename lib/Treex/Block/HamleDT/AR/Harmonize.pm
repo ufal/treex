@@ -198,7 +198,6 @@ sub fix_morphology
         my $lemma = $node->lemma();
         if($node->is_conjunction())
         {
-            log_warn("Conjunction found: '$lemma'.") unless($lemma eq 'وَ');
             # أَنَّ ʾanna "that"
             # إِنَّ ʾinna "that"
             # We may not see whether the Unicode string is normalized and/or vocalized, which may complicate identifying the lemmas.
@@ -211,14 +210,8 @@ sub fix_morphology
             if($lemma =~ m/^($ala$a?|$alb$i?)${n}[$gg$a]*$/)
             #if($lemma =~ m/^(أَنَّ|إِنَّ)$/)
             {
-                log_warn("... setting the conjunction type to subordinating.");
                 $node->iset()->set('conjtype', 'sub');
             }
-        }
-        elsif($lemma =~ m/^(أَنَّ|إِنَّ)$/)
-        {
-            my $tag = $node->tag();
-            log_warn("Found '$lemma' but its tag is '$tag'.");
         }
     }
 }
