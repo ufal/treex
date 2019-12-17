@@ -462,15 +462,20 @@ sub fix_annotation_errors
         # sent_id = afp.20000715.0029:p4u1
         # text = وقال رئيس التحالف الليبرالي ميروسلاف فيكوفيتش لوكالة فرانس برس "ان الاستقلال لمونتينغرو هو الوسيلة الوحيدة لتحسين الوضع المعيشي".
         # text_en = "Independence to Montenegro is the only way to improve the living situation," Liberal Alliance President Miroslav Vikovich told AFP.
-        # orig_file_sentence AFP_ARB_20000715.0029#4
+        # orig_file_sentence AFP_ARB_20000715.0029#4 (dev)
+        # Similar situation but the cited speech is not in quotation marks:
+        # sent_id = afp.20000815.0042:p10u1
+        # text = واشاد كلينتون اشادة خاصة بآل غور الرجل "الطيب"، واعتبر ان "آل غور يفقه اكثر من اي شخص اخر عرفته في حياتي العامة، المستقبل وكيف ان تغييرات كبيرة يمكن ان تؤثر على حياة الاميركيين اليومية".
+        # orig_file_sentence AFP_ARB_20000815.0042#10 (train)
         if($node->is_subordinator() && $node->deprel() eq 'AuxZ' && $node->parent()->ord() > $node->ord())
         {
             my $lnbr = $node->get_left_neighbor();
-            if(defined($lnbr) && $lnbr->form() eq '"')
+            my @children = $node->children();
+            if(defined($lnbr) && ($lnbr->form() eq '"' || scalar(@children) > 0))
             {
                 # Reattach my children to my parent.
                 my $parent = $node->parent();
-                foreach my $child ($node->children())
+                foreach my $child (@children)
                 {
                     $child->set_parent($parent);
                     # Apposition is a left-to-right relation. It is wrong if the new parent is to the right.
@@ -493,6 +498,11 @@ sub fix_annotation_errors
                     $node->set_parent($grandparent);
                     $node->set_deprel('AuxC');
                     $parent->set_parent($node);
+                    if($parent->is_member())
+                    {
+                        $parent->set_is_member(undef);
+                        $node->set_is_member(1);
+                    }
                 }
             }
         }
