@@ -457,6 +457,45 @@ sub fix_annotation_errors
                 }
             }
         }
+        # ʾinna "that" in direct speech is attached as AuxE (now converted to AuxZ) to the (nominal) predicate, instead of heading it as AuxC.
+        # The following noun is attached to ʾinna as Ante (now converted to Apposition), which seems wrong.
+        # sent_id = afp.20000715.0029:p4u1
+        # text = وقال رئيس التحالف الليبرالي ميروسلاف فيكوفيتش لوكالة فرانس برس "ان الاستقلال لمونتينغرو هو الوسيلة الوحيدة لتحسين الوضع المعيشي".
+        # text_en = "Independence to Montenegro is the only way to improve the living situation," Liberal Alliance President Miroslav Vikovich told AFP.
+        # orig_file_sentence AFP_ARB_20000715.0029#4
+        if($node->is_subordinator() && $node->deprel() eq 'AuxZ' && $node->parent()->ord() > $node->ord())
+        {
+            my $lnbr = $node->get_left_neighbor();
+            if(defined($lnbr) && $lnbr->form() eq '"')
+            {
+                # Reattach my children to my parent.
+                my $parent = $node->parent();
+                foreach my $child ($node->children())
+                {
+                    $child->set_parent($parent);
+                    # Apposition is a left-to-right relation. It is wrong if the new parent is to the right.
+                    if($child->deprel() eq 'Apposition' && $parent->ord() > $child->ord())
+                    {
+                        if($parent->is_noun())
+                        {
+                            $child->set_deprel('Atr');
+                        }
+                        else
+                        {
+                            $child->set_deprel('Adv');
+                        }
+                    }
+                }
+                # Reattach myself between my grandparent and my parent.
+                my $grandparent = $parent->parent();
+                if(defined($grandparent))
+                {
+                    $node->set_parent($grandparent);
+                    $node->set_deprel('AuxC');
+                    $parent->set_parent($node);
+                }
+            }
+        }
         ###!!! It seems that despite our efforts in other functions, some occurrences
         # of "laysa" are still attached to the preposition on their right hand.
         # Here we simply re-attach them non-projectively to the other child of the
