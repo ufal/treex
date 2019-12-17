@@ -471,7 +471,7 @@ sub fix_annotation_errors
         {
             my $lnbr = $node->get_left_neighbor();
             my @children = $node->children();
-            if(defined($lnbr) && ($lnbr->form() eq '"' || scalar(@children) > 0))
+            if((defined($lnbr) && $lnbr->form() eq '"') || scalar(@children) > 0)
             {
                 # Reattach my children to my parent.
                 my $parent = $node->parent();
