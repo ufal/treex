@@ -45,9 +45,11 @@ sub next_document {
         my @funodes = ();
         my $funspaf; # no space after the fused token?
         my $fumisc; # MISC column of fused token line, except SpaceAfter=No, which is stored in $funspaf
+        my %egraph; # enhanced dependency relations
 
         LINE:
-        foreach my $line (@lines) {
+        foreach my $line (@lines)
+        {
             next LINE if $line =~ /^\s*$/;
             if ($line =~ s/^#\s*//)
             {
@@ -91,11 +93,20 @@ sub next_document {
             my ( $id, $form, $lemma, $upos, $postag, $feats, $head, $deprel, $deps, $misc, $rest ) = split( /\t/, $line );
             log_warn "Extra columns: '$rest'" if $rest;
 
+            # There may be empty nodes (they participate in the enhanced graph but not in the basic tree).
+            if ($id =~ m/^\d+\.\d+$/)
+            {
+                if ($deps && $deps ne '_')
+                {
+                    my @edeps = grep {defined($_)} (map {my $x = $_; $x =~ m/^(\d+(?:\.\d+)?):(.+)$/ ? [$1, $2] : undef} (split(/\|/, $deps)));
+                    $egraph{$id} = \@edeps;
+                }
+            }
             # There may be fused tokens consisting of multiple syntactic words (= nodes). For example (German):
             # 2-3   zum   _     _
             # 2     zu    zu    ADP
             # 3     dem   der   DET
-            if ($id =~ /(\d+)-(\d+)/)
+            elsif ($id =~ m/(\d+)-(\d+)/)
             {
                 $fufrom = $1;
                 $futo = $2;
@@ -192,10 +203,13 @@ sub next_document {
                 }
             }
             # The enhanced relations can be stored as wild attributes.
+            # However, we need to first collect and store them separately, and
+            # once the entire graph has been read, we have to collapse the
+            # empty nodes into long relations.
             if ($deps && $deps ne '_')
             {
                 my @edeps = grep {defined($_)} (map {my $x = $_; $x =~ m/^(\d+(?:\.\d+)?):(.+)$/ ? [$1, $2] : undef} (split(/\|/, $deps)));
-                $newnode->wild()->{enhanced} = \@edeps;
+                $egraph{$id} = \@edeps;
             }
             if ($misc && $misc ne '_')
             {
@@ -240,8 +254,96 @@ sub next_document {
             push @nodes,   $newnode;
             push @parents, $head;
         }
-        foreach my $i ( 1 .. $#nodes ) {
+        foreach my $i ( 1 .. $#nodes )
+        {
             $nodes[$i]->set_parent( $nodes[ $parents[$i] ] );
+        }
+        # Process the enhanced graph. We do not have objects for empty nodes.
+        # Instead, we encode the path from the first non-empty ancestor as one
+        # relation.
+        my @ids = keys(%egraph);
+        my @edges;
+        foreach my $cid (@ids)
+        {
+            my @edeps = $egraph{$cid};
+            foreach my $edep (@edeps)
+            {
+                my $pid = $edep->[0];
+                my $deprel = $edep->[1];
+                push(@edges, [$pid, $deprel, $cid]);
+            }
+        }
+        my @okedges = grep {my $x = $_; $x->[0] =~ m/^\d+$/ && $x->[-1] =~ m/^\d+$/} (@edges);
+        my @epedges = grep {my $x = $_; $x->[0] =~ m/^\d+\.\d+$/} (@edges); # including those that have also empty child
+        my @ecedges = grep {my $x = $_; $x->[-1] =~ m/^\d+\.\d+$/} (@edges); # including those that have also empty parent
+        while(@epedges)
+        {
+            my $epedge = shift(@epedges);
+            my @myecedges = grep {$_->[-1] eq $epedge->[0]} (@ecedges);
+            @ecedges      = grep {$_->[-1] ne $epedge->[0]} (@ecedges);
+            foreach my $ecedge (@myecedges)
+            {
+                my @newedge = @{$ecedge};
+                pop(@newedge);
+                push(@newedge, @{$epedge});
+                # If there are cycles involving the empty nodes, ignore them.
+                my $cycle = 0;
+                my %map;
+                for(my $i = 0; $i <= $#newedge; $i += 2)
+                {
+                    if(exists($map{$newedge[$i]}))
+                    {
+                        $cycle = 1;
+                        last;
+                    }
+                    $map{$newedge[$i]}++;
+                }
+                unless($cycle)
+                {
+                    if($newedge[0] =~ m/^\d+$/ && $newedge[-1] =~ m/^\d+$/)
+                    {
+                        push(@okedges, \@newedge);
+                    }
+                    else
+                    {
+                        if($newedge[0] =~ m/^\d+\.\d+$/)
+                        {
+                            push(@epedges, \@newedge);
+                        }
+                        if($newedge[-1] =~ m/^\d+\.\d+$/)
+                        {
+                            push(@ecedges, \@newedge);
+                        }
+                    }
+                }
+            }
+        }
+        # Now there are no more @epedges and @ecedges should be also empty.
+        # All edges in @okedges have non-empty ends.
+        @okedges = sort {my $r = $a->[-1] <=> $b->[-1]; unless($r) {$r = $a->[0] <=> $b->[0]} $r} (@okedges);
+        my @cegraph;
+        foreach my $edge (@okedges)
+        {
+            my @edge = @{$edge};
+            my $pid = shift(@edge);
+            my $cid = pop(@edge);
+            my $deprel = join('', map {s/^\d+\.\d+$/>/; $_} (@edge));
+            $cegraph[$cid]{$pid}{$deprel}++;
+        }
+        foreach my $node (@nodes)
+        {
+            my $id = $node->ord();
+            my @edeps;
+            my @pids = sort {$a <=> $b} (keys(%{$cegraph[$id]}));
+            foreach my $pid (@pids)
+            {
+                my @deprels = sort {$a cmp $b} (keys(%{$cegraph[$id]{$pid}}));
+                foreach my $deprel (@deprels)
+                {
+                    push(@edeps, [$pid, $deprel]);
+                }
+            }
+            $node->wild()->{enhanced} = \@edeps;
         }
         $sentence =~ s/\s+$//;
         unless($sentence_read_from_input_text)
