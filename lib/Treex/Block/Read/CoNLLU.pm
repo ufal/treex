@@ -191,6 +191,12 @@ sub next_document {
                     $newnode->wild()->{iset_other} = $other;
                 }
             }
+            # The enhanced relations can be stored as wild attributes.
+            if ($deps && $deps ne '_')
+            {
+                my @edeps = grep {defined($_)} (map {my $x = $_; $x =~ m/^(\d+(?:\.\d+)?):(.+)$/ ? [$1, $2] : undef} (split(/\|/, $deps)));
+                $newnode->wild()->{enhanced} = \@edeps;
+            }
             if ($misc && $misc ne '_')
             {
                 my @misc = split(/\|/, $misc);
