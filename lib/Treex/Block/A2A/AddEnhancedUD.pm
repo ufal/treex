@@ -4,6 +4,12 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+has 'case'  => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'enhance oblique relation labels by case information' );
+has 'coord' => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'propagate shared parents and dependents across coordination' );
+has 'xsubj' => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'add relations to external subjects of open clausal complements' );
+has 'relcl' => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'transform relations between relative clauses and their modified nominals' );
+has 'empty' => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'add empty nodes where there are orphans in basic tree' );
+
 
 
 sub process_atree
@@ -21,43 +27,58 @@ sub process_atree
     # First enhance all oblique relations with case information. If we later
     # copy those relations in other transformations, we want to be sure that
     # it all have been enhanced.
-    foreach my $node (@nodes)
+    if($self->case())
     {
-        if(!exists($node->wild()->{enhanced}))
+        foreach my $node (@nodes)
         {
-            log_fatal("The wild attribute 'enhanced' does not exist.");
+            if(!exists($node->wild()->{enhanced}))
+            {
+                log_fatal("The wild attribute 'enhanced' does not exist.");
+            }
+            $self->add_enhanced_case_deprel($node); # call this before coordination and relative clauses
         }
-        $self->add_enhanced_case_deprel($node); # call this before coordination and relative clauses
     }
     # Process all relations that shall be propagated across coordination before
     # proceeding to the next enhancement type.
-    foreach my $node (@nodes)
+    if($self->coord())
     {
-        $self->add_enhanced_parent_of_coordination($node);
-        $self->add_enhanced_shared_dependent_of_coordination($node);
+        foreach my $node (@nodes)
+        {
+            $self->add_enhanced_parent_of_coordination($node);
+            $self->add_enhanced_shared_dependent_of_coordination($node);
+        }
     }
     # Add external subject relations in control verb constructions.
-    my @visited_xsubj;
-    foreach my $node (@nodes)
+    if($self->xsubj())
     {
-        $self->add_enhanced_external_subject($node, \@visited_xsubj);
+        my @visited_xsubj;
+        foreach my $node (@nodes)
+        {
+            $self->add_enhanced_external_subject($node, \@visited_xsubj);
+        }
     }
     # Process all relations affected by relative clauses before proceeding to
     # the next enhancement type. Calling this after the coordination enhancement
     # enables us to transform also coordinate relative clauses or modified nouns.
-    foreach my $node (@nodes)
+    if($self->relcl())
     {
-        $self->add_enhanced_relative_clause($node);
-    }
-    foreach my $node (@nodes)
-    {
-        $self->remove_enhanced_non_ref_relations($node);
+        foreach my $node (@nodes)
+        {
+            $self->add_enhanced_relative_clause($node);
+        }
+        foreach my $node (@nodes)
+        {
+            $self->remove_enhanced_non_ref_relations($node);
+        }
     }
     # Generate empty nodes instead of orphan relations.
-    my %emptynodes;
-    foreach my $node (@nodes)
+    if($self->empty())
     {
-        $self->add_enhanced_empty_node($node, \%emptynodes);
+        my %emptynodes;
+        foreach my $node (@nodes)
+        {
+            $self->add_enhanced_empty_node($node, \%emptynodes);
+        }
     }
 }
 
