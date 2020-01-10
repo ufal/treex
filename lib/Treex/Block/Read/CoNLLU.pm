@@ -351,6 +351,10 @@ sub collapse_enhanced_graph
                     }
                 }
             }
+            else
+            {
+                log_warn('Ignoring enhanced path '.join('>', @newedge));
+            }
         }
     }
     # Now there are no more @epedges (while @ecedges grew over time but we do not care now).
