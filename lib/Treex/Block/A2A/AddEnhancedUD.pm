@@ -102,6 +102,11 @@ sub add_enhanced_case_deprel
     {
         my $eparent = $edep->[0];
         my $edeprel = $edep->[1];
+        # We use paths to represent empty nodes in Treex, e.g., '0:root>34.1>cc'
+        # means that there should be a root edge from 0 to 34.1, and a cc edge
+        # from 34.1 to the actual node. If the graph already contains such edges,
+        # do not touch them, we do not want to destroy them!
+        next if($edeprel =~ m/>/);
         # The guidelines allow enhancing nmod, acl, obl and advcl.
         # If it makes sense in the language, core relations obj, iobj and ccomp can be enhanced too.
         # Sebastian's enhancer further enhances conj relations with the lemma of the conjunction, but it is not supported in the guidelines.
