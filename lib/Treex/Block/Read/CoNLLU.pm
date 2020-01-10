@@ -205,7 +205,14 @@ sub next_document
             # empty nodes into long relations.
             if ($deps && $deps ne '_')
             {
+                my @deps = split(/\|/, $deps);
                 my @edeps = grep {defined($_)} (map {my $x = $_; $x =~ m/^(\d+(?:\.\d+)?):(.+)$/ ? [$1, $2] : undef} (split(/\|/, $deps)));
+                my $m = scalar(@deps);
+                my $n = scalar(@edeps);
+                if($m!=$n)
+                {
+                    log_fatal("POČET HRAN NESEDÍ $m --> $n: $deps");
+                }
                 $egraph{$id} = \@edeps;
             }
             if ($misc && $misc ne '_')
