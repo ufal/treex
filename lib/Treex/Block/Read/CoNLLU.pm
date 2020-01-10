@@ -358,6 +358,7 @@ sub collapse_enhanced_graph
     }
     # Now there are no more @epedges (while @ecedges grew over time but we do not care now).
     # All edges in @okedges have non-empty ends.
+    log_warn("There are ".scalar(@okedges)." edges in the collapsed graph.");
     @okedges = sort {my $r = $a->[-1] <=> $b->[-1]; unless($r) {$r = $a->[0] <=> $b->[0]} $r} (@okedges);
     my @cegraph;
     foreach my $edge (@okedges)
