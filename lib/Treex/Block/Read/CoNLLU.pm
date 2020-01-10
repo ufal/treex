@@ -261,75 +261,7 @@ sub next_document {
         # Process the enhanced graph. We do not have objects for empty nodes.
         # Instead, we encode the path from the first non-empty ancestor as one
         # relation.
-        my @ids = keys(%egraph);
-        my @edges;
-        foreach my $cid (@ids)
-        {
-            my @edeps = $egraph{$cid};
-            foreach my $edep (@edeps)
-            {
-                my $pid = $edep->[0];
-                my $deprel = $edep->[1];
-                push(@edges, [$pid, $deprel, $cid]);
-            }
-        }
-        my @okedges = grep {my $x = $_; $x->[0] =~ m/^\d+$/ && $x->[-1] =~ m/^\d+$/} (@edges);
-        my @epedges = grep {my $x = $_; $x->[0] =~ m/^\d+\.\d+$/} (@edges); # including those that have also empty child
-        my @ecedges = grep {my $x = $_; $x->[-1] =~ m/^\d+\.\d+$/} (@edges); # including those that have also empty parent
-        while(@epedges)
-        {
-            my $epedge = shift(@epedges);
-            my @myecedges = grep {$_->[-1] eq $epedge->[0]} (@ecedges);
-            @ecedges      = grep {$_->[-1] ne $epedge->[0]} (@ecedges);
-            foreach my $ecedge (@myecedges)
-            {
-                my @newedge = @{$ecedge};
-                pop(@newedge);
-                push(@newedge, @{$epedge});
-                # If there are cycles involving the empty nodes, ignore them.
-                my $cycle = 0;
-                my %map;
-                for(my $i = 0; $i <= $#newedge; $i += 2)
-                {
-                    if(exists($map{$newedge[$i]}))
-                    {
-                        $cycle = 1;
-                        last;
-                    }
-                    $map{$newedge[$i]}++;
-                }
-                unless($cycle)
-                {
-                    if($newedge[0] =~ m/^\d+$/ && $newedge[-1] =~ m/^\d+$/)
-                    {
-                        push(@okedges, \@newedge);
-                    }
-                    else
-                    {
-                        if($newedge[0] =~ m/^\d+\.\d+$/)
-                        {
-                            push(@epedges, \@newedge);
-                        }
-                        if($newedge[-1] =~ m/^\d+\.\d+$/)
-                        {
-                            push(@ecedges, \@newedge);
-                        }
-                    }
-                }
-            }
-        }
-        # Now there are no more @epedges and @ecedges should be also empty.
-        # All edges in @okedges have non-empty ends.
-        @okedges = sort {my $r = $a->[-1] <=> $b->[-1]; unless($r) {$r = $a->[0] <=> $b->[0]} $r} (@okedges);
-        my @cegraph;
-        foreach my $edge (@okedges)
-        {
-            my @edge = @{$edge};
-            my $pid = shift(@edge);
-            my $cid = pop(@edge);
-            my $deprel = join('', map {s/^\d+\.\d+$/>/; $_} (@edge));
-            $cegraph[$cid]{$pid}{$deprel}++;
-        }
+        my @cegraph = $self->collapse_enhanced_graph(%egraph);
         foreach my $node (@nodes)
         {
             my $id = $node->ord();
@@ -345,6 +277,7 @@ sub next_document {
             }
             $node->wild()->{enhanced} = \@edeps;
         }
+        # Set the zone sentence text.
         $sentence =~ s/\s+$//;
         unless($sentence_read_from_input_text)
         {
@@ -355,6 +288,91 @@ sub next_document {
 
     return $document;
 }
+
+
+
+#------------------------------------------------------------------------------
+# Processes the enhanced graph. We do not have objects for empty nodes.
+# Instead, we encode the path from the first non-empty ancestor as one
+# relation.
+#------------------------------------------------------------------------------
+sub collapse_enhanced_graph
+{
+    my $self = shift;
+    my %egraph = @_;
+    my @ids = keys(%egraph);
+    my @edges;
+    foreach my $cid (@ids)
+    {
+        my @edeps = $egraph{$cid};
+        foreach my $edep (@edeps)
+        {
+            my $pid = $edep->[0];
+            my $deprel = $edep->[1];
+            push(@edges, [$pid, $deprel, $cid]);
+        }
+    }
+    my @okedges = grep {$_->[0] =~ m/^\d+$/ && $_->[-1] =~ m/^\d+$/} (@edges);
+    my @epedges = grep {$_->[0] =~ m/^\d+\.\d+$/} (@edges); # including those that have also empty child
+    my @ecedges = grep {$_->[-1] =~ m/^\d+\.\d+$/} (@edges); # including those that have also empty parent
+    while(@epedges)
+    {
+        my $epedge = shift(@epedges);
+        my @myecedges = grep {$_->[-1] eq $epedge->[0]} (@ecedges);
+        foreach my $ecedge (@myecedges)
+        {
+            my @newedge = @{$ecedge};
+            pop(@newedge);
+            push(@newedge, @{$epedge});
+            # If there are cycles involving the empty nodes, ignore them.
+            my $cycle = 0;
+            my %map;
+            for(my $i = 0; $i <= $#newedge; $i += 2)
+            {
+                if(exists($map{$newedge[$i]}))
+                {
+                    $cycle = 1;
+                    last;
+                }
+                $map{$newedge[$i]}++;
+            }
+            unless($cycle)
+            {
+                if($newedge[0] =~ m/^\d+$/ && $newedge[-1] =~ m/^\d+$/)
+                {
+                    push(@okedges, \@newedge);
+                }
+                else
+                {
+                    if($newedge[0] =~ m/^\d+\.\d+$/)
+                    {
+                        push(@epedges, \@newedge);
+                    }
+                    if($newedge[-1] =~ m/^\d+\.\d+$/)
+                    {
+                        push(@ecedges, \@newedge);
+                    }
+                }
+            }
+        }
+    }
+    # Now there are no more @epedges (while @ecedges grew over time but we do not care now).
+    # All edges in @okedges have non-empty ends.
+    @okedges = sort {my $r = $a->[-1] <=> $b->[-1]; unless($r) {$r = $a->[0] <=> $b->[0]} $r} (@okedges);
+    my @cegraph;
+    foreach my $edge (@okedges)
+    {
+        my @edge = @{$edge};
+        my $pid = shift(@edge);
+        my $cid = pop(@edge);
+        my $deprel = join('>', @edge);
+        # Avoid duplicate edges.
+        $cegraph[$cid]{$pid}{$deprel}++;
+    }
+    return @cegraph;
+}
+
+
 
 1;
 
