@@ -103,7 +103,8 @@ sub process_atree
     # Empty sentences are not allowed.
     return if(scalar(@nodes)==0);
     # Print sentence (bundle) ID as a comment before the sentence.
-    my $comment = $tree->get_bundle()->wild()->{comment};
+    my $bwild = $tree->get_bundle()->wild();
+    my $comment = $bwild->{comment};
     my @comment;
     if ($comment)
     {
@@ -201,31 +202,28 @@ sub process_atree
             }
         }
     }
+    # In addition, attributes of empty nodes, including leaf empty nodes, may
+    # be stored in a wild attribute of the bundle.
+    my %enodes_to_write;
+    if(exists($bwild->{empty_nodes}))
+    {
+        my @empty_nodes = @{$bwild->{empty_nodes}};
+        foreach my $empty_node (@empty_nodes)
+        {
+            if($empty_node->{id} =~ m/^(\d+)\.(\d+)$/)
+            {
+                $enodes_to_write{$1}{$2} = $empty_node;
+            }
+            else
+            {
+                log_warn("Cannot parse empty node id '$empty_node->{id}'");
+            }
+        }
+    }
 
     # If there are any empty nodes positioned before the first real node,
     # write them now.
-    my $major = 0;
-    if(exists($edeps_to_write{$major}))
-    {
-        my @minors = grep {$_ != 0} (sort {$a <=> $b} (keys(%{$edeps_to_write{$major}})));
-        foreach my $minor (@minors)
-        {
-            my $deps = '_';
-            my @edeps;
-            foreach my $epord (sort {$a <=> $b} (keys(%{$edeps_to_write{$major}{$minor}})))
-            {
-                foreach my $edeprel (sort {$a cmp $b} (keys(%{$edeps_to_write{$major}{$minor}{$epord}})))
-                {
-                    push(@edeps, "$epord:$edeprel");
-                }
-            }
-            if(scalar(@edeps) > 0)
-            {
-                $deps = join('|', @edeps);
-            }
-            $self->print_nfc("$major.$minor\t_\t_\t_\t_\t_\t_\t_\t$deps\t_\n");
-        }
-    }
+    $self->print_empty_nodes(\%enodes_to_write, \%edeps_to_write, 0);
 
     for(my $i = 0; $i<=$#nodes; $i++)
     {
@@ -373,32 +371,74 @@ sub process_atree
 
         # If there are any empty nodes positioned after the current real node,
         # write them now.
-        my $major = $node->ord();
-        if(exists($edeps_to_write{$major}))
-        {
-            my @minors = grep {$_ != 0} (sort {$a <=> $b} (keys(%{$edeps_to_write{$major}})));
-            foreach my $minor (@minors)
-            {
-                my $deps = '_';
-                my @edeps;
-                foreach my $epord (sort {$a <=> $b} (keys(%{$edeps_to_write{$major}{$minor}})))
-                {
-                    foreach my $edeprel (sort {$a cmp $b} (keys(%{$edeps_to_write{$major}{$minor}{$epord}})))
-                    {
-                        push(@edeps, "$epord:$edeprel");
-                    }
-                }
-                if(scalar(@edeps) > 0)
-                {
-                    $deps = join('|', @edeps);
-                }
-                $self->print_nfc("$major.$minor\t_\t_\t_\t_\t_\t_\t_\t$deps\t_\n");
-            }
-        }
+        $self->print_empty_nodes(\%enodes_to_write, \%edeps_to_write, $node->ord());
     }
     $self->print_nfc("\n") if $tree->get_descendants();
     return;
 }
+
+
+
+#------------------------------------------------------------------------------
+# Prints all empty nodes after a given position.
+#------------------------------------------------------------------------------
+sub print_empty_nodes
+{
+    my $enodestw = shift;
+    my $edepstw = shift;
+    my $major = shift;
+    my %enodes_to_write = %{$enodestw};
+    my %edeps_to_write = %{$edepstw};
+    my %minors = ();
+    if(exists($enodes_to_write{$major}))
+    {
+        foreach my $key (keys(%{$enodes_to_write{$major}}))
+        {
+            $minors{$key}++;
+        }
+    }
+    if(exists($edeps_to_write{$major}))
+    {
+        foreach my $key (keys(%{$edeps_to_write{$major}}))
+        {
+            $minors{$key}++;
+        }
+    }
+    my @minors = grep {$_ != 0} (sort {$a <=> $b} (keys(%minors)));
+    foreach my $minor (@minors)
+    {
+        my $form = '_';
+        my $lemma = '_';
+        my $upos = '_';
+        my $xpos = '_';
+        my $feats = '_';
+        my $deps = '_';
+        my $misc = '_';
+        if(exists($enodes_to_write{$major}{$minor}))
+        {
+            my $en = $enodes_to_write{$major}{$minor};
+            ($form, $lemma, $upos, $xpos, $feats, $deps, $misc) = ($en->{form}, $en->{lemma}, $en->{upos}, $en->{xpos}, $en->{feats}, $en->{deps}, $en->{misc});
+        }
+        if(exists($edeps_to_write{$major}{$minor}))
+        {
+            my @edeps;
+            foreach my $epord (sort {$a <=> $b} (keys(%{$edeps_to_write{$major}{$minor}})))
+            {
+                foreach my $edeprel (sort {$a cmp $b} (keys(%{$edeps_to_write{$major}{$minor}{$epord}})))
+                {
+                    push(@edeps, "$epord:$edeprel");
+                }
+            }
+            if(scalar(@edeps) > 0)
+            {
+                $deps = join('|', @edeps);
+            }
+        }
+        $self->print_nfc("$major.$minor\t$form\t$lemma\t$upos\t$xpos\t$feats\t_\t_\t$deps\t$misc\n");
+    }
+}
+
+
 
 sub _print_alignment {
     my ($self, $node, $type) = @_;

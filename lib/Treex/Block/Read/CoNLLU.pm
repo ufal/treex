@@ -48,6 +48,7 @@ sub next_document
         my $funspaf; # no space after the fused token?
         my $fumisc; # MISC column of fused token line, except SpaceAfter=No, which is stored in $funspaf
         my %egraph; # enhanced dependency relations
+        my @empty_nodes; # attributes of empty nodes, including leaf empty nodes
 
         LINE:
         foreach my $line (@lines)
@@ -97,6 +98,26 @@ sub next_document
                     my @edeps = grep {defined($_)} (map {my $x = $_; $x =~ m/^(\d+(?:\.\d+)?):(.+)$/ ? [$1, $2] : undef} (split(/\|/, $deps)));
                     $egraph{$id} = \@edeps;
                 }
+                # Drawing long edges over empty nodes will help to remember that there was an empty inner node
+                # but nothing more. Some treebanks feature empty leaves (e.g. copulae in Ukrainian), although
+                # it is not licensed by the guidelines; such leaf nodes would be lost. Also, some treebanks
+                # assign word forms and morphological annotation to empty nodes, which would be lost. Treex
+                # currently cannot represent an empty node as a Node object. So we must store them as wild
+                # attributes of the bundle.
+                my %empty_node =
+                (
+                    'id'    => $id,
+                    'form'  => $form,
+                    'lemma' => $lemma,
+                    'upos'  => $upos,
+                    'xpos'  => $postag,
+                    'feats' => $feats,
+                    # We keep deps only for the case that this is a leaf node, which will disappear in the collapsed graph.
+                    # Unlike deps of normal, inner empty nodes, we do not expect these to be manipulated, only preserved and written again.
+                    'deps'  => $deps,
+                    'misc'  => $misc
+                );
+                push(@empty_nodes, \%empty_node);
                 next LINE;
             }
             # There may be fused tokens consisting of multiple syntactic words (= nodes). For example (German):
@@ -288,6 +309,10 @@ sub next_document
             $zone->set_sentence($sentence);
         }
         $bundle->wild->{comment} = $comment;
+        if(scalar(@empty_nodes) > 0)
+        {
+            $bundle->wild->{empty_nodes} = \@empty_nodes;
+        }
     }
 
     return $document;
