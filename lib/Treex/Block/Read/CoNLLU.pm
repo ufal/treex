@@ -304,7 +304,7 @@ sub collapse_enhanced_graph
     my @edges;
     foreach my $cid (@ids)
     {
-        my @edeps = $egraph{$cid};
+        my @edeps = @{$egraph{$cid}};
         foreach my $edep (@edeps)
         {
             my $pid = $edep->[0];
