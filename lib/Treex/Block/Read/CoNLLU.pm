@@ -97,6 +97,7 @@ sub next_document
                     my @edeps = grep {defined($_)} (map {my $x = $_; $x =~ m/^(\d+(?:\.\d+)?):(.+)$/ ? [$1, $2] : undef} (split(/\|/, $deps)));
                     $egraph{$id} = \@edeps;
                 }
+                next LINE;
             }
             # There may be fused tokens consisting of multiple syntactic words (= nodes). For example (German):
             # 2-3   zum   _     _
