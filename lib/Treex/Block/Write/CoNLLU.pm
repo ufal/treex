@@ -384,6 +384,7 @@ sub process_atree
 #------------------------------------------------------------------------------
 sub print_empty_nodes
 {
+    my $self = shift;
     my $enodestw = shift;
     my $edepstw = shift;
     my $major = shift;
