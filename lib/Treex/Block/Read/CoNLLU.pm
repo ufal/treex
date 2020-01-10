@@ -8,13 +8,15 @@ use File::Slurp;
 use Try::Tiny;
 extends 'Treex::Block::Read::BaseCoNLLReader';
 
-sub next_document {
+sub next_document
+{
     my ($self) = @_;
     my $text = $self->next_document_text();
     return if !defined $text;
 
     my $document = $self->new_document();
-    foreach my $tree ( split /\n\s*\n/, $text ) {
+    foreach my $tree ( split /\n\s*\n/, $text )
+    {
         my @lines  = split( /\n/, $tree );
 
         # Skip empty sentences (if any sentence is empty at all,
@@ -50,7 +52,7 @@ sub next_document {
         LINE:
         foreach my $line (@lines)
         {
-            next LINE if $line =~ /^\s*$/;
+            next LINE if($line =~ m/^\s*$/);
             if ($line =~ s/^#\s*//)
             {
                 # sent_id metadata sentence-level comment
@@ -81,12 +83,6 @@ sub next_document {
                 {
                     $comment .= "$line\n";
                 }
-                next LINE;
-            }
-            # Since UD v2, there may be lines with empty nodes of the enhanced representation.
-            ###!!! Currently skip empty nodes!
-            elsif ($line =~ m/^\d+\.\d+/)
-            {
                 next LINE;
             }
             # Since UD v2, the FORM and LEMMA columns may contain spaces, thus we can only use the TAB character as column separator.
