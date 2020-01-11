@@ -482,6 +482,66 @@ sub add_enhanced_external_subject
             qw(činiť urobiť)
         );
     }
+    elsif($self->language() eq 'pl') #------------------------------------------------------------------------------------------------------------------
+    {
+        # Polish verbs whose subject can control an open complement (infinitive).
+        @nomcontrol =
+        (
+            # Modality / external circumstances:
+            qw(móc można mieć winien powinien musieć potrzebować),
+            # Modality / will of the actor:
+            # Weak positive:
+            qw(chcieć zechcieć zamierzać myśleć pomyśleć planować deliberować woleć pragnąć marzyć śnić śmieć ośmielić odważyć lubić),
+            # Strong positive:
+            qw(postanowić postanawiać decydować zdecydować obiecać obiecywać ślubować zgodzić),
+            # Strong negative:
+            #qw(odmietnuť odmietať),
+            # Weak negative:
+            qw(obawiać),
+            # Passive negative:
+            qw(zapomnieć omieszkać),
+            # Ability:
+            qw(umieć wiedzieć potrafić zdążyć zdołać starać postarać usiłować próbować spróbować),
+            # Aspect and phase:
+            qw(chystať jąć zacząć zaczynać począć poczynać pozostawać przestać przestawać kończyć skończyć powstrzymywać),
+            # Movement (to go somewhere to do something):
+            qw(iść pójść chodzić jechać przyjść przychodzić wydawać),
+            # Other action than movement:
+            qw(kłaść),
+            # Attitude of the speaker:
+            qw(zdawać raczyć),
+            # Pseudocopulas: (not "znaczyć", there is no coreference!)
+            #qw(pôsobiť pracovať cítiť ukazovať ukázať)
+        );
+        # Polish verbs whose dative argument can control an open complement (infinitive).
+        @datcontrol =
+        (
+            # Enabling:
+            qw(dozwolić dovoľovať pozwolić pozwalać dać dawać należeć pozostawać),
+            # Recommendation:
+            qw(polecić zalecać proponować radzić),
+            # Order:
+            qw(rozkazać rozkazować nakazać nakazywać kazać),
+            # Negative order, disabling:
+            qw(szkodzić przeszkadzać),
+            # Success:
+            qw(udać udawać zdążyć zdarzać opłacać wypadać)
+        );
+        # Polish verbs whose accusative argument can control an open complement (infinitive).
+        @acccontrol =
+        (
+            # Enabling or request:
+            #qw(oprávniť opravňovať zmocniť zmocňovať prosić poprosiť pustiť),
+            # Order, enforcement:
+            #qw(donútiť prinútiť nútiť zaviazať zaväzovať poveriť poverovať presvedčiť presviedčať odsúdiť odsudzovať),
+            # Teaching:
+            qw(uczyć nauczyć),
+            # Seeing (viděl umírat lidi):
+            qw(widzieć),
+            # Pseudocopulas:
+            #qw(činiť urobiť)
+        );
+    }
     elsif($self->language() eq 'ru') #------------------------------------------------------------------------------------------------------------------
     {
         # Russian verbs whose subject can control an open complement (infinitive).
