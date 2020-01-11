@@ -482,6 +482,42 @@ sub add_enhanced_external_subject
             qw(činiť urobiť)
         );
     }
+    elsif($self->language() eq 'ru') #------------------------------------------------------------------------------------------------------------------
+    {
+        # Russian verbs whose subject can control an open complement (infinitive).
+        @nomcontrol =
+        (
+            # Modality / external circumstances:
+            qw(мочь требовать),
+            # Modality / will of the actor:
+            # Weak positive:
+            qw(хотеть захотеть планировать намереваться рассчитывать предпочесть предпочитать надеяться желать думать задумать мечтать счесть сметь любить привыкнуть),
+            # Strong positive:
+            qw(решить решать решиться решаться собраться обещать пообещать согласиться договориться),
+            # Strong negative:
+            qw(отказаться отказываться),
+            # Weak negative:
+            qw(бояться),
+            # Passive negative:
+            qw(забыть забывать),
+            # Ability:
+            qw(уметь знать успеть успевать пытаться стремиться стараться браться норовить затрудниться пробовать учиться научиться),
+            # Aspect and phase:
+            qw(собираться готовиться начать начинать приняться продолжить продолжать остаться оставаться уставать перестать переставать прекратить),
+            # Movement (to go somewhere to do something):
+            qw(пойти идти ездить отправиться спешить торопиться прийти приходить приехать),
+            # Other action than movement:
+            qw(догадаться),
+            # Attitude of the speaker:
+            qw(рискнуть рисковать грозить),
+            # Pseudocopulas: (not "значить", there is no coreference!)
+            qw(стать считать)
+        );
+        # Tyhle se našly bez předmětu, ale koreference nastane, až když k nim přidáme předmět:
+        # позволять позволить вынудить просить предложить хотеться помочь давать предлагать помогать заставлять дать обязать призвать призывать
+        # мешать рекомендовать советовать велеть запретить заставить разрешать запрещать разрешить учить
+        # Tohle je kiks, nemá být xcomp, ale ccomp: выбирать (vybrat si, co dělat).
+    }
     elsif($self->language() eq 'lt') #------------------------------------------------------------------------------------------------------------------
     {
         # Lithuanian verbs whose subject can control an open complement (infinitive).
@@ -540,41 +576,6 @@ sub add_enhanced_external_subject
             #qw(vidieť),
             # Pseudocopulas:
             #qw(činiť urobiť)
-        );
-    }
-    else #------------------------------------------------------------------------------------------------------------------
-    {
-        # Tamil verbs whose subject can control an open complement (infinitive).
-        @nomcontrol =
-        (
-            # தெரிவி tèrivi "inform, notify, signify" 9 times
-            # கூறு kūru "tell, mention, report" 5 times
-            # என் èn "my" (???) 2 times
-            # Modality / external circumstances:
-            qw(galėti turėti reikėti privalėti tekti),
-            # Modality / will of the actor:
-            # Weak positive:
-            qw(siekti norėti norėtis planuoti ketinti numatyti mėgti),
-            # Strong positive:
-            qw(nuspręsti),
-            # Strong negative:
-            #qw(odmietnuť odmietať),
-            # Weak negative:
-            qw(atsisakyti bijoti),
-            # Passive negative:
-            #qw(zabudnúť zabúdať opomenúť),
-            # Ability:
-            qw(bandyti pabandyti stengtis mėginti pasistengti sugebėti išmokti mokytis pavykti),
-            # Aspect and phase:
-            qw(pradėti belikti telikti),
-            # Movement (to go somewhere to do something):
-            #qw(ísť chodiť utekať ponáhľať jet jazdiť odísť odchádzať prísť přichádzať),
-            # Other action than movement:
-            qw(imti),
-            # Attitude of the speaker:
-            qw(rizikuoti),
-            # Pseudocopulas: (not "znamenať", there is no coreference!)
-            #qw(pôsobiť pracovať cítiť ukazovať ukázať)
         );
     }
     foreach my $gv (@gverbs)
