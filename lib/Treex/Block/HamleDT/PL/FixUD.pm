@@ -86,22 +86,6 @@ sub fix_constructions
         $deprel = 'parataxis';
         $node->set_deprel($deprel);
     }
-    # An adverb should not depend on a copula but on the nominal part of the
-    # predicate. Example: "Také vakovlk je, respektive před vyhubením byl, ..."
-    elsif($node->is_adverb() && $node->deprel() =~ m/^advmod(:|$)/ &&
-          $parent->deprel() =~ m/^cop(:|$)/)
-    {
-        $parent = $parent->parent();
-        $node->set_parent($parent);
-    }
-    # "rozuměj" (imperative of "understand") is a verb but attached as 'cc'.
-    # We will not keep the parallelism to "to jest" here. We will make it a parataxis.
-    # Similar: "míněno" (ADJ, passive participle of "mínit")
-    elsif($node->form() =~ m/^(rozuměj|dejme|míněno|počínaje|řekněme|říkajíc|srov(nej)?|víte|event)$/i && $deprel =~ m/^(cc|advmod|mark)(:|$)/)
-    {
-        $deprel = 'parataxis';
-        $node->set_deprel($deprel);
-    }
     # Interjections showing the attitude to the speaker towards the event should
     # be attached as 'discourse', not as 'advmod'.
     elsif($node->is_interjection() && $deprel =~ m/^advmod(:|$)/)
@@ -217,86 +201,6 @@ sub fix_constructions
         $deprel = 'punct';
         $node->set_deprel($deprel);
     }
-    # Hyphen is sometimes used as a predicate similar to a copula, but not with
-    # Pnom. Rather its children are subject and object. Sometimes there is
-    # ellipsis and one of the children comes out as 'dep'.
-    # "celková škoda - 1000 korun"
-    # "týden pro dospělého - 1400 korun, pro dítě do deseti let - 700 korun"
-    # We do not know what to do if there fewer than 2 children. However, there
-    # can be more if the entire expression is enclosed in parentheses.
-    elsif($node->form() =~ m/^[-:]$/ && scalar($node->children()) >= 2)
-    {
-        my @children = $node->get_children({'ordered' => 1});
-        my @punctchildren = grep {$_->deprel() =~ m/^punct(:|$)/} (@children);
-        my @argchildren = grep {$_->deprel() !~ m/^punct(:|$)/} (@children);
-        if(scalar(@argchildren) == 0)
-        {
-            # There are 2 or more children and all are punctuation.
-            # Silently exit this branch. This will be solved elsewhere.
-        }
-        elsif(scalar(@argchildren) == 2)
-        {
-            # Assume that the hyphen is acting like a copula. If we are lucky,
-            # one of the children is labeled as a subject. The other will be
-            # object or oblique and that is the one we will treat as predicate.
-            # If we are unlucky (e.g. because of ellipsis), no child is labeled
-            # as subject. Then we take the first one.
-            my $s = $argchildren[0];
-            my $p = $argchildren[1];
-            if($p->deprel() =~ m/subj/ && $s->deprel() !~ m/subj/)
-            {
-                $s = $argchildren[1];
-                $p = $argchildren[0];
-            }
-            $p->set_parent($parent);
-            $deprel = 'parataxis' if($deprel =~ m/^punct(:|$)/);
-            $p->set_deprel($deprel);
-            $s->set_parent($p);
-            foreach my $punct (@punctchildren)
-            {
-                $punct->set_parent($p);
-            }
-            $parent = $p;
-            $deprel = 'punct';
-            $node->set_parent($parent);
-            $node->set_deprel($deprel);
-        }
-        else # more than two non-punctuation children
-        {
-            # Examples (head words of children in parentheses):
-            # 'Náměstek ministra podnikatelům - daňové nedoplatky dosahují miliard' (Náměstek podnikatelům dosahují)
-            # 'Týden pro dospělého - 1400 korun , pro dítě do deseti let - 700 korun .' (Týden korun -)
-            # 'V " supertermínech " jako je Silvestr - 20 německých marek za osobu , jinak 12 marek , případně v přepočtu na koruny .' (supertermínech marek osobu jinak)
-            # 'Dnes v listě Neobyčejně obyčejné příběhy - portrét režiséra Karla Kachyni' (Dnes listě portrét)
-            # 'Brankáři s nulou : Hlinka ( Vítkovice ) a Novotný ( Jihlava ) - oba ve 2 . kole .' (Brankáři oba kole)
-            # '25 . 2 . 1994 - hebronský masakr ( židovský osadník Baruch Goldstein postřílel při modlitbě tři desítky Arabů ) ;' (2 masakr postřílel)
-            ###!!! It is not clear what we should do. For the moment, we just pick the first child as the head.
-            my $p = shift(@argchildren);
-            $p->set_parent($parent);
-            $deprel = 'parataxis' if($deprel =~ m/^punct(:|$)/);
-            $p->set_deprel($deprel);
-            foreach my $arg (@argchildren)
-            {
-                $arg->set_parent($p);
-            }
-            foreach my $punct (@punctchildren)
-            {
-                $punct->set_parent($p);
-            }
-            $parent = $p;
-            $deprel = 'punct';
-            $node->set_parent($parent);
-            $node->set_deprel($deprel);
-        }
-    }
-    # If we changed tag of a symbol from PUNCT to SYM above, we must also change
-    # its dependency relation.
-    elsif($node->is_symbol() && $deprel =~ m/^punct(:|$)/ &&
-          $node->ord() > $parent->ord())
-    {
-        $deprel = 'flat';
-        $node->set_deprel($deprel);
-    }
     $self->fix_auxiliary_verb($node);
     # Functional nodes normally do not have modifiers of their own, with a few
     # exceptions, such as coordination. Most modifiers should be attached
@@ -378,25 +282,8 @@ sub fix_annotation_errors
 {
     my $self = shift;
     my $node = shift;
-    my $spanstring = $self->get_node_spanstring($node);
-    # "prosím vás" ("I ask you"): "vás" should be "obj", not "cc".
-    if(lc($node->form()) eq 'vás' && !$node->is_root() && lc($node->parent()->form()) eq 'prosím')
-    {
-        $node->set_deprel('obj');
-    }
-    # "široko - ďaleko": the hyphen should not be treated as "ADJ" and "cc".
-    elsif($node->form() eq '‐' && $node->is_adjective() && $node->deprel() =~ m/^cc(:|$)/)
-    {
-        $node->set_tag('PUNCT');
-        $node->iset()->set_hash({'pos' => 'punc'});
-        $node->set_deprel('punct');
-    }
-    # "+ a –"
-    elsif($node->form() eq '–' && $node->deprel() =~ m/^conj(:|$)/)
-    {
-        $node->set_tag('SYM');
-        $node->iset()->set_hash({'pos' => 'sym'});
-    }
+    #my $spanstring = $self->get_node_spanstring($node);
+    # Currently no errors targeted in Polish.
 }
 
 
