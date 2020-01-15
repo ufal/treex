@@ -95,6 +95,19 @@ sub identify_acl_relcl
     ###!!! with the bad noun, the clause is recognized as relative, otherwise
     ###!!! it is not.
     $node->set_deprel('acl:relcl');
+    # If the enhanced graph exists, we should replace 'acl' by 'acl:relcl' there as well.
+    my $wild = $node->wild();
+    if(exists($wild->{enhanced}))
+    {
+        my @edeps = @{$wild->{enhanced}};
+        foreach my $edep (@edeps)
+        {
+            if($edep->[0] == $node->parent()->ord() && $edep->[1] =~ m/^acl(:|$)/ && $edep->[1] !~ m/^acl:relcl(:|$)/)
+            {
+                $edep->[1] =~ s/^acl/acl:relcl/;
+            }
+        }
+    }
 }
 
 
