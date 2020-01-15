@@ -102,6 +102,7 @@ sub identify_acl_relcl
         my @edeps = @{$wild->{enhanced}};
         foreach my $edep (@edeps)
         {
+            ###!!! This approach will not catch the collapsed paths through empty nodes such as 'acl>37.1>nsubj'.
             if($edep->[0] == $node->parent()->ord() && $edep->[1] =~ m/^acl(:|$)/ && $edep->[1] !~ m/^acl:relcl(:|$)/)
             {
                 $edep->[1] =~ s/^acl/acl:relcl/;
