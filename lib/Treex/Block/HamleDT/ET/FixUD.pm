@@ -22,11 +22,42 @@ sub process_atree
     # on the morphology you see at the parent node).
     foreach my $node (@nodes)
     {
-        #$self->identify_acl_relcl($node);
+        $self->identify_acl_relcl($node);
     }
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
     #$root->get_zone()->set_sentence($root->collect_sentence_text());
+}
+
+
+
+#------------------------------------------------------------------------------
+# Figures out whether an adnominal clause is a relative clause, and changes the
+# relation accordingly. The Estonian EWT data is unusual in that acl:relcl is
+# already identified in the basic tree but the corresponding edge in the
+# enhanced graph is labeled only acl. We need to fix the enhanced label because
+# without it the enhanced relations will not be correctly transformed in
+# AddEnhancedUD.
+#------------------------------------------------------------------------------
+sub identify_acl_relcl
+{
+    my $self = shift;
+    my $node = shift;
+    return unless($node->deprel() =~ m/^acl:relcl$/);
+    # If the enhanced graph exists, we should replace 'acl' by 'acl:relcl' there as well.
+    my $wild = $node->wild();
+    if(exists($wild->{enhanced}))
+    {
+        my @edeps = @{$wild->{enhanced}};
+        foreach my $edep (@edeps)
+        {
+            ###!!! This approach will not catch the collapsed paths through empty nodes such as 'acl>37.1>nsubj'.
+            if($edep->[0] == $node->parent()->ord() && $edep->[1] =~ m/^acl(:|$)/ && $edep->[1] !~ m/^acl:relcl(:|$)/)
+            {
+                $edep->[1] =~ s/^acl/acl:relcl/;
+            }
+        }
+    }
 }
 
 
