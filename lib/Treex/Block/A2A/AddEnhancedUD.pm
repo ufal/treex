@@ -887,8 +887,8 @@ sub add_enhanced_relative_clause
             }
         }
         # If the relativizer is not the root of the relative clause, we remove its
-        # current relation to its current and instead we add an analogous relation
-        # between the parent and the modified noun.
+        # current relation to its current parent and instead we add an analogous
+        # relation between the parent and the modified noun.
         else
         {
             foreach my $nd (@noundeps)
@@ -1123,7 +1123,8 @@ sub add_enhanced_dependency
     if($parent == $child)
     {
         my $ord = $child->ord();
-        log_fatal("Self-loops are not allowed in the enhanced graph but we are attempting to attach the node no. $ord to itself.");
+        my $form = $child->form() // '';
+        log_fatal("Self-loops are not allowed in the enhanced graph but we are attempting to attach the node no. $ord ('$form') to itself.");
     }
     my $pord = $parent->ord();
     my @edeps = $self->get_enhanced_deps($child);
