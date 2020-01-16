@@ -895,12 +895,31 @@ sub add_enhanced_relative_clause
             {
                 my $relparent = $nd->[0];
                 my $reldeprel = $nd->[1];
+                # Although the the current node (root of the relative clause)
+                # is not the relativizer, the possibility of self-loops is not
+                # excluded. In the Finnish TDT training sentence f102.5, there
+                # is coordination of relative clauses, the first clause is
+                # headed by the relativizer, which at the same time acts as
+                # an oblique argument in the second and the third clause. When
+                # we process it from the perspective of the second clause (where it is not the root),
+                # we will also see the acl:relcl relation that connects it to
+                # the modified noun. We must ignore this relation, otherwise it
+                # will lead to a self-loop.
+                # Niitä, joilla on farmariautot sekä kultainennoutaja kopissaan, lapset huutavat ja kiirettä tuntuu olevan kokoajan arjen keskellä.
+                # Google Translate: Children with station wagons and a golden retriever in their booths are screaming and hurrying in the midst of everyday life.
+                # Niitä = those (partitive demonstrative) is the root of the sentence.
+                # First clause: joilla on farmariautot sekä kultainennoutaja kopissaan = with station wagons and a golden retriever in their booth (joilla = whose = the head and the relativizer)
+                # Second clause: lapset huutavat = the children cry (joilla is oblique argument of this)
+                # Third clause: ja kiirettä tuntuu olevan kokoajan arjen keskellä (joilla oblique here too) = and hurry seems to be in the middle of everyday life
+                # I.e.: those, whose are station wagons, whose children cry and who feel in a hurry
+                my $relparentnode = $self->get_node_by_ord($node, $relparent);
+                next if($relparentnode == $noun);
                 # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
                 # Discard subtypes of the original relation, if present. Such subtypes may not be available
                 # for the substitute relation.
                 $reldeprel =~ s/^advmod(:.+)?$/obl/;
                 $reldeprel =~ s/^det(:.+)?$/nmod/;
-                $self->add_enhanced_dependency($noun, $self->get_node_by_ord($node, $relparent), $reldeprel);
+                $self->add_enhanced_dependency($noun, $relparentnode, $reldeprel);
             }
         }
     }
