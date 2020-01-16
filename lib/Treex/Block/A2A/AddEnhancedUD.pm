@@ -950,26 +950,11 @@ sub add_enhanced_empty_node
 {
     my $self = shift;
     my $node = shift;
-    my $emptynodes = shift; # hash ref
+    my $emptynodes = shift; # hash ref, keys are ids of empty nodes
     # We have to generate an empty node if a node has one or more orphan children.
     my @orphans = $self->get_enhanced_children($node, '^orphan(:|$)');
     return if(scalar(@orphans) == 0);
-    # The current node and all its current children will become children of the
-    # empty node.
-    my @children = $self->get_enhanced_children($node);
-    my @empchildren = sort {$a->ord() <=> $b->ord()} ($node, @children);
-    # For the moment we will position the empty node right before its first child.
-    # There might be better heuristics but the position does not matter much.
-    # However, we must not pick a position that is already taken by another
-    # empty node. For that we need the hash of all empty nodes generated in this
-    # sentence so far.
-    my $posmajor = $empchildren[0]->ord() - 1;
-    my $posminor = 1;
-    while(exists($emptynodes->{"$posmajor.$posminor"}))
-    {
-        $posminor++;
-    }
-    my $emppos = "$posmajor.$posminor";
+    my $emppos = $self->get_empty_node_position($node, $emptynodes);
     $emptynodes->{$emppos}++;
     # All current parents of $node will become parents of the empty node.
     ###!!! There should not be any 'orphan' among the relations to the parents.
@@ -1002,6 +987,7 @@ sub add_enhanced_empty_node
     # Create the path to each child via the empty node. Also use just 'dep' for
     # now, unless the node is an adverb, when it is probably safe to say
     # that it is 'advmod'.
+    my @children = $self->get_enhanced_children($node);
     foreach my $child (@children)
     {
         my @origchildiedges = $self->get_enhanced_deps($child);
@@ -1043,6 +1029,56 @@ sub add_enhanced_empty_node
         }
         $child->wild()->{enhanced} = \@childiedges;
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Determines position for a new empty node.
+# For the moment we will position the empty node right before its first child.
+# Exception: if this is a non-first conjunct and the first child is shared
+# and appears before the first conjunct, skip it. We do not want to place the
+# second conjunct before the first one (conj relation must go left-to-right).
+# There might be better heuristics but the position does not matter much.
+# However, we must not pick a position that is already taken by another
+# empty node. For that we need the hash of all empty nodes generated in this
+# sentence so far.
+#------------------------------------------------------------------------------
+sub get_empty_node_position
+{
+    my $self = shift;
+    my $node = shift; # node to be replaced by the empty node and to become a child of the empty node
+    my $emptynodes = shift; # hash ref, keys are ids of existing empty nodes
+    # The current node and all its current children will become children of the
+    # empty node.
+    my @children = $self->get_enhanced_children($node);
+    my @empchildren = sort {$a->ord() <=> $b->ord()} ($node, @children);
+    my $posmajor = $empchildren[0]->ord() - 1;
+    my $posminor = 1;
+    # If the current node is a conj child of another node, discard children that
+    # occur before that other node.
+    my @conjparents = sort {$a->ord() <=> $b->ord()} ($self->get_enhanced_parents($node, '^conj(:|$)'));
+    if(scalar(@conjparents) > 0)
+    {
+        @empchildren = grep {$_->ord() > $conjparents[-1]->ord()} (@empchildren);
+        if(scalar(@empchildren) > 0)
+        {
+            $posmajor = $empchildren[0]->ord() - 1;
+        }
+        # The else branch should not be needed because at least $node should be
+        # located after all its conj parents. But there is no guarantee that the
+        # basic annotation is correct.
+        else
+        {
+            $posmajor = $conjparents[-1]->ord();
+        }
+    }
+    while(exists($emptynodes->{"$posmajor.$posminor"}))
+    {
+        $posminor++;
+    }
+    my $emppos = "$posmajor.$posminor";
+    return $emppos;
 }
 
 
