@@ -670,6 +670,122 @@ sub add_enhanced_external_subject
             #qw(činiť urobiť)
         );
     }
+    elsif($self->language() eq 'fi') #------------------------------------------------------------------------------------------------------------------
+    {
+        # Finnish verbs whose subject can control an open complement (infinitive).
+        # saada = get have make obtain
+        # tulla = become come get arrive
+        # auttaa = help assist aid
+        # antaa = give let issue deliver
+        # kannustaa = encourage urge stimulate
+        # käydä = visit call go run
+        # käyttää = use exercise wear operate
+        # pakottaa = force drive compel oblige
+        # asettaa = set lay position place
+        # estää = prevent preclude forestall inhibit
+        # kehittää = develop evolve improve elaborate
+        # kehottaa = urge recommend invite advise
+        # kieltää = prohibit forbid
+        # lähettää = send broadcast post transmit
+        # laittaa = put lay set fix
+        # olla = be exist have hold
+        # pyytää = request ask demand seek
+        # sallia = allow permit let tolerate
+        # suositella = recommend commend
+        # työskennellä = work
+        # varoittaa = warn caution dissuade
+        @nomcontrol =
+        (
+            # Modality / external circumstances:
+            # pystyä = can
+            qw(pystyä),
+            # Modality / will of the actor:
+            # Weak positive:
+            # haluta = want; kiinnostua = be interested in; tarjoutua = offer
+            qw(haluta kiinnostua tarjoutua),
+            # Strong positive:
+            # päättää = decide; luvata = promise; suostua = agree
+            qw(päättää luvata suostua),
+            # Strong negative:
+            # kieltäytyä = refuse
+            qw(kieltäytyä),
+            # Weak negative:
+            # epäröidä = hesitate
+            qw(epäröidä),
+            # Passive negative:
+            #qw(zabudnúť zabúdať opomenúť),
+            # Ability:
+            # onnistua = succeed; yrittää = try; koettaa = try; pyrkiä = strive;
+            # osata = know, master
+            qw(onnistua yrittää koettaa pyrkiä osata),
+            # Aspect and phase:
+            # alkaa = begin; keskittyä = attend, settle down; koittaa = break;
+            # päätyä = end up, finish up
+            qw(alkaa keskittyä koittaa päätyä),
+            # Movement (to go somewhere to do something):
+            #qw(ísť chodiť utekať ponáhľať jet jazdiť odísť odchádzať prísť přichádzať),
+            # Other action than movement:
+            # kiirehtiä = rush; palata = return, revive
+            qw(kiirehtiä palata),
+            # Attitude of the speaker:
+            # viitsiä = bother
+            qw(viitsiä),
+        );
+    }
+    elsif($self->language() eq 'et') #------------------------------------------------------------------------------------------------------------------
+    {
+        # Estonian verbs whose subject can control an open complement (infinitive).
+        # aitama = help assist aid
+        # soovitama = recommend commend suggest
+        # laskma = have let allow
+        # paluma = ask pray beg
+        # lubama = allow permit let authorize
+        # saama = receive become get acquire
+        # tegema = do perform make execute
+        # võimaldama = enable allow permit
+        # andma = give grant yield allow
+        # jõudma = reach arrive come get
+        # käskima = command order tell
+        # keelama = prohibit forbid ban
+        # olenema = depend turn
+        @nomcontrol =
+        (
+            # Modality / external circumstances:
+            # suutma = can; pruukima = need
+            qw(suutma pruukima),
+            # Modality / will of the actor:
+            # Weak positive:
+            # tahtma = want; julgema = dare; soovima = wish; kavatsema = plan;
+            # lootma = hope; pakkuma = offer; söandama = dare
+            qw(tahtma julgema soovima kavatsema lootma pakkuma söandama),
+            # Strong positive:
+            # otsustama = decide; võtma = admit
+            qw(otsustama võtma),
+            # Strong negative:
+            # keelduma = refuse
+            qw(keelduma),
+            # Weak negative:
+            # jaksama = endure; kannatama = suffer; kartma = fear; muretsema = worry
+            qw(jaksama kannatama kartma muretsema),
+            # Passive negative:
+            #qw(zabudnúť zabúdať opomenúť),
+            # Ability:
+            # oskama = know how; püüdma = strive; üritama = try; proovima = try;
+            # katsuma = attempt
+            qw(oskama püüdma üritama proovima katsuma),
+            # Aspect and phase:
+            # algama = begin
+            qw(algama),
+            # Movement (to go somewhere to do something):
+            #qw(ísť chodiť utekať ponáhľať jet jazdiť odísť odchádzať prísť přichádzať),
+            # Other action than movement:
+            # kiirustama = rush
+            qw(kiirustama),
+            # Attitude of the speaker:
+            # viitsima = bother; suvatsema = deign
+            qw(viitsima suvatsema),
+        );
+    }
     foreach my $gv (@gverbs)
     {
         my $lemma = $gv->lemma();
