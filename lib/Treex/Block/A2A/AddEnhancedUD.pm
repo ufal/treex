@@ -548,7 +548,8 @@ sub add_enhanced_external_subject
         @nomcontrol =
         (
             # Modality / external circumstances:
-            qw(мочь требовать),
+            # Note: должен is ADJ, not VERB, but otherwise it should work the same way.
+            qw(мочь должен требовать),
             # Modality / will of the actor:
             # Weak positive: (warning: желать can control either nominative or, if present, dative)
             qw(хотеть захотеть планировать намереваться рассчитывать предпочесть предпочитать надеяться думать задумать придумать мечтать счесть сметь любить привыкнуть),
