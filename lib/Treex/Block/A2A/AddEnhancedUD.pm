@@ -384,8 +384,14 @@ sub add_enhanced_external_subject
             log_warn("Skipping control verb '$form' because its lemma is undefined.");
             next;
         }
+        # Do we know the lemma and do we know which of its arguments should be coreferential with the subject of the infinitive?
+        my $is_nomcontrol = any {$_ eq $lemma} (@nomcontrol);
+        my $is_datcontrol = any {$_ eq $lemma} (@datcontrol);
+        my $is_acccontrol = any {$_ eq $lemma} (@acccontrol);
         # Is this a subject-control verb?
-        if(any {$_ eq $lemma} (@nomcontrol))
+        # Alternatively: is this an object-control verb in passive form?
+        # Example [ru]: Компании вынуждены обращаться к системным интеграторам. ("Companies are forced to seek system integrators.")
+        if($is_nomcontrol || $gv->iset()->is_passive() && $is_acccontrol)
         {
             # Does the control verb have an overt subject?
             my @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
@@ -403,15 +409,16 @@ sub add_enhanced_external_subject
                     log_warn("Multiple subject relations between the same two nodes: ".join(', ', map {$_->[1]} (@edeps)));
                 }
                 my $edeprel = $edeps[0][1];
+                # If the control verb is in passive form, its subject is [nc]subj:pass.
+                # However, it should be an active subject of the controlled verb (see the Russian example above).
+                $edeprel =~ s/:pass//;
                 # We could now add the ':xsubj' subtype to the relation label.
                 # But we would first have to remove the previous subtype, if any.
-                # And replacing ':pass' by ':xsubj' would do more harm than good,
-                # so we just keep it as it is.
                 $self->add_enhanced_dependency($subject, $node, $edeprel);
             }
         }
         # Is this a dative-control verb?
-        elsif(any {$_ eq $lemma} (@datcontrol))
+        elsif($is_datcontrol)
         {
             # Does the control verb have an overt dative argument?
             my @objects = $self->get_enhanced_children($gv, '^(i?obj|obl:arg)(:|$)');
@@ -449,7 +456,7 @@ sub add_enhanced_external_subject
             }
         }
         # Is this an accusative-control verb?
-        elsif(any {$_ eq $lemma} (@acccontrol))
+        elsif($is_acccontrol)
         {
             # Does the control verb have an overt accusative argument?
             my @objects = $self->get_enhanced_children($gv, '^(i?obj|obl:arg)(:|$)');
