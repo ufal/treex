@@ -217,7 +217,21 @@ sub add_enhanced_parent_of_coordination
         {
             foreach my $edep (@edeps_to_propagate)
             {
-                $self->add_enhanced_dependency($node, $self->get_node_by_ord($node, $edep->[0]), $edep->[1]);
+                # Occasionally conjuncts differ in part of speech, meaning that their relation to the shared parent must differ, too.
+                # Example [ru]: выполняться в произвольном порядке, параллельно или одновременно ("executed in arbitrary order, in parallel, or at the same time")
+                # The first conjunct is a prepositional phrase and its relation is obl:в:loc(выполняться, порядке).
+                # The other two conjuncts are adverbs, thus the relations should be advmod(выполняться, параллельно) and advmod(выполняться, одновременно).
+                my $deprel = $edep->[1];
+                if($deprel =~ m/^obl(:|$)/ && $node->is_adverb())
+                {
+                    $deprel = 'advmod';
+                }
+                elsif($deprel =~ m/^advmod(:|$)/ && $node->is_noun())
+                {
+                    ###!!! We should now also check whether a preposition or a case label should be added!
+                    $deprel = 'obl';
+                }
+                $self->add_enhanced_dependency($node, $self->get_node_by_ord($node, $edep->[0]), $deprel);
                 # The coordination may function as a shared dependent of other coordination.
                 # In that case, make me depend on every conjunct in the parent coordination.
                 if($inode->is_shared_modifier())
@@ -225,7 +239,7 @@ sub add_enhanced_parent_of_coordination
                     my @conjuncts = $self->recursively_collect_conjuncts($self->get_node_by_ord($node, $edep->[0]));
                     foreach my $conjunct (@conjuncts)
                     {
-                        $self->add_enhanced_dependency($node, $conjunct, $edep->[1]);
+                        $self->add_enhanced_dependency($node, $conjunct, $deprel);
                     }
                 }
             }
