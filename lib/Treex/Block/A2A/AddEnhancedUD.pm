@@ -357,436 +357,10 @@ sub add_enhanced_external_subject
     {
         $self->add_enhanced_external_subject($gv, $visited);
     }
-    ###!!! This part is language-dependent, hence it should be moved to a
-    ###!!! language-specific block!
-    my @nomcontrol = ();
-    my @datcontrol = ();
-    my @acccontrol = ();
-    if($self->language() eq 'cs')
-    {
-        # Czech verbs whose subject can control an open complement (infinitive).
-        @nomcontrol =
-        (
-            # Modality / external circumstances:
-            qw(moci mít muset musit smět potřebovat),
-            # Modality / will of the actor:
-            # Weak positive:
-            qw(chtít hodlat mínit plánovat zamýšlet toužit troufnout troufat odvážit odvažovat odhodlat odhodlávat zvyknout zvykat),
-            # Strong positive:
-            qw(rozhodnout rozhodovat zavázat zavazovat přislíbit slíbit slibovat),
-            # Strong negative:
-            qw(odmítnout odmítat),
-            # Weak negative:
-            qw(bát obávat stydět zdráhat ostýchat rozmyslit rozpakovat váhat),
-            # Passive negative:
-            qw(zapomenout zapomínat opomenout opomíjet),
-            # Ability:
-            qw(umět dokázat dovést snažit namáhat usilovat pokusit pokoušet zkusit zkoušet stačit stihnout stíhat zvládnout zvládat),
-            # Aspect and phase:
-            qw(chystat začít začínat jmout počít počínat zůstat vydržet přestat přestávat končit skončit),
-            # Movement (to go somewhere to do something):
-            qw(jít chodit utíkat spěchat jet jezdit odejít odcházet odjet odjíždět přijít přicházet přijet přijíždět),
-            # Other action than movement:
-            qw(vzít),
-            # Attitude of the speaker:
-            qw(zdát hrozit ráčit),
-            # Pseudocopulas: (not "znamenat", there is no coreference!)
-            qw(působit pracovat cítit ukazovat ukázat)
-        );
-        # Czech verbs whose dative argument can control an open complement (infinitive).
-        @datcontrol =
-        (
-            # Enabling:
-            qw(umožnit umožňovat dovolit dovolovat povolit povolovat dát dávat příslušet),
-            # Recommendation:
-            qw(doporučit doporučovat navrhnout navrhovat poradit radit),
-            # Order:
-            qw(uložit ukládat přikázat přikazovat nařídit nařizovat velet klást kázat),
-            # Negative order, disabling:
-            qw(bránit zabránit zabraňovat znemožnit znemožňovat zakázat zakazovat zapovědět zapovídat),
-            # Success:
-            qw(podařit dařit)
-        );
-        # Czech verbs whose accusative argument can control an open complement (infinitive).
-        @acccontrol =
-        (
-            # Enabling or request:
-            qw(oprávnit opravňovat zmocnit zmocňovat prosit),
-            # Order, enforcement:
-            qw(donutit přinutit nutit přimět zavázat zavazovat pověřit pověřovat přesvědčit přesvědčovat odsoudit odsuzovat),
-            # Teaching:
-            qw(učit naučit odnaučit odnaučovat),
-            # Seeing (viděl umírat lidi):
-            qw(vidět),
-            # Pseudocopulas:
-            qw(činit učinit)
-        );
-    }
-    elsif($self->language() eq 'sk') #------------------------------------------------------------------------------------------------------------------
-    {
-        # Slovak verbs whose subject can control an open complement (infinitive).
-        @nomcontrol =
-        (
-            # Modality / external circumstances:
-            qw(môcť mať musieť smieť potrebovať),
-            # Modality / will of the actor:
-            # Weak positive:
-            qw(chcieť hodlať mieniť plánovať zamýšľať túžiť trúfnuť trúfať odvážiť odvažovať odhodlať odhodlávať želať),
-            # Strong positive:
-            qw(rozhodnúť rozhodovať zaviazať zaväzovať prisľúbiť sľúbiť sľubovať),
-            # Strong negative:
-            qw(odmietnuť odmietať),
-            # Weak negative:
-            qw(báť obávať hanbiť zdráhať ostýchať rozmyslieť rozpakovať váhať),
-            # Passive negative:
-            qw(zabudnúť zabúdať opomenúť),
-            # Ability:
-            qw(vedieť dokázať doviesť snažiť namáhať usilovať pokúsiť pokúšať skúsiť skúšať stačiť stihnúť stíhať zvládnuť vládať),
-            # Aspect and phase:
-            qw(chystať začať začínať počať počínať zostať ostať vytrvať prestať prestávať končiť skončiť),
-            # Movement (to go somewhere to do something):
-            qw(ísť chodiť utekať ponáhľať jet jazdiť odísť odchádzať prísť přichádzať),
-            # Other action than movement:
-            qw(vziať),
-            # Attitude of the speaker:
-            qw(zdať hroziť ráčiť),
-            # Pseudocopulas: (not "znamenať", there is no coreference!)
-            qw(pôsobiť pracovať cítiť ukazovať ukázať)
-        );
-        # Slovak verbs whose dative argument can control an open complement (infinitive).
-        @datcontrol =
-        (
-            # Enabling:
-            qw(umožniť umožňovať dovoliť dovoľovať povoliť povoľovať dať dávať prináležať),
-            # Recommendation:
-            qw(odporučiť odporúčať navrhnúť navrhovať poradiť radiť hovoriť povedať pobádať),
-            # Order:
-            qw(uložiť ukladať prikázať prikazovať nariadiť nariaďovať veliť klásť kázať),
-            # Negative order, disabling:
-            qw(brániť zabrániť zabraňovať znemožniť znemožňovať zakázať zakazovať),
-            # Success:
-            qw(podariť dariť postačiť)
-        );
-        # Slovak verbs whose accusative argument can control an open complement (infinitive).
-        @acccontrol =
-        (
-            # Enabling or request:
-            qw(oprávniť opravňovať zmocniť zmocňovať prosiť poprosiť pustiť),
-            # Order, enforcement:
-            qw(donútiť prinútiť nútiť zaviazať zaväzovať poveriť poverovať presvedčiť presviedčať odsúdiť odsudzovať),
-            # Teaching:
-            qw(učiť naučiť odnaučiť odučovať),
-            # Seeing (viděl umírat lidi):
-            qw(vidieť),
-            # Pseudocopulas:
-            qw(činiť urobiť)
-        );
-    }
-    elsif($self->language() eq 'pl') #------------------------------------------------------------------------------------------------------------------
-    {
-        # Polish verbs whose subject can control an open complement (infinitive).
-        @nomcontrol =
-        (
-            # Modality / external circumstances:
-            qw(móc można mieć winien powinien musieć potrzebować),
-            # Modality / will of the actor:
-            # Weak positive:
-            qw(chcieć zechcieć zamierzać myśleć pomyśleć planować deliberować woleć pragnąć marzyć śnić śmieć ośmielić odważyć lubić),
-            # Strong positive:
-            qw(postanowić postanawiać decydować zdecydować obiecać obiecywać ślubować zgodzić),
-            # Strong negative:
-            #qw(odmietnuť odmietať),
-            # Weak negative:
-            qw(obawiać),
-            # Passive negative:
-            qw(zapomnieć omieszkać),
-            # Ability:
-            qw(umieć wiedzieć potrafić zdążyć zdołać starać postarać usiłować próbować spróbować),
-            # Aspect and phase:
-            qw(chystať jąć zacząć zaczynać począć poczynać pozostawać przestać przestawać kończyć skończyć powstrzymywać),
-            # Movement (to go somewhere to do something):
-            qw(iść pójść chodzić jechać przyjść przychodzić wydawać),
-            # Other action than movement:
-            qw(kłaść),
-            # Attitude of the speaker:
-            qw(zdawać raczyć),
-            # Pseudocopulas: (not "znaczyć", there is no coreference!)
-            #qw(pôsobiť pracovať cítiť ukazovať ukázať)
-        );
-        # Polish verbs whose dative argument can control an open complement (infinitive).
-        @datcontrol =
-        (
-            # Enabling:
-            qw(dozwolić dovoľovať pozwolić pozwalać dać dawać należeć pozostawać),
-            # Recommendation:
-            qw(polecić zalecać proponować radzić),
-            # Order:
-            qw(rozkazać rozkazować nakazać nakazywać kazać),
-            # Negative order, disabling:
-            qw(szkodzić przeszkadzać),
-            # Success:
-            qw(udać udawać zdążyć zdarzać opłacać wypadać)
-        );
-        # Polish verbs whose accusative argument can control an open complement (infinitive).
-        @acccontrol =
-        (
-            # Enabling or request:
-            #qw(oprávniť opravňovať zmocniť zmocňovať prosić poprosiť pustiť),
-            # Order, enforcement:
-            #qw(donútiť prinútiť nútiť zaviazať zaväzovať poveriť poverovať presvedčiť presviedčať odsúdiť odsudzovať),
-            # Teaching:
-            qw(uczyć nauczyć),
-            # Seeing (viděl umírat lidi):
-            qw(widzieć),
-            # Pseudocopulas:
-            #qw(činiť urobiť)
-        );
-    }
-    elsif($self->language() eq 'ru') #------------------------------------------------------------------------------------------------------------------
-    {
-        # Russian verbs whose subject can control an open complement (infinitive).
-        @nomcontrol =
-        (
-            # Modality / external circumstances:
-            # Note: должен is ADJ, not VERB, but otherwise it should work the same way.
-            qw(мочь должен требовать),
-            # Modality / will of the actor:
-            # Weak positive: (warning: желать can control either nominative or, if present, dative)
-            qw(хотеть захотеть планировать намереваться рассчитывать предпочесть предпочитать надеяться думать задумать придумать мечтать счесть сметь любить привыкнуть),
-            # Strong positive:
-            qw(решить решать решиться решаться собраться обещать пообещать согласиться договориться гарантировать),
-            # Strong negative:
-            qw(отказаться отказываться),
-            # Weak negative:
-            qw(бояться),
-            # Passive negative:
-            qw(забыть забывать),
-            # Ability:
-            qw(уметь знать успеть успевать пытаться стремиться стараться браться норовить затрудниться пробовать учиться научиться),
-            # Aspect and phase:
-            qw(собираться готовиться начать начинать приняться продолжить продолжать остаться оставаться уставать перестать переставать прекратить),
-            # Movement (to go somewhere to do something):
-            qw(пойти идти ездить отправиться спешить торопиться прийти приходить приехать),
-            # Other action than movement:
-            qw(догадаться),
-            # Attitude of the speaker:
-            qw(рискнуть рисковать грозить),
-            # Pseudocopulas: (not "значить", there is no coreference!)
-            qw(стать считать)
-        );
-        # Tyhle se našly bez předmětu, ale koreference nastane, až když k nim přidáme předmět:
-        # позволять позволить вынудить просить предложить хотеться помочь давать предлагать помогать заставлять дать обязать призвать призывать
-        # мешать рекомендовать советовать велеть запретить заставить разрешать запрещать разрешить учить
-        # Tohle je kiks, nemá být xcomp, ale ccomp: выбирать (vybrat si, co dělat).
-        # Russian verbs whose dative argument can control an open complement (infinitive).
-        @datcontrol =
-        (
-            # Enabling:
-            qw(разрешить разрешать позволить позволять напозволять дать давать доверить доверять предоставить предоставлять),
-            # Modality / will of the actor:
-            qw(хотеться захотеться быть прийтись),
-            # Recommendation:
-            qw(рекомендовать предложить предлагать советовать посоветовать сказать подсказать подсказывать),
-            # Order:
-            qw(задать задавать приказать приказывать поручить поручать командовать велеть предписать заказать наказать),
-            # Negative order, disabling:
-            qw(мешать запретить запрещать препятствовать),
-            # Success:
-            qw(удаться)
-        );
-        # Russian verbs whose accusative argument can control an open complement (infinitive).
-        @acccontrol =
-        (
-            # Enabling or request:
-            qw(просить попросить призвать призывать звать пригласить приглашать заклинать),
-            # Order, enforcement, encouragement:
-            qw(вынудить вынуждать понуждать принудить принуждать заставить заставлять побудить побуждать поручить поручать убедить убеждать уговаривать обязать обязывать стимулировать вдохновить вдохновлять мотивировать подвинуть поощрять провоцировать тянуть уговорить),
-            # Teaching:
-            qw(учить научить обучить обучать отучить отучать),
-            # Movement (to send somebody somewhere to do something):
-            qw(отправить отправлять послать отослать присылать брать),
-            # Seeing (viděl umírat lidi):
-            qw(видеть),
-            # Pseudocopulas:
-            #qw(činiť urobiť)
-        );
-    }
-    elsif($self->language() eq 'lt') #------------------------------------------------------------------------------------------------------------------
-    {
-        # Lithuanian verbs whose subject can control an open complement (infinitive).
-        @nomcontrol =
-        (
-            # Modality / external circumstances:
-            qw(galėti turėti reikėti privalėti tekti),
-            # Modality / will of the actor:
-            # Weak positive:
-            qw(siekti norėti norėtis planuoti ketinti numatyti mėgti),
-            # Strong positive:
-            qw(nuspręsti),
-            # Strong negative:
-            #qw(odmietnuť odmietať),
-            # Weak negative:
-            qw(atsisakyti bijoti),
-            # Passive negative:
-            #qw(zabudnúť zabúdať opomenúť),
-            # Ability:
-            qw(bandyti pabandyti stengtis mėginti pasistengti sugebėti išmokti mokytis pavykti),
-            # Aspect and phase:
-            qw(pradėti belikti telikti),
-            # Movement (to go somewhere to do something):
-            #qw(ísť chodiť utekať ponáhľať jet jazdiť odísť odchádzať prísť přichádzať),
-            # Other action than movement:
-            qw(imti),
-            # Attitude of the speaker:
-            qw(rizikuoti),
-            # Pseudocopulas: (not "znamenať", there is no coreference!)
-            #qw(pôsobiť pracovať cítiť ukazovať ukázať)
-        );
-        # Lithuanian verbs whose dative argument can control an open complement (infinitive).
-        @datcontrol =
-        (
-            # Enabling:
-            qw(leisti),
-            # Recommendation:
-            qw(siūlyti pasiūlyti patarti raginti rekomenduoti),
-            # Order:
-            #qw(uložiť ukladať prikázať prikazovať nariadiť nariaďovať veliť klásť kázať),
-            # Negative order, disabling:
-            #qw(brániť zabrániť zabraňovať znemožniť znemožňovať zakázať zakazovať),
-            # Success:
-            #qw(podariť dariť postačiť)
-        );
-        # Lithuanian verbs whose accusative argument can control an open complement (infinitive).
-        @acccontrol =
-        (
-            # Enabling or request:
-            qw(prašyti paprašyti),
-            # Order, enforcement:
-            qw(priversti),
-            # Teaching:
-            qw(mokyti),
-            # Seeing (viděl umírat lidi):
-            #qw(vidieť),
-            # Pseudocopulas:
-            #qw(činiť urobiť)
-        );
-    }
-    elsif($self->language() eq 'fi') #------------------------------------------------------------------------------------------------------------------
-    {
-        # Finnish verbs whose subject can control an open complement (infinitive).
-        # saada = get have make obtain
-        # tulla = become come get arrive
-        # auttaa = help assist aid
-        # antaa = give let issue deliver
-        # kannustaa = encourage urge stimulate
-        # käydä = visit call go run
-        # käyttää = use exercise wear operate
-        # pakottaa = force drive compel oblige
-        # asettaa = set lay position place
-        # estää = prevent preclude forestall inhibit
-        # kehittää = develop evolve improve elaborate
-        # kehottaa = urge recommend invite advise
-        # kieltää = prohibit forbid
-        # lähettää = send broadcast post transmit
-        # laittaa = put lay set fix
-        # olla = be exist have hold
-        # pyytää = request ask demand seek
-        # sallia = allow permit let tolerate
-        # suositella = recommend commend
-        # työskennellä = work
-        # varoittaa = warn caution dissuade
-        @nomcontrol =
-        (
-            # Modality / external circumstances:
-            # pystyä = can
-            qw(pystyä),
-            # Modality / will of the actor:
-            # Weak positive:
-            # haluta = want; kiinnostua = be interested in; tarjoutua = offer
-            qw(haluta kiinnostua tarjoutua),
-            # Strong positive:
-            # päättää = decide; luvata = promise; suostua = agree
-            qw(päättää luvata suostua),
-            # Strong negative:
-            # kieltäytyä = refuse
-            qw(kieltäytyä),
-            # Weak negative:
-            # epäröidä = hesitate
-            qw(epäröidä),
-            # Passive negative:
-            #qw(zabudnúť zabúdať opomenúť),
-            # Ability:
-            # onnistua = succeed; yrittää = try; koettaa = try; pyrkiä = strive;
-            # osata = know, master
-            qw(onnistua yrittää koettaa pyrkiä osata),
-            # Aspect and phase:
-            # alkaa = begin; keskittyä = attend, settle down; koittaa = break;
-            # päätyä = end up, finish up
-            qw(alkaa keskittyä koittaa päätyä),
-            # Movement (to go somewhere to do something):
-            #qw(ísť chodiť utekať ponáhľať jet jazdiť odísť odchádzať prísť přichádzať),
-            # Other action than movement:
-            # kiirehtiä = rush; palata = return, revive
-            qw(kiirehtiä palata),
-            # Attitude of the speaker:
-            # viitsiä = bother
-            qw(viitsiä),
-        );
-    }
-    elsif($self->language() eq 'et') #------------------------------------------------------------------------------------------------------------------
-    {
-        # Estonian verbs whose subject can control an open complement (infinitive).
-        # aitama = help assist aid
-        # soovitama = recommend commend suggest
-        # laskma = have let allow
-        # paluma = ask pray beg
-        # lubama = allow permit let authorize
-        # saama = receive become get acquire
-        # tegema = do perform make execute
-        # võimaldama = enable allow permit
-        # andma = give grant yield allow
-        # jõudma = reach arrive come get
-        # käskima = command order tell
-        # keelama = prohibit forbid ban
-        # olenema = depend turn
-        @nomcontrol =
-        (
-            # Modality / external circumstances:
-            # suutma = can; pruukima = need
-            qw(suutma pruukima),
-            # Modality / will of the actor:
-            # Weak positive:
-            # tahtma = want; julgema = dare; soovima = wish; kavatsema = plan;
-            # lootma = hope; pakkuma = offer; söandama = dare
-            qw(tahtma julgema soovima kavatsema lootma pakkuma söandama),
-            # Strong positive:
-            # otsustama = decide; võtma = admit
-            qw(otsustama võtma),
-            # Strong negative:
-            # keelduma = refuse
-            qw(keelduma),
-            # Weak negative:
-            # jaksama = endure; kannatama = suffer; kartma = fear; muretsema = worry
-            qw(jaksama kannatama kartma muretsema),
-            # Passive negative:
-            #qw(zabudnúť zabúdať opomenúť),
-            # Ability:
-            # oskama = know how; püüdma = strive; üritama = try; proovima = try;
-            # katsuma = attempt
-            qw(oskama püüdma üritama proovima katsuma),
-            # Aspect and phase:
-            # algama = begin
-            qw(algama),
-            # Movement (to go somewhere to do something):
-            #qw(ísť chodiť utekať ponáhľať jet jazdiť odísť odchádzať prísť přichádzať),
-            # Other action than movement:
-            # kiirustama = rush
-            qw(kiirustama),
-            # Attitude of the speaker:
-            # viitsima = bother; suvatsema = deign
-            qw(viitsima suvatsema),
-        );
-    }
+    my ($nom, $dat, $acc) = $self->get_control_lemmas();
+    my @nomcontrol = @{$nom};
+    my @datcontrol = @{$dat};
+    my @acccontrol = @{$acc};
     foreach my $gv (@gverbs)
     {
         my $lemma = $gv->lemma();
@@ -1435,6 +1009,250 @@ sub get_first_edeprel_to_parent_n
         log_fatal("No relation to parent with ord '$parentord' found.");
     }
     return $edges_from_n[0][1];
+}
+
+
+
+#==============================================================================
+# Language-specific lists of lemmas.
+#==============================================================================
+
+
+
+#------------------------------------------------------------------------------
+# Returns the language-specific list of lemmas (typically verbs, but some of
+# them are adjectives) that control their open complements (typically
+# infinitives): the subject of the infinitive is coreferential with a
+# particular argument of the controlling verb.
+#------------------------------------------------------------------------------
+sub get_control_lemmas
+{
+    my $self = shift;
+    my $language = $self->language();
+    # nom: verbs whose subject (nominative argument) is coreferential with the subject of xcomp
+    # dat: verbs whose dative argument is coreferential with the subject of xcomp
+    # acc: verbs whose accusative argument (object) is coreferential with the subject of xcomp
+    my %control; # $control{language}{nom} = \@nomcontrol;
+    # Subject / nominative argument control.
+    # Modality / external circumstances:
+    push(@{$control{cs}{nom}}, qw(moci mít muset musit smět potřebovat));
+    push(@{$control{sk}{nom}}, qw(môcť mať musieť smieť potrebovať));
+    push(@{$control{pl}{nom}}, qw(móc można mieć winien powinien musieć potrzebować));
+    # Note: должен is ADJ, not VERB, but otherwise it should work the same way.
+    push(@{$control{ru}{nom}}, qw(мочь должен требовать));
+    push(@{$control{lt}{nom}}, qw(galėti turėti reikėti privalėti tekti));
+    # Modality / will of the actor:
+    # Weak positive:
+    push(@{$control{cs}{nom}}, qw(chtít hodlat mínit plánovat zamýšlet toužit troufnout troufat odvážit odvažovat odhodlat odhodlávat zvyknout zvykat));
+    push(@{$control{sk}{nom}}, qw(chcieť hodlať mieniť plánovať zamýšľať túžiť želať trúfnuť trúfať odvážiť odvažovať odhodlať odhodlávať));
+    push(@{$control{pl}{nom}}, qw(chcieć zechcieć zamierzać myśleć pomyśleć planować deliberować woleć pragnąć marzyć śnić śmieć ośmielić odważyć lubić));
+    # Warning: желать can control either nominative or, if present, dative.
+    push(@{$control{ru}{nom}}, qw(хотеть захотеть планировать намереваться рассчитывать предпочесть предпочитать надеяться думать задумать придумать мечтать счесть сметь любить привыкнуть));
+    push(@{$control{lt}{nom}}, qw(siekti norėti norėtis planuoti ketinti numatyti mėgti));
+    # Strong positive:
+    push(@{$control{cs}{nom}}, qw(rozhodnout rozhodovat zavázat zavazovat přislíbit slíbit slibovat));
+    push(@{$control{sk}{nom}}, qw(rozhodnúť rozhodovať zaviazať zaväzovať prisľúbiť sľúbiť sľubovať));
+    push(@{$control{pl}{nom}}, qw(postanowić postanawiać decydować zdecydować obiecać obiecywać ślubować zgodzić));
+    push(@{$control{ru}{nom}}, qw(решить решать решиться решаться собраться обещать пообещать согласиться договориться гарантировать));
+    push(@{$control{lt}{nom}}, qw(nuspręsti));
+    # Strong negative:
+    push(@{$control{cs}{nom}}, qw(odmítnout odmítat));
+    push(@{$control{sk}{nom}}, qw(odmietnuť odmietať));
+    push(@{$control{ru}{nom}}, qw(отказаться отказываться));
+    # Weak negative:
+    push(@{$control{cs}{nom}}, qw(bát obávat stydět zdráhat ostýchat rozmyslit rozpakovat váhat));
+    push(@{$control{sk}{nom}}, qw(báť obávať hanbiť zdráhať ostýchať rozmyslieť rozpakovať váhať));
+    push(@{$control{pl}{nom}}, qw(obawiać));
+    push(@{$control{ru}{nom}}, qw(бояться));
+    push(@{$control{lt}{nom}}, qw(atsisakyti bijoti));
+    # Passive negative:
+    push(@{$control{cs}{nom}}, qw(zapomenout zapomínat opomenout opomíjet));
+    push(@{$control{sk}{nom}}, qw(zabudnúť zabúdať opomenúť));
+    push(@{$control{pl}{nom}}, qw(zapomnieć omieszkać));
+    push(@{$control{ru}{nom}}, qw(забыть забывать));
+    # Ability:
+    push(@{$control{cs}{nom}}, qw(umět dokázat dovést snažit namáhat usilovat pokusit pokoušet zkusit zkoušet stačit stihnout stíhat zvládnout zvládat));
+    push(@{$control{sk}{nom}}, qw(vedieť dokázať doviesť snažiť namáhať usilovať pokúsiť pokúšať skúsiť skúšať stačiť stihnúť stíhať zvládnuť vládať));
+    push(@{$control{pl}{nom}}, qw(umieć wiedzieć potrafić zdążyć zdołać starać postarać usiłować próbować spróbować));
+    push(@{$control{ru}{nom}}, qw(уметь знать успеть успевать пытаться стремиться стараться браться норовить затрудниться пробовать учиться научиться));
+    push(@{$control{lt}{nom}}, qw(bandyti pabandyti stengtis mėginti pasistengti sugebėti išmokti mokytis pavykti));
+    # Aspect and phase:
+    push(@{$control{cs}{nom}}, qw(chystat začít začínat jmout počít počínat zůstat vydržet přestat přestávat končit skončit));
+    push(@{$control{sk}{nom}}, qw(chystať začať začínať počať počínať zostať ostať vytrvať prestať prestávať končiť skončiť));
+    push(@{$control{pl}{nom}}, qw(zacząć zaczynać jąć począć poczynać pozostawać przestać przestawać kończyć skończyć powstrzymywać));
+    push(@{$control{ru}{nom}}, qw(собираться готовиться начать начинать приняться продолжить продолжать остаться оставаться уставать перестать переставать прекратить));
+    push(@{$control{lt}{nom}}, qw(pradėti belikti telikti));
+    # Movement (to go somewhere to do something):
+    push(@{$control{cs}{nom}}, qw(jít chodit utíkat spěchat jet jezdit odejít odcházet odjet odjíždět přijít přicházet přijet přijíždět));
+    push(@{$control{sk}{nom}}, qw(ísť chodiť utekať ponáhľať jet jazdiť odísť odchádzať prísť přichádzať));
+    push(@{$control{pl}{nom}}, qw(iść pójść chodzić jechać przyjść przychodzić wydawać));
+    push(@{$control{ru}{nom}}, qw(пойти идти ездить отправиться спешить торопиться прийти приходить приехать));
+    # Other action than movement:
+    push(@{$control{cs}{nom}}, qw(vzít)); # vzít si za úkol
+    push(@{$control{sk}{nom}}, qw(vziať)); # vzít si za úkol
+    push(@{$control{pl}{nom}}, qw(kłaść));
+    push(@{$control{ru}{nom}}, qw(догадаться));
+    push(@{$control{lt}{nom}}, qw(imti));
+    # Attitude or perspective of the speaker:
+    push(@{$control{cs}{nom}}, qw(zdát hrozit ráčit));
+    push(@{$control{sk}{nom}}, qw(zdať hroziť ráčiť));
+    push(@{$control{pl}{nom}}, qw(zdawać raczyć));
+    push(@{$control{ru}{nom}}, qw(рискнуть рисковать грозить));
+    push(@{$control{lt}{nom}}, qw(rizikuoti));
+    # Pseudocopulas: (not "znamenat" / "znamenať" / "значить", there is no coreference!)
+    push(@{$control{cs}{nom}}, qw(působit pracovat cítit ukazovat ukázat));
+    push(@{$control{sk}{nom}}, qw(pôsobiť pracovať cítiť ukazovať ukázať));
+    push(@{$control{ru}{nom}}, qw(стать считать));
+    # Dative argument control.
+    # Enabling:
+    push(@{$control{cs}{dat}}, qw(umožnit umožňovat dovolit dovolovat povolit povolovat dát dávat příslušet));
+    push(@{$control{sk}{dat}}, qw(umožniť umožňovať dovoliť dovoľovať povoliť povoľovať dať dávať prináležať));
+    push(@{$control{pl}{dat}}, qw(dozwolić pozwolić pozwalać dać dawać należeć pozostawać));
+    push(@{$control{ru}{dat}}, qw(разрешить разрешать позволить позволять напозволять дать давать доверить доверять предоставить предоставлять));
+    push(@{$control{lt}{dat}}, qw(leisti));
+    # Modality / will of the actor:
+    push(@{$control{ru}{dat}}, qw(хотеться захотеться быть прийтись));
+    # Recommendation:
+    push(@{$control{cs}{dat}}, qw(doporučit doporučovat navrhnout navrhovat poradit radit));
+    push(@{$control{sk}{dat}}, qw(odporučiť odporúčať navrhnúť navrhovať poradiť radiť hovoriť povedať pobádať));
+    push(@{$control{pl}{dat}}, qw(polecić zalecać proponować radzić));
+    push(@{$control{ru}{dat}}, qw(рекомендовать предложить предлагать советовать посоветовать сказать подсказать подсказывать));
+    push(@{$control{lt}{dat}}, qw(siūlyti pasiūlyti patarti raginti rekomenduoti));
+    # Order:
+    push(@{$control{cs}{dat}}, qw(uložit ukládat přikázat přikazovat nařídit nařizovat velet klást kázat));
+    push(@{$control{sk}{dat}}, qw(uložiť ukladať prikázať prikazovať nariadiť nariaďovať veliť klásť kázať));
+    push(@{$control{pl}{dat}}, qw(rozkazać rozkazować nakazać nakazywać kazać));
+    push(@{$control{ru}{dat}}, qw(задать задавать приказать приказывать поручить поручать командовать велеть предписать заказать наказать));
+    # Negative order, disabling:
+    push(@{$control{cs}{dat}}, qw(bránit zabránit zabraňovat znemožnit znemožňovat zakázat zakazovat zapovědět zapovídat));
+    push(@{$control{sk}{dat}}, qw(brániť zabrániť zabraňovať znemožniť znemožňovať zakázať zakazovať));
+    push(@{$control{pl}{dat}}, qw(szkodzić przeszkadzać));
+    push(@{$control{ru}{dat}}, qw(мешать запретить запрещать препятствовать));
+    # Success:
+    push(@{$control{cs}{dat}}, qw(podařit dařit));
+    push(@{$control{sk}{dat}}, qw(podariť dariť postačiť));
+    push(@{$control{pl}{dat}}, qw(udać udawać zdążyć zdarzać opłacać wypadać));
+    push(@{$control{ru}{dat}}, qw(удаться));
+    # Object / accusative argument control.
+    # Enabling or request:
+    push(@{$control{cs}{acc}}, qw(oprávnit opravňovat zmocnit zmocňovat prosit poprosit pustit));
+    push(@{$control{sk}{acc}}, qw(oprávniť opravňovať zmocniť zmocňovať prosiť poprosiť pustiť));
+    push(@{$control{ru}{acc}}, qw(просить попросить призвать призывать звать пригласить приглашать заклинать));
+    push(@{$control{lt}{acc}}, qw(prašyti paprašyti));
+    # Order, enforcement, encouragement:
+    push(@{$control{cs}{acc}}, qw(donutit přinutit nutit přimět zavázat zavazovat pověřit pověřovat přesvědčit přesvědčovat odsoudit odsuzovat));
+    push(@{$control{sk}{acc}}, qw(donútiť prinútiť nútiť zaviazať zaväzovať poveriť poverovať presvedčiť presviedčať odsúdiť odsudzovať));
+    push(@{$control{ru}{acc}}, qw(вынудить вынуждать понуждать принудить принуждать заставить заставлять побудить побуждать поручить поручать убедить убеждать уговаривать обязать обязывать стимулировать вдохновить вдохновлять мотивировать подвинуть поощрять провоцировать тянуть уговорить));
+    push(@{$control{lt}{acc}}, qw(priversti));
+    # Teaching:
+    push(@{$control{cs}{acc}}, qw(učit naučit odnaučit odnaučovat));
+    push(@{$control{sk}{acc}}, qw(učiť naučiť odnaučiť odučovať));
+    push(@{$control{pl}{acc}}, qw(uczyć nauczyć));
+    push(@{$control{ru}{acc}}, qw(учить научить обучить обучать отучить отучать));
+    push(@{$control{lt}{acc}}, qw(mokyti));
+    # Movement (to send somebody somewhere to do something):
+    push(@{$control{ru}{acc}}, qw(отправить отправлять послать отослать присылать брать));
+    # Seeing (viděl umírat lidi):
+    push(@{$control{cs}{acc}}, qw(vidět));
+    push(@{$control{sk}{acc}}, qw(vidieť));
+    push(@{$control{pl}{acc}}, qw(widzieć));
+    push(@{$control{ru}{acc}}, qw(видеть));
+    # Pseudocopulas:
+    push(@{$control{cs}{acc}}, qw(činit učinit));
+    push(@{$control{sk}{acc}}, qw(činiť urobiť));
+
+    # Uralic languages.
+    # Subject / nominative argument control.
+    # Modality / external circumstances:
+    # pystyä = can
+    push(@{$control{fi}{nom}}, qw(pystyä));
+    # suutma = can; pruukima = need
+    push(@{$control{et}{nom}}, qw(suutma pruukima));
+    # Modality / will of the actor:
+    # Weak positive:
+    # haluta = want; kiinnostua = be interested in; tarjoutua = offer
+    push(@{$control{fi}{nom}}, qw(haluta kiinnostua tarjoutua));
+    # tahtma = want; julgema = dare; soovima = wish; kavatsema = plan;
+    # lootma = hope; pakkuma = offer; söandama = dare
+    push(@{$control{et}{nom}}, qw(tahtma julgema soovima kavatsema lootma pakkuma söandama));
+    # Strong positive:
+    # päättää = decide; luvata = promise; suostua = agree
+    push(@{$control{fi}{nom}}, qw(päättää luvata suostua));
+    # otsustama = decide; võtma = admit
+    push(@{$control{et}{nom}}, qw(otsustama võtma));
+    # Strong negative:
+    # kieltäytyä = refuse
+    push(@{$control{fi}{nom}}, qw(kieltäytyä));
+    # keelduma = refuse
+    push(@{$control{et}{nom}}, qw(keelduma));
+    # Weak negative:
+    # epäröidä = hesitate
+    push(@{$control{fi}{nom}}, qw(epäröidä));
+    # jaksama = endure; kannatama = suffer; kartma = fear; muretsema = worry
+    push(@{$control{et}{nom}}, qw(jaksama kannatama kartma muretsema));
+    # Ability:
+    # onnistua = succeed; yrittää = try; koettaa = try; pyrkiä = strive;
+    # osata = know, master
+    push(@{$control{fi}{nom}}, qw(onnistua yrittää koettaa pyrkiä osata));
+    # oskama = know how; püüdma = strive; üritama = try; proovima = try;
+    # katsuma = attempt
+    push(@{$control{et}{nom}}, qw(oskama püüdma üritama proovima katsuma));
+    # Aspect and phase:
+    # alkaa = begin; keskittyä = attend, settle down; koittaa = break;
+    # päätyä = end up, finish up
+    push(@{$control{fi}{nom}}, qw(alkaa keskittyä koittaa päätyä));
+    # algama = begin
+    push(@{$control{et}{nom}}, qw(algama));
+    # Other action than movement:
+    # kiirehtiä = rush; palata = return, revive
+    push(@{$control{fi}{nom}}, qw(kiirehtiä palata));
+    # kiirustama = rush
+    push(@{$control{et}{nom}}, qw(kiirustama));
+    # Attitude of the speaker:
+    # viitsiä = bother
+    push(@{$control{fi}{nom}}, qw(viitsiä));
+    # viitsima = bother; suvatsema = deign
+    push(@{$control{et}{nom}}, qw(viitsima suvatsema));
+
+    # Other Finnish verbs whose subject can control an open complement (infinitive).
+    # saada = get have make obtain
+    # tulla = become come get arrive
+    # auttaa = help assist aid
+    # antaa = give let issue deliver
+    # kannustaa = encourage urge stimulate
+    # käydä = visit call go run
+    # käyttää = use exercise wear operate
+    # pakottaa = force drive compel oblige
+    # asettaa = set lay position place
+    # estää = prevent preclude forestall inhibit
+    # kehittää = develop evolve improve elaborate
+    # kehottaa = urge recommend invite advise
+    # kieltää = prohibit forbid
+    # lähettää = send broadcast post transmit
+    # laittaa = put lay set fix
+    # olla = be exist have hold
+    # pyytää = request ask demand seek
+    # sallia = allow permit let tolerate
+    # suositella = recommend commend
+    # työskennellä = work
+    # varoittaa = warn caution dissuade
+
+    # Other Estonian verbs whose subject can control an open complement (infinitive).
+    # aitama = help assist aid
+    # soovitama = recommend commend suggest
+    # laskma = have let allow
+    # paluma = ask pray beg
+    # lubama = allow permit let authorize
+    # saama = receive become get acquire
+    # tegema = do perform make execute
+    # võimaldama = enable allow permit
+    # andma = give grant yield allow
+    # jõudma = reach arrive come get
+    # käskima = command order tell
+    # keelama = prohibit forbid ban
+    # olenema = depend turn
+
+    return ($control{$language}{nom}, $control{$language}{dat}, $control{$language}{acc});
 }
 
 
