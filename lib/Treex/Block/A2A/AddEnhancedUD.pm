@@ -410,8 +410,16 @@ sub add_enhanced_external_subject
                 }
                 my $edeprel = $edeps[0][1];
                 # If the control verb is in passive form, its subject is [nc]subj:pass.
-                # However, it should be an active subject of the controlled verb (see the Russian example above).
-                $edeprel =~ s/:pass//;
+                # However, it should be an active subject of the controlled verb (see the Russian example above),
+                # unless the controlled verb is also passive, as in [ru]:
+                # Алгоритм может быть записан словами. ("An algorithm can be written in words.")
+                ###!!! We rely on the VerbForm=Pass feature of the controlled verb.
+                ###!!! This will work in Russian where we will see a passive participle.
+                ###!!! But it may not work in other languages where the passive clause must be recognized by auxiliaries.
+                unless($node->iset()->is_passive())
+                {
+                    $edeprel =~ s/:pass//;
+                }
                 # We could now add the ':xsubj' subtype to the relation label.
                 # But we would first have to remove the previous subtype, if any.
                 $self->add_enhanced_dependency($subject, $node, $edeprel);
