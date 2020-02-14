@@ -372,9 +372,9 @@ sub add_enhanced_external_subject
         $self->add_enhanced_external_subject($gv, $visited);
     }
     my ($nom, $dat, $acc) = $self->get_control_lemmas();
-    my @nomcontrol = @{$nom};
-    my @datcontrol = @{$dat};
-    my @acccontrol = @{$acc};
+    my @nomcontrol = defined($nom) ? @{$nom} : ();
+    my @datcontrol = defined($dat) ? @{$dat} : ();
+    my @acccontrol = defined($acc) ? @{$acc} : ();
     foreach my $gv (@gverbs)
     {
         my $lemma = $gv->lemma();
