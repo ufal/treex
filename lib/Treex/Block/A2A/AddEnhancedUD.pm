@@ -1207,8 +1207,8 @@ sub get_control_lemmas
     # Strong positive:
     # päättää = decide; luvata = promise; suostua = agree
     push(@{$control{fi}{nom}}, qw(päättää luvata suostua));
-    # otsustama = decide; võtma = admit
-    push(@{$control{et}{nom}}, qw(otsustama võtma));
+    # otsustama = decide
+    push(@{$control{et}{nom}}, qw(otsustama));
     # Strong negative:
     # kieltäytyä = refuse
     push(@{$control{fi}{nom}}, qw(kieltäytyä));
@@ -1243,7 +1243,9 @@ sub get_control_lemmas
     # viitsima = bother; suvatsema = deign
     push(@{$control{et}{nom}}, qw(viitsima suvatsema));
 
-    # Other Finnish verbs whose subject can control an open complement (infinitive).
+    # Other Finnish verbs that have been observed governing an xcomp and not governing an obj.
+    # Note that this does not imply that their subject controls the open complement (infinitive).
+    # The open complement can be controlled by an oblique argument rather than object.
     # saada = get have make obtain
     # tulla = become come get arrive
     # auttaa = help assist aid
@@ -1266,7 +1268,9 @@ sub get_control_lemmas
     # työskennellä = work
     # varoittaa = warn caution dissuade
 
-    # Other Estonian verbs whose subject can control an open complement (infinitive).
+    # Other Estonian verbs that have been observed governing an xcomp and not governing an obj.
+    # Note that this does not imply that their subject controls the open complement (infinitive).
+    # The open complement can be controlled by an oblique argument (adessive) rather than object.
     # aitama = help assist aid
     # soovitama = recommend commend suggest
     # laskma = have let allow
@@ -1280,6 +1284,7 @@ sub get_control_lemmas
     # käskima = command order tell
     # keelama = prohibit forbid ban
     # olenema = depend turn
+    # võtma = admit
 
     return ($control{$language}{nom}, $control{$language}{dat}, $control{$language}{acc});
 }
