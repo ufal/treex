@@ -42,7 +42,7 @@ sub process_zone
         {
             my $to = $from + $l;
             $anode->wild()->{anchor} = {'from' => $from, 'to' => $to};
-            $sentence_rest = substr($sentence_rest, $to);
+            $sentence_rest = substr($sentence_rest, $l);
             $from = $to;
             my $nspaces = $sentence_rest =~ s/^\s+//;
             $from += $nspaces;
