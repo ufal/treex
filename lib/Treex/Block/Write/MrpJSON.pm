@@ -50,6 +50,7 @@ sub process_zone
         else
         {
             # For debugging purposes, show the anchoring of the previous tokens.
+            log_warn($zone->sentence());
             foreach my $a (@anodes)
             {
                 if($a == $anode)
