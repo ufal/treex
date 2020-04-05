@@ -103,6 +103,7 @@ sub process_zone
     # provide the anchoring of the nodes in the input text.
     my @tnodes = $troot->get_descendants({ordered => 1});
     my @nodes_json = ();
+    my @edges_json = ();
     foreach my $tnode (@tnodes)
     {
         my @node_json = ();
@@ -144,8 +145,10 @@ sub process_zone
         ###!!! Temporarily turning off the valency frame. Need to fix the path to the valency dictionary.
         #$tnode->wild()->{valency_frame} = $self->get_valency_frame($tnode);
         push(@nodes_json, \@node_json);
+        push(@edges_json, [['source', $tnode->id()], ['target', $tnode->parent()->id()], ['label', $tnode->functor()]]);
     }
     push(@json, ['nodes', \@nodes_json, 'list']);
+    push(@json, ['edges', \@edges_json, 'list']);
     # Encode JSON.
     my $json = $self->encode_json(@json);
     print {$self->_file_handle()} ("$json\n");
