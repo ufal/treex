@@ -151,7 +151,8 @@ sub process_zone
             $anode->wild()->{tnode} = $tnode unless(defined($anode->wild()->{tnode}));
             push(@{$anode->wild()->{tnodes}}, $tnode);
         }
-        $tnode->wild()->{valency_frame} = $self->get_valency_frame($tnode);
+        ###!!! Temporarily turning off the valency frame. Need to fix the path to the valency dictionary.
+        #$tnode->wild()->{valency_frame} = $self->get_valency_frame($tnode);
     }
     # We require that the token ids make an unbroken sequence, starting at 1.
     # Unfortunately, this is not guaranteed in all a-trees. For example, in PCEDT 2.0 file wsj_0006.treex.gz, sentence 1, several numbers are skipped.
