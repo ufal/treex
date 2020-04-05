@@ -138,15 +138,14 @@ sub process_zone
             push(@{$anode->wild()->{tnodes}}, $tnode);
             if(exists($anode->wild()->{anchor}))
             {
-                push(@node_json, ['anchorf', $anode->wild()->{anchor}->{from}]);
-                push(@node_json, ['anchort', $anode->wild()->{anchor}->{to}]);
+                push(@node_json, ['anchors', [[['from', $anode->wild()->{anchor}->{from}, 'numeric'],['to', $anode->wild()->{anchor}->{to}, 'numeric']]], 'list']);
             }
         }
         ###!!! Temporarily turning off the valency frame. Need to fix the path to the valency dictionary.
         #$tnode->wild()->{valency_frame} = $self->get_valency_frame($tnode);
         push(@nodes_json, \@node_json);
     }
-    push(@json, ['nodes', \@nodes_json]);
+    push(@json, ['nodes', \@nodes_json, 'list']);
     # Encode JSON.
     my $json = $self->encode_json(@json);
     print {$self->_file_handle()} ("$json\n");
@@ -181,21 +180,29 @@ sub encode_json
     {
         my $name = '"'.$pair->[0].'"';
         my $value;
-        if(ref($pair->[1]) eq 'ARRAY')
+        if(defined($pair->[2]))
         {
-            my @array_json = ();
-            foreach my $element (@{$pair->[1]})
+            if($pair->[2] eq 'list')
             {
-                my $element_json = $self->encode_json(@{$element});
-                push(@array_json, $element_json);
+                # Assume that each list element is a structure.
+                my @array_json = ();
+                foreach my $element (@{$pair->[1]})
+                {
+                    my $element_json = $self->encode_json(@{$element});
+                    push(@array_json, $element_json);
+                }
+                $value = '['.join(',', @array_json).']';
             }
-            $value = '['.join(',', @array_json).']';
+            elsif($pair->[2] eq 'numeric')
+            {
+                $value = $pair->[1];
+            }
+            else
+            {
+                log_fatal("Unknown value type '$pair->[2]'.");
+            }
         }
-        elsif(defined($pair->[2]) && $pair->[2] eq 'numeric')
-        {
-            $value = $pair->[1];
-        }
-        else
+        else # value is a string
         {
             $value = $pair->[1];
             $value =~ s/"/\\"/g;
