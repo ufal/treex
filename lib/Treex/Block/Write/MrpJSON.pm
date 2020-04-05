@@ -99,15 +99,25 @@ sub process_zone
     $sentence =~ s/"/\\"/g;
     push(@json, ['input', $sentence]);
     ###!!! Add "tops": [8],
+    # Assign integer numbers to nodes for the purpose of the JSON references.
+    # Users are used to integer node identifiers, so we will not use $tnode->id(),
+    # which is a string like 'EnglishT-wsj_0001-s2-t3'.
+    my @tnodes = $troot->get_descendants({ordered => 1});
+    my %id;
+    my $i = 0;
+    foreach my $tnode (@tnodes)
+    {
+        $id{$tnode->id()} = $i;
+        $i++;
+    }
     # Compute correspondences between t-nodes and a-nodes. We will need them to
     # provide the anchoring of the nodes in the input text.
-    my @tnodes = $troot->get_descendants({ordered => 1});
     my @nodes_json = ();
     my @edges_json = ();
     foreach my $tnode (@tnodes)
     {
         my @node_json = ();
-        push(@node_json, ['id', $tnode->id()]);
+        push(@node_json, ['id', $id{$tnode->id()}, 'numeric']);
         push(@node_json, ['label', $tnode->t_lemma()]);
         my $anode = $tnode->get_lex_anode();
         if(!defined($anode))
@@ -145,7 +155,7 @@ sub process_zone
         ###!!! Temporarily turning off the valency frame. Need to fix the path to the valency dictionary.
         #$tnode->wild()->{valency_frame} = $self->get_valency_frame($tnode);
         push(@nodes_json, \@node_json);
-        push(@edges_json, [['source', $tnode->id()], ['target', $tnode->parent()->id()], ['label', $tnode->functor()]]);
+        push(@edges_json, [['source', $id{$tnode->id()}, 'numeric'], ['target', $id{$tnode->parent()->id()}, 'numeric'], ['label', $tnode->functor()]]);
     }
     push(@json, ['nodes', \@nodes_json, 'list']);
     push(@json, ['edges', \@edges_json, 'list']);
