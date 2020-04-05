@@ -95,33 +95,19 @@ sub process_zone
     # stamp, no?
     push(@json, ['time', '2020-04-04 (10:00)']);
     # Full sentence text.
-    push(@json, ['input', $zone->sentence()]);
-    # Encode JSON.
-    my @json1 = ();
-    foreach my $pair (@json)
-    {
-        my $name = '"'.$pair->[0].'"';
-        my $value;
-        if(defined($pair->[2]) && $pair->[2] eq 'numeric')
-        {
-            $value = $pair->[1];
-        }
-        else
-        {
-            $value = $pair->[1];
-            $value =~ s/"/\\"/g;
-            $value = '"'.$value.'"';
-        }
-        push(@json1, "$name: $value");
-    }
-    my $json = '{'.join(', ', @json1).'}';
-    print {$self->_file_handle()} ("$json\n");
-    ###!!! FIX THE REST!
+    my $sentence = $zone->sentence();
+    $sentence =~ s/"/\\"/g;
+    push(@json, ['input', $sentence]);
+    ###!!! Add "tops": [8],
     # Compute correspondences between t-nodes and a-nodes. We will need them to
     # provide the anchoring of the nodes in the input text.
     my @tnodes = $troot->get_descendants({ordered => 1});
+    my @nodes_json = ();
     foreach my $tnode (@tnodes)
     {
+        my @node_json = ();
+        push(@node_json, ['id', $tnode->id()]);
+        push(@node_json, ['label', $tnode->tlemma()]);
         my $anode = $tnode->get_lex_anode();
         if(!defined($anode))
         {
@@ -150,14 +136,21 @@ sub process_zone
             # We store separately links to all t-nodes found for functions that can use them all.
             $anode->wild()->{tnode} = $tnode unless(defined($anode->wild()->{tnode}));
             push(@{$anode->wild()->{tnodes}}, $tnode);
+            if(exists($anode->wild()->{anchor}))
+            {
+                push(@node_json, ['anchorf', $anode->wild()->{anchor}->{from}]);
+                push(@node_json, ['anchort', $anode->wild()->{anchor}->{to}]);
+            }
         }
         ###!!! Temporarily turning off the valency frame. Need to fix the path to the valency dictionary.
         #$tnode->wild()->{valency_frame} = $self->get_valency_frame($tnode);
+        push(@nodes_json, \@node_json);
     }
-    # We require that the token ids make an unbroken sequence, starting at 1.
-    # Unfortunately, this is not guaranteed in all a-trees. For example, in PCEDT 2.0 file wsj_0006.treex.gz, sentence 1, several numbers are skipped.
-    # So we have to re-index the nodes ourselves.
-    $aroot->_normalize_node_ordering();
+    push(@json, ['nodes', \@nodes_json]);
+    # Encode JSON.
+    my $json = $self->encode_json(@json);
+    print {$self->_file_handle()} ("$json\n");
+    ###!!! FIX THE REST!
     @anodes = $aroot->get_descendants({ordered => 1});
     my @frames = ([]); # identifiers of valency frames for nodes that have them; dummy first element for the root node [0]
     foreach my $anode (@anodes)
@@ -166,8 +159,52 @@ sub process_zone
         my $tag = $anode->tag();
         my $form = $self->decode_characters($anode->form(), $tag);
         my $lemma = $self->get_lemma($anode);
-        push(@frames, $self->get_valency_frame_for_a_node($anode));
+        #push(@frames, $self->get_valency_frame_for_a_node($anode));
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes a list of pairs [name, value] and returns the corresponding JSON
+# structure {"name1": "value1", "name2": "value2"}. The pair is an arrayref;
+# if there is a third element in the array and it says "numeric", then the
+# value is treated as numeric, i.e., it is not enclosed in quotation marks.
+#------------------------------------------------------------------------------
+sub encode_json
+{
+    my $self = shift;
+    my @json = @_;
+    # Encode JSON.
+    my @json1 = ();
+    foreach my $pair (@json)
+    {
+        my $name = '"'.$pair->[0].'"';
+        my $value;
+        if(ref($pair->[1]) eq 'ARRAY')
+        {
+            my @array_json = ();
+            foreach my $element (@{$pair->[1]})
+            {
+                my $element_json = $self->encode_json(@{$element});
+                push(@array_json, $element_json);
+            }
+            $value = '['.join(',', @array_json).']';
+        }
+        elsif(defined($pair->[2]) && $pair->[2] eq 'numeric')
+        {
+            $value = $pair->[1];
+        }
+        else
+        {
+            $value = $pair->[1];
+            $value =~ s/"/\\"/g;
+            $value = '"'.$value.'"';
+        }
+        push(@json1, "$name: $value");
+    }
+    my $json = '{'.join(', ', @json1).'}';
+    return $json;
 }
 
 
