@@ -49,7 +49,7 @@ sub process_zone
         }
         else
         {
-            log_fatal("Word form '$form' does not match the rest of sentence '$sentence'.");
+            log_fatal("Word form '$form' does not match the rest of sentence '$sentence_rest'.");
         }
     }
     my @json = ();
