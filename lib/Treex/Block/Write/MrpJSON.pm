@@ -125,6 +125,8 @@ sub process_zone
         push(@node_json, ['id', $id{$tnode->id()}, 'numeric']);
         push(@node_json, ['label', $tnode->t_lemma()]);
         my $anode = $tnode->get_lex_anode();
+        ###!!! If there are other corresponding a-nodes (function words), add them to the anchors.
+        ###!!! Add coreference to edges.
         if(!defined($anode))
         {
             # Sometimes there is no direct link from a generated t-node to an a-node,
@@ -136,6 +138,11 @@ sub process_zone
             my @coref_tnodes = $tnode->get_coref_nodes();
             # We are only interested in nodes that are in the same sentence.
             @coref_tnodes = grep {$_->get_root() == $troot} @coref_tnodes;
+            ###!!! Experimental: Add coreference edges. (But we should also distinguish grammatical and textual coreference!)
+            foreach my $corefnode (@coref_tnodes)
+            {
+                push(@edges_json, [['source', $id{$tnode->id()}, 'numeric'], ['target', $id{$corefnode->id()}, 'numeric'], ['label', 'coref']]);
+            }
             # We are only interested in nodes that are realized on surface.
             my @coref_anodes = grep {defined($_)} map {$_->get_lex_anode()} @coref_tnodes;
             ###!!! We do not know how to choose one of several coreference targets. We will pick the first one.
