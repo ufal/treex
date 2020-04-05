@@ -49,6 +49,18 @@ sub process_zone
         }
         else
         {
+            # For debugging purposes, show the anchoring of the previous tokens.
+            foreach my $a (@anodes)
+            {
+                if($a == $anode)
+                {
+                    last;
+                }
+                my $f = $a->form();
+                my $af = $a->wild()->{anchor}->{from};
+                my $at = $a->wild()->{anchor}->{to};
+                log_warn("'$f' from $af to $at");
+            }
             log_fatal("Word form '$form' does not match the rest of sentence '$sentence_rest'.");
         }
     }
