@@ -80,7 +80,7 @@ sub process_zone
     # 2 ... unanchored semantic graphs; correspondence between nodes and the
     #       surface string is not an inherent part of the representation of
     #       meaning.
-    push(@json, ['flavor', 0, 'numeric']);
+    push(@json, ['flavor', 1, 'numeric']);
     # Framework 'ptt' = Prague Tectogrammatical Trees (an established name,
     # although the coreference edges break treeness).
     push(@json, ['framework', 'ptt']);
@@ -93,7 +93,9 @@ sub process_zone
     # Time: Should this be the time when the file was generated? Then we should
     # probably make sure that all sentences in the file will get the same time
     # stamp, no?
-    push(@json, ['time', '2020-04-04 (10:00)']);
+    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
+    my $timestamp = sprintf("%4d-%02d-%02d (%02d:%02d)", $year, $mon+1, $mday, $hour, $min);
+    push(@json, ['time', $timestamp]);
     # Full sentence text.
     my $sentence = $zone->sentence();
     $sentence =~ s/"/\\"/g;
