@@ -143,9 +143,7 @@ sub process_zone
     # Unfortunately, this is not guaranteed in all a-trees. For example, in PCEDT 2.0 file wsj_0006.treex.gz, sentence 1, several numbers are skipped.
     # So we have to re-index the nodes ourselves.
     $aroot->_normalize_node_ordering();
-    my @anodes = $aroot->get_descendants({ordered => 1});
-    my @matrix = ([]); # right part of table, relations between nodes: $matrix[$i][$j]='ACT' means node $i depends on node $j and its role is ACT
-    my @roots; # binary value for each node index; roots as seen by Stephan Oepen, i.e. our children of the artificial root node
+    @anodes = $aroot->get_descendants({ordered => 1});
     my @frames = ([]); # identifiers of valency frames for nodes that have them; dummy first element for the root node [0]
     foreach my $anode (@anodes)
     {
