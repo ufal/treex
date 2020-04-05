@@ -220,7 +220,7 @@ sub encode_json
         }
         else # value is a string
         {
-            if(!defined($value))
+            if(!defined($pair->[1]))
             {
                 log_warn("Unknown value of attribute '$name'.");
             }
