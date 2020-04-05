@@ -107,7 +107,7 @@ sub process_zone
     {
         my @node_json = ();
         push(@node_json, ['id', $tnode->id()]);
-        push(@node_json, ['label', $tnode->tlemma()]);
+        push(@node_json, ['label', $tnode->t_lemma()]);
         my $anode = $tnode->get_lex_anode();
         if(!defined($anode))
         {
