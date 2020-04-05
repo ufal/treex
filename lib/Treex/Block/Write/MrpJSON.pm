@@ -105,6 +105,8 @@ sub process_zone
     my @tnodes = $troot->get_descendants({ordered => 1});
     my %id;
     my $i = 0;
+    $id{$troot->id()} = $i;
+    $i = 1;
     foreach my $tnode (@tnodes)
     {
         $id{$tnode->id()} = $i;
@@ -114,6 +116,7 @@ sub process_zone
     # provide the anchoring of the nodes in the input text.
     my @nodes_json = ();
     my @edges_json = ();
+    push(@nodes_json, [['id', $id{$troot->id()}, 'numeric'], ['label', '#Root']]);
     foreach my $tnode (@tnodes)
     {
         my @node_json = ();
@@ -155,7 +158,7 @@ sub process_zone
         ###!!! Temporarily turning off the valency frame. Need to fix the path to the valency dictionary.
         #$tnode->wild()->{valency_frame} = $self->get_valency_frame($tnode);
         push(@nodes_json, \@node_json);
-        push(@edges_json, [['source', $id{$tnode->id()}, 'numeric'], ['target', $id{$tnode->parent()->id()}, 'numeric'], ['label', $tnode->functor()]]);
+        push(@edges_json, [['source', $id{$tnode->parent()->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $tnode->functor()]]);
     }
     push(@json, ['nodes', \@nodes_json, 'list']);
     push(@json, ['edges', \@edges_json, 'list']);
@@ -217,6 +220,10 @@ sub encode_json
         }
         else # value is a string
         {
+            if(!defined($value))
+            {
+                log_warn("Unknown value of attribute '$name'.");
+            }
             $value = $pair->[1];
             $value =~ s/"/\\"/g;
             $value = '"'.$value.'"';
