@@ -62,6 +62,7 @@ sub process_zone
                 my $at = $a->wild()->{anchor}->{to};
                 log_warn("'$f' from $af to $at");
             }
+            log_warn("Current position = $from");
             log_fatal("Word form '$form' does not match the rest of sentence '$sentence_rest'.");
         }
     }
