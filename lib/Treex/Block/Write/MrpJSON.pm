@@ -94,7 +94,7 @@ sub process_zone
     # probably make sure that all sentences in the file will get the same time
     # stamp, no?
     my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
-    my $timestamp = sprintf("%4d-%02d-%02d (%02d:%02d)", $year, $mon+1, $mday, $hour, $min);
+    my $timestamp = sprintf("%4d-%02d-%02d (%02d:%02d)", $year+1900, $mon+1, $mday, $hour, $min);
     push(@json, ['time', $timestamp]);
     # Full sentence text.
     my $sentence = $zone->sentence();
