@@ -166,6 +166,11 @@ sub process_zone
         }
         my @properties = ();
         my @values = ();
+        if(defined($tnode->formeme()) && $tnode->formeme() ne '')
+        {
+            push(@properties, 'formeme');
+            push(@values, $tnode->formeme());
+        }
         # The block Write::SDP2015 reads engvallex.xml because it asks whether a frame role is obligatory.
         # We currently do not do that, so we can output the frame reference ($tnode->val_frame_rf())
         # without reading the frame from engvallex.xml to $tnode->wild()->{valency_frame}.
