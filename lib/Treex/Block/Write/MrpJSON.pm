@@ -153,19 +153,24 @@ sub process_zone
                 $anode = $coref_anodes[0];
             }
         }
+        my @anchors = ();
         if(defined($anode))
         {
             if(exists($anode->wild()->{anchor}))
             {
-                push(@node_json, ['anchors', [[['from', $anode->wild()->{anchor}->{from}, 'numeric'],['to', $anode->wild()->{anchor}->{to}, 'numeric']]], 'list of structures']);
+                push(@anchors, [['from', $anode->wild()->{anchor}->{from}, 'numeric'],['to', $anode->wild()->{anchor}->{to}, 'numeric']]);
             }
         }
         foreach my $aux (@auxiliaries)
         {
             if(exists($aux->wild()->{anchor}))
             {
-                push(@node_json, ['anchors', [[['from', $aux->wild()->{anchor}->{from}, 'numeric'],['to', $aux->wild()->{anchor}->{to}, 'numeric']]], 'list of structures']);
+                push(@anchors, [['from', $aux->wild()->{anchor}->{from}, 'numeric'],['to', $aux->wild()->{anchor}->{to}, 'numeric']]);
             }
+        }
+        if(scalar(@anchors) > 0)
+        {
+            push(@node_json, ['anchors', \@anchors, 'list of structures']);
         }
         my @properties = ();
         my @values = ();
