@@ -180,6 +180,8 @@ sub process_zone
         }
         if(scalar(@anchors) > 0)
         {
+            # Order the anchors left-to-right by their occurrence in the text.
+            @anchors = sort {my $r = $a->[0][1] <=> $b->[0][1]; unless($r) {$r = $a->[1][1] <=> $b->[1][1]} $r} (@anchors);
             push(@node_json, ['anchors', \@anchors, 'list of structures']);
         }
         my @properties = ();
