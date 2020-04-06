@@ -167,8 +167,11 @@ sub process_zone
         my @properties = ();
         my @values = ();
         $tnode->wild()->{valency_frame} = $self->get_valency_frame($tnode);
-        push(@properties, 'frame');
-        push(@values, $tnode->wild()->{valency_frame});
+        if(defined($tnode->wild()->{valency_frame}) && $tnode->wild()->{valency_frame} ne '')
+        {
+            push(@properties, 'frame');
+            push(@values, $tnode->wild()->{valency_frame});
+        }
         push(@node_json, ['properties', \@properties, 'list']);
         push(@node_json, ['values', \@values, 'list']);
         push(@nodes_json, \@node_json);
