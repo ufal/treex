@@ -100,7 +100,8 @@ sub process_zone
     my $sentence = $zone->sentence();
     $sentence =~ s/"/\\"/g;
     push(@json, ['input', $sentence]);
-    ###!!! Add "tops": [8],
+    # There is always one top node and it is always the artificial root (id 0).
+    push(@json, ['tops', [0], 'list of numeric']);
     ###!!! Někde vyřešit COORD.member a APPOS.member!
     # Assign integer numbers to nodes for the purpose of the JSON references.
     # Users are used to integer node identifiers, so we will not use $tnode->id(),
@@ -254,7 +255,17 @@ sub encode_json
                     $element_json = '"'.$element_json.'"';
                     push(@array_json, $element_json);
                 }
-                $value = '['.join(',', @array_json).']';
+                $value = '['.join(', ', @array_json).']';
+            }
+            elsif($pair->[2] eq 'list of numeric')
+            {
+                # Assume that each list element is numeric.
+                my @array_json = ();
+                foreach my $element (@{$pair->[1]})
+                {
+                    push(@array_json, $element);
+                }
+                $value = '['.join(', ', @array_json).']';
             }
             elsif($pair->[2] eq 'list of structures')
             {
@@ -265,7 +276,7 @@ sub encode_json
                     my $element_json = $self->encode_json(@{$element});
                     push(@array_json, $element_json);
                 }
-                $value = '['.join(',', @array_json).']';
+                $value = '['.join(', ', @array_json).']';
             }
             else
             {
