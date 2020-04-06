@@ -166,8 +166,11 @@ sub process_zone
         }
         my @properties = ();
         my @values = ();
-        $tnode->wild()->{valency_frame} = $self->get_valency_frame($tnode);
-        if(defined($tnode->wild()->{valency_frame}) && $tnode->wild()->{valency_frame} ne '')
+        # The block Write::SDP2015 reads engvallex.xml because it asks whether a frame role is obligatory.
+        # We currently do not do that, so we can output the frame reference ($tnode->val_frame_rf())
+        # without reading the frame from engvallex.xml to $tnode->wild()->{valency_frame}.
+        #$tnode->wild()->{valency_frame} = $self->get_valency_frame($tnode);
+        if(defined($tnode->val_frame_rf()) && $tnode->val_frame_rf() !~ m/^_?$/)
         {
             push(@properties, 'frame');
             push(@values, $tnode->wild()->{valency_frame});
