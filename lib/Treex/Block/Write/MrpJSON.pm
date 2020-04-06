@@ -31,14 +31,13 @@ sub process_zone
     # First character of the sentence has position 0. Node anchor is given as
     # a closed-open interval, i.e., the right margin is the position of the first
     # character outside the node.
-    ###!!! UNLIKE IN SDP WE STILL DID NOT DECODE THE PENN-TB CHARACTERS. WE MUST BE CAREFUL BECAUSE IT WILL AFFECT THE ANCHORING OFFSETS!
-    #my $form = $self->decode_characters($anode->form(), $tag);
-    my $sentence_rest = $zone->sentence();
+    my $sentence = $self->decode_characters($zone->sentence());
+    my $sentence_rest = $sentence;
     my @anodes = $aroot->get_descendants({'ordered' => 1});
     my $from = 0;
     foreach my $anode (@anodes)
     {
-        my $form = $anode->form();
+        my $form = $self->decode_characters($anode->form());
         my $l = length($form);
         if(substr($sentence_rest, 0, $l) eq $form)
         {
@@ -49,7 +48,7 @@ sub process_zone
             my $nspaces = $sentence_rest =~ s/^\s+//;
             $from += $nspaces;
         }
-        else
+        else # form does not match the rest of the sentence!
         {
             # For debugging purposes, show the anchoring of the previous tokens.
             log_warn($zone->sentence());
@@ -99,8 +98,6 @@ sub process_zone
     my $timestamp = sprintf("%4d-%02d-%02d (%02d:%02d)", $year+1900, $mon+1, $mday, $hour, $min);
     push(@json, ['time', $timestamp]);
     # Full sentence text.
-    my $sentence = $zone->sentence();
-    $sentence =~ s/"/\\"/g;
     push(@json, ['input', $sentence]);
     # There is always one top node and it is always the artificial root (id 0).
     push(@json, ['tops', [0], 'list of numeric']);
