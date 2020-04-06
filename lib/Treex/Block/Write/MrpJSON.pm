@@ -124,21 +124,6 @@ sub process_zone
         my @node_json = ();
         push(@node_json, ['id', $id{$tnode->id()}, 'numeric']);
         push(@node_json, ['label', $tnode->t_lemma()]);
-        # Get coreference edges.
-        my @gcoref = $tnode->get_coref_gram_nodes();
-        my @tcoref = $tnode->get_coref_text_nodes();
-        # We are only interested in nodes that are in the same sentence.
-        @gcoref = grep {$_->get_root() == $troot} (@gcoref);
-        foreach my $cnode (@gcoref)
-        {
-            push(@edges_json, [['source', $id{$tnode->id()}, 'numeric'], ['target', $id{$cnode->id()}, 'numeric'], ['label', 'coref.gram']]);
-        }
-        # We are only interested in nodes that are in the same sentence.
-        @tcoref = grep {$_->get_root() == $troot} (@tcoref);
-        foreach my $cnode (@tcoref)
-        {
-            push(@edges_json, [['source', $id{$tnode->id()}, 'numeric'], ['target', $id{$cnode->id()}, 'numeric'], ['label', 'coref.text']]);
-        }
         # A t-node refers to zero or one lexical a-node, and to any number of auxiliary a-nodes.
         my $anode = $tnode->get_lex_anode();
         my @auxiliaries = $tnode->get_aux_anodes();
@@ -155,26 +140,6 @@ sub process_zone
             if(exists($aux->wild()->{anchor}))
             {
                 push(@anchors, [['from', $aux->wild()->{anchor}->{from}, 'numeric'], ['to', $aux->wild()->{anchor}->{to}, 'numeric']]);
-            }
-        }
-        if(!defined($anode))
-        {
-            # Sometimes there is no direct link from a generated t-node to an a-node,
-            # but there is a coreference link to another t-node, which is realized on surface.
-            # Example (wsj_0062.treex.gz#4): "Garbage made its debut with the promise to give consumers..."
-            # T-tree (partial): ACT(made, Garbage); PAT(promise, give); ACT(give, #PersPron)-coref->(Garbage)
-            # In SDP2015 we wanted to use the coreferenced a-node for both the t-nodes
-            # because, in the above example, we wanted to deduce: ACT(give, Garbage).
-            # This is no longer a problem in the MRP task where we have relations directly between t-nodes.
-            # The only thing we may want to do here (may we?) is to propagate the text anchoring across coreferenced nodes.
-            # We are only interested in nodes that are realized on surface.
-            my @coref_anodes = grep {defined($_)} map {$_->get_lex_anode()} (@gcoref, @tcoref);
-            foreach my $canode (@coref_anodes)
-            {
-                if(exists($canode->wild()->{anchor}))
-                {
-                    push(@anchors, [['from', $canode->wild()->{anchor}->{from}, 'numeric'], ['to', $canode->wild()->{anchor}->{to}, 'numeric']]);
-                }
             }
         }
         if(scalar(@anchors) > 0)
@@ -211,6 +176,21 @@ sub process_zone
             $label .= '.member';
         }
         push(@edges_json, [['source', $id{$tnode->parent()->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $label]]);
+        # Get coreference edges.
+        my @gcoref = $tnode->get_coref_gram_nodes();
+        my @tcoref = $tnode->get_coref_text_nodes();
+        # We are only interested in nodes that are in the same sentence.
+        @gcoref = grep {$_->get_root() == $troot} (@gcoref);
+        foreach my $cnode (@gcoref)
+        {
+            push(@edges_json, [['source', $id{$tnode->id()}, 'numeric'], ['target', $id{$cnode->id()}, 'numeric'], ['label', 'coref.gram']]);
+        }
+        # We are only interested in nodes that are in the same sentence.
+        @tcoref = grep {$_->get_root() == $troot} (@tcoref);
+        foreach my $cnode (@tcoref)
+        {
+            push(@edges_json, [['source', $id{$tnode->id()}, 'numeric'], ['target', $id{$cnode->id()}, 'numeric'], ['label', 'coref.text']]);
+        }
     }
     push(@json, ['nodes', \@nodes_json, 'list of structures']);
     push(@json, ['edges', \@edges_json, 'list of structures']);
