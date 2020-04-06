@@ -102,7 +102,6 @@ sub process_zone
     push(@json, ['input', $sentence]);
     # There is always one top node and it is always the artificial root (id 0).
     push(@json, ['tops', [0], 'list of numeric']);
-    ###!!! Někde vyřešit COORD.member a APPOS.member!
     # Assign integer numbers to nodes for the purpose of the JSON references.
     # Users are used to integer node identifiers, so we will not use $tnode->id(),
     # which is a string like 'EnglishT-wsj_0001-s2-t3'.
@@ -202,7 +201,15 @@ sub process_zone
         push(@node_json, ['properties', \@properties, 'list']);
         push(@node_json, ['values', \@values, 'list']);
         push(@nodes_json, \@node_json);
-        push(@edges_json, [['source', $id{$tnode->parent()->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $tnode->functor()]]);
+        # Being a member of a paratactic structure (coordination or apposition)
+        # is an independent attribute of a node in Treex but in MRP, we have to
+        # encode it as a part of the relation label.
+        my $label = $tnode->functor();
+        if($tnode->is_member())
+        {
+            $label .= '.member';
+        }
+        push(@edges_json, [['source', $id{$tnode->parent()->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $label]]);
     }
     push(@json, ['nodes', \@nodes_json, 'list of structures']);
     push(@json, ['edges', \@edges_json, 'list of structures']);
