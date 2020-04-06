@@ -153,12 +153,6 @@ sub process_zone
         }
         if(defined($anode))
         {
-            # Occasionally a token is re-tokenized on the t-layer and there are several t-nodes corresponding to one a-node.
-            # Example: "1/2" -> "1", "#Slash", "2" (annotated as coordination headed by #Slash).
-            # We store the link to the first t-node found for subsequent functions that can deal with at most one t-node.
-            # We store separately links to all t-nodes found for functions that can use them all.
-            $anode->wild()->{tnode} = $tnode unless(defined($anode->wild()->{tnode}));
-            push(@{$anode->wild()->{tnodes}}, $tnode);
             if(exists($anode->wild()->{anchor}))
             {
                 push(@node_json, ['anchors', [[['from', $anode->wild()->{anchor}->{from}, 'numeric'],['to', $anode->wild()->{anchor}->{to}, 'numeric']]], 'list of structures']);
@@ -198,7 +192,6 @@ sub process_zone
         my $ord = $anode->ord();
         my $tag = $anode->tag();
         my $form = $self->decode_characters($anode->form(), $tag);
-        my $lemma = $self->get_lemma($anode);
     }
 }
 
@@ -314,62 +307,6 @@ sub get_sentence_id
         log_warn("File name '$ptb_section_file' does not follow expected patterns, cannot construct sentence identifier");
     }
     return $sid;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Returns lemma for output. If there is no t-node, returns a-node's lemma.
-# If there is one t-node, returns its t-lemma. If there are more than one
-# t-node, concatenates their t-lemmas.
-#------------------------------------------------------------------------------
-sub get_lemma
-{
-    my $self = shift;
-    my $anode = shift;
-    my $lemma;
-    # Is there a lexically corresponding tnode?
-    my $tnode = $anode->wild()->{tnode};
-    my @tnodes;
-    # Unfortunately the sort() does not help always. It is not rare that the annotation of PCEDT is wrong.
-    # For instance, in sentence 32 of wsj_2300, the token "7/8" yields three t-nodes but their ord values order them as "#Slash 8 7".
-    @tnodes = sort {$a->ord() <=> $b->ord()} (@{$anode->wild()->{tnodes}}) if(defined($anode->wild()->{tnodes}));
-    if(scalar(@tnodes)>1)
-    {
-        # There are two or more t-nodes linked to one a-node. Two model cases:
-        # 1. Retokenized a-nodes such as "1/2" --> "1", "#Slash", "2".
-        # 2. Doubled or multiplied nodes to cover ellipsis, e.g. "yield" --> "yield", "yield".
-        # 3. Generated nodes "#Cor" that are the source point of coreference leading to the lexical node.
-        # In case 1, we want to see the lemmas of all t-nodes involved.
-        # In case 2, we want just one copy of the lemma.
-        # In case 3, we do not want to see "#Cor" in the lemma.
-        my @lemmas = map {$self->decode_characters($_->t_lemma())} (@tnodes);
-        my @coreflemmas = grep {$_ =~ m/^\#/} (@lemmas);
-        my @noncoreflemmas = grep {$_ !~ m/^\#/} (@lemmas);
-        if(scalar(@coreflemmas) && scalar(@noncoreflemmas)) # case 3
-        {
-            $lemma = join('_', @noncoreflemmas);
-        }
-        elsif(grep {$_ ne $lemmas[0]} (@lemmas)) # case 1
-        {
-            $lemma = join('_', @lemmas);
-        }
-        else # case 2
-        {
-            $lemma = $lemmas[0];
-        }
-    }
-    elsif(defined($tnode))
-    {
-        # This is a content word and there is a lexically corresponding t-node.
-        $lemma = $self->decode_characters($tnode->t_lemma());
-    }
-    else
-    {
-        # This is a function word or punctuation and it does not have its own t-node.
-        $lemma = $self->decode_characters($anode->lemma());
-    }
-    return $lemma;
 }
 
 
@@ -521,83 +458,6 @@ sub find_a_parent
             goto project_current;
         }
     }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Finds all relations of an a-node to its parents. The relations are
-# projections of dependencies in the t-tree. An a-node may have zero, one or
-# more parents. The relations are added to the matrix and the array of root
-# flags is updated. We expect to get the references to matrix and roots from
-# the caller.
-#------------------------------------------------------------------------------
-sub get_parents
-{
-    my $self = shift;
-    my $anode = shift;
-    my $matrix = shift;
-    my $roots = shift;
-    my $aroot = shift; # We need this in order to check that the result is in the same sentence, see below.
-    my $ord = $anode->ord();
-    # Is there a lexically corresponding tnode?
-    my $tn = $anode->wild()->{tnode};
-    my @tnodes;
-    @tnodes = sort {$a->ord() <=> $b->ord()} (@{$anode->wild()->{tnodes}}) if(defined($anode->wild()->{tnodes}));
-    $roots->[$ord] = '-';
-    if(defined($tn))
-    {
-        # This is a content word and there is at least one lexically corresponding t-node.
-        # Add parent relations for all corresponding t-nodes. (Some of them may collapse in the a-tree to a reflexive link.)
-        foreach my $tnode (@tnodes)
-        {
-            my @parents = $self->find_a_parent($tnode, $aroot);
-            foreach my $parent (@parents)
-            {
-                if($parent->{tnode}->is_root())
-                {
-                    $roots->[$ord] = '+';
-                }
-                my $functor = $parent->{outfunctor};
-                # Mark dependencies projected from generated t-nodes. They are often responsible for problems, e.g. cycles in graphs.
-                if($tnode->is_generated())
-                {
-                    $functor .= '*';
-                }
-                ###!!! If there are two or more paths to the same a-parent, only the last functor will survive.
-                $matrix->[$ord][$parent->{anode}] = $functor;
-            }
-        }
-    }
-    return $matrix;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Takes a matrix of graph relations: $matrix[$i][$j] = 'ACT' means that node $i
-# depends on node $j and the label of the relation is 'ACT'. Returns array of
-# binary values that tell for each node whether it is a predicate (has
-# children) or not.
-#------------------------------------------------------------------------------
-sub get_is_pred
-{
-    my $self = shift;
-    my $matrix = shift;
-    # How many predicates are there and what is their mapping to the all-node indices?
-    # The artificial root node does not count as predicate because it does not have a corresponding token!
-    my @ispred;
-    for(my $i = 1; $i<=$#{$matrix}; $i++)
-    {
-        for(my $j = 1; $j<=$#{$matrix->[$i]}; $j++)
-        {
-            if(defined($matrix->[$i][$j]))
-            {
-                $ispred[$j]++;
-            }
-        }
-    }
-    return @ispred;
 }
 
 
