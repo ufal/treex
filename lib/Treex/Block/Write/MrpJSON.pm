@@ -173,7 +173,7 @@ sub process_zone
         if(defined($tnode->val_frame_rf()) && $tnode->val_frame_rf() !~ m/^_?$/)
         {
             push(@properties, 'frame');
-            push(@values, $tnode->wild()->{valency_frame});
+            push(@values, $tnode->val_frame_rf());
         }
         push(@node_json, ['properties', \@properties, 'list']);
         push(@node_json, ['values', \@values, 'list']);
