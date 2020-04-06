@@ -165,7 +165,7 @@ sub process_zone
             }
         }
         ###!!! Temporarily turning off the valency frame. Need to fix the path to the valency dictionary.
-        #$tnode->wild()->{valency_frame} = $self->get_valency_frame($tnode);
+        $tnode->wild()->{valency_frame} = $self->get_valency_frame($tnode);
         push(@nodes_json, \@node_json);
         push(@edges_json, [['source', $id{$tnode->parent()->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $tnode->functor()]]);
     }
