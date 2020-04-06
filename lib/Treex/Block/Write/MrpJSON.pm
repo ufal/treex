@@ -124,7 +124,9 @@ sub process_zone
         my @node_json = ();
         push(@node_json, ['id', $id{$tnode->id()}, 'numeric']);
         push(@node_json, ['label', $tnode->t_lemma()]);
+        # A t-node refers to zero or one lexical a-node, and to any number of auxiliary a-nodes.
         my $anode = $tnode->get_lex_anode();
+        my @auxiliaries = $tnode->get_aux_anodes();
         ###!!! If there are other corresponding a-nodes (function words), add them to the anchors.
         ###!!! Add coreference to edges.
         if(!defined($anode))
@@ -156,6 +158,13 @@ sub process_zone
             if(exists($anode->wild()->{anchor}))
             {
                 push(@node_json, ['anchors', [[['from', $anode->wild()->{anchor}->{from}, 'numeric'],['to', $anode->wild()->{anchor}->{to}, 'numeric']]], 'list of structures']);
+            }
+        }
+        foreach my $aux (@auxiliaries)
+        {
+            if(exists($aux->wild()->{anchor}))
+            {
+                push(@node_json, ['anchors', [[['from', $aux->wild()->{anchor}->{from}, 'numeric'],['to', $aux->wild()->{anchor}->{to}, 'numeric']]], 'list of structures']);
             }
         }
         my @properties = ();
