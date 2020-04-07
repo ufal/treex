@@ -82,9 +82,9 @@ sub process_zone
     #       surface string is not an inherent part of the representation of
     #       meaning.
     push(@json, ['flavor', 1, 'numeric']);
-    # Framework 'ptt' = Prague Tectogrammatical Trees (an established name,
-    # although the coreference edges break treeness).
-    push(@json, ['framework', 'ptt']);
+    # Framework 'ptg' = Prague Tectogrammatical Graphs (since we treat
+    # coreference links as edges, the structure is no longer a tree).
+    push(@json, ['framework', 'ptg']);
     # Version: I am not sure what is the thing whose versions we number here.
     # I think that the Prague tectogrammatical trees changed for the last time
     # when version 2.0 of PDT and PCEDT was released, so we will put 2.0 here.
@@ -403,6 +403,11 @@ L<http://mrp.nlpl.eu/2020/index.php?page=14#format>
 Sample usage:
 
 C<treex -Len Read::Treex from='!/net/data/pcedt2.0/data/00/wsj_00[012]*.treex.gz' Write::MrpJSON path=./trial-pcedt extension=.mrp>
+
+Note that the MRP graphs can be visualized using 'mtool' (maintained by the
+organizers of the MRP task) and by the 'dot' tool:
+
+C<treex -Len Read::Treex from=... Write::MrpJSON to=... | /net/work/people/zeman/mrptask/sharedata/mtool/main.py --read mrp --write dot --ids - wsj.dot && dot -Tpdf wsj.dot &gt; wsj.pdf>
 
 =head1 PARAMETERS
 
