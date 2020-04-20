@@ -214,6 +214,7 @@ sub process_zone
         # Get coreference edges.
         my @gcoref = $tnode->get_coref_gram_nodes();
         my @tcoref = $tnode->get_coref_text_nodes();
+        my ($bridgenodes, $bridgetypes) = $tnode->get_bridging_nodes();
         # We are only interested in nodes that are in the same sentence.
         @gcoref = grep {$_->get_root() == $troot} (@gcoref);
         foreach my $cnode (@gcoref)
@@ -225,6 +226,14 @@ sub process_zone
         foreach my $cnode (@tcoref)
         {
             push(@edges_json, [['source', $id{$tnode->id()}, 'numeric'], ['target', $id{$cnode->id()}, 'numeric'], ['label', 'coref.text']]);
+        }
+        for(my $i = 0; $i <= $#{$bridgenodes}; $i++)
+        {
+            # We are only interested in nodes that are in the same sentence.
+            if($bridgenodes->[$i]->get_root() == $troot)
+            {
+                push(@edges_json, [['source', $id{$tnode->id()}, 'numeric'], ['target', $id{$bridgenodes->[$i]->id()}, 'numeric'], ['label', 'bridging.'.$bridgetypes->[$i]]]);
+            }
         }
     }
     push(@json, ['nodes', \@nodes_json, 'list of structures']);
