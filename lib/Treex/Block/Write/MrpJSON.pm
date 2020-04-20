@@ -86,11 +86,11 @@ sub process_zone
     # coreference links as edges, the structure is no longer a tree).
     push(@json, ['framework', 'ptg']);
     # Version: I am not sure what is the thing whose versions we number here.
-    # I think that the Prague tectogrammatical trees changed for the last time
-    # when version 2.0 of PDT and PCEDT was released, so we will put 2.0 here.
-    # But maybe it is the version of the particular dataset that we are
+    # If it is the version of the source treebank or tectogrammatical guidelines,
+    # then we would have to generate a different version for each language.
+    # But maybe it is even the version of the particular dataset that we are
     # generating now?
-    push(@json, ['version', 2.0, 'numeric']);
+    push(@json, ['version', 1, 'numeric']);
     # Time: Should this be the time when the file was generated? Then we should
     # probably make sure that all sentences in the file will get the same time
     # stamp, no?
