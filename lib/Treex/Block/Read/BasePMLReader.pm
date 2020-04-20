@@ -64,8 +64,9 @@ sub _convert_ttree {
             'coref_special', 'discourse_special',
         );
         my @gram_attribs = (
-            'sempos', 'gender', 'number', 'degcmp', 'verbmod', 'deontmod', 'tense', 'aspect', 'resultative',
-            'dispmod', 'iterativeness', 'indeftype', 'person', 'numertype', 'politeness', 'negation', 'typgroup',
+            'sempos', 'gender', 'number', 'degcmp', 'verbmod', 'deontmod', 'factmod', 'tense', 'aspect', 'resultative',
+            'dispmod', 'iterativeness', 'indeftype', 'person', 'numertype', 'politeness', 'negation', 'definiteness',
+            'diathesis', 'diatgram', 'typgroup',
         );
         my @list_attribs = (
             'compl.rf', 'coref_text.rf', 'coref_text', 'coref_gram.rf', 'bridging', 'a/aux.rf',
@@ -147,11 +148,11 @@ sub _convert_atree {
 # Convert an m-tree into a flat a-tree (no afuns/dependencies, just form-lemma-tag).
 sub _convert_mtree {
     my ( $self, $pml_node, $treex_aroot ) = @_;
-   
+
     $self->_copy_attr( $pml_node, $treex_aroot, 'id', 'id' );
-    
+
     foreach my $pml_child ( $pml_node->children ){
-                
+
         my $treex_anode = $treex_aroot->create_child();
         my $attr_prefix = '';
         $treex_anode->shift_after_subtree($treex_aroot);
@@ -161,7 +162,7 @@ sub _convert_mtree {
         if ( $pml_child->attr('#content') ){
             $attr_prefix = '#content/';
         }
-                        
+
         foreach my $attr_name (qw(id form lemma tag)) {
             $self->_copy_attr( $pml_child, $treex_anode, $attr_prefix . $attr_name, $attr_name );
         }
@@ -222,9 +223,9 @@ Treex::Block::Read::BasePMLReader
 
 =head1 DESCRIPTION
 
-Abstract base class for readers importing from PML trees (PDT, PCEDT). 
+Abstract base class for readers importing from PML trees (PDT, PCEDT).
 
-All derived classes must override the methods C<_convert_all_trees>, C<_create_val_refs>, 
+All derived classes must override the methods C<_convert_all_trees>, C<_create_val_refs>,
 C<_load_all_files> and the attributes C<_layers> and C<_file_suffix>.
 
 =head1 PARAMETERS
@@ -236,7 +237,7 @@ C<_load_all_files> and the attributes C<_layers> and C<_file_suffix>.
 Must be set to the directory with corresponding PML schemas.
 
 =back
-  
+
 =head1 AUTHORS
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
