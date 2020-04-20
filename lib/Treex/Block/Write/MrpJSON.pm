@@ -150,6 +150,19 @@ sub process_zone
         }
         my @properties = ();
         my @values = ();
+        # Sentence modality.
+        if(defined($tnode->sentmod()) && $tnode->sentmod() ne '')
+        {
+            push(@properties, 'sentmod');
+            push(@values, $tnode->sentmod());
+        }
+        # Factual modality.
+        if(defined($tnode->gram_factmod()) && $tnode->gram_factmod() ne '')
+        {
+            push(@properties, 'factmod');
+            push(@values, $tnode->gram_factmod());
+        }
+        # Formeme.
         if(defined($tnode->formeme()) && $tnode->formeme() ne '')
         {
             push(@properties, 'formeme');
@@ -164,13 +177,19 @@ sub process_zone
             push(@properties, 'frame');
             push(@values, $tnode->val_frame_rf());
         }
+        # Topic-focus articulation.
+        if(defined($tnode->tfa()))
+        {
+            push(@properties, 'tfa');
+            push(@values, $tnode->tfa());
+        }
         push(@node_json, ['properties', \@properties, 'list']);
         push(@node_json, ['values', \@values, 'list']);
         push(@nodes_json, \@node_json);
         # Being a member of a paratactic structure (coordination or apposition)
         # is an independent attribute of a node in Treex but in MRP, we have to
         # encode it as a part of the relation label.
-        my $label = $tnode->functor();
+        my $label = $tnode->functor(); ###!!! what about subfunctors?
         if($tnode->is_member())
         {
             $label .= '.member';

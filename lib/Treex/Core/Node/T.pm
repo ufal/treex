@@ -180,7 +180,7 @@ sub _unfold_appos {
     my ( $self, $type ) = @_;
 
     my @appos_nodes_not_self = grep {$_ != $self} $self->get_appos_expansion({with_appos_root => 1});
-    
+
     my @member_antes = ();
     # type = { text, gram, all }
     if ($type eq "gram") {
@@ -200,7 +200,7 @@ sub _replace_appos_antes {
     my @new_antes = map {$_->get_appos_expansion({with_appos_root => 0})} @antes;
     my %seen = ();
     my @unique_antes = grep { !$seen{$_->id}++ } @new_antes;
-    return @unique_antes; 
+    return @unique_antes;
 }
 
 sub _get_coref_nodes {
@@ -215,19 +215,19 @@ sub _get_coref_nodes {
 
     if ($type ne 'text') {
         my @gram_nodes = $self->_get_node_list('coref_gram.rf');
-        push @antes, @gram_nodes; 
+        push @antes, @gram_nodes;
         push @types, map {undef} @gram_nodes;
     }
     if ($type ne 'gram') {
         # textual coreference in PDT2.0 and 2.5 style
         my @text_nodes = $self->_get_node_list('coref_text.rf');
-        push @antes, @text_nodes; 
+        push @antes, @text_nodes;
         push @types, map {undef} @text_nodes;
         # textual coreference in PDT3.0 style
         my $pdt30_text_coref_rf = $self->get_attr('coref_text') // [];
         @text_nodes = map {$self->get_document->get_node_by_id( $_->{'target_node.rf'} )} @$pdt30_text_coref_rf;
         my @text_types = map { $_->{'type'} } @$pdt30_text_coref_rf;
-        push @antes, @text_nodes; 
+        push @antes, @text_nodes;
         push @types, @text_types;
     }
 
@@ -236,7 +236,7 @@ sub _get_coref_nodes {
         push @antes, $self->_unfold_appos($type);
         @antes = _replace_appos_antes(@antes);
     }
-    
+
     my @filtered_antes = $self->_process_switches( $arg_ref, @antes );
     return @filtered_antes if (!$with_types);
 
@@ -301,7 +301,7 @@ sub select_node_if_apps {
 
 sub _add_coref_nodes {
     my ($self, $type, @antes) = @_;
-    
+
     # if called on a member of an apposition, call it on the apposition root
     my $anaph = select_node_if_apps($self);
     if ($anaph != $self) {
@@ -310,12 +310,12 @@ sub _add_coref_nodes {
 
     # antes must be apposition roots if in apposition
     @antes = map {select_node_if_apps($_)} @antes;
-    
+
     # avoid link repeating and self-reference
     my %seen;
     @antes = grep {$_ != $self} grep {!$seen{$_->id}++} @antes;
-    return if (!@antes); 
-    
+    return if (!@antes);
+
     $self->_add_to_node_list( "coref_$type.rf", @antes );
 }
 
@@ -349,7 +349,7 @@ sub get_bridging_nodes {
     my ($self, $arg_ref) = @_;
     my $bridging = $self->get_attr('bridging') // [];
     my $doc = $self->get_document;
-    my @nodes = map {$doc->get_node_by_id($_->{'target_node.rf'})} @$bridging; 
+    my @nodes = map {$doc->get_node_by_id($_->{'target_node.rf'})} @$bridging;
     my @types = map {$_->{'type'}} @$bridging;
     return (\@nodes, \@types);
 }
@@ -426,6 +426,7 @@ sub gram_number        { return $_[0]->get_attr('gram/number'); }
 sub gram_degcmp        { return $_[0]->get_attr('gram/degcmp'); }
 sub gram_verbmod       { return $_[0]->get_attr('gram/verbmod'); }
 sub gram_deontmod      { return $_[0]->get_attr('gram/deontmod'); }
+sub gram_factmod       { return $_[0]->get_attr('gram/factmod'); }
 sub gram_tense         { return $_[0]->get_attr('gram/tense'); }
 sub gram_aspect        { return $_[0]->get_attr('gram/aspect'); }
 sub gram_resultative   { return $_[0]->get_attr('gram/resultative'); }
@@ -438,6 +439,8 @@ sub gram_politeness    { return $_[0]->get_attr('gram/politeness'); }
 sub gram_negation      { return $_[0]->get_attr('gram/negation'); }
 sub gram_definiteness  { return $_[0]->get_attr('gram/definiteness'); }
 sub gram_diathesis     { return $_[0]->get_attr('gram/diathesis'); }
+sub gram_diatgram      { return $_[0]->get_attr('gram/diatgram'); }
+sub gram_typgroup      { return $_[0]->get_attr('gram/typgroup'); }
 
 sub set_gram_sempos        { return $_[0]->set_attr( 'gram/sempos',        $_[1] ); }
 sub set_gram_gender        { return $_[0]->set_attr( 'gram/gender',        $_[1] ); }
@@ -445,6 +448,7 @@ sub set_gram_number        { return $_[0]->set_attr( 'gram/number',        $_[1]
 sub set_gram_degcmp        { return $_[0]->set_attr( 'gram/degcmp',        $_[1] ); }
 sub set_gram_verbmod       { return $_[0]->set_attr( 'gram/verbmod',       $_[1] ); }
 sub set_gram_deontmod      { return $_[0]->set_attr( 'gram/deontmod',      $_[1] ); }
+sub set_gram_factmod       { return $_[0]->set_attr( 'gram/factmod',       $_[1] ); }
 sub set_gram_tense         { return $_[0]->set_attr( 'gram/tense',         $_[1] ); }
 sub set_gram_aspect        { return $_[0]->set_attr( 'gram/aspect',        $_[1] ); }
 sub set_gram_resultative   { return $_[0]->set_attr( 'gram/resultative',   $_[1] ); }
@@ -457,6 +461,8 @@ sub set_gram_politeness    { return $_[0]->set_attr( 'gram/politeness',    $_[1]
 sub set_gram_negation      { return $_[0]->set_attr( 'gram/negation',      $_[1] ); }
 sub set_gram_definiteness  { return $_[0]->set_attr( 'gram/definiteness',  $_[1] ); }
 sub set_gram_diathesis     { return $_[0]->set_attr( 'gram/diathesis',     $_[1] ); }
+sub set_gram_diatgram      { return $_[0]->set_attr( 'gram/diatgram',      $_[1] ); }
+sub set_gram_typgroup      { return $_[0]->set_attr( 'gram/typgroup',      $_[1] ); }
 
 #------------- valency frame reference -----
 
