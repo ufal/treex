@@ -212,11 +212,14 @@ sub process_zone
         }
         push(@edges_json, [['source', $id{$tnode->parent()->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $label]]);
         # Get effective parents.
-        my @eparents = $tnode->get_eparents();
-        @eparents = grep {$_ != $tnode->parent()} (@eparents);
-        foreach my $eparent (@eparents)
+        unless($tnode->is_coap_root())
         {
-            push(@edges_json, [['source', $id{$eparent->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $label.'.effective']]);
+            my @eparents = $tnode->get_eparents();
+            @eparents = grep {$_ != $tnode->parent()} (@eparents);
+            foreach my $eparent (@eparents)
+            {
+                push(@edges_json, [['source', $id{$eparent->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $label.'.effective']]);
+            }
         }
         # Get coreference edges.
         my @gcoref = $tnode->get_coref_gram_nodes();
