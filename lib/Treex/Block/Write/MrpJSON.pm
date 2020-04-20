@@ -162,6 +162,18 @@ sub process_zone
             push(@properties, 'factmod');
             push(@values, $tnode->gram_factmod());
         }
+        # Diatgram grammateme (diathesis).
+        if(defined($tnode->gram_diatgram()) && $tnode->gram_diatgram() ne '')
+        {
+            push(@properties, 'diatgram');
+            push(@values, $tnode->gram_diatgram());
+        }
+        # Typgroup: does the noun in plural signify a pair or a tuple?
+        if(defined($tnode->gram_typgroup()) && $tnode->gram_typgroup() ne '')
+        {
+            push(@properties, 'typgroup');
+            push(@values, $tnode->gram_typgroup());
+        }
         # Formeme.
         if(defined($tnode->formeme()) && $tnode->formeme() ne '')
         {
