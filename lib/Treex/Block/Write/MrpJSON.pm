@@ -266,7 +266,7 @@ sub get_sentence_id
         my $issue = $3;
         my $ifile = $4;
         my $isource = $source eq 'cmpr' ? 0 : $source =~ m/^ln/ ? 1 : 2;
-        $sid = sprintf("1%d%d%04d%03d", $isource, $year, $issue, $ifile);
+        $sid = sprintf("1%d%d%04d%03d%03d", $isource, $year, $issue, $ifile, $isentence);
     }
     else
     {
