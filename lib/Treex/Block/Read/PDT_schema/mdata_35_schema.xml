@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pml_schema
+  xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/"
+  version="1.1">
+  <revision>1.0.0</revision>
+  <description>PDT 3.5 morphological annotation</description>
+  <reference name="wdata" readas="pml"/>
+
+  <import schema="wdata_35_schema.xml" type="w-node.type" minimal_revision="1.0.0"/>
+  <import schema="wdata_35_schema.xml" type="bool.type"/>
+
+  <derive type="w-node.type">
+    <structure name="w-node">
+      <member as_attribute="1" name="id" role="#ID" required="1">
+        <cdata format="PMLREF"/>
+      </member>
+    </structure>
+  </derive>
+  
+  <root name="mdata" type="m-mdata.type"/>
+
+  <type name="m-mdata.type">
+    <sequence role="#TREES" content_pattern="meta?, s+">
+      <element name="meta" type="m-meta.type"/>
+      <element name="s" type="m-s.type"/>
+    </sequence>
+  </type>
+
+  <type name="m-meta.type">
+    <structure>
+      <member name="lang"><cdata format="any"/></member>
+      <member name="annotation_info">
+        <structure name="m-annotation-info">
+          <member as_attribute="1" name="id" role="#ID" required="1"><cdata format="ID"/></member>
+          <member name="version_info"><cdata format="any"/></member>
+          <member name="desc"><cdata format="any"/></member>
+        </structure>
+      </member>
+    </structure>
+  </type>
+
+
+  <type name="m-s.type">
+    <container role="#NODE">
+      <attribute name="id" role="#ID" required="1"><cdata format="ID"/></attribute>
+      <sequence role="#CHILDNODES">
+        <element name="m" type="m-node.type"/>
+      </sequence>
+    </container>
+  </type>
+
+  <type name="m-node.type">
+    <structure name="m-node" role="#NODE">
+      <member as_attribute="1" name="id" role="#ID" required="1"><cdata format="ID"/></member>
+      <member name="src.rf"><cdata format="PMLREF"/></member>
+      <member name="w.rf">
+        <list ordered="1" role="#KNIT" type="w-node.type"><cdata format="PMLREF"/></list>
+      </member>
+      <member name="form_change" type="m-form_change.type"/>
+      <member name="form" required="1"><cdata format="any"/></member>
+      <member name="lemma" required="1"><cdata format="any"/></member>
+      <member name="tag" required="1"><cdata format="any"/></member>
+    </structure>
+  </type>
+
+  <type name="m-form_change.type">
+    <choice>
+      <value>ctcd</value>
+      <value>spell</value>
+      <value>insert</value>
+      <value>num_normalization</value>
+    </choice>
+  </type>
+
+</pml_schema>
