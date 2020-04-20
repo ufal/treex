@@ -201,7 +201,11 @@ sub process_zone
         # Being a member of a paratactic structure (coordination or apposition)
         # is an independent attribute of a node in Treex but in MRP, we have to
         # encode it as a part of the relation label.
-        my $label = $tnode->functor(); ###!!! what about subfunctors?
+        my $label = $tnode->functor();
+        if($tnode->subfunctor())
+        {
+            $label .= '.'.$tnode->subfunctor();
+        }
         if($tnode->is_member())
         {
             $label .= '.member';
