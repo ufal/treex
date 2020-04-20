@@ -214,11 +214,14 @@ sub process_zone
         # Get effective parents.
         unless($tnode->is_coap_root())
         {
+            my $elabel = $label;
+            $elabel =~ s/\.member$//;
+            $elabel .= '.effective';
             my @eparents = $tnode->get_eparents();
             @eparents = grep {$_ != $tnode->parent()} (@eparents);
             foreach my $eparent (@eparents)
             {
-                push(@edges_json, [['source', $id{$eparent->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $label.'.effective']]);
+                push(@edges_json, [['source', $id{$eparent->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $elabel]]);
             }
         }
         # Get coreference edges.
