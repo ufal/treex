@@ -177,7 +177,7 @@ sub process_zone
             push(@properties, 'tfa');
             push(@values, $tnode->tfa());
         }
-        push(@node_json, ['attributes', \@properties, 'list']);
+        push(@node_json, ['properties', \@properties, 'list']);
         push(@node_json, ['values', \@values, 'list']);
         push(@nodes_json, \@node_json);
         # Being a member of a paratactic structure (coordination or apposition)
