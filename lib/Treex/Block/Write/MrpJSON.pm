@@ -80,7 +80,9 @@ sub process_zone
     # provide the anchoring of the nodes in the input text.
     my @nodes_json = ();
     my @edges_json = ();
-    push(@nodes_json, [['id', $id{$troot->id()}, 'numeric'], ['label', '#Root']]);
+    # We could label the root #Root, which does not occur in PML files.
+    # But per Stephan Oepen's request, we leave the root unlabeled.
+    push(@nodes_json, [['id', $id{$troot->id()}, 'numeric']]); # , ['label', '#Root']
     foreach my $tnode (@tnodes)
     {
         my @node_json = ();
