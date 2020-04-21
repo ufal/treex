@@ -57,7 +57,8 @@ sub process_zone
     # probably make sure that all sentences in the file will get the same time
     # stamp, no?
     my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
-    my $timestamp = sprintf("%4d-%02d-%02d (%02d:%02d)", $year+1900, $mon+1, $mday, $hour, $min);
+    # Stephan says they dropped hour-minute part between data releases in 2019, so now it's only the date.
+    my $timestamp = sprintf("%4d-%02d-%02d", $year+1900, $mon+1, $mday);
     push(@json, ['time', $timestamp]);
     # Full sentence text.
     push(@json, ['input', $sentence]);
@@ -176,7 +177,7 @@ sub process_zone
             push(@properties, 'tfa');
             push(@values, $tnode->tfa());
         }
-        push(@node_json, ['properties', \@properties, 'list']);
+        push(@node_json, ['attributes', \@properties, 'list']);
         push(@node_json, ['values', \@values, 'list']);
         push(@nodes_json, \@node_json);
         # Being a member of a paratactic structure (coordination or apposition)
@@ -189,7 +190,7 @@ sub process_zone
         }
         if($tnode->is_member())
         {
-            push(@edges_json, [['source', $id{$tnode->parent()->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $label], ['properties', ['member'], 'list'], ['values', ['true'], 'list of numeric']]);
+            push(@edges_json, [['source', $id{$tnode->parent()->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $label], ['attributes', ['member'], 'list'], ['values', ['true'], 'list of numeric']]);
         }
         else
         {
@@ -202,7 +203,7 @@ sub process_zone
             @eparents = grep {$_ != $tnode->parent()} (@eparents);
             foreach my $eparent (@eparents)
             {
-                push(@edges_json, [['source', $id{$eparent->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $label], ['properties', ['effective'], 'list'], ['values', ['true'], 'list of numeric']]);
+                push(@edges_json, [['source', $id{$eparent->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $label], ['attributes', ['effective'], 'list'], ['values', ['true'], 'list of numeric']]);
             }
         }
         # Get coreference edges.
