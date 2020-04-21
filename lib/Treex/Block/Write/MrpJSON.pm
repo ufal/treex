@@ -148,6 +148,7 @@ sub process_zone
             @anchors = sort {my $r = $a->[0][1] <=> $b->[0][1]; unless($r) {$r = $a->[1][1] <=> $b->[1][1]} $r} (@anchors);
             push(@node_json, ['anchors', \@anchors, 'list of structures']);
         }
+        # Export selected attributes and grammatemes of the node (especially the ones that are annotated manually in PDT 3.5).
         my @properties = ();
         my @values = ();
         # Sentence modality.
@@ -155,6 +156,22 @@ sub process_zone
         {
             push(@properties, 'sentmod');
             push(@values, $tnode->sentmod());
+        }
+        # Semantic part-of-speech category.
+        if(defined($tnode->gram_sempos()) && $tnode->gram_sempos() ne '')
+        {
+            push(@properties, 'sempos');
+            push(@values, $tnode->gram_sempos());
+        }
+        # Older data (English in PCEDT) do not have sempos but they have formeme,
+        # first part of which is like sempos (and second part corresponds to
+        # information that in PDT is covered by subfunctors).
+        elsif(defined($tnode->formeme()) && $tnode->formeme() ne '')
+        {
+            my $sempos = $tnode->formeme();
+            $sempos =~ s/:.*$//;
+            push(@properties, 'sempos');
+            push(@values, $sempos);
         }
         # Factual modality.
         if(defined($tnode->gram_factmod()) && $tnode->gram_factmod() ne '')
@@ -173,12 +190,6 @@ sub process_zone
         {
             push(@properties, 'typgroup');
             push(@values, $tnode->gram_typgroup());
-        }
-        # Formeme.
-        if(defined($tnode->formeme()) && $tnode->formeme() ne '')
-        {
-            push(@properties, 'formeme');
-            push(@values, $tnode->formeme());
         }
         # The block Write::SDP2015 reads engvallex.xml because it asks whether a frame role is obligatory.
         # We currently do not do that, so we can output the frame reference ($tnode->val_frame_rf())
