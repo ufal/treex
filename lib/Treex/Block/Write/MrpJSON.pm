@@ -195,12 +195,12 @@ sub process_zone
         {
             my $elabel = $label;
             $elabel =~ s/\.member$//;
-            $elabel .= '.effective';
+            #$elabel .= '.effective';
             my @eparents = $tnode->get_eparents();
             @eparents = grep {$_ != $tnode->parent()} (@eparents);
             foreach my $eparent (@eparents)
             {
-                push(@edges_json, [['source', $id{$eparent->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $elabel]]);
+                push(@edges_json, [['source', $id{$eparent->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $elabel], ['properties', ['effective'], 'list'], ['values', ['true'], 'list of numeric']]);
             }
         }
         # Get coreference edges.
