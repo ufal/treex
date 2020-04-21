@@ -8,7 +8,7 @@ use Treex::Tool::Vallex::ValencyFrame;
 extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+language' => ( required => 1 );
-has '+extension' => ( default => '.sdp' );
+has '+extension' => ( default => '.mrp' );
 has 'valency_dict_name' => ( is => 'ro', isa => 'Str', default => 'engvallex.xml',
     documentation => 'Name of the file with the valency dictionary to which the val_frame.rf attributes point. '.
     'Full path is not needed. The XML logic will somehow magically find the file.');
