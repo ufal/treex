@@ -187,20 +187,20 @@ sub process_zone
         }
         if($tnode->is_member())
         {
-            $label .= '.member';
+            push(@edges_json, [['source', $id{$tnode->parent()->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $label], ['properties', ['member'], 'list'], ['values', ['true'], 'list of numeric']]);
         }
-        push(@edges_json, [['source', $id{$tnode->parent()->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $label]]);
+        else
+        {
+            push(@edges_json, [['source', $id{$tnode->parent()->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $label]]);
+        }
         # Get effective parents.
         unless($tnode->is_coap_root())
         {
-            my $elabel = $label;
-            $elabel =~ s/\.member$//;
-            #$elabel .= '.effective';
             my @eparents = $tnode->get_eparents();
             @eparents = grep {$_ != $tnode->parent()} (@eparents);
             foreach my $eparent (@eparents)
             {
-                push(@edges_json, [['source', $id{$eparent->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $elabel], ['properties', ['effective'], 'list'], ['values', ['true'], 'list of numeric']]);
+                push(@edges_json, [['source', $id{$eparent->id()}, 'numeric'], ['target', $id{$tnode->id()}, 'numeric'], ['label', $label], ['properties', ['effective'], 'list'], ['values', ['true'], 'list of numeric']]);
             }
         }
         # Get coreference edges.
