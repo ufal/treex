@@ -337,14 +337,14 @@ sub decode_characters
     # English closing double quotation mark.
     $x =~ s/''/\x{201D}/g;
     # English opening single quotation mark.
-    $x =~ s/^`$/\x{2018}/g;
+    $x =~ s/`/\x{2018}/g; # `
     # English closing single quotation mark.
     # Includes cases where the character is used as apostrophe: 's s' 're 've n't etc.
     # According to the Unicode standard, U+2019 is the preferred character for both the single quote and the apostrophe,
     # despite their different semantics. See also
     # http://www.cl.cam.ac.uk/~mgk25/ucs/quotes.html and
     # http://www.unicode.org/versions/Unicode6.2.0/ch06.pdf (page 200)
-    $x =~ s/'/\x{2019}/g;
+    $x =~ s/'/\x{2019}/g; # '
     # N-dash.
     $x =~ s/--/\x{2013}/g;
     # Ellipsis.
