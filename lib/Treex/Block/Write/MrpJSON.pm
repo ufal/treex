@@ -448,7 +448,7 @@ sub encode_json
                 foreach my $element (@{$pair->[1]})
                 {
                     my $element_json = $element;
-                    $element_json =~ s/"/\\"/g;
+                    $element_json = $self->escape_json_string($element_json);
                     $element_json = '"'.$element_json.'"';
                     push(@array_json, $element_json);
                 }
@@ -487,13 +487,39 @@ sub encode_json
                 log_warn("Unknown value of attribute '$name'.");
             }
             $value = $pair->[1];
-            $value =~ s/"/\\"/g;
+            $value = $self->escape_json_string($value);
             $value = '"'.$value.'"';
         }
         push(@json1, "$name: $value");
     }
     my $json = '{'.join(', ', @json1).'}';
     return $json;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes a string and escapes characters that would prevent it from being used
+# in JSON. (For control characters, it throws a fatal exception instead of
+# escaping them because they should not occur in anything we export in this
+# block.)
+#------------------------------------------------------------------------------
+sub escape_json_string
+{
+    my $self = shift;
+    my $string = shift;
+    # https://www.ietf.org/rfc/rfc4627.txt
+    # The only characters that must be escaped in JSON are the following:
+    # \ " and control codes (anything less than U+0020)
+    # Escapes can be written as \uXXXX where XXXX is UTF-16 code.
+    # There are a few shortcuts, too: \\ \"
+    $string =~ s/\\/\\\\/g; # escape \
+    $string =~ s/"/\\"/g; # escape " # "
+    if($string =~ m/[\x{00}-\x{1F}]/)
+    {
+        log_fatal("The string must not contain control characters.");
+    }
+    return $string;
 }
 
 
