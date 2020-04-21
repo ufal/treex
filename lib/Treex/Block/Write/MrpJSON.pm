@@ -90,7 +90,13 @@ sub process_zone
         my $anode = $tnode->get_lex_anode();
         my @auxiliaries = $tnode->get_aux_anodes();
         my @anchors = ();
-        if(defined($anode))
+        # Sometimes a t-node refers to an a-node in a previous sentence.
+        # Example: gapping across sentence boundary, as in wsj_0430, sentence 2 refers to "hold up" in sentence 1:
+        # 1. Nothing was going to hold up the long-delayed settlement of Britton vs. Thomasini.
+        # 2. Not even an earthquake.
+        # In such cases, we must not take the anchors because they do not refer to the current sentence text!
+        # Hence we must test that the a-roots match.
+        if(defined($anode) && $anode->get_root() == $aroot)
         {
             if(exists($anode->wild()->{anchor}))
             {
@@ -99,7 +105,7 @@ sub process_zone
         }
         foreach my $aux (@auxiliaries)
         {
-            if(exists($aux->wild()->{anchor}))
+            if($aux->get_root() == $aroot && exists($aux->wild()->{anchor}))
             {
                 push(@anchors, [['from', $aux->wild()->{anchor}->{from}, 'numeric'], ['to', $aux->wild()->{anchor}->{to}, 'numeric']]);
             }
