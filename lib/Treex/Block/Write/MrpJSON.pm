@@ -28,45 +28,7 @@ sub process_zone
     my $aroot = $zone->get_tree('a');
     # Compute the text anchors for each a-node. We cannot do it directly for
     # t-nodes, but each t-node may be linked to zero, one or more a-nodes.
-    # First character of the sentence has position 0. Node anchor is given as
-    # a closed-open interval, i.e., the right margin is the position of the first
-    # character outside the node.
-    my $sentence = $self->decode_characters($zone->sentence());
-    my $sentence_rest = $sentence;
-    my @anodes = $aroot->get_descendants({'ordered' => 1});
-    my $from = 0;
-    foreach my $anode (@anodes)
-    {
-        my $form = $self->decode_characters($anode->form());
-        my $l = length($form);
-        if(substr($sentence_rest, 0, $l) eq $form)
-        {
-            my $to = $from + $l;
-            $anode->wild()->{anchor} = {'from' => $from, 'to' => $to};
-            $sentence_rest = substr($sentence_rest, $l);
-            $from = $to;
-            my $nspaces = $sentence_rest =~ s/^\s+//;
-            $from += $nspaces;
-        }
-        else # form does not match the rest of the sentence!
-        {
-            # For debugging purposes, show the anchoring of the previous tokens.
-            log_warn($zone->sentence());
-            foreach my $a (@anodes)
-            {
-                if($a == $anode)
-                {
-                    last;
-                }
-                my $f = $a->form();
-                my $af = $a->wild()->{anchor}->{from};
-                my $at = $a->wild()->{anchor}->{to};
-                log_warn("'$f' from $af to $at");
-            }
-            log_warn("Current position = $from");
-            log_fatal("Word form '$form' does not match the rest of sentence '$sentence_rest'.");
-        }
-    }
+    my $sentence = $self->decode_sentence_and_anchor_anodes($zone);
     my @json = ();
     # Sentence (graph) identifier.
     push(@json, ['id', $self->get_sentence_id($zone)]);
@@ -310,6 +272,84 @@ sub get_sentence_id
         log_warn("File name '$ptb_section_file' does not follow expected patterns, cannot construct sentence identifier");
     }
     return $sid;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Computes text anchors for each a-node. The task is tricky because we also
+# want to translate some characters to Unicode, which may change the total
+# number of characters, as well as their offsets. The method returns the
+# sentence with translated characters, while the anchors are stored directly
+# as wild attributes of the a-nodes.
+#------------------------------------------------------------------------------
+sub decode_sentence_and_anchor_anodes
+{
+    my $self = shift;
+    my $zone = shift;
+    my $aroot = $zone->get_tree('a');
+    my @anodes = $aroot->get_descendants({'ordered' => 1});
+    my $sentence_rest = $zone->sentence();
+    my $decoded_sentence = '';
+    # We cannot apply decode_characters() to the whole sentence. Some regular
+    # expression could match across node boundary and the result would differ
+    # from the concatenation of decoded nodes.
+    # First character of the sentence has position 0. Node anchor is given as
+    # a closed-open interval, i.e., the right margin is the position of the first
+    # character outside the node.
+    my $from = 0;
+    foreach my $anode (@anodes)
+    {
+        my $form = $anode->form();
+        my $l = length($form);
+        if(substr($sentence_rest, 0, $l) eq $form)
+        {
+            # We have matched the original form against the original sentence rest.
+            # Now it is time to decode the characters in the form.
+            my $decoded_form = $self->decode_characters($form);
+            my $decoded_length = length($decoded_form);
+            $sentence_rest = substr($sentence_rest, $l);
+            $decoded_sentence .= $decoded_form;
+            my $to = $from + $decoded_length;
+            $anode->wild()->{decoded_form} = $decoded_form;
+            $anode->wild()->{anchor} = {'from' => $from, 'to' => $to};
+            $from = $to;
+            # Now deal with spaces after the node, if any.
+            my $nspaces = $sentence_rest =~ s/^(\s+)//;
+            my $spaces = $1;
+            $decoded_sentence .= $spaces;
+            $from += $nspaces;
+        }
+        else # form does not match the rest of the sentence!
+        {
+            # For debugging purposes, show the anchoring of the previous tokens.
+            log_warn($zone->sentence());
+            foreach my $a (@anodes)
+            {
+                if($a == $anode)
+                {
+                    last;
+                }
+                my $f = $a->form();
+                my $af = $a->wild()->{anchor}->{from};
+                my $at = $a->wild()->{anchor}->{to};
+                log_warn("'$f' from $af to $at");
+            }
+            log_warn("Current position = $from");
+            log_fatal("Word form '$form' does not match the rest of sentence '$sentence_rest'.");
+        }
+    }
+    ###!!! Sanity check. Make sure that the anchors indeed yield the decoded forms of a-nodes.
+    foreach my $anode (@anodes)
+    {
+        my $decoded_form = $anode->wild()->{decoded_form};
+        my $form_by_anchors = substr($decoded_sentence, $anode->wild()->{anchor}{from}, $anode->wild()->{anchor}{to} - $anode->wild()->{anchor}{from});
+        if($form_by_anchors ne $decoded_form)
+        {
+            log_fatal("Something went wrong: decoded form is '$decoded_form' but the anchors point to '$form_by_anchors'.");
+        }
+    }
+    return $decoded_sentence;
 }
 
 
