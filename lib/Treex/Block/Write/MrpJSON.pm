@@ -317,8 +317,11 @@ sub decode_sentence_and_anchor_anodes
             # Now deal with spaces after the node, if any.
             my $nspaces = $sentence_rest =~ s/^(\s+)//;
             my $spaces = $1;
-            $decoded_sentence .= $spaces;
-            $from += $nspaces;
+            if($nspaces)
+            {
+                $decoded_sentence .= $spaces;
+                $from += $nspaces;
+            }
         }
         else # form does not match the rest of the sentence!
         {
