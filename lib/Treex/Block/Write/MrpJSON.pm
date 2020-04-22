@@ -47,12 +47,9 @@ sub process_zone
     # Framework 'ptg' = Prague Tectogrammatical Graphs (since we treat
     # coreference links as edges, the structure is no longer a tree).
     push(@json, ['framework', 'ptg']);
-    # Version: I am not sure what is the thing whose versions we number here.
-    # If it is the version of the source treebank or tectogrammatical guidelines,
-    # then we would have to generate a different version for each language.
-    # But maybe it is even the version of the particular dataset that we are
-    # generating now?
-    push(@json, ['version', 1, 'numeric']);
+    # The version should be '1.0' (as of April 2020), a decimal number,
+    # indicating the MRP format revision.
+    push(@json, ['version', '1.0', 'numeric']);
     # Time: Should this be the time when the file was generated? Then we should
     # probably make sure that all sentences in the file will get the same time
     # stamp, no?
