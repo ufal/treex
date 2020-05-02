@@ -11,9 +11,9 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
-    $self->fix_tokenization($root);
-    $self->fix_morphology($root);
-    $self->regenerate_upos($root);
+    #$self->fix_tokenization($root);
+    #$self->fix_morphology($root);
+    #$self->regenerate_upos($root);
 }
 
 
