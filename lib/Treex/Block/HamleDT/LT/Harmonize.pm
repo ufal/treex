@@ -477,7 +477,12 @@ sub convert_deprels
         # would be better to make the clause Atr of the pronoun, not Sb!
         # Example:
         # tai, ką mes kalbame = what we are talking about (lit. "that, what we discuss")
-        if($deprel eq 'Pred_Sub')
+        if($deprel =~ m/^Pred_(Sub|Obj|Adj|Atr|Adv)$/ && $parent->is_demonstrative())
+        {
+            $deprel = 'Atr';
+        }
+        # Predicate of a subject clause.
+        elsif($deprel eq 'Pred_Sub')
         {
             $deprel = 'Sb';
         }
