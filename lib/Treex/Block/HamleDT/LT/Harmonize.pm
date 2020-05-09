@@ -469,19 +469,46 @@ sub convert_deprels
                 $deprel = 'Adv';
             }
         }
-        # Pred_Sub is a clause that modifies a coreferential pronoun, which
-        # serves as a subject of the matrix clause. Example:
+        # Bernadeta: Pred_Atr, Pred_Sub etc. designate types of subordinate
+        # clauses, i.e., modifying, subjective, objective, etc.
+        # Dan: Then I should drop the 'Pred_' and keep the actual type. However,
+        # I believe I also saw an example where Pred_Sub modified a coreferential
+        # pronoun, which serves as a subject of the matrix clause, and then it
+        # would be better to make the clause Atr of the pronoun, not Sb!
+        # Example:
         # tai, ką mes kalbame = what we are talking about (lit. "that, what we discuss")
-        # Similarly, Pred_Obj seems to be a clause that modifies a noun.
-        if($deprel =~ m/^PredN?_(Sub|Obj|Adj|Atr)$/i)
+        if($deprel eq 'Pred_Sub')
+        {
+            $deprel = 'Sb';
+        }
+        # Predicate of an object clause.
+        elsif($deprel eq 'Pred_Obj')
+        {
+            $deprel = 'Obj';
+        }
+        # Predicate of an adjunct clause? How does it differ from adverbial clause?
+        elsif($deprel eq 'Pred_Adj')
+        {
+            $deprel = 'Adv';
+        }
+        # Predicate of an attributive clause (modifying a nominal).
+        elsif($deprel eq 'Pred_Atr')
         {
             $deprel = 'Atr';
         }
         # Pred_Adv is the predicate of an adverbial clause (possibly under AuxC).
+        elsif($deprel eq 'Pred_Adv')
+        {
+            $deprel = 'Adv';
+        }
+        if($deprel =~ m/^PredN_(Sub|Obj|Adj|Atr)$/i)
+        {
+            $deprel = 'Atr';
+        }
         # PredN_Adv seems to be, analogously, a nominal predicate of an adverbial clause.
         # There is also one occurrence of PredV_Adv. I do not know how it differs
         # from Pred_Adv.
-        if($deprel =~ m/^Pred[NV]?_Adv$/i)
+        if($deprel =~ m/^Pred[NV]_Adv$/i)
         {
             $deprel = 'Adv';
         }
@@ -867,6 +894,6 @@ Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2017 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2017, 2020 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
