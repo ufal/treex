@@ -76,6 +76,9 @@
       <value>ro</value> <!-- Romanian -->
       <value>mo</value> <!-- Moldovan (deprecated: use Romanian) -->
       <!-- Celtic languages -->
+      <value>pgl</value> <!-- Archaic Irish -->
+      <value>sga</value> <!-- Old Irish -->
+      <value>mga</value> <!-- Middle Irish -->
       <value>ga</value> <!-- Irish -->
       <value>gd</value> <!-- Scottish (Gaelic) -->
       <value>gv</value> <!-- Manx -->
@@ -145,28 +148,29 @@
       <value>ig</value> <!-- Igbo -->
       <value>sg</value> <!-- Sango -->
       <!-- Bantu languages -->
-      <value>ln</value> <!-- Lingala (Ngala) -->
-      <value>kg</value> <!-- Kongo -->
-      <value>lu</value> <!-- Luba-Katanga -->
-      <value>lg</value> <!-- Luganda (Ganda) -->
-      <value>rw</value> <!-- Kinyarwanda (Rwanda) -->
-      <value>rn</value> <!-- Kirundi (Rundi) -->
-      <value>ki</value> <!-- Kikuyu -->
-      <value>sw</value> <!-- Swahili -->
-      <value>ny</value> <!-- Chichewa -->
-      <value>kj</value> <!-- Kuanyama -->
-      <value>ng</value> <!-- Ndonga (Owambo) -->
-      <value>hz</value> <!-- Herero -->
-      <value>sn</value> <!-- Shona -->
-      <value>nd</value> <!-- North Ndebele -->
-      <value>nr</value> <!-- South Ndebele -->
-      <value>tn</value> <!-- Tswana -->
-      <value>ts</value> <!-- Tsonga -->
-      <value>ve</value> <!-- Venda -->
-      <value>ss</value> <!-- Swati -->
-      <value>st</value> <!-- Southern Sotho -->
-      <value>zu</value> <!-- Zulu -->
-      <value>xh</value> <!-- Xhosa -->
+      <value>ln</value> <!-- Lingala (Ngala) C30 -->
+      <value>rw</value> <!-- Kinyarwanda (Rwanda) [J]D61 -->
+      <value>rn</value> <!-- Kirundi (Rundi) [J]D62 -->
+      <value>lg</value> <!-- Luganda (Ganda) [J]E15 -->
+      <value>ki</value> <!-- Kikuyu E51 -->
+      <value>sw</value> <!-- Swahili G40 -->
+      <value>kg</value> <!-- Kongo H10 -->
+      <value>lu</value> <!-- Luba-Katanga L33 -->
+      <value>ny</value> <!-- Chichewa (Nyanja) N31 -->
+      <value>ndg</value> <!-- Ndengeleko P11 -->
+      <value>kj</value> <!-- Kuanyama R21 -->
+      <value>ng</value> <!-- Ndonga (Owambo) R22 -->
+      <value>hz</value> <!-- Herero R31 -->
+      <value>sn</value> <!-- Shona S11 Korekore, S12 Zezuru, S14 Karanga -->
+      <value>ve</value> <!-- Venda S21 -->
+      <value>tn</value> <!-- Tswana S31 -->
+      <value>st</value> <!-- Southern Sotho S33 -->
+      <value>xh</value> <!-- Xhosa S41 -->
+      <value>zu</value> <!-- Zulu S42 -->
+      <value>ss</value> <!-- Swati S43 -->
+      <value>nd</value> <!-- North Ndebele S44 -->
+      <value>nr</value> <!-- South Ndebele S407 -->
+      <value>ts</value> <!-- Tsonga S53 -->
       <!-- Uralic languages -->
       <value>hu</value> <!-- Hungarian -->
       <value>fi</value> <!-- Finnish -->
@@ -185,6 +189,7 @@
       <value>eu</value> <!-- Basque -->
       <value>ka</value> <!-- Georgian -->
       <value>ab</value> <!-- Abkhaz -->
+      <value>abq</value> <!-- Abaza -->
       <value>ce</value> <!-- Chechen -->
       <value>av</value> <!-- Avaric -->
       <!-- Turkic languages -->

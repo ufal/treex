@@ -43,6 +43,7 @@ subtype 'Treex::Type::ZoneCode'
 # Added code for Modern Greek which comes under ISO 639-3 (but normally it is encoded using ISO 639-1 'el').
 use Locale::Language;
 my %EXTRA_LANG_CODES = (
+    'abq'     => "Abaza",
     'aii'     => "Assyrian",
     'akk'     => "Akkadian",
     'bho'     => "Bhojpuri",
@@ -70,16 +71,20 @@ my %EXTRA_LANG_CODES = (
     'ku-cyrl' => "Kurdish in Cyrillic script",
     'lzh'     => "Classical Chinese",
     'mdf'     => "Moksha",
+    'mga'     => "Middle Irish",
     'mul'     => "multiple languages", # ISO 639-2 code
     'myv'     => "Erzya",
     'nan'     => "Taiwanese",
+    'ndg'     => "Ndengeleko",
     'olo'     => "Livvi", # Olonets Karelian
     'orv'     => "Old Russian",
     'pcm'     => "Nigerian Pidgin (Naija)",
+    'pgl'     => "Archaic Irish",
     'rmy'     => "Romany",
     'qhe'     => "Hindi-English", # used in UD bilingual corpora
     'quz'     => "Cusco Quechua",
     'sah'     => "Yakut",
+    'sga'     => "Old Irish",
     'sme'     => "North Sami",
     'sms'     => "Skolt Sami",
     'swl'     => "Swedish Sign Language",
