@@ -372,32 +372,40 @@ sub decode_characters
 {
     my $self = shift;
     my $x = shift;
-    my $tag = shift; # Could be used to distinguish between possessive apostrophe and right single quotation mark. Currently not used.
-    # Cancel escaping of brackets. The codes are uppercased in forms (and POS tags) and lowercased in lemmas.
-    $x =~ s/-LRB-/(/ig;
-    $x =~ s/-RRB-/)/ig;
-    $x =~ s/-LCB-/{/ig;
-    $x =~ s/-RCB-/}/ig;
-    # Cancel escaping of slashes and asterisks.
-    $x =~ s-\\/-/-g;
-    $x =~ s/\\\*/*/g;
-    # English opening double quotation mark.
-    $x =~ s/``/\x{201C}/g;
-    # English closing double quotation mark.
-    $x =~ s/''/\x{201D}/g;
-    # English opening single quotation mark.
-    $x =~ s/`/\x{2018}/g; # `
-    # English closing single quotation mark.
-    # Includes cases where the character is used as apostrophe: 's s' 're 've n't etc.
-    # According to the Unicode standard, U+2019 is the preferred character for both the single quote and the apostrophe,
-    # despite their different semantics. See also
-    # http://www.cl.cam.ac.uk/~mgk25/ucs/quotes.html and
-    # http://www.unicode.org/versions/Unicode6.2.0/ch06.pdf (page 200)
-    $x =~ s/'/\x{2019}/g; # '
-    # N-dash.
-    $x =~ s/--/\x{2013}/g;
-    # Ellipsis.
-    $x =~ s/\.\.\./\x{2026}/g;
+    ###!!! DZ 31.5.2020:
+    ###!!! The decoding of characters was encouraged by Stephan Oepen and introduced for the SDP 2014 and 2015 SemEval tasks (separate blocks Write::SDP(2015)).
+    ###!!! However, it is no longer wanted in CoNLL MRP shared task 2020 because of compatibility with other frameworks that cover the Wall Street Journal.
+    ###!!! And it is unsuitable for the Czech data from PDT because it targets the English Penn Treebank.
+    ###!!! Even if we want to use it, it should be moved to a separate block, which would then be called before Write::MrpJSON!
+    if(0)
+    {
+        my $tag = shift; # Could be used to distinguish between possessive apostrophe and right single quotation mark. Currently not used.
+        # Cancel escaping of brackets. The codes are uppercased in forms (and POS tags) and lowercased in lemmas.
+        $x =~ s/-LRB-/(/ig;
+        $x =~ s/-RRB-/)/ig;
+        $x =~ s/-LCB-/{/ig;
+        $x =~ s/-RCB-/}/ig;
+        # Cancel escaping of slashes and asterisks.
+        $x =~ s-\\/-/-g;
+        $x =~ s/\\\*/*/g;
+        # English opening double quotation mark.
+        $x =~ s/``/\x{201C}/g;
+        # English closing double quotation mark.
+        $x =~ s/''/\x{201D}/g;
+        # English opening single quotation mark.
+        $x =~ s/`/\x{2018}/g; # `
+        # English closing single quotation mark.
+        # Includes cases where the character is used as apostrophe: 's s' 're 've n't etc.
+        # According to the Unicode standard, U+2019 is the preferred character for both the single quote and the apostrophe,
+        # despite their different semantics. See also
+        # http://www.cl.cam.ac.uk/~mgk25/ucs/quotes.html and
+        # http://www.unicode.org/versions/Unicode6.2.0/ch06.pdf (page 200)
+        $x =~ s/'/\x{2019}/g; # '
+        # N-dash.
+        $x =~ s/--/\x{2013}/g;
+        # Ellipsis.
+        $x =~ s/\.\.\./\x{2026}/g;
+    }
     return $x;
 }
 
