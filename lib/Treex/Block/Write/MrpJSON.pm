@@ -316,6 +316,11 @@ sub decode_sentence_and_anchor_anodes
             $form = '"';
             $l = length($form);
         }
+        elsif($form eq "''" && $sentence_rest =~ m/^"/) # "
+        {
+            $form = '"';
+            $l = length($form);
+        }
         ###!!! End of hacking normalized characters.
         if(substr($sentence_rest, 0, $l) eq $form)
         {
