@@ -308,6 +308,14 @@ sub decode_sentence_and_anchor_anodes
     {
         my $form = $anode->form();
         my $l = length($form);
+        ###!!! If English text was processed by Treex, chances are that certain characters
+        ###!!! were normalized in <form> but not in <sentence>, which will cause errors now.
+        ###!!! Try to fix known instances using ad-hoc rules.
+        if($form eq '``' && $sentence_rest =~ m/^"/) # "
+        {
+            $form = '"';
+        }
+        ###!!! End of hacking normalized characters.
         if(substr($sentence_rest, 0, $l) eq $form)
         {
             # We have matched the original form against the original sentence rest.
