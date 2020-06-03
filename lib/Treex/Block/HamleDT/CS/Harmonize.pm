@@ -834,26 +834,7 @@ sub fix_annotation_errors
                     $self->set_pdt_tag($node);
                     $node->set_conll_pos($node->tag());
                 }
-                else
-                {
-                    $node->set_form('*');
-                    $node->set_lemma('&cwildcard;');
-                    $node->iset()->set('pos', 'sym');
-                }
-            }
-            elsif($deprel eq 'AuxY' && $node->parent()->form() eq 'když')
-            {
-                $node->set_form('i');
-                $node->set_lemma('i');
-                $node->iset()->set('pos', 'conj');
-                $node->iset()->set('conjtype', 'coor');
-                $node->iset()->clear('abbr');
-                $self->set_pdt_tag($node);
-                $node->set_conll_pos($node->tag());
-            }
-            elsif($deprel eq 'AuxC')
-            {
-                if($node->parent()->form() eq 'Nechám')
+                elsif($node->parent()->form() eq 'Nechám')
                 {
                     $node->set_form('protože');
                     $node->set_lemma('protože');
@@ -883,6 +864,22 @@ sub fix_annotation_errors
                     $self->set_pdt_tag($node);
                     $node->set_conll_pos($node->tag());
                 }
+                else
+                {
+                    $node->set_form('*');
+                    $node->set_lemma('&cwildcard;');
+                    $node->iset()->set('pos', 'sym');
+                }
+            }
+            elsif($deprel eq 'AuxY' && $node->parent()->form() eq 'když')
+            {
+                $node->set_form('i');
+                $node->set_lemma('i');
+                $node->iset()->set('pos', 'conj');
+                $node->iset()->set('conjtype', 'coor');
+                $node->iset()->clear('abbr');
+                $self->set_pdt_tag($node);
+                $node->set_conll_pos($node->tag());
             }
             else
             {
