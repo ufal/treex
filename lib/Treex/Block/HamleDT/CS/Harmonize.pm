@@ -617,6 +617,24 @@ sub fix_annotation_errors
                     $node->iset()->clear('abbr');
                     $node->iset()->set('case', 'acc');
                 }
+                elsif($case eq 'loc')
+                {
+                    # Locative occurs most often with the prepositions "v" ("in") and "při" ("at").
+                    if($preparg->form() =~ m/^(příležitostech|kursech)$/)
+                    {
+                        $node->set_form('při');
+                        $node->set_lemma('při');
+                    }
+                    else
+                    {
+                        $node->set_form('v');
+                        $node->set_lemma('v');
+                    }
+                    $node->iset()->set('pos', 'adp');
+                    $node->iset()->set('adpostype', 'prep');
+                    $node->iset()->clear('abbr');
+                    $node->iset()->set('case', 'loc');
+                }
                 elsif($case eq 'ins')
                 {
                     # Instrumental occurs mostly with the preposition "s" ("with").
