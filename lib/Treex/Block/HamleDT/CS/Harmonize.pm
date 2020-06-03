@@ -841,6 +841,49 @@ sub fix_annotation_errors
                     $node->iset()->set('pos', 'sym');
                 }
             }
+            elsif($deprel eq 'AuxY' && $node->parent()->form() eq 'když')
+            {
+                $node->set_form('i');
+                $node->set_lemma('i');
+                $node->iset()->set('pos', 'conj');
+                $node->iset()->set('conjtype', 'coor');
+                $node->iset()->clear('abbr');
+                $self->set_pdt_tag($node);
+                $node->set_conll_pos($node->tag());
+            }
+            elsif($deprel eq 'AuxC')
+            {
+                if($node->parent()->form() eq 'Nechám')
+                {
+                    $node->set_form('protože');
+                    $node->set_lemma('protože');
+                    $node->iset()->set('pos', 'conj');
+                    $node->iset()->set('conjtype', 'sub');
+                    $node->iset()->clear('abbr');
+                    $self->set_pdt_tag($node);
+                    $node->set_conll_pos($node->tag());
+                }
+                elsif($node->parent()->form() eq 'a')
+                {
+                    $node->set_form('Když');
+                    $node->set_lemma('když');
+                    $node->iset()->set('pos', 'conj');
+                    $node->iset()->set('conjtype', 'sub');
+                    $node->iset()->clear('abbr');
+                    $self->set_pdt_tag($node);
+                    $node->set_conll_pos($node->tag());
+                }
+                elsif($node->parent()->form() eq 'je')
+                {
+                    $node->set_form('li');
+                    $node->set_lemma('li');
+                    $node->iset()->set('pos', 'conj');
+                    $node->iset()->set('conjtype', 'sub');
+                    $node->iset()->clear('abbr');
+                    $self->set_pdt_tag($node);
+                    $node->set_conll_pos($node->tag());
+                }
+            }
             else
             {
                 $node->set_form('*');

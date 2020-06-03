@@ -565,9 +565,10 @@ sub _check_switches {
         if $arg_ref->{first_only} && $arg_ref->{last_only};
 
     # Check for explicit "ordered" when not needed (possible typo)
-    log_warn('Specifying (first|last|preceding|following)_only implies ordered.')
-        if $arg_ref->{ordered}
-            && any { $arg_ref->{ $_ . '_only' } } qw(first last preceding following);
+    # DZ: Turning off. This is an annoying warning when I want to explicitly say in my code that the result will be ordered and accessing the first/last item is meaningful.
+    #log_warn('Specifying (first|last|preceding|following)_only implies ordered.')
+    #    if $arg_ref->{ordered}
+    #        && any { $arg_ref->{ $_ . '_only' } } qw(first last preceding following);
 
     # Check for unknown switches
     my $unknown = first { $_ !~ $_SWITCHES_REGEX } keys %{$arg_ref};
