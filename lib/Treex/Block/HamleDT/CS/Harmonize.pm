@@ -720,6 +720,11 @@ sub fix_annotation_errors
                         $node->set_form('vůči');
                         $node->set_lemma('vůči');
                     }
+                    elsif($preparg->form() =~ m/^(revizionismu|antikomunismu)$/)
+                    {
+                        $node->set_form('proti');
+                        $node->set_lemma('proti');
+                    }
                     else
                     {
                         $node->set_form('k');
@@ -815,6 +820,26 @@ sub fix_annotation_errors
                 }
                 $self->set_pdt_tag($node);
                 $node->set_conll_pos($node->tag());
+            }
+            elsif($deprel eq 'AuxC')
+            {
+                my @children = grep {!$_->is_punctuation()} $node->get_children({'ordered' => 1, 'preceding_only' => 1});
+                if(scalar(@children) >= 1 && $children[-1]->form() =~ m/^i$/i)
+                {
+                    $node->set_form('když');
+                    $node->set_lemma('když');
+                    $node->iset()->set('pos', 'conj');
+                    $node->iset()->set('conjtype', 'sub');
+                    $node->iset()->clear('abbr');
+                    $self->set_pdt_tag($node);
+                    $node->set_conll_pos($node->tag());
+                }
+                else
+                {
+                    $node->set_form('*');
+                    $node->set_lemma('&cwildcard;');
+                    $node->iset()->set('pos', 'sym');
+                }
             }
             else
             {
