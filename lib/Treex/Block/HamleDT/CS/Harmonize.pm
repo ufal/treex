@@ -580,26 +580,64 @@ sub fix_annotation_errors
                     $self->set_pdt_tag($preparg);
                     $preparg->set_conll_pos($preparg->tag());
                 }
+                elsif($case eq 'gen' && $preparg->form() eq 'průměru')
+                {
+                    # This particular occurrence is an error. The noun "průměru" is in locative, not genitive.
+                    $node->set_form('o');
+                    $node->set_lemma('o');
+                    $node->iset()->set('pos', 'adp');
+                    $node->iset()->set('adpostype', 'prep');
+                    $node->iset()->clear('abbr');
+                    $node->iset()->set('case', 'loc');
+                    $preparg->iset()->set('case', 'loc');
+                    $self->set_pdt_tag($preparg);
+                    $preparg->set_conll_pos($preparg->tag());
+                }
+                elsif($case eq 'gen' && $preparg->form() eq 'povinností')
+                {
+                    # na základě svých povinností: základ should be NNIS6-----A---- Animacy=Inan|Case=Loc|Gender=Masc|Number=Sing|Polarity=Pos
+                    $node->set_form('základě');
+                    $node->set_lemma('základ');
+                    $node->iset()->set('pos', 'noun');
+                    $node->iset()->clear('abbr');
+                    $node->iset()->set('animacy', 'inan');
+                    $node->iset()->set('case', 'loc');
+                    $node->iset()->set('gender', 'masc');
+                    $node->iset()->set('number', 'sing');
+                    $node->iset()->set('polarity', 'pos');
+                }
                 elsif($case eq 'gen')
                 {
                     # Genitive occurs with a variety of prepositions.
                     # We have to look at the concrete nouns observed in concrete situations (although the same nouns could occur with the other prepositions too!)
-                    if($preparg->form() =~ m/^(pokynů|objemu)$/)
+                    if($preparg->form() =~ m/^(pokynů|objemu|podmínek)$/)
                     {
                         $node->set_form('podle');
                         $node->set_lemma('podle');
                     }
-                    elsif($preparg->form() =~ m/^(střediska|indiánů)$/)
+                    elsif($preparg->form() =~ m/^(elektronů)$/)
+                    {
+                        $node->set_form('bez');
+                        $node->set_lemma('bez');
+                    }
+                    elsif($preparg->form() =~ m/^(střediska|indiánů|nás|nichž)$/)
                     {
                         $node->set_form('u');
                         $node->set_lemma('u');
                     }
-                    elsif($preparg->form() =~ m/^(laboratoře|kultury|města)$/)
+                    ###!!! "do města" se vyskytuje, "od města" taky
+                    ###!!! "severozápadně od města" ("od města" je rozvitím slova "severozápadně")
+                    elsif($preparg->form() =~ m/^(laboratoře|kultury|města|sebe)$/)
                     {
                         $node->set_form('do');
                         $node->set_lemma('do');
                     }
-                    elsif($preparg->form() =~ m/^(požadavku|hlediska|pomoci|staveb)$/)
+                    elsif($preparg->form() =~ m/^(Krosna|průsmyku|Medzilaborců|Karpat)$/)
+                    {
+                        $node->set_form('od');
+                        $node->set_lemma('od');
+                    }
+                    elsif($preparg->form() =~ m/^(požadavku|hlediska|pomoci|staveb|rysů)$/)
                     {
                         $node->set_form('z');
                         $node->set_lemma('z');
@@ -613,6 +651,11 @@ sub fix_annotation_errors
                     {
                         $node->set_form('během');
                         $node->set_lemma('během');
+                    }
+                    elsif($preparg->form() =~ m/^(povinností)$/) ###!!! na základě svých povinností: základ should be NNIS6-----A---- Animacy=Inan|Case=Loc|Gender=Masc|Number=Sing|Polarity=Pos
+                    {
+                        $node->set_form('základě');
+                        $node->set_lemma('základ');
                     }
                     $node->iset()->set('pos', 'adp');
                     $node->iset()->set('adpostype', 'prep');
