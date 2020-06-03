@@ -580,6 +580,45 @@ sub fix_annotation_errors
                     $self->set_pdt_tag($preparg);
                     $preparg->set_conll_pos($preparg->tag());
                 }
+                elsif($case eq 'gen')
+                {
+                    # Genitive occurs with a variety of prepositions.
+                    # We have to look at the concrete nouns observed in concrete situations (although the same nouns could occur with the other prepositions too!)
+                    if($preparg->form() =~ m/^(pokynů|objemu)$/)
+                    {
+                        $node->set_form('podle');
+                        $node->set_lemma('podle');
+                    }
+                    elsif($preparg->form() =~ m/^(střediska|indiánů)$/)
+                    {
+                        $node->set_form('u');
+                        $node->set_lemma('u');
+                    }
+                    elsif($preparg->form() =~ m/^(laboratoře|kultury|města)$/)
+                    {
+                        $node->set_form('do');
+                        $node->set_lemma('do');
+                    }
+                    elsif($preparg->form() =~ m/^(požadavku|hlediska|pomoci|staveb)$/)
+                    {
+                        $node->set_form('z');
+                        $node->set_lemma('z');
+                    }
+                    elsif($preparg->form() =~ m/^(cesty)$/)
+                    {
+                        $node->set_form('podél');
+                        $node->set_lemma('podél');
+                    }
+                    elsif($preparg->form() =~ m/^(roku)$/)
+                    {
+                        $node->set_form('během');
+                        $node->set_lemma('během');
+                    }
+                    $node->iset()->set('pos', 'adp');
+                    $node->iset()->set('adpostype', 'prep');
+                    $node->iset()->clear('abbr');
+                    $node->iset()->set('case', 'gen');
+                }
                 elsif($case eq 'dat')
                 {
                     # Dative occurs mostly with the preposition "k" ("to").
