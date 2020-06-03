@@ -550,9 +550,45 @@ sub fix_annotation_errors
             # In dozens of cases the wildcard represents a preposition.
             elsif($deprel eq 'AuxP')
             {
-                $node->set_form('*');
-                $node->set_lemma('&cprep;');
-                $node->iset()->set('pos', 'adp');
+                # Try to estimate the preposition based on the noun it governs.
+                my @children = $node->get_children({'ordered' => 1});
+                if(scalar(@children) > 1)
+                {
+                    @children = grep {$_->ord() > $node->ord() && !$_->is_punctuation()} (@children);
+                }
+                my $preparg;
+                if(scalar(@children) >= 1)
+                {
+                    $preparg = $children[0];
+                }
+                my $case = '';
+                if(defined($preparg))
+                {
+                    $case = $preparg->iset()->case();
+                }
+                if($case eq 'nom')
+                {
+                    # Nominative is error, it should be accusative.
+                    # Observed with "na den" ("per day").
+                    $node->set_form('na');
+                    $node->set_lemma('na');
+                    $node->iset()->set('pos', 'adp');
+                    $node->iset()->set('case', 'acc');
+                    $preparg->iset()->set('case', 'acc');
+                }
+                elsif($case ne '')
+                {
+                    $node->set_form('*');
+                    $node->set_lemma('&cprep;');
+                    $node->iset()->set('pos', 'adp');
+                    $node->iset()->set('case', $case);
+                }
+                else
+                {
+                    $node->set_form('*');
+                    $node->set_lemma('&cprep;');
+                    $node->iset()->set('pos', 'adp');
+                }
             }
             else
             {
