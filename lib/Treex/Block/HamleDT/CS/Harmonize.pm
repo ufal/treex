@@ -599,6 +599,25 @@ sub fix_annotation_errors
                     $node->iset()->clear('abbr');
                     $node->iset()->set('case', 'dat');
                 }
+                elsif($case eq 'ins')
+                {
+                    # Instrumental occurs mostly with the preposition "s" ("with").
+                    # The most notable exceptions are "nad" ("above") and "pod" ("under"). The former often occurs in names of cities.
+                    if($preparg->form() =~ m/^(Labem|Vltavou|Sázavou|Ohří|Nisou|Doubravou|Úpou|Orlicí|Svitavou|Bečvou|Odrou)$/)
+                    {
+                        $node->set_form('nad');
+                        $node->set_lemma('nad');
+                    }
+                    else
+                    {
+                        $node->set_form('s');
+                        $node->set_lemma('s');
+                    }
+                    $node->iset()->set('pos', 'adp');
+                    $node->iset()->set('adpostype', 'prep');
+                    $node->iset()->clear('abbr');
+                    $node->iset()->set('case', 'ins');
+                }
                 elsif($case ne '')
                 {
                     $node->set_form('*');
