@@ -577,6 +577,8 @@ sub fix_annotation_errors
                     $node->iset()->clear('abbr');
                     $node->iset()->set('case', 'acc');
                     $preparg->iset()->set('case', 'acc');
+                    $self->set_pdt_tag($preparg);
+                    $preparg->set_conll_pos($preparg->tag());
                 }
                 elsif($case ne '')
                 {
@@ -596,6 +598,7 @@ sub fix_annotation_errors
                     $node->iset()->clear('abbr');
                 }
                 $self->set_pdt_tag($node);
+                $node->set_conll_pos($node->tag());
             }
             else
             {
