@@ -565,6 +565,16 @@ sub fix_annotation_errors
                 if(defined($preparg))
                 {
                     $case = $preparg->iset()->case();
+                    # If the preparg is coordination, we must reach for one of the conjuncts.
+                    if($case eq '' && $preparg->is_coordinator())
+                    {
+                        my @conjuncts = grep {$_->is_member()} ($preparg->get_children({'ordered' => 1}));
+                        if(scalar(@conjuncts) >= 1)
+                        {
+                            $preparg = $conjuncts[0];
+                            $case = $preparg->iset()->case();
+                        }
+                    }
                     # Sometimes the preparg itself is caseless but its adjectival attribute can reveal the case.
                     if($case eq '')
                     {
