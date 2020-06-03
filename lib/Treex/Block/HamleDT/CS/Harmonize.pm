@@ -573,6 +573,8 @@ sub fix_annotation_errors
                     $node->set_form('na');
                     $node->set_lemma('na');
                     $node->iset()->set('pos', 'adp');
+                    $node->iset()->set('adpostype', 'prep');
+                    $node->iset()->clear('abbr');
                     $node->iset()->set('case', 'acc');
                     $preparg->iset()->set('case', 'acc');
                 }
@@ -581,6 +583,8 @@ sub fix_annotation_errors
                     $node->set_form('*');
                     $node->set_lemma('&cprep;');
                     $node->iset()->set('pos', 'adp');
+                    $node->iset()->set('adpostype', 'prep');
+                    $node->iset()->clear('abbr');
                     $node->iset()->set('case', $case);
                 }
                 else
@@ -588,7 +592,10 @@ sub fix_annotation_errors
                     $node->set_form('*');
                     $node->set_lemma('&cprep;');
                     $node->iset()->set('pos', 'adp');
+                    $node->iset()->set('adpostype', 'prep');
+                    $node->iset()->clear('abbr');
                 }
+                $self->set_pdt_tag($node);
             }
             else
             {
