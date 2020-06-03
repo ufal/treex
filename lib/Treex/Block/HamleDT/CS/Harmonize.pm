@@ -599,6 +599,24 @@ sub fix_annotation_errors
                     $node->iset()->clear('abbr');
                     $node->iset()->set('case', 'dat');
                 }
+                elsif($case eq 'acc')
+                {
+                    # Accusative occurs most often with the prepositions "na" ("on") and "pro" ("for").
+                    if($preparg->form() =~ m/^(měsíc|rok|stavbu)$/)
+                    {
+                        $node->set_form('na');
+                        $node->set_lemma('na');
+                    }
+                    else
+                    {
+                        $node->set_form('pro');
+                        $node->set_lemma('pro');
+                    }
+                    $node->iset()->set('pos', 'adp');
+                    $node->iset()->set('adpostype', 'prep');
+                    $node->iset()->clear('abbr');
+                    $node->iset()->set('case', 'acc');
+                }
                 elsif($case eq 'ins')
                 {
                     # Instrumental occurs mostly with the preposition "s" ("with").
