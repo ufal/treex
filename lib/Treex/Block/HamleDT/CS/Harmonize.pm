@@ -565,6 +565,45 @@ sub fix_annotation_errors
                 if(defined($preparg))
                 {
                     $case = $preparg->iset()->case();
+                    # Sometimes the preparg itself is caseless but its adjectival attribute can reveal the case.
+                    if($case eq '')
+                    {
+                        my @prepargattrs = grep {$_->is_adjective()} ($preparg->children());
+                        if(scalar(@prepargattrs) >= 1)
+                        {
+                            $case = $prepargattrs[0]->iset()->case();
+                        }
+                    }
+                    if($case eq '' && $node->parent()->form() eq 'Zruči')
+                    {
+                        $case = 'ins';
+                        $preparg->set_form('Sázavou');
+                        $preparg->set_lemma('Sázava');
+                        $preparg->iset()->set('pos', 'noun');
+                        $preparg->iset()->set('nountype', 'prop');
+                        $preparg->iset()->set('gender', 'fem');
+                        $preparg->iset()->set('number', 'sing');
+                        $preparg->iset()->set('case', 'ins');
+                        $preparg->iset()->set('polarity', 'pos');
+                        $preparg->iset()->clear('abbr');
+                        $self->set_pdt_tag($preparg);
+                        $preparg->set_conll_pos($preparg->tag());
+                    }
+                    elsif($case eq '' && $node->parent()->form() =~ m/^(Ústí|Roudnici)$/)
+                    {
+                        $case = 'ins';
+                        $preparg->set_form('Labem');
+                        $preparg->set_lemma('Labe');
+                        $preparg->iset()->set('pos', 'noun');
+                        $preparg->iset()->set('nountype', 'prop');
+                        $preparg->iset()->set('gender', 'neut');
+                        $preparg->iset()->set('number', 'sing');
+                        $preparg->iset()->set('case', 'ins');
+                        $preparg->iset()->set('polarity', 'pos');
+                        $preparg->iset()->clear('abbr');
+                        $self->set_pdt_tag($preparg);
+                        $preparg->set_conll_pos($preparg->tag());
+                    }
                 }
                 if($case eq 'nom')
                 {
@@ -637,7 +676,7 @@ sub fix_annotation_errors
                         $node->set_form('od');
                         $node->set_lemma('od');
                     }
-                    elsif($preparg->form() =~ m/^(požadavku|hlediska|pomoci|staveb|rysů)$/)
+                    elsif($preparg->form() =~ m/^(požadavku|hlediska|pomoci|staveb|rysů|ateliéru)$/)
                     {
                         $node->set_form('z');
                         $node->set_lemma('z');
