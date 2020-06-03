@@ -580,6 +580,25 @@ sub fix_annotation_errors
                     $self->set_pdt_tag($preparg);
                     $preparg->set_conll_pos($preparg->tag());
                 }
+                elsif($case eq 'dat')
+                {
+                    # Dative occurs mostly with the preposition "k" ("to").
+                    # Exception: "vůči sjezdu" ("towards the congress")
+                    if($preparg->form() eq 'sjezdu')
+                    {
+                        $node->set_form('vůči');
+                        $node->set_lemma('vůči');
+                    }
+                    else
+                    {
+                        $node->set_form('k');
+                        $node->set_lemma('k');
+                    }
+                    $node->iset()->set('pos', 'adp');
+                    $node->iset()->set('adpostype', 'prep');
+                    $node->iset()->clear('abbr');
+                    $node->iset()->set('case', 'dat');
+                }
                 elsif($case ne '')
                 {
                     $node->set_form('*');
