@@ -547,10 +547,17 @@ sub fix_annotation_errors
                 $node->set_lemma('se');
                 $node->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'reflex', 'case' => 'acc'});
             }
+            # In dozens of cases the wildcard represents a preposition.
+            elsif($deprel eq 'AuxP')
+            {
+                $node->set_form('*');
+                $node->set_lemma('&cprep;');
+                $node->iset()->set('pos', 'adp');
+            }
             else
             {
                 $node->set_form('*');
-                $node->set_lemma('<CAC_wildcard>');
+                $node->set_lemma('&cwildcard;');
                 $node->iset()->set('pos', 'sym');
             }
         }
