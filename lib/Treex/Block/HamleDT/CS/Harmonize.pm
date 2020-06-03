@@ -534,8 +534,11 @@ sub fix_annotation_errors
         # CAC 2.0 contains restored non-word nodes that were omitted in the original data (Korpus věcného stylu).
         # Punctuation symbols were restored according to orthography rules.
         # Missing numbers are substituted by the '#' wildcard.
-        # Missing measure units are substituted by '?', which seems unfortunate because the question mark is a common punctuation symbol. Let's replace it by something more specific.
-        elsif($lemma eq '?' && $deprel !~ m/^Aux[GK]$/)
+        # Missing measure units are substituted by '?', which seems unfortunate because the question mark is a common punctuation symbol.
+        # Let's replace it by something more specific.
+        ###!!! This rule is a bit dangerous as we cannot check whether the input
+        ###!!! data is really from CAC.
+        elsif($lemma eq '?' && $deprel !~ m/^(Aux[GK]|ExD)$/)
         {
             # In 6 cases the wildcard represents a reflexive pronoun attached to an inherently reflexive verb.
             if($deprel eq 'AuxT')
@@ -546,9 +549,8 @@ sub fix_annotation_errors
             }
             else
             {
-                my $symbol = '*';
-                $node->set_form($symbol);
-                $node->set_lemma($symbol);
+                $node->set_form('*');
+                $node->set_lemma('<CAC_wildcard>');
                 $node->iset()->set('pos', 'sym');
             }
         }
