@@ -538,10 +538,22 @@ sub fix_annotation_errors
         # Let's replace it by something more specific.
         ###!!! This rule is a bit dangerous as we cannot check whether the input
         ###!!! data is really from CAC.
-        elsif($lemma eq '?' && $deprel !~ m/^(Aux[GK]|ExD)$/)
+        elsif($lemma eq '?' && $deprel !~ m/^(Aux[GK])$/)
         {
+            # ExD may be legitimate with a real question mark even in PDT, so we must be careful.
+            # However, certain instances in CAC have to be replaced by a wildcard.
+            if($deprel eq 'ExD')
+            {
+                if($node->is_member() && $node->parent()->form() eq 'až')
+                {
+                    $node->set_form('*');
+                    $node->set_lemma('&cwildcard;');
+                    $node->iset()->set('pos', 'sym');
+                }
+                # Otherwise do nothing. It could be a real question mark.
+            }
             # In 6 cases the wildcard represents a reflexive pronoun attached to an inherently reflexive verb.
-            if($deprel eq 'AuxT')
+            elsif($deprel eq 'AuxT')
             {
                 $node->set_form('se');
                 $node->set_lemma('se');
