@@ -542,14 +542,30 @@ sub fix_annotation_errors
         {
             # ExD may be legitimate with a real question mark even in PDT, so we must be careful.
             # However, certain instances in CAC have to be replaced by a wildcard.
+            # There is one occurrence of "?" and ExD in PDT that is not leaf and that should not be changed to "*":
+            # článek ( ? ? ? )
+            # The parentheses and the first question mark are attached as ExD to "článek". The two remaining question marks
+            # are attached to the first one as AuxG.
             if($deprel eq 'ExD')
             {
-                if($node->is_member() && $node->parent()->form() =~ m/^(a|nebo|ale|až|,)$/ ||
-                   !$node->is_leaf())
+                if($node->is_member() && $node->parent()->form() =~ m/^(a|nebo|ale|až|,)$/)
                 {
                     $node->set_form('*');
                     $node->set_lemma('&cwildcard;');
                     $node->iset()->set('pos', 'sym');
+                }
+                elsif(!$node->is_leaf())
+                {
+                    my @children = $node->get_children({'ordered' => 1});
+                    unless(scalar(@children)==2 &&
+                           $children[0]->form() eq '?' &&
+                           $children[1]->form() eq '?')
+                    {
+                        $node->set_form('*');
+                        $node->set_lemma('&cwildcard;');
+                        $node->iset()->set('pos', 'sym');
+                    }
+                    # Otherwise do nothing. It could be a real question mark.
                 }
                 # Otherwise do nothing. It could be a real question mark.
             }
