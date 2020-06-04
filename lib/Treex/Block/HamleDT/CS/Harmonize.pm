@@ -909,6 +909,12 @@ sub fix_annotation_errors
                 $node->iset()->set('pos', 'sym');
             }
         }
+        # CAC 2.0: Nested coordination: forgot _Co in Coord_Co.
+        elsif($spanstring =~ m/^měkká , pružná a napjatá , dobře prokrvená , svěží barvy a jemné struktury$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[3]->set_is_member(1);
+        }
         # PDT 3.0: Wrong Pnom.
         elsif($spanstring =~ m/^systém převratný , ale funkční a perspektivní$/)
         {
