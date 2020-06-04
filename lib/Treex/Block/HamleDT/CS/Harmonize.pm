@@ -940,6 +940,11 @@ sub fix_annotation_errors
             my @subtree = $self->get_node_subtree($node);
             $subtree[6]->set_deprel('Atr');
         }
+        elsif($spanstring =~ m/^Je všeobecně známá značka ESČ , jíž jsou označovány elektrotechnické výrobky$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[8]->set_deprel('Atr');
+        }
         # PDT 3.0: Wrong Pnom.
         elsif($spanstring =~ m/^systém převratný , ale funkční a perspektivní$/)
         {
