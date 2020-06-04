@@ -923,6 +923,7 @@ sub fix_annotation_errors
                 my @pnoms = grep {$_->deprel() eq 'Pnom'} ($node->get_children({'ordered' => 1}));
                 if(scalar(@pnoms) >= 1)
                 {
+                    my @subjects = grep {$_->deprel() eq 'Sb'} ($node->get_children({'ordered' => 1}));
                     if($node->parent()->lemma() =~ m/^(chtít|moci|smět|mít|muset)/ && $node->deprel() eq 'Obj')
                     {
                         $node->set_form('být');
@@ -931,11 +932,32 @@ sub fix_annotation_errors
                         $self->set_pdt_tag($node);
                         $node->set_conll_pos($node->tag());
                     }
+                    # , není-li v pracovní smlouvě sjednána doba kratší
+                    # Úbytkem pracovních sil tu vinen není ani tak zmíněný nedostatek
+                    elsif($node->parent()->form() eq 'li' ||
+                          scalar(@subjects) >= 1 && $subjects[0]->form() eq 'nedostatek')
+                    {
+                        $node->set_form('není');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act', 'number' => 'sing', 'person' => '3', 'polarity' => 'neg'});
+                        $self->set_pdt_tag($node);
+                        $node->set_conll_pos($node->tag());
+                    }
+                    elsif(scalar(@subjects) >= 1 && $subjects[0]->is_plural())
+                    {
+                        $node->set_form('jsou');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act', 'number' => 'plur', 'person' => '3', 'polarity' => 'pos'});
+                        $self->set_pdt_tag($node);
+                        $node->set_conll_pos($node->tag());
+                    }
                     else
                     {
-                        $node->set_form('*');
-                        $node->set_lemma('&cwildcard;');
-                        $node->iset()->set('pos', 'sym');
+                        $node->set_form('je');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act', 'number' => 'sing', 'person' => '3', 'polarity' => 'pos'});
+                        $self->set_pdt_tag($node);
+                        $node->set_conll_pos($node->tag());
                     }
                 }
                 $node->set_form('*');
