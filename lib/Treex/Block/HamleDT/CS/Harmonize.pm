@@ -544,7 +544,7 @@ sub fix_annotation_errors
             # However, certain instances in CAC have to be replaced by a wildcard.
             if($deprel eq 'ExD')
             {
-                if($node->is_member() && $node->parent()->form() eq 'až' ||
+                if($node->is_member() && $node->parent()->form() =~ m/^(a|nebo|ale|až|,)$/ ||
                    !$node->is_leaf())
                 {
                     $node->set_form('*');
