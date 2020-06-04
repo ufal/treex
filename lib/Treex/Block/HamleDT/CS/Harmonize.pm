@@ -960,9 +960,12 @@ sub fix_annotation_errors
                         $node->set_conll_pos($node->tag());
                     }
                 }
-                $node->set_form('*');
-                $node->set_lemma('&cwildcard;');
-                $node->iset()->set('pos', 'sym');
+                else
+                {
+                    $node->set_form('*');
+                    $node->set_lemma('&cwildcard;');
+                    $node->iset()->set('pos', 'sym');
+                }
             }
         }
         # CAC 2.0: Nested coordination: forgot _Co in Coord_Co.
