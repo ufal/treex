@@ -578,7 +578,7 @@ sub fix_annotation_errors
                 $node->set_lemma('se');
                 $node->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'reflex', 'case' => 'acc'});
                 $self->set_pdt_tag($node);
-                $preparg->set_conll_pos($node->tag());
+                $node->set_conll_pos($node->tag());
             }
             # In dozens of cases the wildcard represents a preposition.
             elsif($deprel eq 'AuxP')
