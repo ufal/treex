@@ -915,6 +915,11 @@ sub fix_annotation_errors
             my @subtree = $self->get_node_subtree($node);
             $subtree[3]->set_is_member(1);
         }
+        elsif($spanstring =~ m/^důsledně vědeckou filozofickou doktrínou , jakou je dialektický a historický materialismus , nebo eklektickým souhrnem různých pozitivistických směrů$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[14]->set_is_member(1);
+        }
         # PDT 3.0: Wrong Pnom.
         elsif($spanstring =~ m/^systém převratný , ale funkční a perspektivní$/)
         {
