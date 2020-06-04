@@ -934,6 +934,12 @@ sub fix_annotation_errors
             my @subtree = $self->get_node_subtree($node);
             $subtree[14]->set_is_member(1);
         }
+        # CAC 2.0: Wrong Pnom.
+        elsif($spanstring =~ m/^metoda sovětského novátora .* zaměřená na boj .* v závodech našeho odvětví$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[6]->set_deprel('Atr');
+        }
         # PDT 3.0: Wrong Pnom.
         elsif($spanstring =~ m/^systém převratný , ale funkční a perspektivní$/)
         {
