@@ -804,6 +804,14 @@ sub fix_annotation_errors
                     $node->iset()->clear('abbr');
                     $node->iset()->set('case', $case);
                 }
+                elsif($node->parent()->form() eq 's')
+                {
+                    # Multi-word preposition "spolu s" ("together with").
+                    $node->set_form('spolu');
+                    $node->set_lemma('spolu');
+                    $node->iset()->set('pos', 'adv');
+                    $node->iset()->clear('abbr');
+                }
                 else
                 {
                     $node->set_form('*');
