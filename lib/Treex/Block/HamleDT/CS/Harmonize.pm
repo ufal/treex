@@ -569,9 +569,11 @@ sub fix_annotation_errors
                 }
                 # Otherwise do nothing. It could be a real question mark.
             }
-            # In 6 cases the wildcard represents a reflexive pronoun attached to an inherently reflexive verb.
-            elsif($deprel eq 'AuxT')
+            # In 6 cases the wildcard represents a reflexive pronoun attached to an inherently reflexive verb;
+            # in other similar cases, the reflexive pronoun forms a reflexive passive.
+            elsif($deprel =~ m/^(Aux[TR])$/)
             {
+                ###!!! We assume that it is always the accusative "se", although it could also be the dative "si".
                 $node->set_form('se');
                 $node->set_lemma('se');
                 $node->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'reflex', 'case' => 'acc'});
