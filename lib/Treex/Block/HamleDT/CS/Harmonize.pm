@@ -918,6 +918,26 @@ sub fix_annotation_errors
             }
             else
             {
+                # In many cases the missing word is a copula. We will not recognize it by its deprel.
+                # However, we can recognize it by the presence of a Pnom child.
+                my @pnoms = grep {$_->deprel() eq 'Pnom'} ($node->get_children({'ordered' => 1}));
+                if(scalar(@pnoms) >= 1)
+                {
+                    if($node->parent()->lemma() =~ m/^(chtít|moci|smět|mít|muset)/ && $node->deprel() eq 'Obj')
+                    {
+                        $node->set_form('být');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'inf', 'polarity' => 'pos'});
+                        $self->set_pdt_tag($node);
+                        $node->set_conll_pos($node->tag());
+                    }
+                    else
+                    {
+                        $node->set_form('*');
+                        $node->set_lemma('&cwildcard;');
+                        $node->iset()->set('pos', 'sym');
+                    }
+                }
                 $node->set_form('*');
                 $node->set_lemma('&cwildcard;');
                 $node->iset()->set('pos', 'sym');
