@@ -577,6 +577,8 @@ sub fix_annotation_errors
                 $node->set_form('se');
                 $node->set_lemma('se');
                 $node->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'reflex', 'case' => 'acc'});
+                $self->set_pdt_tag($node);
+                $preparg->set_conll_pos($node->tag());
             }
             # In dozens of cases the wildcard represents a preposition.
             elsif($deprel eq 'AuxP')
@@ -620,13 +622,7 @@ sub fix_annotation_errors
                         $case = 'ins';
                         $preparg->set_form('Sázavou');
                         $preparg->set_lemma('Sázava');
-                        $preparg->iset()->set('pos', 'noun');
-                        $preparg->iset()->set('nountype', 'prop');
-                        $preparg->iset()->set('gender', 'fem');
-                        $preparg->iset()->set('number', 'sing');
-                        $preparg->iset()->set('case', 'ins');
-                        $preparg->iset()->set('polarity', 'pos');
-                        $preparg->iset()->clear('abbr');
+                        $preparg->iset()->set_hash({'pos' => 'noun', 'nountype' => 'prop', 'gender' => 'fem', 'number' => 'sing', 'case' => 'ins', 'polarity' => 'pos'});
                         $self->set_pdt_tag($preparg);
                         $preparg->set_conll_pos($preparg->tag());
                     }
