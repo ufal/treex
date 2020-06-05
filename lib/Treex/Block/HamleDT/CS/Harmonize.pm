@@ -921,6 +921,19 @@ sub fix_annotation_errors
                 # In many cases the missing word is a copula. We will not recognize it by its deprel.
                 # However, we can recognize it by the presence of a Pnom child.
                 my @pnoms = grep {$_->deprel() eq 'Pnom'} ($node->get_children({'ordered' => 1}));
+                if(scalar(@pnoms) == 0)
+                {
+                    # Maybe there is coordination of pnoms.
+                    my @coords = grep {$_->deprel() eq 'Coord'} ($node->get_children({'ordered' => 1}));
+                    foreach my $coord (@coords)
+                    {
+                        my @pnoms1 = grep {$_->deprel() eq 'Pnom'} ($coord->get_children({'ordered' => 1}));
+                        if(scalar(@pnoms1) > 0)
+                        {
+                            push(@pnoms, @pnoms1);
+                        }
+                    }
+                }
                 if(scalar(@pnoms) >= 1)
                 {
                     my @subjects = grep {$_->deprel() eq 'Sb'} ($node->get_children({'ordered' => 1}));
@@ -1019,6 +1032,136 @@ sub fix_annotation_errors
         {
             my @subtree = $self->get_node_subtree($node);
             $subtree[13]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^jen tituly a pracovní .* akcí/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^důkladná , doprovázená hlučným smíchem a jadrnými vtipy$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^popudlivé a zlostné , lhostejné až netečné , sobecké$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^zahradách , kde není nic vysázeno a zaseto$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[3]->set_parent(0);
+            $subtree[3]->set_deprel('Atr');
+            $subtree[1]->set_parent(3);
+            $subtree[2]->set_parent(3);
+            $subtree[4]->set_parent(3);
+            $subtree[6]->set_parent(3);
+        }
+        elsif($spanstring =~ m/^dosažitelné jen velmi obtížně nebo i vůbec nedosažitelné$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^pohyblivost elektronů zahrnující v sobě/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_deprel('Atr');
+        }
+        elsif($spanstring =~ m/^, které jsou běžné nebo aspoň dostupné každému/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[3]->set_is_member(1);
+            $subtree[6]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^, jimiž je dědičností vybaven$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_deprel('Atr');
+        }
+        elsif($spanstring =~ m/^cenné nejen pro lexikální statistiku , ale i pro gramatiku , s níž je slovník slovnědruhovým aspektem rovněž těsně spjat , dále pro sémantiku a stylistiku$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_parent($subtree[20]->parent());
+            $subtree[20]->set_parent($subtree[0]);
+            $subtree[6]->set_parent($subtree[20]);
+            $subtree[6]->set_is_member(1);
+            $subtree[21]->set_parent($subtree[24]);
+            $subtree[21]->set_deprel('AuxZ');
+            $subtree[21]->set_is_member(undef);
+            $subtree[23]->set_deprel('Adv');
+            $subtree[25]->set_deprel('Adv');
+        }
+        elsif($spanstring =~ m/^řehole benediktinská$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_deprel('Atr');
+        }
+        elsif($spanstring =~ m/^už nikoliv pouze vlastním , čistým náboženstvím , nýbrž teologickou formou náboženství , náboženstvím uvedeným do systému s pomocí a použitím mimonáboženských , racionálních prvků a postupů , náboženstvím , které je jistým způsobem sladěno , zharmonizováno s pozitivním , relativně pravdivým poznáním skutečnosti a kulturními produkty lidské činnosti , náboženstvím racionálně filozoficky odůvodněným$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[12]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^souhrn výtvorů lidské činnosti , materiálních i nemateriálních , souhrn hodnot i uznávaných způsobů jednání/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[9]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^nástrojem sociální kontroly a prostředkem moci$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^Větnými dvojicemi jsou syntaktická spojení v určitém vztahu , predikačním , otec píše , determinačním , starý otec , apozičním , Karel , král český , a koordinačním , města a vesnice$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_parent($subtree[26]->parent());
+            $subtree[1]->set_parent($subtree[2]);
+            $subtree[26]->set_parent($subtree[7]);
+            $subtree[9]->set_parent($subtree[26]);
+            $subtree[9]->set_is_member(1);
+            $subtree[14]->set_deprel('Atr');
+            $subtree[19]->set_deprel('Atr');
+        }
+        elsif($spanstring =~ m/^nafukování , nabubřování$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^U centralizovaného zásobování je energeticky výhodnější použití tepláren dodávajících současně teplo i elektřinu než výtopen dodávajících pouze teplo$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[13]->set_deprel('AuxC');
+        }
+        elsif($spanstring =~ m/^umístěn v krajních případech buď přímo uvnitř oblasti zásobované teplem , nebo naopak ve velké vzdálenosti od ní$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^Potom je to uhlí zvláště hnědé$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[5]->set_deprel('Atr');
+        }
+        elsif($spanstring =~ m/^nerozpustné ve vodě a odolné proti chemickým látkám$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^tak velký , oslnivě krásný a nápadný$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^asi o .* širší a .* delší/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^komutační špičky , zapalovací impulsy , jiskření na komutátorech trakčních a pomocných motorů , spínací pochody$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_is_member(1);
         }
         # PDT 3.0: Wrong Pnom.
         elsif($spanstring =~ m/^systém převratný , ale funkční a perspektivní$/)
