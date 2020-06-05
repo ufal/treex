@@ -1163,6 +1163,16 @@ sub fix_annotation_errors
             my @subtree = $self->get_node_subtree($node);
             $subtree[1]->set_is_member(1);
         }
+        elsif($spanstring =~ m/^analogické či takřka totožné faktory působící/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_deprel('Atr');
+        }
+        elsif($spanstring =~ m/^, aniž by měnil její směr$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_parent($subtree[3]);
+        }
         # PDT 3.0: Wrong Pnom.
         elsif($spanstring =~ m/^systém převratný , ale funkční a perspektivní$/)
         {
