@@ -1303,6 +1303,67 @@ sub fix_annotation_errors
             my @subtree = $self->get_node_subtree($node);
             $subtree[1]->set_deprel('AuxP');
         }
+        elsif($spanstring =~ m/^Bylo z ní cítit onu vášeň po ničení$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_parent($subtree[3]->parent());
+            $subtree[0]->set_deprel('Pred');
+            $subtree[3]->set_parent($subtree[0]);
+            $subtree[3]->set_deprel('Sb');
+        }
+        elsif($spanstring =~ m/^Co když právě ve vaší třídě upíná/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_parent($subtree[6]->parent());
+            $subtree[0]->set_deprel('ExD');
+            $subtree[1]->set_parent($subtree[6]->parent());
+            $subtree[1]->set_deprel('AuxC');
+            $subtree[6]->set_parent($subtree[1]);
+            $subtree[6]->set_deprel('ExD');
+        }
+        elsif($spanstring =~ m/^, že bude třeba ve větší míře než dosud uplatňovat jasně formulované zásady/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_parent($subtree[1]);
+            $subtree[2]->set_deprel('Obj');
+            $subtree[9]->set_parent($subtree[2]);
+            $subtree[9]->set_deprel('Sb');
+        }
+        elsif($spanstring =~ m/^Budiž (řečeno|napřed konstatováno) , že/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_deprel('AuxV');
+        }
+        elsif($spanstring =~ m/^kolem . až . dní$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_parent($subtree[4]);
+            $subtree[0]->set_deprel('AuxP');
+            $subtree[2]->set_parent($subtree[0]);
+        }
+        elsif($spanstring =~ m/^hodnotám kolem . v současnosti$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_parent($subtree[0]);
+            $subtree[1]->set_deprel('AuxP');
+            $subtree[2]->set_parent($subtree[1]);
+        }
+        elsif($spanstring =~ m/^pouze s tím , že provádění statistické přejímky bude dohodnuto/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_deprel('AuxC');
+        }
+        elsif($spanstring =~ m/^Obdobně by měla být rozdělena záruční doba/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[3]->set_deprel('Obj');
+        }
+        elsif($spanstring =~ m/^v poměru . vztaženo/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_parent($subtree[1]);
+            $subtree[2]->set_deprel('Atr');
+        }
         # PDT 3.0: Wrong Pnom.
         elsif($spanstring =~ m/^systém převratný , ale funkční a perspektivní$/)
         {
