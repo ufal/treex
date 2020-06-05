@@ -951,7 +951,7 @@ sub fix_annotation_errors
                     {
                         @conjuncts = grep {$_ != $node && $_->is_member()} ($node->parent()->get_children({'ordered' => 1}));
                     }
-                    if($node->parent()->lemma() =~ m/^(chtít|moci|smět|mít|muset)/ && $node->deprel() eq 'Obj')
+                    if(defined($node->parent()->lemma()) && $node->parent()->lemma() =~ m/^(chtít|moci|smět|mít|muset)/ && $node->deprel() eq 'Obj')
                     {
                         $node->set_form('být');
                         $node->set_lemma('být');
@@ -961,7 +961,7 @@ sub fix_annotation_errors
                     }
                     # , není-li v pracovní smlouvě sjednána doba kratší
                     # Úbytkem pracovních sil tu vinen není ani tak zmíněný nedostatek
-                    elsif($node->parent()->form() eq 'li' ||
+                    elsif(defined($node->parent()->form()) && $node->parent()->form() eq 'li' ||
                           scalar(@subjects) >= 1 && $subjects[0]->form() eq 'nedostatek')
                     {
                         $node->set_form('není');
@@ -1006,17 +1006,59 @@ sub fix_annotation_errors
                         $node->set_lemma('být');
                         $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'part', 'tense' => 'past', 'voice' => 'act', 'number' => 'sing', 'gender' => 'masc', 'animacy' => 'anim', 'polarity' => 'pos'});
                     }
-                    elsif($node->parent()->form() eq 'dodán')
+                    elsif($node->parent()->form() =~ m/^(dodán|splněn)$/)
                     {
                         $node->set_form('byl');
                         $node->set_lemma('být');
                         $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'part', 'tense' => 'past', 'voice' => 'act', 'number' => 'sing', 'gender' => 'masc', 'animacy' => 'inan', 'polarity' => 'pos'});
+                    }
+                    elsif($node->parent()->form() eq 'odkryta')
+                    {
+                        $node->set_form('byla');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'part', 'tense' => 'past', 'voice' => 'act', 'number' => 'sing', 'gender' => 'fem', 'polarity' => 'pos'});
                     }
                     elsif($node->parent()->form() eq 'pracováno')
                     {
                         $node->set_form('bylo');
                         $node->set_lemma('být');
                         $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'part', 'tense' => 'past', 'voice' => 'act', 'number' => 'sing', 'gender' => 'neut', 'polarity' => 'pos'});
+                    }
+                    elsif($node->parent()->form() eq 'stavěny')
+                    {
+                        $node->set_form('byly');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'part', 'tense' => 'past', 'voice' => 'act', 'number' => 'plur', 'gender' => 'fem', 'polarity' => 'pos'});
+                    }
+                    elsif($node->parent()->form() eq 'a')
+                    {
+                        $node->set_form('by');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'cnd', 'number' => 'sing', 'person' => '3'});
+                    }
+                    elsif($node->parent()->form() eq 'zdrželi')
+                    {
+                        $node->set_form('bychom');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'cnd', 'number' => 'plur', 'person' => '1'});
+                    }
+                    elsif($node->parent()->form() =~ m/^(budovány|osazeny|zmítány)$/)
+                    {
+                        $node->set_form('jsou');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act', 'number' => 'plur', 'person' => '3'});
+                    }
+                    elsif($node->parent()->form() eq 'převádět')
+                    {
+                        $node->set_form('budou');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'fut', 'voice' => 'act', 'number' => 'plur', 'person' => '3'});
+                    }
+                    else
+                    {
+                        $node->set_form('*');
+                        $node->set_lemma('&cwildcard;');
+                        $node->iset()->set('pos', 'sym');
                     }
                     $self->set_pdt_tag($node);
                     $node->set_conll_pos($node->tag());
