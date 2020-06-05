@@ -540,13 +540,21 @@ sub fix_annotation_errors
         ###!!! data is really from CAC.
         elsif($lemma eq '?' && $deprel !~ m/^(Aux[GK])$/)
         {
+            if($deprel eq 'AuxX')
+            {
+                $node->set_form(',');
+                $node->set_lemma(',');
+                $node->iset()->set_hash({'pos' => 'punc'});
+                $self->set_pdt_tag($node);
+                $node->set_conll_pos($node->tag());
+            }
             # ExD may be legitimate with a real question mark even in PDT, so we must be careful.
             # However, certain instances in CAC have to be replaced by a wildcard.
             # There is one occurrence of "?" and ExD in PDT that is not leaf and that should not be changed to "*":
             # článek ( ? ? ? )
             # The parentheses and the first question mark are attached as ExD to "článek". The two remaining question marks
             # are attached to the first one as AuxG.
-            if($deprel eq 'ExD')
+            elsif($deprel eq 'ExD')
             {
                 if($node->is_member() && $node->parent()->form() =~ m/^(a|nebo|ale|až|,)$/)
                 {
@@ -1042,6 +1050,12 @@ sub fix_annotation_errors
                         $node->set_lemma('být');
                         $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'cnd', 'number' => 'plur', 'person' => '1'});
                     }
+                    elsif($node->parent()->form() =~ m/^(realizovat)$/)
+                    {
+                        $node->set_form('je');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act', 'number' => 'sing', 'person' => '3'});
+                    }
                     elsif($node->parent()->form() =~ m/^(budovány|osazeny|zmítány)$/)
                     {
                         $node->set_form('jsou');
@@ -1264,6 +1278,30 @@ sub fix_annotation_errors
             $node->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'yes', 'case' => 'acc', 'variant' => 'short'});
             $self->set_pdt_tag($node);
             $node->set_conll_pos($node->tag());
+        }
+        elsif($spanstring =~ m/^Jsou to vřelá slova , která jsou pro nás povzbuzením/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_deprel('Obj');
+        }
+        elsif($spanstring =~ m/^víc než dříve$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_deprel('AuxC');
+        }
+        elsif($spanstring =~ m/^být uspokojivě řešeno na sjezdu/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_deprel('AuxV');
+        }
+        elsif($node->form() eq 'prosím' && $node->deprel() eq 'AuxY')
+        {
+            $node->set_deprel('Adv');
+        }
+        elsif($spanstring =~ m/^v rámci celkové opravy$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_deprel('AuxP');
         }
         # PDT 3.0: Wrong Pnom.
         elsif($spanstring =~ m/^systém převratný , ale funkční a perspektivní$/)
