@@ -1051,12 +1051,12 @@ sub fix_annotation_errors
         elsif($spanstring =~ m/^zahradách , kde není nic vysázeno a zaseto$/)
         {
             my @subtree = $self->get_node_subtree($node);
-            $subtree[3]->set_parent(0);
+            $subtree[3]->set_parent($subtree[0]);
             $subtree[3]->set_deprel('Atr');
-            $subtree[1]->set_parent(3);
-            $subtree[2]->set_parent(3);
-            $subtree[4]->set_parent(3);
-            $subtree[6]->set_parent(3);
+            $subtree[1]->set_parent($subtree[3]);
+            $subtree[2]->set_parent($subtree[3]);
+            $subtree[4]->set_parent($subtree[3]);
+            $subtree[6]->set_parent($subtree[3]);
         }
         elsif($spanstring =~ m/^dosažitelné jen velmi obtížně nebo i vůbec nedosažitelné$/)
         {
