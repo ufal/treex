@@ -1364,6 +1364,41 @@ sub fix_annotation_errors
             $subtree[2]->set_parent($subtree[1]);
             $subtree[2]->set_deprel('Atr');
         }
+        elsif($spanstring =~ m/^do vhodného substrátu , to je do správně volené zeminy$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[3]->set_parent($subtree[5]->parent());
+            $subtree[0]->set_parent($subtree[3]);
+            $subtree[0]->set_is_member(1);
+            $subtree[6]->set_parent($subtree[3]);
+            $subtree[6]->set_is_member(1);
+            $subtree[5]->set_parent($subtree[7]);
+            $subtree[5]->set_deprel('Pred');
+        }
+        elsif($spanstring =~ m/^, z nichž jedna váží až . .$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[6]->set_deprel('Obj');
+        }
+        elsif($spanstring =~ m/^vážící . .$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_deprel('Obj');
+        }
+        elsif($spanstring =~ m/^přes milióny mladých lidí , kteří jsou dnes ve věku . let$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_parent($subtree[1]->parent());
+            $subtree[0]->set_deprel('AuxP');
+            $subtree[1]->set_parent($subtree[0]);
+        }
+        elsif($spanstring =~ m/^kmitočtech okolo . . a . .$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_parent($subtree[0]);
+            $subtree[1]->set_deprel('AuxP');
+            $subtree[4]->set_parent($subtree[1]);
+        }
         # PDT 3.0: Wrong Pnom.
         elsif($spanstring =~ m/^systém převratný , ale funkční a perspektivní$/)
         {
