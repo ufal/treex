@@ -998,6 +998,29 @@ sub fix_annotation_errors
                         $node->set_conll_pos($node->tag());
                     }
                 }
+                elsif($node->deprel() eq 'AuxV')
+                {
+                    if($node->parent()->form() eq 'schválen')
+                    {
+                        $node->set_form('byl');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'part', 'tense' => 'past', 'voice' => 'act', 'number' => 'sing', 'gender' => 'masc', 'animacy' => 'anim', 'polarity' => 'pos'});
+                    }
+                    elsif($node->parent()->form() eq 'dodán')
+                    {
+                        $node->set_form('byl');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'part', 'tense' => 'past', 'voice' => 'act', 'number' => 'sing', 'gender' => 'masc', 'animacy' => 'inan', 'polarity' => 'pos'});
+                    }
+                    elsif($node->parent()->form() eq 'pracováno')
+                    {
+                        $node->set_form('bylo');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'part', 'tense' => 'past', 'voice' => 'act', 'number' => 'sing', 'gender' => 'neut', 'polarity' => 'pos'});
+                    }
+                    $self->set_pdt_tag($node);
+                    $node->set_conll_pos($node->tag());
+                }
                 else
                 {
                     $node->set_form('*');
@@ -1184,6 +1207,21 @@ sub fix_annotation_errors
             $subtree[2]->set_parent($subtree[0]);
             $subtree[1]->set_parent($subtree[2]);
             $subtree[1]->set_deprel('Atr');
+        }
+        elsif($spanstring =~ m/^jako další akci výstavbu$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_parent($subtree[3]);
+            $subtree[0]->set_deprel('AuxC');
+            $subtree[2]->set_parent($subtree[0]);
+        }
+        elsif($node->form() eq 'se' && $node->deprel() =~ m/^Aux[RT]$/)
+        {
+            # Error: preposition instead of pronoun.
+            $node->set_lemma('se');
+            $node->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'yes', 'case' => 'acc', 'variant' => 'short'});
+            $self->set_pdt_tag($node);
+            $node->set_conll_pos($node->tag());
         }
         # PDT 3.0: Wrong Pnom.
         elsif($spanstring =~ m/^systém převratný , ale funkční a perspektivní$/)
