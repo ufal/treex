@@ -1181,11 +1181,9 @@ sub fix_annotation_errors
         elsif($spanstring =~ m/^nejpozději . měsíce před skončením lhůty$/)
         {
             my @subtree = $self->get_node_subtree($node);
-            $subtree[1]->set_form('do');
-            $subtree[1]->set_lemma('do');
-            $subtree[1]->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep', 'case' => 'gen'});
-            $self->set_pdt_tag($subtree[1]);
-            $subtree[1]->set_conll_pos($subtree[1]->tag());
+            $subtree[2]->set_parent($subtree[0]);
+            $subtree[1]->set_parent($subtree[2]);
+            $subtree[1]->set_deprel('Atr');
         }
         # PDT 3.0: Wrong Pnom.
         elsif($spanstring =~ m/^systém převratný , ale funkční a perspektivní$/)
