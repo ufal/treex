@@ -924,6 +924,20 @@ sub fix_annotation_errors
                 if(scalar(@pnoms) >= 1)
                 {
                     my @subjects = grep {$_->deprel() eq 'Sb'} ($node->get_children({'ordered' => 1}));
+                    if(scalar(@subjects) == 0)
+                    {
+                        my @ktere = grep {$_->form() eq 'které' && $_->is_nominative()} ($node->children());
+                        if(scalar(@ktere) == 1)
+                        {
+                            push(@subjects, $ktere[0]);
+                            $ktere[0]->set_deprel('Sb');
+                        }
+                    }
+                    my @conjuncts;
+                    if($node->is_member())
+                    {
+                        @conjuncts = grep {$_ != $node && $_->is_member()} ($node->parent()->get_children({'ordered' => 1}));
+                    }
                     if($node->parent()->lemma() =~ m/^(chtít|moci|smět|mít|muset)/ && $node->deprel() eq 'Obj')
                     {
                         $node->set_form('být');
@@ -943,7 +957,18 @@ sub fix_annotation_errors
                         $self->set_pdt_tag($node);
                         $node->set_conll_pos($node->tag());
                     }
-                    elsif(scalar(@subjects) >= 1 && $subjects[0]->is_plural())
+                    # čerpadlo bylo složeno, ..., koncová oka byla spojena
+                    elsif(scalar(@subjects) >= 1 && $subjects[0]->form() eq 'oka')
+                    {
+                        $node->set_form('byla');
+                        $node->set_lemma('být');
+                        $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'part', 'tense' => 'past', 'voice' => 'act', 'number' => 'plur', 'gender' => 'neut', 'polarity' => 'pos'});
+                        $self->set_pdt_tag($node);
+                        $node->set_conll_pos($node->tag());
+                    }
+                    elsif(scalar(@subjects) >= 1 && $subjects[0]->is_plural() ||
+                          scalar(@conjuncts) >= 1 && $conjuncts[0]->is_plural() ||
+                          $pnoms[0]->is_plural())
                     {
                         $node->set_form('jsou');
                         $node->set_lemma('být');
