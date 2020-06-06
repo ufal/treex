@@ -1831,7 +1831,7 @@ sub fix_annotation_errors
             $subtree[2]->set_deprel('AuxC');
         }
         # CLTT: Prepositions "od" and "do" are sometimes wrongly tagged as prefixes (ADJ+Hyph=Yes).
-        elsif($node->form() =~ m/^od|do$/i && $node->deprel() eq 'AuxP' && !$node->is_adposition())
+        elsif($node->form() =~ m/^(od|do)$/i && $node->deprel() eq 'AuxP' && !$node->is_adposition())
         {
             $node->set_tag('RR--2----------');
             $node->set_conll_pos('RR--2----------');
