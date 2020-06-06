@@ -61,6 +61,106 @@ sub get_input_tag_for_interset
 
 
 #------------------------------------------------------------------------------
+# Converts the tokenization of the Czech Legal Text Treebank to the standard of
+# the other Prague dependency treebanks. This involves splitting tokens and
+# finding lemmas, morphological tags and dependency structure for the new
+# tokens. We currently call this method from the beginning of fix_morphology.
+# It means that we process the layers bottom-up, and no other conversions in
+# this block have been done yet. However, convert_tags() has been called from
+# the superordinate class, which means we can use Interset and we must update
+# it.
+#------------------------------------------------------------------------------
+sub fix_tokenization
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    foreach my $node (@nodes)
+    {
+        if($node->form() =~ m/^(je|není|jsou|nejsou)-(li)$/i)
+        {
+            my $byt = $1; # may be uppercased
+            my $li = $2; # may be uppercased
+            # We will need two new nodes right after the current node.
+            # Shift the ords of all subsequent nodes.
+            my $co = $node->ord();
+            foreach my $n (@nodes)
+            {
+                if($n->ord() > $co)
+                {
+                    $n->_set_ord($n->ord()+2);
+                }
+            }
+            # Create a new node for the hyphen.
+            my $node1 = $node->create_child();
+            $node1->_set_ord($co+1);
+            $node1->set_form('-');
+            $node1->set_lemma('-');
+            $node1->set_tag('Z:-------------');
+            $node1->set_conll_pos('Z:-------------');
+            $node1->iset()->set_hash({'pos' => 'punc'});
+            # Create a new node for the subordinating clitic "li".
+            my $node2 = $node->create_child();
+            $node2->_set_ord($co+2);
+            $node2->set_form($li);
+            $node2->set_lemma('li');
+            $node2->set_tag('TT-------------');
+            $node2->set_conll_pos('TT-------------');
+            $node2->iset()->set_hash({'pos' => 'part'});
+            # Adjust the no-space-after flags.
+            $node2->set_no_space_after($node->no_space_after());
+            $node->set_no_space_after(1);
+            $node1->set_no_space_after(1);
+            # Adjust the morphology of the current node.
+            $node->set_form($byt);
+            $node->set_lemma('být');
+            # je:     VB-S---3P-AA--- Mood=Ind|Number=Sing|Person=3|Polarity=Pos|Tense=Pres|VerbForm=Fin|Voice=Act
+            # není:   VB-S---3P-NA--- Mood=Ind|Number=Sing|Person=3|Polarity=Neg|Tense=Pres|VerbForm=Fin|Voice=Act
+            # jsou:   VB-P---3P-AA--- Mood=Ind|Number=Plur|Person=3|Polarity=Pos|Tense=Pres|VerbForm=Fin|Voice=Act
+            # nejsou: VB-P---3P-NA--- Mood=Ind|Number=Plur|Person=3|Polarity=Neg|Tense=Pres|VerbForm=Fin|Voice=Act
+            if($node->form() =~ m/^je$/i)
+            {
+                $node->set_tag('VB-S---3P-AA');
+                $node->set_conll_pos('VB-S---3P-AA');
+                $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act', 'number' => 'sing', 'person' => '3', 'polarity' => 'pos'});
+            }
+            elsif($node->form() =~ m/^není$/i)
+            {
+                $node->set_tag('VB-S---3P-NA');
+                $node->set_conll_pos('VB-S---3P-NA');
+                $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act', 'number' => 'sing', 'person' => '3', 'polarity' => 'neg'});
+            }
+            elsif($node->form() =~ m/^jsou$/i)
+            {
+                $node->set_tag('VB-P---3P-AA');
+                $node->set_conll_pos('VB-P---3P-AA');
+                $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act', 'number' => 'plur', 'person' => '3', 'polarity' => 'pos'});
+            }
+            else # nejsou
+            {
+                $node->set_tag('VB-P---3P-NA');
+                $node->set_conll_pos('VB-P---3P-NA');
+                $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act', 'number' => 'plur', 'person' => '3', 'polarity' => 'neg'});
+            }
+            # Adjust the tree structure.
+            # We do not know whether the calling code still stores relation types in afun or conll_deprel, or deprel.
+            # To be on the safe side, we will set all three.
+            $node2->set_parent($node->parent());
+            $node2->set_deprel('AuxC');
+            $node2->set_afun('AuxC');
+            $node2->set_conll_deprel('AuxC');
+            $node->set_parent($node2);
+            $node1->set_parent($node2);
+            $node1->set_deprel('AuxG');
+            $node1->set_afun('AuxG');
+            $node1->set_conll_deprel('AuxC');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Adds Interset features that cannot be decoded from the PDT tags but they can
 # be inferred from lemmas and word forms. This method is called from
 # SUPER->process_zone().
@@ -69,6 +169,8 @@ sub fix_morphology
 {
     my $self = shift;
     my $root = shift;
+    # Fix tokenization of CLTT (the method will do nothing to other treebanks).
+    $self->fix_tokenization($root);
     # We must first normalize the lemmas because many subsequent rules depend on them.
     $self->remove_features_from_lemmas($root);
     my @nodes = $root->get_descendants();
@@ -451,7 +553,9 @@ sub convert_deprels
 
 
 #------------------------------------------------------------------------------
-# Catches possible annotation inconsistencies.
+# Catches possible annotation inconsistencies. This method is called from
+# SUPER->process_zone() after convert_tags(), fix_morphology(), and
+# convert_deprels().
 #------------------------------------------------------------------------------
 sub fix_annotation_errors
 {
