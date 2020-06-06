@@ -145,15 +145,29 @@ sub fix_tokenization
             # Adjust the tree structure.
             # We do not know whether the calling code still stores relation types in afun or conll_deprel, or deprel.
             # To be on the safe side, we will set all three.
-            $node2->set_parent($node->parent());
-            $node2->set_deprel('AuxC');
-            $node2->set_afun('AuxC');
-            $node2->set_conll_deprel('AuxC');
-            $node->set_parent($node2);
+            # There are two possible situations:
+            # 1) "není-li" is AuxV, as in "není-li dále stanoveno jinak"
+            # 2) "není-li" is the head of the clause (copula or existential predicate)
+            if($node->deprel() eq 'AuxV' || $node->afun() eq 'AuxV' || $node->conll_deprel() eq 'AuxV')
+            {
+                $node2->set_parent($node->parent()->parent());
+                $node2->set_deprel('AuxC');
+                $node2->set_afun('AuxC');
+                $node2->set_conll_deprel('AuxC');
+                $node->parent()->set_parent($node2);
+            }
+            else
+            {
+                $node2->set_parent($node->parent());
+                $node2->set_deprel('AuxC');
+                $node2->set_afun('AuxC');
+                $node2->set_conll_deprel('AuxC');
+                $node->set_parent($node2);
+            }
             $node1->set_parent($node2);
             $node1->set_deprel('AuxG');
             $node1->set_afun('AuxG');
-            $node1->set_conll_deprel('AuxC');
+            $node1->set_conll_deprel('AuxG');
         }
     }
 }
