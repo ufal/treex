@@ -1864,6 +1864,10 @@ sub fix_annotation_errors
             $subtree[6]->set_deprel('Adv');
             $subtree[7]->set_deprel('Pnom');
         }
+        elsif($node->lemma() eq 'být' && $node->parent()->form() eq 'pokud' && $node->deprel() eq 'AuxV')
+        {
+            $node->set_deprel('Adv');
+        }
     }
 }
 
