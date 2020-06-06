@@ -209,7 +209,7 @@ sub fix_tokenization
             $nodeq0->set_afun('AuxG');
             $nodeq0->set_conll_deprel('AuxG');
             my $nodeq1 = $node->create_child();
-            $nodeq1->_set_ord($co);
+            $nodeq1->_set_ord($co+$nw+1);
             $nodeq1->set_form('“');
             $nodeq1->set_lemma('"');
             $nodeq1->set_tag('Z:-------------');
@@ -225,7 +225,7 @@ sub fix_tokenization
                 my $nodew = $node->create_child();
                 $nodew->_set_ord($co+$i+1);
                 $nodew->set_form($words[$i]);
-                $nodew->set_lemma($words[$i].'_from_multi_word_term');
+                $nodew->set_lemma($words[$i].'_^(from_multi_word_term)');
                 $nodew->set_tag('X@-------------');
                 $nodew->set_conll_pos('X@-------------');
                 $nodew->iset()->set_hash({});
@@ -241,7 +241,7 @@ sub fix_tokenization
                 $nodew->set_conll_deprel('Atr');
             }
             $node->set_form($words[0]);
-            $node->set_lemma($words[0].'_from_multi_word_term');
+            $node->set_lemma($words[0].'_^(from_multi_word_term)');
             $node->set_tag('X@-------------');
             $node->set_conll_pos('X@-------------');
             $node->iset()->set_hash({});
