@@ -1838,11 +1838,11 @@ sub fix_annotation_errors
             $node->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep', 'case' => 'gen'});
         }
         # CLTT: "vymezené" wrongly analyzed as Pnom.
-        elsif($spanstring =~ m/byty a nebytové prostory vymezené jako jednotky/)
+        elsif($spanstring =~ m/^[a-z]\s*\) byty a nebytové prostory vymezené jako jednotky/)
         {
             # The current node is "a" and "vymezené" is one of its children.
             my @vymezene = grep {$_->form() eq 'vymezené'} ($node->children());
-            die if(scalar(@vymezene)==0);
+            log_fatal("Something is wrong") if(scalar(@vymezene)==0);
             $vymezene[0]->set_deprel('Atr');
         }
         elsif($spanstring =~ m/^, (ne)?jsou - li ceny ve smlouvě sjednány$/)
