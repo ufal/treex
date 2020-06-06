@@ -653,7 +653,16 @@ sub fix_annotation_errors
 {
     my $self  = shift;
     my $root  = shift;
+    # CLTT: document_01_009 # sentence 1 is brutally messed up. The tree seems more or less OK
+    # but the ords of the words are wrong and the sentence appears interlaced.
+    # We need to fix the order before we obtain the ordered list of nodes and do anything else.
     my @nodes = $root->get_descendants({'ordered' => 1});
+    my @rchildren = $root->get_children({'ordered' => 1});
+    if(scalar(@nodes) == 507 && $rchildren[0]->form() eq 'uvede')
+    {
+        $self->fix_cltt_order($root);
+        @nodes = $root->get_descendants({'ordered' => 1});
+    }
     for(my $i = 0; $i<=$#nodes; $i++)
     {
         my $node = $nodes[$i];
@@ -1854,6 +1863,550 @@ sub fix_annotation_errors
             $subtree[5]->set_parent($subtree[1]);
             $subtree[6]->set_deprel('Adv');
             $subtree[7]->set_deprel('Pnom');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Reorders nodes in a messed up sentence of CLTT.
+#------------------------------------------------------------------------------
+sub fix_cltt_order
+{
+    my $self = shift;
+    my $root = shift;
+    # First number: correct ord
+    # Second number: current ord (wrong)
+    my $reorder = <<EOF
+1	3	(2)
+2	6	Konsolidující
+3	9	účetní
+4	12	jednotka
+5	15	dále
+6	18	v
+7	21	příloze
+8	24	uvede
+9	27	zejména
+10	2	a)
+11	5	výši
+12	8	odměn
+13	11	vyplacených
+14	14	za
+15	17	účetní
+16	20	období
+17	23	jak
+18	26	v
+19	29	peněžní
+20	31	,
+21	33	tak
+22	35	i
+23	37	v
+24	38	nepeněžní
+25	40	formě
+26	42	osobám
+27	44	,
+28	46	které
+29	48	jsou
+30	50	statutárním
+31	52	orgánem
+32	54	,
+33	56	členům
+34	58	statutárních
+35	59	nebo
+36	60	jiných
+37	61	řídících
+38	62	a
+39	63	dozorčích
+40	64	orgánů
+41	65	,
+42	66	jakož
+43	67	i
+44	68	výši
+45	69	vzniklých
+46	70	nebo
+47	71	sjednaných
+48	72	penzijních
+49	73	závazků
+50	74	k
+51	75	bývalým
+52	76	členům
+53	77	vyjmenovaných
+54	78	orgánů
+55	79	,
+56	80	s
+57	81	uvedením
+58	82	úhrnu
+59	83	za
+60	84	každou
+61	85	kategorii
+62	86	,
+63	87	b)
+64	88	výši
+65	89	záloh
+66	90	,
+67	91	půjček
+68	92	a
+69	93	úvěrů
+70	94	poskytnutých
+71	95	osobám
+72	96	,
+73	97	které
+74	98	jsou
+75	99	statutárním
+76	100	orgánem
+77	101	,
+78	102	členům
+79	103	statutárních
+80	104	nebo
+81	105	jiných
+82	106	řídících
+83	107	a
+84	108	dozorčích
+85	109	orgánů
+86	110	s
+87	111	uvedením
+88	112	úrokové
+89	113	sazby
+90	114	,
+91	115	hlavních
+92	116	podmínek
+93	117	a
+94	118	jakýchkoliv
+95	119	splatných
+96	120	částek
+97	121	,
+98	122	výši
+99	123	všech
+100	124	forem
+101	125	zajištění
+102	126	,
+103	127	s
+104	128	uvedením
+105	129	úhrnu
+106	130	za
+107	131	každou
+108	132	kategorii
+109	133	,
+110	134	c)
+111	135	celkovou
+112	136	částku
+113	137	závazků
+114	138	,
+115	139	které
+116	140	ke
+117	141	dni
+118	142	sestavení
+119	143	konsolidované
+120	144	účetní
+121	145	závěrky
+122	146	mají
+123	147	dobu
+124	148	splatnosti
+125	149	delší
+126	150	než
+127	151	pět
+128	152	let
+129	153	a
+130	154	celkovou
+131	155	částku
+132	156	zajištěných
+133	157	závazků
+134	158	s
+135	159	uvedením
+136	160	povahy
+137	161	a
+138	162	formy
+139	163	tohoto
+140	164	zajištění
+141	165	,
+142	166	d)
+143	167	způsob
+144	168	stanovení
+145	169	reálné
+146	170	hodnoty
+147	171	příslušného
+148	172	majetku
+149	173	a
+150	174	závazků
+151	175	,
+152	176	popis
+153	177	použitého
+154	178	oceňovacího
+155	179	modelu
+156	180	při
+157	181	ocenění
+158	182	cenných
+159	183	papírů
+160	184	a
+161	185	derivátů
+162	186	reálnou
+163	187	hodnotou
+164	188	,
+165	189	změny
+166	190	reálné
+167	191	hodnoty
+168	192	,
+169	193	včetně
+170	194	změn
+171	195	v
+172	196	ocenění
+173	197	podílu
+174	198	ekvivalencí
+175	199	podle
+176	200	jednotlivých
+177	201	druhů
+178	202	finančního
+179	203	majetku
+180	204	a
+181	205	způsob
+182	206	jejich
+183	207	zaúčtování
+184	208	;
+185	209	pokud
+186	210	nebyl
+187	211	cenný
+188	212	papír
+189	213	,
+190	214	podíl
+191	215	a
+192	216	derivát
+193	217	oceněn
+194	218	reálnou
+195	219	hodnotou
+196	220	nebo
+197	221	ekvivalencí
+198	222	,
+199	223	uvede
+200	224	účetní
+201	225	jednotka
+202	226	důvody
+203	227	a
+204	228	případnou
+205	229	výši
+206	230	opravné
+207	231	položky
+208	232	,
+209	233	e)
+210	234	souhrnnou
+211	235	výši
+212	236	finančních
+213	237	závazků
+214	238	,
+215	239	které
+216	240	nejsou
+217	241	uvedeny
+218	242	v
+219	243	konsolidované
+220	244	rozvaze
+221	245	,
+222	246	jsou
+223	247	-
+224	248	li
+225	249	tyto
+226	250	informace
+227	251	užitečné
+228	252	pro
+229	253	posouzení
+230	254	finanční
+231	255	situace
+232	256	;
+233	257	samostatně
+234	258	se
+235	259	uvedou
+236	260	veškeré
+237	261	závazky
+238	262	související
+239	263	s
+240	264	důchody
+241	265	a
+242	266	závazky
+243	267	mezi
+244	268	konsolidující
+245	269	účetní
+246	270	jednotkou
+247	271	a
+248	272	účetními
+249	273	jednotkami
+250	274	nezahrnutými
+251	275	do
+252	276	konsolidované
+253	277	účetní
+254	278	závěrky
+255	279	,
+256	280	f)
+257	281	konsolidované
+258	282	výnosy
+259	283	z
+260	284	běžné
+261	285	činnosti
+262	286	rozvržené
+263	287	podle
+264	288	kategorií
+265	289	činností
+266	290	a
+267	291	podle
+268	292	zeměpisných
+269	293	trhů
+270	294	,
+271	295	pokud
+272	296	se
+273	297	tyto
+274	298	kategorie
+275	299	a
+276	300	trhy
+277	301	mezi
+278	302	sebou
+279	303	podstatně
+280	304	liší
+281	305	z
+282	306	hlediska
+283	307	způsobu
+284	308	,
+285	309	kterým
+286	310	je
+287	311	organizován
+288	312	prodej
+289	313	zboží
+290	314	a
+291	315	výrobků
+292	316	a
+293	317	poskytování
+294	318	služeb
+295	319	spadajících
+296	320	do
+297	321	běžné
+298	322	činnosti
+299	323	,
+300	324	g)
+301	325	charakter
+302	326	a
+303	327	obchodní
+304	328	účel
+305	329	transakcí
+306	330	,
+307	331	které
+308	332	nejsou
+309	333	uvedeny
+310	334	v
+311	335	konsolidované
+312	336	rozvaze
+313	337	,
+314	338	a
+315	339	finanční
+316	340	dopad
+317	341	těchto
+318	342	transakcí
+319	343	,
+320	344	pokud
+321	345	jsou
+322	346	rizika
+323	347	nebo
+324	348	užitky
+325	349	z
+326	350	těchto
+327	351	operací
+328	352	významné
+329	353	a
+330	354	pokud
+331	355	je
+332	356	zveřejnění
+333	357	těchto
+334	358	rizik
+335	359	nebo
+336	360	užitků
+337	361	nezbytné
+338	362	k
+339	363	posouzení
+340	364	finanční
+341	365	situace
+342	366	,
+343	367	h)
+344	368	transakce
+345	369	,
+346	370	s
+347	371	výjimkou
+348	372	transakcí
+349	373	v
+350	374	rámci
+351	375	účetních
+352	376	jednotek
+353	377	v
+354	378	konsolidaci
+355	379	,
+356	380	které
+357	381	konsolidující
+358	382	účetní
+359	383	jednotka
+360	384	,
+361	385	konsolidované
+362	386	účetní
+363	387	jednotky
+364	388	,
+365	389	účetní
+366	390	jednotky
+367	391	pod
+368	392	společným
+369	393	vlivem
+370	394	nebo
+371	395	účetní
+372	396	jednotky
+373	397	přidružené
+374	398	uzavřely
+375	399	se
+376	400	spřízněnou
+377	401	stranou
+378	402	,
+379	403	včetně
+380	404	objemu
+381	405	takových
+382	406	transakcí
+383	407	,
+384	408	povahy
+385	409	vztahu
+386	410	se
+387	411	spřízněnou
+388	412	stranou
+389	413	a
+390	414	ostatních
+391	415	informací
+392	416	o
+393	417	těchto
+394	418	transakcích
+395	419	,
+396	420	které
+397	421	jsou
+398	422	nezbytné
+399	423	k
+400	424	pochopení
+401	425	finanční
+402	426	situace
+403	427	,
+404	428	pokud
+405	429	jsou
+406	430	tyto
+407	431	transakce
+408	432	významné
+409	433	a
+410	434	nebyly
+411	435	uzavřeny
+412	436	za
+413	437	běžných
+414	438	tržních
+415	439	podmínek
+416	440	;
+417	441	informace
+418	442	o
+419	443	jednotlivých
+420	444	transakcích
+421	445	lze
+422	446	seskupovat
+423	447	podle
+424	448	jejich
+425	449	charakteru
+426	450	s
+427	451	výjimkou
+428	452	případů
+429	453	,
+430	454	kdy
+431	455	jsou
+432	456	samostatné
+433	457	informace
+434	458	nezbytné
+435	459	k
+436	460	pochopení
+437	461	dopadu
+438	462	transakcí
+439	463	se
+440	464	spřízněnou
+441	465	stranou
+442	466	na
+443	467	finanční
+444	468	situaci
+445	469	;
+446	470	výraz
+447	471	„
+448	472	spřízněná
+449	473	strana
+450	474	“
+451	475	má
+452	476	stejný
+453	477	význam
+454	478	jako
+455	479	v
+456	480	mezinárodních
+457	481	účetních
+458	482	standardech
+459	483	upravených
+460	484	právem
+461	485	Evropské
+462	486	unie
+463	487	,
+464	488	i)
+465	489	odděleně
+466	490	informace
+467	491	o
+468	492	celkových
+469	493	nákladech
+470	494	na
+471	495	odměny
+472	496	statutárnímu
+473	497	auditorovi
+474	498	nebo
+475	499	auditorské
+476	500	společnosti
+477	501	za
+478	502	účetní
+479	503	období
+480	504	v
+481	505	členění
+482	506	na
+483	1	1
+484	4	.
+485	7	povinný
+486	10	audit
+487	13	roční
+488	16	účetní
+489	19	závěrky
+490	22	,
+491	25	2
+492	28	.
+493	30	jiné
+494	32	ověřovací
+495	34	služby
+496	36	,
+497	39	3
+498	41	.
+499	43	daňové
+500	45	poradenství
+501	47	,
+502	49	4
+503	51	.
+504	53	jiné
+505	55	neauditorské
+506	57	služby
+507	507	.
+EOF
+    ;
+    my @reorder = split(/\r?\n/, $reorder);
+    my @correctord;
+    foreach my $line (@reorder)
+    {
+        if($line =~ m/^(\d+)\s+(\d+)\s+.+$/)
+        {
+            $correctord[$2] = $1;
+        }
+    }
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if(defined($correctord[$node->ord()]) && $correctord[$node->ord()] > 0)
+        {
+            $node->_set_ord($correctord[$node->ord()]);
+        }
+        else
+        {
+            log_warn("Undefined correct order of node ".$node->ord());
         }
     }
 }
