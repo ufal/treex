@@ -120,26 +120,26 @@ sub fix_tokenization
             # nejsou: VB-P---3P-NA--- Mood=Ind|Number=Plur|Person=3|Polarity=Neg|Tense=Pres|VerbForm=Fin|Voice=Act
             if($node->form() =~ m/^je$/i)
             {
-                $node->set_tag('VB-S---3P-AA');
-                $node->set_conll_pos('VB-S---3P-AA');
+                $node->set_tag('VB-S---3P-AA---');
+                $node->set_conll_pos('VB-S---3P-AA---');
                 $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act', 'number' => 'sing', 'person' => '3', 'polarity' => 'pos'});
             }
             elsif($node->form() =~ m/^není$/i)
             {
-                $node->set_tag('VB-S---3P-NA');
-                $node->set_conll_pos('VB-S---3P-NA');
+                $node->set_tag('VB-S---3P-NA---');
+                $node->set_conll_pos('VB-S---3P-NA---');
                 $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act', 'number' => 'sing', 'person' => '3', 'polarity' => 'neg'});
             }
             elsif($node->form() =~ m/^jsou$/i)
             {
-                $node->set_tag('VB-P---3P-AA');
-                $node->set_conll_pos('VB-P---3P-AA');
+                $node->set_tag('VB-P---3P-AA---');
+                $node->set_conll_pos('VB-P---3P-AA---');
                 $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act', 'number' => 'plur', 'person' => '3', 'polarity' => 'pos'});
             }
             else # nejsou
             {
-                $node->set_tag('VB-P---3P-NA');
-                $node->set_conll_pos('VB-P---3P-NA');
+                $node->set_tag('VB-P---3P-NA---');
+                $node->set_conll_pos('VB-P---3P-NA---');
                 $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act', 'number' => 'plur', 'person' => '3', 'polarity' => 'neg'});
             }
             # Adjust the tree structure.
