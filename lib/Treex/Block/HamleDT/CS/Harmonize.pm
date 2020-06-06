@@ -77,14 +77,18 @@ sub fix_tokenization
     my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
+        #----------------------------------------------------------------------
+        # Verb with "-li" ("if").
         if($node->form() =~ m/^(je|není|jsou|nejsou)-(li)$/i)
         {
             my $byt = $1; # may be uppercased
             my $li = $2; # may be uppercased
             # We will need two new nodes right after the current node.
-            # Shift the ords of all subsequent nodes.
+            # Shift the ords of all subsequent nodes. We must take the new list
+            # of descendants, not @nodes, because we may have already inserted
+            # other nodes that are not in @nodes!
             my $co = $node->ord();
-            foreach my $n (@nodes)
+            foreach my $n ($root->get_descendants({'ordered' => 1}))
             {
                 if($n->ord() > $co)
                 {
@@ -146,9 +150,11 @@ sub fix_tokenization
             # We do not know whether the calling code still stores relation types in afun or conll_deprel, or deprel.
             # To be on the safe side, we will set all three.
             # There are two possible situations:
-            # 1) "není-li" is AuxV, as in "není-li dále stanoveno jinak"
-            # 2) "není-li" is the head of the clause (copula or existential predicate)
-            if($node->deprel() eq 'AuxV' || $node->afun() eq 'AuxV' || $node->conll_deprel() eq 'AuxV')
+            # 1. "není-li" is AuxV, as in "není-li dále stanoveno jinak"
+            # 2. "není-li" is the head of the clause (copula or existential predicate)
+            if(defined($node->deprel()) && $node->deprel() eq 'AuxV' ||
+               defined($node->afun()) && $node->afun() eq 'AuxV' ||
+               defined($node->conll_deprel()) && $node->conll_deprel() eq 'AuxV')
             {
                 $node2->set_parent($node->parent()->parent());
                 $node2->set_deprel('AuxC');
@@ -168,6 +174,81 @@ sub fix_tokenization
             $node1->set_deprel('AuxG');
             $node1->set_afun('AuxG');
             $node1->set_conll_deprel('AuxG');
+        }
+        #----------------------------------------------------------------------
+        # Multi-word terms enclosed in quotation marks, with spaces inside the
+        # token!
+        if($node->form() =~ m/^"(.+)"$/)
+        {
+            my $term = $1;
+            my @words = split(/\s+/, $term);
+            my $nw = scalar(@words);
+            # We will need $nw+1 new nodes right after the current node.
+            # Shift the ords of all subsequent nodes. We must take the new list
+            # of descendants, not @nodes, because we may have already inserted
+            # other nodes that are not in @nodes!
+            my $co = $node->ord();
+            foreach my $n ($root->get_descendants({'ordered' => 1}))
+            {
+                if($n->ord() > $co)
+                {
+                    $n->_set_ord($n->ord()+$nw+1);
+                }
+            }
+            $node->_set_ord($co+1);
+            # Create new nodes for the quotation marks.
+            my $nodeq0 = $node->create_child();
+            $nodeq0->_set_ord($co);
+            $nodeq0->set_form('„');
+            $nodeq0->set_lemma('"');
+            $nodeq0->set_tag('Z:-------------');
+            $nodeq0->set_conll_pos('Z:-------------');
+            $nodeq0->iset()->set_hash({'pos' => 'punc'});
+            $nodeq0->set_no_space_after(1);
+            $nodeq0->set_deprel('AuxG');
+            $nodeq0->set_afun('AuxG');
+            $nodeq0->set_conll_deprel('AuxG');
+            my $nodeq1 = $node->create_child();
+            $nodeq1->_set_ord($co);
+            $nodeq1->set_form('“');
+            $nodeq1->set_lemma('"');
+            $nodeq1->set_tag('Z:-------------');
+            $nodeq1->set_conll_pos('Z:-------------');
+            $nodeq1->iset()->set_hash({'pos' => 'punc'});
+            $nodeq1->set_no_space_after($node->no_space_after());
+            $nodeq1->set_deprel('AuxG');
+            $nodeq1->set_afun('AuxG');
+            $nodeq1->set_conll_deprel('AuxG');
+            # Create new nodes for the extra words.
+            for(my $i = 1; $i <= $#words; $i++)
+            {
+                my $nodew = $node->create_child();
+                $nodew->_set_ord($co+$i+1);
+                $nodew->set_form($words[$i]);
+                $nodew->set_lemma($words[$i].'_from_multi_word_term');
+                $nodew->set_tag('X@-------------');
+                $nodew->set_conll_pos('X@-------------');
+                $nodew->iset()->set_hash({});
+                if($i == $#words)
+                {
+                    $nodew->set_no_space_after(1);
+                }
+                # Unfortunately, the HamleDT/PDT deprel set does not provide
+                # a label suitable for technical relations between parts of
+                # a multi-word expression.
+                $nodew->set_deprel('Atr');
+                $nodew->set_afun('Atr');
+                $nodew->set_conll_deprel('Atr');
+            }
+            $node->set_form($words[0]);
+            $node->set_lemma($words[0].'_from_multi_word_term');
+            $node->set_tag('X@-------------');
+            $node->set_conll_pos('X@-------------');
+            $node->iset()->set_hash({});
+            if($nw > 1)
+            {
+                $node->set_no_space_after(undef);
+            }
         }
     }
 }
