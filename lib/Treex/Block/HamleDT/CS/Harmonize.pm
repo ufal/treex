@@ -1830,6 +1830,13 @@ sub fix_annotation_errors
             # "dokud" has the wrong deprel 'Adv' here.
             $subtree[2]->set_deprel('AuxC');
         }
+        # CLTT: Prepositions "od" and "do" are sometimes wrongly tagged as prefixes (ADJ+Hyph=Yes).
+        elsif($node->form() =~ m/^od|do$/i && $node->deprel() eq 'AuxP')
+        {
+            $node->set_tag('RR--2----------');
+            $node->set_conll_pos('RR--2----------');
+            $node->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep', 'case' => 'gen'});
+        }
     }
 }
 
