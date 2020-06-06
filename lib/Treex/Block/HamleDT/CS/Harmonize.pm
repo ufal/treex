@@ -1837,6 +1837,24 @@ sub fix_annotation_errors
             $node->set_conll_pos('RR--2----------');
             $node->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep', 'case' => 'gen'});
         }
+        # CLTT: "vymezené" wrongly analyzed as Pnom.
+        elsif($spanstring =~ m/byty a nebytové prostory vymezené jako jednotky/)
+        {
+            # The current node is "a" and "vymezené" is one of its children.
+            my @vymezene = grep {$_->form() eq 'vymezené'} ($node->children());
+            die if(scalar(@vymezene)==0);
+            $vymezene[0]->set_deprel('Atr');
+        }
+        elsif($spanstring =~ m/^, (ne)?jsou - li ceny ve smlouvě sjednány$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_deprel('Adv');
+            $subtree[4]->set_parent($subtree[1]);
+            $subtree[4]->set_deprel('Sb');
+            $subtree[5]->set_parent($subtree[1]);
+            $subtree[6]->set_deprel('Adv');
+            $subtree[7]->set_deprel('Pnom');
+        }
     }
 }
 
