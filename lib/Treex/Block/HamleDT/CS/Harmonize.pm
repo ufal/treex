@@ -245,10 +245,7 @@ sub fix_tokenization
             $node->set_tag('X@-------------');
             $node->set_conll_pos('X@-------------');
             $node->iset()->set_hash({});
-            if($nw > 1)
-            {
-                $node->set_no_space_after(undef);
-            }
+            $node->set_no_space_after($nw==1 ? 1 : undef);
         }
     }
 }
