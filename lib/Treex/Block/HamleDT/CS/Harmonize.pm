@@ -537,10 +537,14 @@ sub remove_features_from_lemmas
         }
         # Numeric value after lemmas of numeral words.
         # Example: třikrát`3
+        # Similarly some other lemmas also refer to other lemmas.
+        # Example: m`metr-1
+        # In general, the '`' character occurring at a non-first position signals a reference to another lemma.
+        # See "Reference" at https://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/m-layer/html/ch02s01.html
         my $wild = $node->wild();
-        if($lemma =~ s/\`(\d+)//) # `
+        if($lemma =~ s/(.)\`(.+)/$1/) # `
         {
-            $wild->{lnumvalue} = $1;
+            $wild->{lnumvalue} = $2;
         }
         # An optional numeric suffix helps distinguish homonyms.
         # Example: jen-1 (particle) vs. jen-2 (noun, Japanese currency)
