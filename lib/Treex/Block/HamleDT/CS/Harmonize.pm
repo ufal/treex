@@ -477,7 +477,9 @@ sub remove_features_from_lemmas
             # For instance, "zelenej" is a colloquial form of a neutral lemma "zelený".
             # However, "zpackaný" is a colloquial lemma, regardless whether the form is "zpackaný" (neutral) or "zpackanej" (colloquial).
             # Move the foreign feature from the lemma to the Interset features.
-            if($ltags =~ s/_,t//)
+            # There is an error and once the foreign flag is rendered as ;t instead of ,t:
+            # Johnnie_;R_;S_;t
+            if($ltags =~ s/_[,;]t//)
             {
                 $iset->set('foreign', 'foreign');
             }
@@ -489,7 +491,8 @@ sub remove_features_from_lemmas
             }
             # The style flat _,a means "archaic" but it seems to be used inconsistently in the data. Discard it.
             # The style flat _,s means "bookish" but it seems to be used inconsistently in the data. Discard it.
-            $ltags =~ s/_,[as]//;
+            # On one occasion both of them are used: nikdá_,a_,s
+            $ltags =~ s/_,[as]//g;
             # Colloquial
             if($ltags =~ s/_,h//)
             {
