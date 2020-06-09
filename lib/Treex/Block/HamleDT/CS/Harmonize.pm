@@ -557,66 +557,6 @@ sub remove_features_from_lemmas
             {
                 $iset->set('nountype', 'com');
             }
-            # Lemma comments help explain the meaning of the lemma.
-            # They are especially useful for homonyms, foreign words and abbreviations; but they may appear everywhere.
-            # A typical comment is a synonym or other explaining text in Czech.
-            # Example: jen-1_^(pouze)
-            # Unfortunately there are instances where the '^' character is missing. Let's capture them as well.
-            # Example: správně_(*1ý)
-            # Unfortunately there are instances where the closing ')' is missing. Let's capture them as well.
-            # Example: and-1_,t_^(obv._souč._anglických_názvů,_"a"
-            # Regular expression for a non-left-bracket.
-            my $nonbrack = '[^\)]';
-            while($ltags =~ s/_\^?(\($nonbrack+\)?)//)
-            {
-                my $comment = $1;
-                # Add the closing bracket if missing. ((
-                $comment .= ')' if($comment !~ m/\)$/);
-                # There is a special class of comments that encode how this lemma was derived from another lemma.
-                # Example: uváděný_^(*2t)
-                # An oddity: Maruška_^(^DI*4ie-1)
-                if($comment =~ m/^\((?:\^DI)?\*(\d*)(.*)\)$/)
-                {
-                    my $nrm = $1;
-                    my $add = $2;
-                    if(defined($nrm) && $nrm > 0)
-                    {
-                        # Remove the specified number of trailing characters.
-                        # Warning: If there was the numeric lemma id suffix, it is counted in the characters removed!
-                        # pozornost-1_^(všímavý,_milý,_soustředěný)_(*5ý-1)
-                        # 5 characters from "pozornost-1" = "pozorn" + "ý-1"
-                        # if we wrongly remove them from "pozornost", the result will be "pozoý-1"
-                        # Similarly, if the lemma proper includes a reference to a synonymous lemma or a numeric value, it is counted in the characters removed.
-                        # šestina`6_^(*5`6)
-                        # The lemma this is derived from is "šest`6".
-                        my $lderiv = $lprop;
-                        $lderiv =~ s/.{$nrm}$//;
-                        # Append the original suffix.
-                        $lderiv .= $add if(defined($add));
-                        # But if it includes its own lemma identification number, remove it again.
-                        $lderiv =~ s/(.)-(\d+)/$1/;
-                        # If it includes its own reference to another lemma or numeric value, remove it too.
-                        $lderiv =~ s/(.)`.+/$1/; # `
-                        if($lderiv eq $lprop)
-                        {
-                            log_warn("Lemma '$lemma', derivation comment '$comment', no change.");
-                        }
-                        else
-                        {
-                            $node->set_misc_attr('LDeriv', $lderiv);
-                        }
-                    }
-                }
-                else # normal comment in plain Czech
-                {
-                    $node->set_misc_attr('LGloss', $comment);
-                }
-            }
-            # Sanity check. What if a lemma contains tags that are ill-formed?
-            if($ltags ne '')
-            {
-                log_warn("Lemma '$lemma' contains information that cannot be understood: '$ltags'.");
-            }
             # Numeric value after lemmas of numeral words.
             # Example: třikrát`3
             # Similarly some other lemmas also refer to other lemmas.
@@ -695,6 +635,66 @@ sub remove_features_from_lemmas
             if($lprop =~ s/(.)-(\d+)/$1/)
             {
                 $node->set_misc_attr('LId', "$lprop-$2");
+            }
+            # Lemma comments help explain the meaning of the lemma.
+            # They are especially useful for homonyms, foreign words and abbreviations; but they may appear everywhere.
+            # A typical comment is a synonym or other explaining text in Czech.
+            # Example: jen-1_^(pouze)
+            # Unfortunately there are instances where the '^' character is missing. Let's capture them as well.
+            # Example: správně_(*1ý)
+            # Unfortunately there are instances where the closing ')' is missing. Let's capture them as well.
+            # Example: and-1_,t_^(obv._souč._anglických_názvů,_"a"
+            # Regular expression for a non-left-bracket.
+            my $nonbrack = '[^\)]';
+            while($ltags =~ s/_\^?(\($nonbrack+\)?)//)
+            {
+                my $comment = $1;
+                # Add the closing bracket if missing. ((
+                $comment .= ')' if($comment !~ m/\)$/);
+                # There is a special class of comments that encode how this lemma was derived from another lemma.
+                # Example: uváděný_^(*2t)
+                # An oddity: Maruška_^(^DI*4ie-1)
+                if($comment =~ m/^\((?:\^DI)?\*(\d*)(.*)\)$/)
+                {
+                    my $nrm = $1;
+                    my $add = $2;
+                    if(defined($nrm) && $nrm > 0)
+                    {
+                        # Remove the specified number of trailing characters.
+                        # Warning: If there was the numeric lemma id suffix, it is counted in the characters removed!
+                        # pozornost-1_^(všímavý,_milý,_soustředěný)_(*5ý-1)
+                        # 5 characters from "pozornost-1" = "pozorn" + "ý-1"
+                        # if we wrongly remove them from "pozornost", the result will be "pozoý-1"
+                        # Similarly, if the lemma proper includes a reference to a synonymous lemma or a numeric value, it is counted in the characters removed.
+                        # šestina`6_^(*5`6)
+                        # The lemma this is derived from is "šest`6".
+                        my $lderiv = $lprop;
+                        $lderiv =~ s/.{$nrm}$//;
+                        # Append the original suffix.
+                        $lderiv .= $add if(defined($add));
+                        # But if it includes its own lemma identification number, remove it again.
+                        $lderiv =~ s/(.)-(\d+)/$1/;
+                        # If it includes its own reference to another lemma or numeric value, remove it too.
+                        $lderiv =~ s/(.)`.+/$1/; # `
+                        if($lderiv eq $lprop)
+                        {
+                            log_warn("Lemma '$lemma', derivation comment '$comment', no change.");
+                        }
+                        else
+                        {
+                            $node->set_misc_attr('LDeriv', $lderiv);
+                        }
+                    }
+                }
+                else # normal comment in plain Czech
+                {
+                    $node->set_misc_attr('LGloss', $comment);
+                }
+            }
+            # Sanity check. What if a lemma contains tags that are ill-formed?
+            if($ltags ne '')
+            {
+                log_warn("Lemma '$lemma' contains information that cannot be understood: '$ltags'.");
             }
             # And there is one clear bug: lemma "serioznóst" instead of "serióznost".
             $lprop =~ s/^serioznóst$/serióznost/;
