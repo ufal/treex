@@ -443,6 +443,9 @@ sub remove_features_from_lemmas
             {
                 $lprop = $1;
                 $ltags = $2;
+                # Occasionally there is an error and two underscores occur in sequence:
+                # l-5__,t_^(př._l'Arc,_stažený_tvar_fr._členu)
+                $ltags =~ s/_+/_/g;
             }
             # Verb lemmas encode aspect.
             # Aspect is a lexical feature in Czech but it can still be encoded in Interset and not in the lemma.
