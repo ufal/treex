@@ -671,7 +671,8 @@ sub remove_features_from_lemmas
                 my $l1 = $lprop; # either abbreviation for measure units, or full word for numerals
                 my $l2 = $2; # either full word for measure units, or numeric value for numerals
                 # Numeric value of a numeral.
-                if($l2 =~ m/\d/)
+                # Note that it is not enough that it contains a digit, as non-numeric lemmas may have numeric identifiers ("mm-1", "s-2").
+                if($l2 =~ m/^\d+$/)
                 {
                     $wild->{lnumvalue} = $l2;
                 }
