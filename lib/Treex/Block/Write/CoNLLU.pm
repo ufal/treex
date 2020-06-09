@@ -300,30 +300,6 @@ sub process_atree
         {
             unshift(@misc, 'SpaceAfter=No');
         }
-        ###!!! (Czech)-specific wild attributes that have been cut off the lemma.
-        ###!!! In the future we will want to make them normal attributes.
-        ###!!! Note: the {lid} attribute is now also collected for other treebanks, e.g. AGDT and LDT.
-        my $wild = $node->wild();
-        if(exists($wild->{lid}) && defined($wild->{lid}))
-        {
-            if(defined($lemma))
-            {
-                push(@misc, "LId=$lemma-$wild->{lid}");
-            }
-            else
-            {
-                log_warn("UNDEFINED LEMMA: $ord $form $wild->{lid}");
-            }
-        }
-        if(exists($wild->{lgloss}) && defined($wild->{lgloss}) && ref($wild->{lgloss}) eq 'ARRAY' && scalar(@{$wild->{lgloss}}) > 0)
-        {
-            my $lgloss = join(',', @{$wild->{lgloss}});
-            push(@misc, "LGloss=$lgloss");
-        }
-        if(exists($wild->{lnumvalue}) && defined($wild->{lnumvalue}))
-        {
-            push(@misc, "LNumValue=$wild->{lnumvalue}");
-        }
         if($self->sort_misc())
         {
             @misc = sort {lc($a) cmp lc($b)} (@misc);

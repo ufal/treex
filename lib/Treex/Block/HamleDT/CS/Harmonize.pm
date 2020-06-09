@@ -609,7 +609,7 @@ sub remove_features_from_lemmas
                 }
                 else # normal comment in plain Czech
                 {
-                    push(@{$wild->{lgloss}}, $comment);
+                    $node->set_misc_attr('LGloss', $comment);
                 }
             }
             # Sanity check. What if a lemma contains tags that are ill-formed?
@@ -675,18 +675,18 @@ sub remove_features_from_lemmas
                 # Note that it is not enough that it contains a digit, as non-numeric lemmas may have numeric identifiers ("mm-1", "s-2").
                 if($l2 =~ m/^\d+$/)
                 {
-                    $wild->{lnumvalue} = $l2;
+                    $node->set_misc_attr('LNumValue', $l2);
                 }
                 # If the form is abbreviated, use the abbreviated lemma.
                 elsif($l1 =~ m/^$form(-\d+)?$/i || $l1 eq 's-2' && lc($form) eq 'sec')
                 {
-                    $wild->{lnumvalue} = $l2;
+                    $node->set_misc_attr('LNumValue', $l2);
                 }
                 # Otherwise use the full lemma.
                 else
                 {
                     $lprop = $l2;
-                    $wild->{lnumvalue} = $l1;
+                    $node->set_misc_attr('LNumValue', $l1);
                 }
             }
             # An optional numeric suffix helps distinguish homonyms.
@@ -694,7 +694,7 @@ sub remove_features_from_lemmas
             # There must be at least one character before the suffix. Otherwise we would be eating tokens that are negative numbers.
             if($lprop =~ s/(.)-(\d+)/$1/)
             {
-                $wild->{lid} = $2;
+                $node->set_misc_attr('LId', "$lprop-$2");
             }
             # And there is one clear bug: lemma "serioznóst" instead of "serióznost".
             $lprop =~ s/^serioznóst$/serióznost/;
