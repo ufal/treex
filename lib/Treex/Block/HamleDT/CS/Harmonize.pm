@@ -427,180 +427,202 @@ sub remove_features_from_lemmas
     {
         my $lemma = $node->lemma();
         my $iset = $node->iset();
-        # Verb lemmas encode aspect.
-        # Aspect is a lexical feature in Czech but it can still be encoded in Interset and not in the lemma.
-        if($lemma =~ s/_:T_:W// || $lemma =~ s/_:W_:T//)
-        {
-            # Do nothing. The verb can have any of the two aspects so it does not make sense to say anything about it.
-            # (But there are also many verbs that do not have any information about their aspect, probably due to incomplete lexicon.)
-        }
-        elsif($lemma =~ s/_:T//)
-        {
-            $iset->set('aspect', 'imp');
-        }
-        elsif($lemma =~ s/_:W//)
-        {
-            $iset->set('aspect', 'perf');
-        }
-        # Move the abbreviation feature from the lemma to the Interset features.
-        # It is probably not necessary because the same information is also encoded in the morphological tag.
-        if($lemma =~ s/_:B//)
-        {
-            $iset->set('abbr', 'abbr');
-        }
-        # According to the documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf, lemmas may also encode the part of speech:
-        # _:[NAJZMVDPCIFQX]
-        # However, none of these codes actually appears in PDT 3.0 data.
-        # According to the documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf, lemmas may also encode style:
-        # _,[tnashelvx]
-        # It is not necessarily the same thing as the style in inflection.
-        # For instance, "zelenej" is a colloquial form of a neutral lemma "zelený".
-        # However, "zpackaný" is a colloquial lemma, regardless whether the form is "zpackaný" (neutral) or "zpackanej" (colloquial).
-        # Move the foreign feature from the lemma to the Interset features.
-        if($lemma =~ s/_,t//)
-        {
-            $iset->set('foreign', 'foreign');
-        }
-        # Vernacular (dialect)
-        if($lemma =~ s/_,n//)
-        {
-            # Examples: súdit, husličky
-            $iset->set('style', 'vrnc');
-        }
-        # The style flat _,a means "archaic" but it seems to be used inconsistently in the data. Discard it.
-        # The style flat _,s means "bookish" but it seems to be used inconsistently in the data. Discard it.
-        $lemma =~ s/_,[as]//;
-        # Colloquial
-        if($lemma =~ s/_,h//)
-        {
-            # Examples: vejstraha, bichle
-            $iset->set('style', 'coll');
-        }
-        # Expressive
-        if($lemma =~ s/_,e//)
-        {
-            # Examples: miminko, hovínko
-            $iset->set('style', 'expr');
-        }
-        # Slang, argot
-        if($lemma =~ s/_,l//)
-        {
-            # Examples: mukl, děcák, pécéčko
-            $iset->set('style', 'slng');
-        }
-        # Vulgar
-        if($lemma =~ s/_,v//)
-        {
-            # Examples: parchant, bordelový
-            $iset->set('style', 'vulg');
-        }
-        # The style flag _,x means, according to documentation, "outdated spelling or misspelling".
-        # But it occurs with a number of alternative spellings and sometimes it is debatable whether they are outdated, e.g. "patriotismus" vs. "patriotizmus".
-        # And there is one clear bug: lemma "serioznóst" instead of "serióznost".
-        if($lemma =~ s/_,x//)
-        {
-            # According to documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf,
-            # 2 means "variant, rarely used, bookish, or archaic".
-            $iset->set('variant', '2');
-            $iset->set('style', 'rare');
-            $lemma =~ s/^serioznóst$/serióznost/;
-        }
-        # Term categories encode (among others) types of named entities.
-        # There may be two categories at one lemma.
-        # JVC_;K_;R (buď továrna, nebo výrobek)
-        # Poldi_;Y_;K
-        # Kladno_;G_;K
-        my %nametypes;
-        while($lemma =~ s/_;([YSEGKRm])//)
-        {
-            my $tag = $1;
-            my $nt = $nametags{$tag};
-            if(defined($nt))
-            {
-                $nametypes{$nt}++;
-            }
-        }
-        # Drop the other term categories because they are used inconsistently (see above).
-        $lemma =~ s/_;[HULjgcybuwpzo]//g;
-        my @nametypes = sort(keys(%nametypes));
-        if(@nametypes)
-        {
-            $iset->set('nametype', join('|', @nametypes));
-            if($node->is_noun())
-            {
-                $iset->set('nountype', 'prop');
-            }
-        }
-        elsif($node->is_noun() && !$node->is_pronoun() && $iset->nountype() eq '')
-        {
-            $iset->set('nountype', 'com');
-        }
-        # Numeric value after lemmas of numeral words.
-        # Example: třikrát`3
-        # Similarly some other lemmas also refer to other lemmas.
-        # Example: m`metr-1
-        # In general, the '`' character occurring at a non-first position signals a reference to another lemma.
-        # See "Reference" at https://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/m-layer/html/ch02s01.html
         my $wild = $node->wild();
-        if($lemma =~ s/(.)\`(.+)/$1/) # `
+        # The underscore character is used to delimit various additional tags within
+        # the lemma string. If the character occurs in the underlying text (which
+        # probably never happens in PDT), its lemma is '_' without any extra tags.
+        if($lemma =~ m/^_.+$/)
         {
-            $wild->{lnumvalue} = $2;
+            log_warn("Lemma '$lemma' starts with the underscore character but it is followed by other characters.");
         }
-        # An optional numeric suffix helps distinguish homonyms.
-        # Example: jen-1 (particle) vs. jen-2 (noun, Japanese currency)
-        # There must be at least one character before the suffix. Otherwise we would be eating tokens that are negative numbers.
-        if($lemma =~ s/(.)-(\d+)/$1/)
+        elsif($lemma ne '_')
         {
-            $wild->{lid} = $2;
-        }
-        # Lemma comments help explain the meaning of the lemma.
-        # They are especially useful for homonyms, foreign words and abbreviations; but they may appear everywhere.
-        # A typical comment is a synonym or other explaining text in Czech.
-        # Example: jen-1_^(pouze)
-        # Unfortunately there are instances where the '^' character is missing. Let's capture them as well.
-        # Example: správně_(*1ý)
-        while($lemma =~ s/_\^?(\(.*?\))//)
-        {
-            my $comment = $1;
-            # There is a special class of comments that encode how this lemma was derived from another lemma.
-            # Example: uváděný_^(*2t)
-            if($comment =~ m/^\(\*(\d*)(.*)\)$/)
+            my $lprop = $lemma;
+            my $ltags = '';
+            if($lemma =~ m/^([^_]+)(_.*)$/)
             {
-                my $nrm = $1;
-                my $add = $2;
-                if(defined($nrm) && $nrm > 0)
+                $lprop = $1;
+                $ltags = $2;
+            }
+            # Verb lemmas encode aspect.
+            # Aspect is a lexical feature in Czech but it can still be encoded in Interset and not in the lemma.
+            if($ltags =~ s/_:T_:W// || $ltags =~ s/_:W_:T//)
+            {
+                # Do nothing. The verb can have any of the two aspects so it does not make sense to say anything about it.
+                # (But there are also many verbs that do not have any information about their aspect, probably due to incomplete lexicon.)
+            }
+            elsif($ltags =~ s/_:T//)
+            {
+                $iset->set('aspect', 'imp');
+            }
+            elsif($ltags =~ s/_:W//)
+            {
+                $iset->set('aspect', 'perf');
+            }
+            # Move the abbreviation feature from the lemma to the Interset features.
+            # It is probably not necessary because the same information is also encoded in the morphological tag.
+            if($ltags =~ s/_:B//)
+            {
+                $iset->set('abbr', 'abbr');
+            }
+            # According to the documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf, lemmas may also encode the part of speech:
+            # _:[NAJZMVDPCIFQX]
+            # However, none of these codes actually appears in PDT 3.0 data.
+            # According to the documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf, lemmas may also encode style:
+            # _,[tnashelvx]
+            # It is not necessarily the same thing as the style in inflection.
+            # For instance, "zelenej" is a colloquial form of a neutral lemma "zelený".
+            # However, "zpackaný" is a colloquial lemma, regardless whether the form is "zpackaný" (neutral) or "zpackanej" (colloquial).
+            # Move the foreign feature from the lemma to the Interset features.
+            if($ltags =~ s/_,t//)
+            {
+                $iset->set('foreign', 'foreign');
+            }
+            # Vernacular (dialect)
+            if($ltags =~ s/_,n//)
+            {
+                # Examples: súdit, husličky
+                $iset->set('style', 'vrnc');
+            }
+            # The style flat _,a means "archaic" but it seems to be used inconsistently in the data. Discard it.
+            # The style flat _,s means "bookish" but it seems to be used inconsistently in the data. Discard it.
+            $ltags =~ s/_,[as]//;
+            # Colloquial
+            if($ltags =~ s/_,h//)
+            {
+                # Examples: vejstraha, bichle
+                $iset->set('style', 'coll');
+            }
+            # Expressive
+            if($ltags =~ s/_,e//)
+            {
+                # Examples: miminko, hovínko
+                $iset->set('style', 'expr');
+            }
+            # Slang, argot
+            if($ltags =~ s/_,l//)
+            {
+                # Examples: mukl, děcák, pécéčko
+                $iset->set('style', 'slng');
+            }
+            # Vulgar
+            if($ltags =~ s/_,v//)
+            {
+                # Examples: parchant, bordelový
+                $iset->set('style', 'vulg');
+            }
+            # The style flag _,x means, according to documentation, "outdated spelling or misspelling".
+            # But it occurs with a number of alternative spellings and sometimes it is debatable whether they are outdated, e.g. "patriotismus" vs. "patriotizmus".
+            # And there is one clear bug: lemma "serioznóst" instead of "serióznost".
+            if($ltags =~ s/_,x//)
+            {
+                # According to documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf,
+                # 2 means "variant, rarely used, bookish, or archaic".
+                $iset->set('variant', '2');
+                $iset->set('style', 'rare');
+                $ltags =~ s/^serioznóst$/serióznost/;
+            }
+            # Term categories encode (among others) types of named entities.
+            # There may be two categories at one lemma.
+            # JVC_;K_;R (buď továrna, nebo výrobek)
+            # Poldi_;Y_;K
+            # Kladno_;G_;K
+            my %nametypes;
+            while($ltags =~ s/_;([YSEGKRm])//)
+            {
+                my $tag = $1;
+                my $nt = $nametags{$tag};
+                if(defined($nt))
                 {
-                    # Remove the specified number of trailing characters.
-                    # Warning: If there was the numeric lemma id suffix, it is counted in the characters removed!
-                    # pozornost-1_^(všímavý,_milý,_soustředěný)_(*5ý-1)
-                    # 5 characters from "pozornost-1" = "pozorn" + "ý-1"
-                    # if we wrongly remove them from "pozornost", the result will be "pozoý-1"
-                    my $lderiv = $lemma;
-                    if(exists($wild->{lid}))
-                    {
-                        $lderiv .= '-'.$wild->{lid};
-                    }
-                    $lderiv =~ s/.{$nrm}$//;
-                    # Append the original suffix.
-                    $lderiv .= $add if(defined($add));
-                    # But if it includes its own lemma identification number, remove it again.
-                    $lderiv =~ s/(.)-(\d+)/$1/;
-                    if($lderiv eq $lemma)
-                    {
-                        log_warn("Lemma $lemma, derivation comment $comment, no change");
-                    }
-                    else
-                    {
-                        $node->set_misc_attr('LDeriv', $lderiv);
-                    }
+                    $nametypes{$nt}++;
                 }
             }
-            else # normal comment in plain Czech
+            # Drop the other term categories because they are used inconsistently (see above).
+            $ltags =~ s/_;[HULjgcybuwpzo]//g;
+            my @nametypes = sort(keys(%nametypes));
+            if(@nametypes)
             {
-                push(@{$wild->{lgloss}}, $comment);
+                $iset->set('nametype', join('|', @nametypes));
+                if($node->is_noun())
+                {
+                    $iset->set('nountype', 'prop');
+                }
             }
+            elsif($node->is_noun() && !$node->is_pronoun() && $iset->nountype() eq '')
+            {
+                $iset->set('nountype', 'com');
+            }
+            # Lemma comments help explain the meaning of the lemma.
+            # They are especially useful for homonyms, foreign words and abbreviations; but they may appear everywhere.
+            # A typical comment is a synonym or other explaining text in Czech.
+            # Example: jen-1_^(pouze)
+            # Unfortunately there are instances where the '^' character is missing. Let's capture them as well.
+            # Example: správně_(*1ý)
+            while($ltags =~ s/_\^?(\(.*?\))//)
+            {
+                my $comment = $1;
+                # There is a special class of comments that encode how this lemma was derived from another lemma.
+                # Example: uváděný_^(*2t)
+                if($comment =~ m/^\(\*(\d*)(.*)\)$/)
+                {
+                    my $nrm = $1;
+                    my $add = $2;
+                    if(defined($nrm) && $nrm > 0)
+                    {
+                        # Remove the specified number of trailing characters.
+                        # Warning: If there was the numeric lemma id suffix, it is counted in the characters removed!
+                        # pozornost-1_^(všímavý,_milý,_soustředěný)_(*5ý-1)
+                        # 5 characters from "pozornost-1" = "pozorn" + "ý-1"
+                        # if we wrongly remove them from "pozornost", the result will be "pozoý-1"
+                        # Similarly, if the lemma proper includes a reference to a synonymous lemma or a numeric value, it is counted in the characters removed.
+                        # šestina`6_^(*5`6)
+                        # The lemma this is derived from is "šest`6".
+                        my $lderiv = $lprop;
+                        $lderiv =~ s/.{$nrm}$//;
+                        # Append the original suffix.
+                        $lderiv .= $add if(defined($add));
+                        # But if it includes its own lemma identification number, remove it again.
+                        $lderiv =~ s/(.)-(\d+)/$1/;
+                        if($lderiv eq $lprop)
+                        {
+                            log_warn("Lemma '$lemma', derivation comment '$comment', no change.");
+                        }
+                        else
+                        {
+                            $node->set_misc_attr('LDeriv', $lderiv);
+                        }
+                    }
+                }
+                else # normal comment in plain Czech
+                {
+                    push(@{$wild->{lgloss}}, $comment);
+                }
+            }
+            # Sanity check. What if a lemma contains tags that are ill-formed?
+            if($ltags ne '')
+            {
+                log_warn("Lemma '$lemma' contains information that cannot be understood: '$ltags'.");
+            }
+            # Numeric value after lemmas of numeral words.
+            # Example: třikrát`3
+            # Similarly some other lemmas also refer to other lemmas.
+            # Example: m`metr-1
+            # In general, the '`' character occurring at a non-first position signals a reference to another lemma.
+            # See "Reference" at https://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/m-layer/html/ch02s01.html
+            if($lprop =~ s/(.)\`(.+)/$1/) # `
+            {
+                $wild->{lnumvalue} = $2;
+            }
+            # An optional numeric suffix helps distinguish homonyms.
+            # Example: jen-1 (particle) vs. jen-2 (noun, Japanese currency)
+            # There must be at least one character before the suffix. Otherwise we would be eating tokens that are negative numbers.
+            if($lprop =~ s/(.)-(\d+)/$1/)
+            {
+                $wild->{lid} = $2;
+            }
+            $lemma = $lprop;
+            $node->set_lemma($lemma);
         }
-        $node->set_lemma($lemma);
     }
 }
 
