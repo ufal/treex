@@ -670,6 +670,7 @@ sub remove_features_from_lemmas
             {
                 my $l1 = $lprop; # either abbreviation for measure units, or full word for numerals
                 my $l2 = $2; # either full word for measure units, or numeric value for numerals
+                my $form = $node->form();
                 # Numeric value of a numeral.
                 # Note that it is not enough that it contains a digit, as non-numeric lemmas may have numeric identifiers ("mm-1", "s-2").
                 if($l2 =~ m/^\d+$/)
@@ -677,7 +678,7 @@ sub remove_features_from_lemmas
                     $wild->{lnumvalue} = $l2;
                 }
                 # If the form is abbreviated, use the abbreviated lemma.
-                elsif(lc($node->form()) eq lc($l1))
+                elsif($l1 =~ m/^$form(-\d+)?$/i)
                 {
                     $wild->{lnumvalue} = $l2;
                 }
