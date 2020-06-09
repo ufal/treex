@@ -559,7 +559,9 @@ sub remove_features_from_lemmas
             # Example: správně_(*1ý)
             # Unfortunately there are instances where the closing ')' is missing. Let's capture them as well.
             # Example: and-1_,t_^(obv._souč._anglických_názvů,_"a"
-            while($ltags =~ s/_\^?(\(.*?\)?)//)
+            # Regular expression for a non-left-bracket.
+            my $nonbrack = '[^\)]';
+            while($ltags =~ s/_\^?(\($nonbrack+\)?)//)
             {
                 my $comment = $1;
                 # Add the closing bracket if missing. ((
