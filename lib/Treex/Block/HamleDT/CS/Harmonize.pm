@@ -512,15 +512,14 @@ sub remove_features_from_lemmas
                 $iset->set('style', 'vulg');
             }
             # The style flag _,x means, according to documentation, "outdated spelling or misspelling".
-            # But it occurs with a number of alternative spellings and sometimes it is debatable whether they are outdated, e.g. "patriotismus" vs. "patriotizmus".
-            # And there is one clear bug: lemma "serioznóst" instead of "serióznost".
+            # But it occurs with a number of alternative spellings and sometimes it is debatable whether
+            # they are outdated, e.g. "patriotismus" vs. "patriotizmus".
             if($ltags =~ s/_,x//)
             {
                 # According to documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf,
                 # 2 means "variant, rarely used, bookish, or archaic".
                 $iset->set('variant', '2');
                 $iset->set('style', 'rare');
-                $ltags =~ s/^serioznóst$/serióznost/;
             }
             # Term categories encode (among others) types of named entities.
             # There may be two categories at one lemma.
@@ -558,12 +557,17 @@ sub remove_features_from_lemmas
             # Example: jen-1_^(pouze)
             # Unfortunately there are instances where the '^' character is missing. Let's capture them as well.
             # Example: správně_(*1ý)
-            while($ltags =~ s/_\^?(\(.*?\))//)
+            # Unfortunately there are instances where the closing ')' is missing. Let's capture them as well.
+            # Example: and-1_,t_^(obv._souč._anglických_názvů,_"a"
+            while($ltags =~ s/_\^?(\(.*?\)?)//)
             {
                 my $comment = $1;
+                # Add the closing bracket if missing. ((
+                $comment .= ')' if($comment !~ m/\)$/);
                 # There is a special class of comments that encode how this lemma was derived from another lemma.
                 # Example: uváděný_^(*2t)
-                if($comment =~ m/^\(\*(\d*)(.*)\)$/)
+                # An oddity: Maruška_^(^DI*4ie-1)
+                if($comment =~ m/^\((?:\^DI)?\*(\d*)(.*)\)$/)
                 {
                     my $nrm = $1;
                     my $add = $2;
@@ -583,6 +587,8 @@ sub remove_features_from_lemmas
                         $lderiv .= $add if(defined($add));
                         # But if it includes its own lemma identification number, remove it again.
                         $lderiv =~ s/(.)-(\d+)/$1/;
+                        # If it includes its own reference to another lemma or numeric value, remove it too.
+                        $lderiv =~ s/(.)`.+/$1/; # `
                         if($lderiv eq $lprop)
                         {
                             log_warn("Lemma '$lemma', derivation comment '$comment', no change.");
@@ -609,9 +615,69 @@ sub remove_features_from_lemmas
             # Example: m`metr-1
             # In general, the '`' character occurring at a non-first position signals a reference to another lemma.
             # See "Reference" at https://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/m-layer/html/ch02s01.html
-            if($lprop =~ s/(.)\`(.+)/$1/) # `
+            # The rules that specify which version of the lemma is primary are odd.
+            # For example, there is a lemma "GJ`gigajoul" and it is used both with
+            # the form "GJ" and with the full words "gigajoul", "gigajoulů" etc.
+            # It would be odd to remove "gigajoul" and keep "GJ" when the form is
+            # "gigajoul". The following appears in PDT (forms in brackets):
+            # cm`centimetr (cm)
+            # g`gram (g)
+            # GJ`gigajoul (gigajoul, gigajoulu, GJ)
+            # GWh`gigawatthodina (GWh)
+            # ha`hektar (hektar, hektaru, hektarů, hektarech, ha)
+            # hl`hektolitr (hektolitrů, hl)
+            # Hz`hertz (Hz)
+            # J`joul (J)
+            # kg`kilogram (kg)
+            # kHz`kilohertz (kHz)
+            # k`kůň (k)
+            # km`kilometr (km)
+            # kV`kilovolt (kilovoltů, kV)
+            # kWh`kilowatthodina (kilowatthodin, kWh)
+            # kW`kilowatt (kilowattů, kW)
+            # l`litr (litr, litru, litrů, litrech, l, L)
+            # MHz`megahertz (megahertzů, MHz)
+            # m`metr (m)
+            # mm`milimetr (mm)
+            # MWh`megawatthodina (megawatthodin)
+            # MW`megawatt (MW)
+            # ns`nanosekunda (nanosekund, ns)
+            # protistrana`strana (protistrana, protistrany) ###!!!???
+            # ps`pikosekunda (PS)
+            # SF`Sinn-1 (Sinn) ###!!!
+            # SF`Fein-1 (Fein) ###!!!
+            # s`sekunda (sec, s)
+            # TJ`terajoul (terajoulů, TJ)
+            # t`tuna (t, T)
+            # TWh`terawatthodina (TWh)
+            # V`volt (voltů, V)
+            # W`watt (watty, W)
+            # ...
+            # šest`6
+            if($lprop =~ m/^SF\`(Sinn-1|Fein-1)$/) # `
             {
-                $wild->{lnumvalue} = $2;
+                $lprop = $1;
+            }
+            elsif($lprop =~ s/(.)\`(.+)/$1/) # `
+            {
+                my $l1 = $lprop; # either abbreviation for measure units, or full word for numerals
+                my $l2 = $2; # either full word for measure units, or numeric value for numerals
+                # Numeric value of a numeral.
+                if($l2 =~ m/\d/)
+                {
+                    $wild->{lnumvalue} = $l2;
+                }
+                # If the form is abbreviated, use the abbreviated lemma.
+                elsif(lc($node->form()) eq lc($l1))
+                {
+                    $wild->{lnumvalue} = $l2;
+                }
+                # Otherwise use the full lemma.
+                else
+                {
+                    $lprop = $l2;
+                    $wild->{lnumvalue} = $l1;
+                }
             }
             # An optional numeric suffix helps distinguish homonyms.
             # Example: jen-1 (particle) vs. jen-2 (noun, Japanese currency)
@@ -620,6 +686,8 @@ sub remove_features_from_lemmas
             {
                 $wild->{lid} = $2;
             }
+            # And there is one clear bug: lemma "serioznóst" instead of "serióznost".
+            $lprop =~ s/^serioznóst$/serióznost/;
             $lemma = $lprop;
             $node->set_lemma($lemma);
         }
