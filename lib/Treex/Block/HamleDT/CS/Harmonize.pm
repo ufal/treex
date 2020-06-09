@@ -678,7 +678,7 @@ sub remove_features_from_lemmas
                     $wild->{lnumvalue} = $l2;
                 }
                 # If the form is abbreviated, use the abbreviated lemma.
-                elsif($l1 =~ m/^$form(-\d+)?$/i)
+                elsif($l1 =~ m/^$form(-\d+)?$/i || $l1 eq 's-2' && lc($form) eq 'sec')
                 {
                     $wild->{lnumvalue} = $l2;
                 }
