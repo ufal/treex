@@ -329,6 +329,12 @@ sub fix_constructions
     my $node = shift;
     my $parent = $node->parent();
     my $deprel = $node->deprel();
+    ###!!! We do not want to see thousands of warnings if the dataset does not
+    ###!!! contain lemmas.
+    if(!defined($node->lemma()))
+    {
+        $node->set_lemma('');
+    }
     # In "Los Angeles", "Los" is wrongly attached to "Angeles" as 'cc'.
     if(lc($node->form()) eq 'los' && $parent->is_proper_noun() &&
        $parent->ord() > $node->ord())
