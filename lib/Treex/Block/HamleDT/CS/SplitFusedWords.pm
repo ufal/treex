@@ -242,7 +242,7 @@ sub split_multiword_entities_cltt
         {
             $node->set_form($form);
         }
-        my $lemma = $node->lemma();
+        my $lemma = $node->lemma() // '';
         if($lemma =~ s/ /_/g)
         {
             $node->set_lemma($lemma);
