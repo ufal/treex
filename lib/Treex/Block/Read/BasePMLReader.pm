@@ -109,30 +109,45 @@ sub _convert_ttree {
     return;
 }
 
-sub _convert_atree {
-    my ( $self, $pml_node, $treex_node ) = @_;
 
-    foreach my $attr_name ( 'id', 'ord', 'afun' ) {
+
+#------------------------------------------------------------------------------
+# Traverses the PML tree, creates a parallel a-tree in Treex and copies over
+# selected attributes of the nodes.
+#------------------------------------------------------------------------------
+sub _convert_atree
+{
+    my ( $self, $pml_node, $treex_node ) = @_;
+    foreach my $attr_name ( 'id', 'ord', 'afun' )
+    {
         $self->_copy_attr( $pml_node, $treex_node, $attr_name, $attr_name );
     }
-
-    if ( not $treex_node->is_root ) {
+    if ( not $treex_node->is_root() )
+    {
         $self->_copy_attr( $pml_node, $treex_node, 'm/w/no_space_after', 'no_space_after' );
-        foreach my $attr_name (qw(form lemma tag)) {
+        foreach my $attr_name (qw(form lemma tag))
+        {
             $self->_copy_attr( $pml_node, $treex_node, "m/$attr_name", $attr_name );
         }
-        foreach my $attr_name (qw(is_member is_parenthesis_root clause_number)) {
+        # In PDT-C (schema version 3.6), lemma is just an attribute of the <tag> element.
+        if ( $pml_node->attr('m/tag/lemma') )
+        {
+            $treex_node->set_attr( 'lemma', $pml_node->attr('m/tag/lemma') );
+        }
+        foreach my $attr_name (qw(is_member is_parenthesis_root clause_number))
+        {
             $self->_copy_attr( $pml_node, $treex_node, "$attr_name", $attr_name );
         }
-
-        if ( $pml_node->attr('p_terminal.rf') ) {
+        if ( $pml_node->attr('p_terminal.rf') )
+        {
             my $value = $pml_node->attr('p_terminal.rf');
             $value =~ s/^.*#//;
             $treex_node->set_attr( 'p_terminal.rf', $value );
         }
     }
-
-    foreach my $pml_child ( $pml_node->children ) {
+    # Recursively copy subtrees of all children.
+    foreach my $pml_child ( $pml_node->children )
+    {
         my $treex_child = $treex_node->create_child;
         $self->_convert_atree( $pml_child, $treex_child );
     }
