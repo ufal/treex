@@ -48,16 +48,24 @@ sub _copy_list_attr {
     return;
 }
 
-sub _convert_ttree {
-    my ( $self, $pml_node, $treex_node, $language ) = @_;
 
-    if ( $treex_node->is_root ) {
-        foreach my $attr_name ( 'id', 'nodetype' ) {
+
+#------------------------------------------------------------------------------
+# Traverses the PML tree, creates a parallel t-tree in Treex and copies over
+# selected attributes of the nodes.
+#------------------------------------------------------------------------------
+sub _convert_ttree
+{
+    my ( $self, $pml_node, $treex_node, $language ) = @_;
+    if ( $treex_node->is_root )
+    {
+        foreach my $attr_name ( 'id', 'nodetype' )
+        {
             $self->_copy_attr( $pml_node, $treex_node, $attr_name, $attr_name );
         }
     }
-
-    else {
+    else
+    {
         my @scalar_attribs = (
             't_lemma', 'functor', 'id', 'nodetype', 'is_generated', 'subfunctor', 'is_member', 'is_name',
             'is_name_of_person', 'is_dsp_root', 'sentmod', 'tfa', 'is_parenthesis', 'is_state',
@@ -71,38 +79,40 @@ sub _convert_ttree {
         my @list_attribs = (
             'compl.rf', 'coref_text.rf', 'coref_text', 'coref_gram.rf', 'bridging', 'a/aux.rf',
         );
-
         $self->_copy_attr( $pml_node, $treex_node, 'deepord', 'ord' );
-
-        foreach my $attr_name ( 'a/lex.rf', 'val_frame.rf' ) {
+        foreach my $attr_name ( 'a/lex.rf', 'val_frame.rf' )
+        {
             my $value = $pml_node->attr($attr_name);
             next if not $value;
             $value =~ s/^.*#//;
             $value = ( $language ? $language . '-' : '' ) . 'v#' . $value if $attr_name eq 'val_frame.rf';    # lang prefixes for val_frames
             $treex_node->set_attr( $attr_name, $value );
         }
-
-        foreach my $attr_name (@scalar_attribs) {
+        foreach my $attr_name (@scalar_attribs)
+        {
             $self->_copy_attr( $pml_node, $treex_node, $attr_name, $attr_name );
         }
-        foreach my $attr_name (@list_attribs) {
+        foreach my $attr_name (@list_attribs)
+        {
             $self->_copy_list_attr( $pml_node, $treex_node, $attr_name, $attr_name, 1 );
         }
         # 'discourse' is a list, but not a reference
         # TODO: it should be represented in a better way
         $self->_copy_list_attr( $pml_node, $treex_node, 'discourse', 'discourse' );
-
         my %gram = ();
-        foreach my $attr_name (@gram_attribs) {
+        foreach my $attr_name (@gram_attribs)
+        {
             my $value = $pml_node->attr("gram/$attr_name");
             $gram{$attr_name} = $value if $value;
         }
-        while ( my ( $attr_name, $value ) = each %gram ) {
+        while ( my ( $attr_name, $value ) = each %gram )
+        {
             $treex_node->set_attr( "gram/$attr_name", $value );
         }
     }
-
-    foreach my $pml_child ( $pml_node->children ) {
+    # Recursively copy subtrees of all children.
+    foreach my $pml_child ( $pml_node->children )
+    {
         my $treex_child = $treex_node->create_child;
         $self->_convert_ttree( $pml_child, $treex_child, $language );
     }
@@ -160,31 +170,40 @@ sub _convert_atree
 }
 
 
-# Convert an m-tree into a flat a-tree (no afuns/dependencies, just form-lemma-tag).
-sub _convert_mtree {
+
+#------------------------------------------------------------------------------
+# Traverses the PML m-tree and creates a flat a-tree in Treex (no dependencies,
+# just form-lemma-tag).
+#------------------------------------------------------------------------------
+sub _convert_mtree
+{
     my ( $self, $pml_node, $treex_aroot ) = @_;
-
     $self->_copy_attr( $pml_node, $treex_aroot, 'id', 'id' );
-
-    foreach my $pml_child ( $pml_node->children ){
-
+    foreach my $pml_child ( $pml_node->children )
+    {
         my $treex_anode = $treex_aroot->create_child();
         my $attr_prefix = '';
         $treex_anode->shift_after_subtree($treex_aroot);
-
         # M-layer data are hidden within a structure called '#content' in PDT 2.0, but accessible
         # (only) directly in PDT 3.0. We want to support both versions.
-        if ( $pml_child->attr('#content') ){
+        if ( $pml_child->attr('#content') )
+        {
             $attr_prefix = '#content/';
         }
-
-        foreach my $attr_name (qw(id form lemma tag)) {
+        foreach my $attr_name (qw(id form lemma tag))
+        {
             $self->_copy_attr( $pml_child, $treex_anode, $attr_prefix . $attr_name, $attr_name );
+        }
+        # In PDT-C (schema version 3.6), lemma is just an attribute of the <tag> element.
+        if ( $pml_node->attr('m/tag/lemma') )
+        {
+            $treex_node->set_attr( 'lemma', $pml_node->attr('m/tag/lemma') );
         }
         $self->_copy_attr( $pml_child, $treex_anode, $attr_prefix . 'w/no_space_after', 'no_space_after' );
     }
     return;
 }
+
 
 
 # the actual conversion of all trees from all layers
