@@ -195,9 +195,9 @@ sub _convert_mtree
             $self->_copy_attr( $pml_child, $treex_anode, $attr_prefix . $attr_name, $attr_name );
         }
         # In PDT-C (schema version 3.6), lemma is just an attribute of the <tag> element.
-        if ( $pml_node->attr('m/tag/lemma') )
+        if ( $pml_child->attr($attr_prefix.'tag/lemma') )
         {
-            $treex_node->set_attr( 'lemma', $pml_node->attr('m/tag/lemma') );
+            $treex_anode->set_attr( 'lemma', $pml_child->attr($attr_prefix.'tag/lemma') );
         }
         $self->_copy_attr( $pml_child, $treex_anode, $attr_prefix . 'w/no_space_after', 'no_space_after' );
     }
