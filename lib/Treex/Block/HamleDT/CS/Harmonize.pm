@@ -426,6 +426,7 @@ sub remove_features_from_lemmas
     foreach my $node (@nodes)
     {
         my $lemma = $node->lemma();
+        next if(!defined($lemma));
         my $iset = $node->iset();
         my $wild = $node->wild();
         # The underscore character is used to delimit various additional tags within
