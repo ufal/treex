@@ -12,6 +12,8 @@ has '+extension' => ( default => '.mrp' );
 has 'valency_dict_name' => ( is => 'ro', isa => 'Str', default => 'engvallex.xml',
     documentation => 'Name of the file with the valency dictionary to which the val_frame.rf attributes point. '.
     'Full path is not needed. The XML logic will somehow magically find the file.');
+has 'decode_unicode' => ( is => 'ro', isa => 'Bool', default => 0,
+    documentation => 'Certain ASCII character sequences will be converted to the corresponding Unicode characters (e.g. typographically correct quotation marks).');
 
 
 
@@ -399,7 +401,7 @@ sub decode_characters
     ###!!! However, it is no longer wanted in CoNLL MRP shared task 2020 because of compatibility with other frameworks that cover the Wall Street Journal.
     ###!!! And it is unsuitable for the Czech data from PDT because it targets the English Penn Treebank.
     ###!!! Even if we want to use it, it should be moved to a separate block, which would then be called before Write::MrpJSON!
-    if(0)
+    if($self->decode_unicode())
     {
         my $tag = shift; # Could be used to distinguish between possessive apostrophe and right single quotation mark. Currently not used.
         # Cancel escaping of brackets. The codes are uppercased in forms (and POS tags) and lowercased in lemmas.
