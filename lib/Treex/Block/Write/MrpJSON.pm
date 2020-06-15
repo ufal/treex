@@ -273,6 +273,14 @@ sub get_sentence_id
         my $isource = $source eq 'cmpr' ? 0 : $source =~ m/^ln/ ? 1 : 2;
         $sid = sprintf("1%d%d%04d%03d%03d", $isource, $year, $issue, $ifile, $isentence);
     }
+    # Option 4: The Little Prince (English), newly annotated because of the CoNLL
+    # MRP shared tasks 2019 and 2020. We no longer atempt to generate an all-numeric
+    # sentence id, as Stephan no longer seems to require it.
+    elsif($ptb_section_file =~ m/^mrp-edited-(\d+)-v\d+$/)
+    {
+        my $ifile = $1;
+        $sid = sprintf("little-prince-%03d-%03d", $ifile, $isentence);
+    }
     else
     {
         log_warn("File name '$ptb_section_file' does not follow expected patterns, cannot construct sentence identifier");
