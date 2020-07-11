@@ -40,9 +40,36 @@ sub fix_upos
     {
         my $lform = lc($node->form());
         my $lemma = $node->lemma();
-        if($lform =~ m/^mein(er|es|em|en|e)$/ && $lemma eq 'mein')
+        # German possessive "pronouns" (traditional term) are determiners in UD.
+        # Checking the lemma is important (although it occasionally contains errors).
+        # We want to avoid changin PRON with lemma 'ich', as well as VERB 'meinen', PROPN 'Meine' (village) etc.
+        if($lform =~ m/^mein(er|es|em|en|e)?$/ && $lemma eq 'mein')
         {
-            ###!!! The UPOS tag is PRON, DET, or even NOUN or PROPN. It should be DET.
+            # The UPOS tag is PRON, DET, or even NOUN or PROPN. It should be DET.
+            $node->iset()->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'yes', 'person' => '1', 'possnumber' => 'sing');
+        }
+        elsif($lform =~ m/^dein(er|es|em|en|e)?$/ && $lemma eq 'dein')
+        {
+            $node->iset()->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'yes', 'person' => '2', 'possnumber' => 'sing');
+        }
+        elsif($lform =~ m/^sein(er|es|em|en|e)?$/ && $lemma eq 'sein' && !$node->is_verb())
+        {
+            $node->iset()->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'yes', 'person' => '3', 'possnumber' => 'sing', 'possgender' => 'masc|neut');
+        }
+        # "Ihr" can be a personal pronoun (2nd person plural) or a possessive determiner (3rd person feminine singular, or 3rd person plural, or honorific 2nd person).
+        # If there is no agreement suffix, we cannot exclude the 2nd person plural pronoun, so we better don't change the POS category.
+        # Note that the suffix is not optional here, unlike in "mein|dein|sein" above.
+        elsif($lform =~ m/^ihr(er|es|em|en|e)$/ && ($lemma eq 'ihr' || $lemma eq 'Ihr|ihr'))
+        {
+            $node->iset()->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'yes', 'person' => '3');
+        }
+        elsif($lform =~ m/^unser(er|es|em|e?n|e)?$/ && $lemma eq 'unser')
+        {
+            $node->iset()->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'yes', 'person' => '1', 'possnumber' => 'plur');
+        }
+        elsif($lform =~ m/^euer(er|es|em|e?n|e)?$/ && $lemma eq 'euer')
+        {
+            $node->iset()->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'yes', 'person' => '2', 'possnumber' => 'plur');
         }
     }
 }
