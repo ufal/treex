@@ -174,7 +174,9 @@ sub convert_deprels
             $deprel = 'obl';
             $node->set_deprel($deprel);
         }
-        $self->fix_auxiliary_verb($node);
+        ###!!! Turn this off. The auxiliaries have been fixed already, and the
+        ###!!! function may attempt to also "fix" some spurious cases.
+        # $self->fix_auxiliary_verb($node);
     }
 }
 
@@ -320,6 +322,11 @@ sub fix_auxiliary_verb
         }
         # Some verbs were tagged AUX and appeared in coordination with other pseudo-auxiliaries.
         # Their deprel is 'conj'. Therefore the above branches did not catch them.
+        ###!!! Note that this rule is not 100% precise. Sometimes the copula heads
+        ###!!! its clause (because of ellipsis or because the predicate is a nested clause),
+        ###!!! so it is not attached as 'cop' but it should be tagged 'AUX'. If it happens
+        ###!!! to be attached as 'conj', then this rule will make it mistakenly 'VERB'
+        ###!!! (see sentence train-s1080).
         elsif($node->deprel() =~ m/^conj(:|$)/ && $node->parent()->deprel() !~ m/^(aux|cop)(:|$)/)
         {
             $node->iset()->clear('verbtype');
