@@ -14,9 +14,37 @@ sub process_atree
     my $root = shift;
     # Fix relations before morphology. The fixes depend only on UPOS tags, not on morphology (e.g. NOUN should not be attached as det).
     # And with better relations we will be more able to disambiguate morphological case and gender.
+    # However, if there is anything to fix with UPOS (which was annotated manually in GSD),
+    # do it before the relations.
+    $self->fix_upos($root);
     $self->convert_deprels($root);
     $self->fix_morphology($root);
     $self->regenerate_upos($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Harmonizes certain UPOS tags, especially of closed classes. Unlike in FixUD
+# blocks of some other languages, we do UPOS separately from features: UPOS
+# before relations, features after relations. The reason is that UPOS are
+# manual in German GSD while features are not, and we need the relations right
+# in order to check e.g. some case values.
+#------------------------------------------------------------------------------
+sub fix_upos
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $lform = lc($node->form());
+        my $lemma = $node->lemma();
+        if($lform =~ m/^mein(er|es|em|en|e)$/ && $lemma eq 'mein')
+        {
+            ###!!! The UPOS tag is PRON, DET, or even NOUN or PROPN. It should be DET.
+        }
+    }
 }
 
 
@@ -403,7 +431,9 @@ sub is_inherently_reflexive_verb
 
 
 #------------------------------------------------------------------------------
-# Fixes known issues in features.
+# Fixes known issues in features. This method is called after the relations
+# have been fixed. However, UPOS tags, unlike features, should be fixed before
+# the relations (see explanation in process_atree()).
 #------------------------------------------------------------------------------
 sub fix_morphology
 {
