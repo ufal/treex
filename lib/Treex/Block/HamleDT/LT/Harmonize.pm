@@ -509,18 +509,15 @@ sub convert_deprels
         {
             $deprel = 'Obj';
         }
-        # Predicate of an adjunct clause? How does it differ from adverbial clause?
-        elsif($deprel eq 'Pred_Adj')
-        {
-            $deprel = 'Adv';
-        }
         # Predicate of an attributive clause (modifying a nominal).
         elsif($deprel eq 'Pred_Atr')
         {
             $deprel = 'Atr';
         }
         # Pred_Adv is the predicate of an adverbial clause (possibly under AuxC).
-        elsif($deprel eq 'Pred_Adv')
+        # Loic Boizou: Pred_Adj (adjunct clause) was a mistake, it does not
+        # appear in newer versions and should be treated as Pred_Adv.
+        elsif($deprel =~ m/^Pred_Ad[vj]$/)
         {
             $deprel = 'Adv';
         }
