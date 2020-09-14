@@ -387,17 +387,35 @@ sub convert_deprels
         }
         # PredN seems to be the nominal predicate. If the copula "būti" is present,
         # the topology is similar to that of Pnom in Czech. But in Lithuanian,
-        # the copula seems to be omitted often. If the copula is missing, the
-        # nominal predicate (PredN) is attached to the subject, which is the
-        # opposite of what we want in UD. Since we are now doing just Prague
-        # harmonization (and there is no similar construction in Czech, we just
-        # leave PredN there for further processing).
+        # the copula seems to be omitted often.
+        # My original observation (maybe on an older version of ALKSNIS?) was
+        # that if the copula is missing, the nominal predicate (PredN) is
+        # attached to the subject, which is the opposite of what we want in UD.
+        # Since we are now doing just Prague harmonization (and there is no
+        # similar construction in Czech), we just leave PredN there for further
+        # processing.
+        # HOWEVER! In her mail from 2020-05-13, Bernadeta says that in a main
+        # clause, the nominal predicate should become the head. It should be
+        # attached to the artificial root but it should still have the PredN
+        # afun instead of Pred. Example:
+        # Specialiosios tarnybos įpareigotos ištirti sutartis.
+        # Special services (are) obliged to investigate contracts.
+        # The participle įpareigotos "obliged" is tagged VERB but still treated
+        # as a nominal predicate, its parent is the root and its afun is PredN.
+        # Also see the subtypes PredN_Sub, PredN_Obj etc. below.
         if($deprel eq 'PredN')
         {
-            my $plemma = $parent->lemma();
-            if(defined($plemma) && $plemma eq 'būti')
+            if($parent->is_root())
             {
-                $deprel = 'Pnom';
+                $deprel = 'Pred';
+            }
+            else
+            {
+                my $plemma = $parent->lemma();
+                if(defined($plemma) && $plemma eq 'būti')
+                {
+                    $deprel = 'Pnom';
+                }
             }
         }
         # PredV seems to be often an infinitive completing another verb.
