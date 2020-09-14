@@ -524,14 +524,41 @@ sub convert_deprels
         {
             $deprel = 'Adv';
         }
-        if($deprel =~ m/^PredN_(Sub|Obj|Adj|Atr)$/i)
+        # Similarly to Pred_*, PredN_Sub etc. also designate types of
+        # subordinate clauses but this time the predicate of the subordinate
+        # clause is nominal without a copula. We will treat PredN_Sub similarly
+        # to Pred_Sub (including the possibility that it is attached via a
+        # demonstrative pronoun). Note however that we lose information that
+        # is useful for the later conversion to UD: if the subject is a noun,
+        # it will be converted to 'nsubj', although if it was a nominal
+        # predicate, it should actually be converted to 'csubj'. ###!!!
+        if($deprel =~ m/^PredN_(Sub|Obj|Adj|Atr)$/ && $parent->is_demonstrative())
         {
             $deprel = 'Atr';
         }
-        # PredN_Adv seems to be, analogously, a nominal predicate of an adverbial clause.
+        # Nominal predicate of a subject clause.
+        elsif($deprel eq 'PredN_Sub')
+        {
+            $deprel = 'Sb';
+        }
+        # Nominal predicate of an object clause.
+        elsif($deprel eq 'PredN_Obj')
+        {
+            $deprel = 'Obj';
+        }
+        # Nominal predicate of an attributive clause (modifying a nominal).
+        elsif($deprel eq 'PredN_Atr')
+        {
+            $deprel = 'Atr';
+        }
+        # Nominal predicate of an adverbial clause (possibly under AuxC).
+        elsif($deprel eq 'PredN_Adv')
+        {
+            $deprel = 'Adv';
+        }
         # There is also one occurrence of PredV_Adv. I do not know how it differs
         # from Pred_Adv.
-        if($deprel =~ m/^Pred[NV]_Adv$/i)
+        if($deprel eq 'PredV_Adv')
         {
             $deprel = 'Adv';
         }
