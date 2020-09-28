@@ -109,8 +109,15 @@ sub _extract_data {
         $deprel = $node->functor;
     }
     if ($node->get_layer eq "t" && $self->include_zeros) {
-        my $par = $node->get_parent;
-        my $apar = $par->get_lex_anode;
+        my $par = $node;
+        my $apar = undef;
+        do {
+            $par = $par->get_parent;
+            $apar = $par->get_lex_anode;
+        } while (!defined $apar);
+        if (!defined $apar) {
+            print STDERR "ADD: ".$node->get_address;
+        }
         $id = $apar->wild->{doc_ord} . "-" . $node->ord;
         $head = $apar->wild->{doc_ord};
     }
