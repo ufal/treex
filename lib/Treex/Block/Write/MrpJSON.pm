@@ -119,6 +119,8 @@ sub process_zone
             push(@node_json, ['anchors', \@anchors, 'list of structures']);
         }
         # Export selected attributes and grammatemes of the node (especially the ones that are annotated manually in PDT 3.5).
+        # Magda: documentation of the grammatemes that were done manually:
+        # tady: https://ufal.mff.cuni.cz/pdt3.0/documentation (Podle Content jednotlivé pododdíly oddílu 1.)
         my @properties = ();
         my @values = ();
         # Sentence modality.
