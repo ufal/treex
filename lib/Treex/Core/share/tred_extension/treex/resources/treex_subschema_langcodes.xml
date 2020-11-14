@@ -95,11 +95,14 @@
       <value>hy</value> <!-- Armenian -->
       <value>hit</value> <!-- Hittite -->
       <!-- Iranian languages -->
-      <value>fa</value> <!-- Persian -->
-      <value>ae</value> <!-- Avestan -->
       <value>ku</value> <!-- Kurdish -->
       <value>kmr</value> <!-- Kurmanji (Northern Kurdish) -->
       <value>ckb</value> <!-- Sorani (Central Kurdish) -->
+      <value>kfm</value> <!-- Khunsari -->
+      <value>nyq</value> <!-- Nayini -->
+      <value>soj</value> <!-- Soi -->
+      <value>fa</value> <!-- Persian -->
+      <value>ae</value> <!-- Avestan -->
       <value>os</value> <!-- Ossetic -->
       <value>tg</value> <!-- Tajiki (in Cyrillic script) -->
       <value>ps</value> <!-- Pashto -->
@@ -126,6 +129,7 @@
       <value>akk</value> <!-- Akkadian -->
       <value>aii</value> <!-- Assyrian -->
       <value>ar</value> <!-- Arabic -->
+      <value>ajp</value> <!-- South Levantine Arabic -->
       <value>mt</value> <!-- Maltese -->
       <value>he</value> <!-- Hebrew -->
       <value>am</value> <!-- Amharic -->
@@ -193,6 +197,7 @@
       <value>ce</value> <!-- Chechen -->
       <value>av</value> <!-- Avaric -->
       <!-- Turkic languages -->
+      <value>otk</value> <!-- Old Turkish -->
       <value>tr</value> <!-- Turkish -->
       <value>az</value> <!-- Azeri -->
       <value>cv</value> <!-- Chuvash -->
@@ -252,6 +257,8 @@
       <value>dbl</value> <!-- Dyirbal -->
       <value>wbp</value> <!-- Warlpiri -->
       <value>yii</value> <!-- Yidiny -->
+      <!-- Chukotko-Kamchatkan languages -->
+      <value>ckt</value> <!-- Chukchi -->
       <!-- Eskimo-Aleutan languages -->
       <value>ik</value> <!-- Inupiaq -->
       <value>iu</value> <!-- Inuit -->
@@ -260,12 +267,17 @@
       <value>cr</value> <!-- Cree -->
       <value>oj</value> <!-- Ojibwa -->
       <value>nv</value> <!-- Navajo -->
+      <value>apu</value> <!-- Apurinã -->
       <value>qu</value> <!-- Quechua -->
       <value>quz</value> <!-- Cusco Quechua -->
       <value>ay</value> <!-- Aymara -->
+      <value>shp</value> <!-- Shipibo -->
+      <!-- Tupian languages -->
+      <value>aqz</value> <!-- Akuntsu -->
+      <value>myu</value> <!-- Mundurukú -->
+      <value>tpn</value> <!-- Tupinambá -->
       <value>gn</value> <!-- Guaraní -->
       <value>gun</value> <!-- Mbyá Guaraní -->
-      <value>shp</value> <!-- Shipibo -->
       <!-- other languages -->
       <value>bi</value> <!-- Bislama -->
       <value>eo</value> <!-- Esperanto -->
@@ -276,6 +288,7 @@
       <value>pcm</value> <!-- Nigerian Pidgin (Naija) -->
       <value>swl</value> <!-- Swedish Sign Language -->
       <value>qhe</value> <!-- Hindi-English (bilingual) -->
+      <value>qtd</value> <!-- Turkish-German (bilingual) -->
       <value>und</value> <!-- ISO 639-2 code for undetermined/unknown language -->
     </choice>
   </type>
