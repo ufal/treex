@@ -524,6 +524,57 @@ sub fix_annotation_errors
                 $node->set_parent($rnbr);
             }
         }
+        # The pronoun huwa could be a copula but not in the following phrases.
+        # sent_id = ummah.20040809.0082:p2u2 (train)
+        # orig_file_sentence UMH_ARB_20040809.0082#3
+        # ل استبعاد هم ب شكل تدريجي، من بين هم شخصيات تمكنت من شغل مواقع قيادية
+        # li istibádi him bi šaklin tadrídžíyin, min bayni him šaxsíyátun tamakkanat min šughli mawákia qiyádíyatin
+        # to gradually exclude them from among them who managed to occupy leadership positions
+        if($node->form() eq 'استبعاد' && scalar($node->children()) == 2)
+        {
+            my @ichildren = $node->children();
+            if($ichildren[0]->form() eq 'هم' && $ichildren[1]->form() eq 'ب' && scalar($ichildren[0]->children()) == 1)
+            {
+                my @hchildren = $ichildren[0]->children();
+                if($hchildren[0]->form() eq 'من' && scalar($hchildren[0]->children()) == 3)
+                {
+                    my $min = $hchildren[0];
+                    my @mchildren = $min->children();
+                    if($mchildren[0]->form() eq 'بين' && $mchildren[1]->form() eq 'هم' && $mchildren[2]->form() eq 'شخصيات')
+                    {
+                        $min->set_parent($node);
+                        $min->set_deprel('AuxP');
+                        $mchildren[0]->set_deprel('AuxP');
+                        $mchildren[1]->set_deprel('Atr');
+                        $mchildren[2]->set_parent($mchildren[1]);
+                        $mchildren[2]->set_deprel('Atr');
+                    }
+                }
+            }
+        }
+        # sent_id = afp.20000815.0010:p14u1
+        # orig_file_sentence AFP_ARB_20000815.0010#14
+        # text = واشارت التلفزيونات اليوم الى ان قائد الاسطول لم يدل باي معلومات محددة حول وضع عمليات الانقاذ. واكتفت انترفاكس بالقول ان "جهازين للانقاذ عجزا عن القيام بمهمتهما بسبب سوء الاحوال الجوية".
+        # جهازين للانقاذ عجزا عن القيام بمهمتهما بسبب سوء الاحوال الجوية
+        # džiházayni li al-inqádi adžizá an al-qiyámi bi mahammati himá bi sababi súi al-ahwáli al-džawwíyati
+        # Two rescue agencies were unable to fulfill their mission due to bad weather
+        # Short vowels should be removed from the forms by now and we should be
+        # able to query the unvocalized forms.
+        if($node->form() eq 'هما' && scalar($node->children()) == 1)
+        {
+            my @hchildren = $node->children();
+            if($hchildren[0]->form() eq 'ب' && scalar($hchildren[0]->children()) == 1)
+            {
+                my @bchildren = $hchildren[0]->children();
+                if($bchildren[0]->form() eq 'سبب')
+                {
+                    if($bchildren[0]->deprel() eq 'Pnom')
+                    {
+                        $bchildren[0]->set_deprel('Atr');
+                    }
+                }
+            }
+        }
     }
     # Fix coordination without conjuncts.
     foreach my $node (@nodes)
