@@ -44,6 +44,12 @@ sub process_document{
     if ($self->version eq "3.0") {
         $version_flag = "_30";
     }
+    if ($self->version eq "3.5") {
+        $version_flag = "_35";
+    }
+    if ($self->version eq "C") {
+        $version_flag = "_c";
+    }
 
     my $doc_id = $doc->file_stem . $doc->file_number;
     my $lang   = $self->language;
@@ -117,9 +123,11 @@ sub escape_xml {
 sub process_atree {
     my ($self, $atree) = @_;
     my $s_id = $atree->id;
+    $s_id =~ s/^a-//;
     print {$m_fh} "<s id='m-$s_id'>\n";
     foreach my $anode ($atree->get_descendants({ordered=>1})){
         my ($id, $form, $lemma, $tag) = map{$self->escape_xml($_)} $anode->get_attrs(qw(id form lemma tag), {undefs=>'?'});
+	$id =~ s/^a-//;
         my $nsa = $anode->no_space_after ? '<no_space_after>1</no_space_after>' : '';
         print {$w_fh} "<w id='w-$id'><token>$form</token>$nsa</w>\n";
         print {$m_fh} "<m id='m-$id'><w.rf>w#w-$id</w.rf><form>$form</form><lemma>$lemma</lemma><tag>$tag</tag></m>\n";
@@ -135,6 +143,7 @@ sub print_asubtree {
     my ($self, $anode) = @_;
     my ($id, $afun, $ord) = $anode->get_attrs(qw(id afun ord));
     $id = 'missingID-'.rand(1000000) if !defined $id;
+    $id =~ s/^a-//;
     $afun = '???' if !defined $afun;
     $ord = 0 if !defined $ord;
     print {$a_fh} "<LM id='a-$id'><m.rf>m#m-$id</m.rf><afun>$afun</afun><ord>$ord</ord>";
@@ -152,11 +161,13 @@ sub print_asubtree {
 sub process_ttree {
     my ($self, $ttree) = @_;
     my $s_id = $ttree->id;
+    $s_id =~ s/^t-//;
     my $a_s_id = $ttree->get_attr('atree.rf');
     if (!$a_s_id){
         $a_s_id = $s_id;
         $a_s_id =~ s/t_tree/a_tree/;
     }
+    $a_s_id =~ s/^a-//;
     print {$t_fh} "<LM id='t-$s_id'><atree.rf>a#a-$a_s_id</atree.rf><nodetype>root</nodetype><deepord>0</deepord>\n<children>\n";
     foreach my $child ($ttree->get_children()) { $self->print_tsubtree($child); }
     print {$t_fh} "</children>\n</LM>\n";
@@ -166,6 +177,7 @@ sub process_ttree {
 sub print_tsubtree {
     my ($self, $tnode) = @_;
     my ($id, $ord) = $tnode->get_attrs(qw(id ord), {undefs=>'?'});
+    $id =~ s/^t-//;
     print {$t_fh} "<LM id='t-$id'><deepord>$ord</deepord>";
 
     # boolean attrs
@@ -187,51 +199,82 @@ sub print_tsubtree {
             print {$t_fh} "<$attr>";
             foreach my $ante (@antes) {
                 my $ante_id = $ante->id;
+		$ante_id =~ s/^t-//;
                 print {$t_fh} "<LM>t-$ante_id</LM>";
             }
             print {$t_fh} "</$attr>";
         }
     }
 
-    # coref text
-    my @antes = $tnode->get_coref_text_nodes();
-    if (@antes) {
-        if ($self->version eq "3.0") {
+    # coref_text.rf
+    my @antes = $tnode->_get_node_list('coref_text.rf');
+    if (@antes) { 
+	if ($self->version eq "3.0" or $self->version eq '3.5' or $self->version eq 'C') { # transform the old-fashioned coref_text.rf to structured coref_text (with default SPEC type)
             print {$t_fh} "<coref_text>";
             foreach my $ante (@antes) {
                 my $ante_id = $ante->id;
+		$ante_id =~ s/^t-//;
                 print {$t_fh} "<LM><target_node.rf>t-$ante_id</target_node.rf><type>SPEC</type></LM>";
             }
             print {$t_fh} "</coref_text>";
-        }
-        else {
+	}
+        else { # just keep the original old-fashioned coref_text.rf
             print {$t_fh} "<coref_text.rf>";
             foreach my $ante (@antes) {
                 my $ante_id = $ante->id;
+		$ante_id =~ s/^t-//;
                 print {$t_fh} "<LM>t-$ante_id</LM>";
             }
             print {$t_fh} "</coref_text.rf>";
         }
     }
 
-    # bridging
-    my $ref_arrows = $tnode->get_attr('bridging');
+    # coref_text
+    my $ref_arrows = $tnode->get_attr('coref_text');
     my @arrows = ();
+    if ($ref_arrows) {
+        @arrows = @{$ref_arrows};
+    }
+    if (@arrows) {
+        print {$t_fh} "<coref_text>";
+        foreach my $arrow (@arrows) { # take all coref_text arrows starting at the given node
+	    print {$t_fh} "<LM>";
+            # simple attrs
+            # foreach my $attr (qw(target_node.rf type comment src)) {
+            foreach my $attr (qw(target_node.rf type comment)) {
+                my $val = $self->escape_xml($arrow->{$attr});
+                if ($attr eq 'target_node.rf') {
+		  $val =~ s/^t-//;
+                  $val = "t-$val";
+                }
+                print {$t_fh} "<$attr>$val</$attr>" if defined $val;
+            }
+	    print {$t_fh} "</LM>";
+        }
+        print {$t_fh} "</coref_text>";
+    }
+
+    # bridging
+    $ref_arrows = $tnode->get_attr('bridging');
+    @arrows = ();
     if ($ref_arrows) {
         @arrows = @{$ref_arrows};
     }
     if (@arrows) {
         print {$t_fh} "<bridging>";
         foreach my $arrow (@arrows) { # take all bridging arrows starting at the given node
+	    print {$t_fh} "<LM>";
             # simple attrs
             # foreach my $attr (qw(target_node.rf type comment src)) {
             foreach my $attr (qw(target_node.rf type comment)) {
                 my $val = $self->escape_xml($arrow->{$attr});
                 if ($attr eq 'target_node.rf') {
+		  $val =~ s/^t-//;
                   $val = "t-$val";
                 }
                 print {$t_fh} "<$attr>$val</$attr>" if defined $val;
             }
+	    print {$t_fh} "</LM>";
         }
         print {$t_fh} "</bridging>";
     }
@@ -245,12 +288,16 @@ sub print_tsubtree {
     if (@discourse_arrows) {
         print {$t_fh} "<discourse>";
         foreach my $arrow (@discourse_arrows) { # take all discourse arrows starting at the given node
+	    print {$t_fh} "<LM>";
             # simple attrs
             # foreach my $attr (qw(target_node.rf type start_group_id start_range target_group_id target_range discourse_type is_negated comment src is_altlex is_compositional connective_inserted is_implicit is_NP)) {
             foreach my $attr (qw(target_node.rf type start_group_id start_range target_group_id target_range discourse_type is_negated comment is_altlex is_compositional connective_inserted is_implicit is_NP)) {
                 my $val = $self->escape_xml($arrow->{$attr});
                 if ($attr eq 'target_node.rf') {
-                  $val = "t-$val";
+		  if ($val) {
+		    $val =~ s/^t-//;
+                    $val = "t-$val";
+		  }
                 }
                 print {$t_fh} "<$attr>$val</$attr>" if defined $val;
             }
@@ -267,23 +314,28 @@ sub print_tsubtree {
                         my $prefix = "t-";
                         if ($attr =~ /^a-/) {
                           $prefix = "a-";
+		          $target_id =~ s/^a-//;
                         }
+			else {
+			    $target_id =~ s/^t-//;
+			}
                         print {$t_fh} "<LM>$prefix$target_id</LM>";
                     }
                     print {$t_fh} "</$attr>";
                 }
             }
+	    print {$t_fh} "</LM>";
         }
         print {$t_fh} "</discourse>";
     }
 
     # grammatemes
     print {$t_fh} "<gram>";
-    foreach my $attr (qw(sempos gender number degcmp verbmod deontmod tense aspect resultative dispmod iterativeness indeftype person number politeness negation)){ # definiteness diathesis
+    foreach my $attr (qw(sempos gender number typgroup degcmp verbmod deontmod tense aspect resultative dispmod iterativeness indeftype person numertype number politeness negation diatgram factmod)){ # definiteness diathesis
         my $val = $tnode->get_attr("gram/$attr") // '';
         $val = 'n.denot' if !$val and $attr eq 'sempos'; #TODO sempos is required in PDT
 
-        if ($self->version eq "3.0") { # grammatemes dispmod and resultative have been canceled, verbmod changed to factmod, and diatgram has been introduced (here ignoring diatgram for now)
+        if ($self->version eq "3.0" or $self->version eq "3.5") { # grammatemes dispmod and resultative have been canceled, verbmod changed to factmod, and diatgram has been introduced (here ignoring diatgram for now)
             next if ($attr =~ /^(dispmod|resultative)$/);
             if ($attr eq 'verbmod') {
                 my $factmod;
@@ -299,7 +351,7 @@ sub print_tsubtree {
             }
             elsif ($attr eq 'tense') {
                 my $verbmod = $tnode->get_attr("gram/verbmod") // '';
-                if ($verbmod eq 'cdn') { # in PDT 3.0, tense is set to 'nil' in case of factmod values 'irreal' and 'potential' (i.e. originally in PDT 2.0 'cdn' in vebmod)
+                if ($verbmod eq 'cdn') { # in PDT 3.0 and 3.5, tense is set to 'nil' in case of factmod values 'irreal' and 'potential' (i.e. originally in PDT 2.0 'cdn' in vebmod)
                     print {$t_fh} "<tense>nil</tense>";
                     next;
                 }
@@ -314,13 +366,22 @@ sub print_tsubtree {
     my @aux = $tnode->get_aux_anodes();
     if ($lex || @aux){
         print {$t_fh} "<a>";
-        printf {$t_fh} "<lex.rf>a#a-%s</lex.rf>", $lex->id if $lex;
+	if ($lex) {
+            my $id = $lex->id;
+	    $id =~ s/^a-//;
+	    printf {$t_fh} "<lex.rf>a#a-$id</lex.rf>"
+	}
         if (@aux==1){
-            printf {$t_fh} "<aux.rf>a#a-%s</aux.rf>", $aux[0]->id;
+	    my $id = $aux[0]->id;
+	    $id =~ s/^a-//;
+            printf {$t_fh} "<aux.rf>a#a-$id</aux.rf>";
         }
         if (@aux>1){
             print {$t_fh} "<aux.rf>";
-            printf {$t_fh} "<LM>a#a-%s</LM>", $_->id for @aux;
+	    for my $id (map {$_->id} @aux) {
+	        $id =~ s/^a-//;
+                printf {$t_fh} "<LM>a#a-$id</LM>";
+	    }
             print {$t_fh} "</aux.rf>";
         }
         print {$t_fh} "</a>\n";
@@ -374,10 +435,10 @@ Optional XML pretty printing (e.g. via xmllint --format), but anyone can do this
 =head1 AUTHOR
 
 Martin Popel <popel@ufal.mff.cuni.cz>
-Jiri Mirovsky <mirovsky@ufal.mff.cuni.cz> (bridging and discourse related parts)
+Jiri Mirovsky <mirovsky@ufal.mff.cuni.cz> (bridging, discourse and coref_text related parts)
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2012-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2012-2020 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

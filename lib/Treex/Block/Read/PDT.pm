@@ -126,7 +126,7 @@ Treex::Block::Read::PDT
 
 =head1 DESCRIPTION
 
-Importing trees from PDT 2.0/2.5/3.0.
+Importing trees from PDT 2.0/2.5/3.0/3.5/C.
 
 =head1 PARAMETERS
 
@@ -148,4 +148,4 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011,2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011,2014,2020 by Institute of Formal and Applied Linguistics, Charles University in Prague

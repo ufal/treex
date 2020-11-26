@@ -77,7 +77,7 @@ sub _convert_ttree
             'diathesis', 'diatgram', 'typgroup',
         );
         my @list_attribs = (
-            'compl.rf', 'coref_text.rf', 'coref_text', 'coref_gram.rf', 'bridging', 'a/aux.rf',
+            'compl.rf', 'coref_text.rf', 'coref_text', 'coref_gram.rf', 'bridging', 'discourse', 'discourse_groups', 'a/aux.rf',
         );
         $self->_copy_attr( $pml_node, $treex_node, 'deepord', 'ord' );
         foreach my $attr_name ( 'a/lex.rf', 'val_frame.rf' )
@@ -98,7 +98,7 @@ sub _convert_ttree
         }
         # 'discourse' is a list, but not a reference
         # TODO: it should be represented in a better way
-        $self->_copy_list_attr( $pml_node, $treex_node, 'discourse', 'discourse' );
+        # $self->_copy_list_attr( $pml_node, $treex_node, 'discourse', 'discourse' );
         my %gram = ();
         foreach my $attr_name (@gram_attribs)
         {
