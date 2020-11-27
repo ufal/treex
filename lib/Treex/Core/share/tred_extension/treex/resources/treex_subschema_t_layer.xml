@@ -32,11 +32,27 @@
       <member name="children" role="#CHILDNODES">
         <list ordered="1" type="t-node.type"/>
       </member>
+      <member name="mwes" required="0">
+        <list ordered="0" type="st-node.type"/>
+      </member>
       <member name="anot_error" type="t-anot_error.type" />
       <member name="pcedt_coref" type="t-pcedt_coref-root.type" />
       <member name="subtree_scores"  type="subtree_scores.type"/>
       <member name="src_tnode.rf"><cdata format="PMLREF"/></member>
       <member name="wild_dump"><cdata format="any"/></member>
+    </structure>
+  </type>
+
+  <type name="st-node.type">
+    <structure name="st-node">
+      <member as_attribute="1" name="id" role="#ID" required="1"><cdata format="ID"/></member>
+      <member name="basic-form" required="0"><cdata format="any"/></member>
+      <member name="type" required="1"><cdata format="any"/></member>
+      <member name="tnode.rfs">
+        <list ordered="0">
+          <cdata format="PMLREF"/>
+        </list>
+      </member>
     </structure>
   </type>
 

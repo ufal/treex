@@ -63,6 +63,7 @@ sub _convert_ttree
         {
             $self->_copy_attr( $pml_node, $treex_node, $attr_name, $attr_name );
         }
+        $self->_copy_list_attr( $pml_node, $treex_node, 'mwes', 'mwes' );
     }
     else
     {

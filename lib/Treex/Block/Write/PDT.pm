@@ -168,7 +168,46 @@ sub process_ttree {
         $a_s_id =~ s/t_tree/a_tree/;
     }
     $a_s_id =~ s/^a-//;
-    print {$t_fh} "<LM id='t-$s_id'><atree.rf>a#a-$a_s_id</atree.rf><nodetype>root</nodetype><deepord>0</deepord>\n<children>\n";
+    print {$t_fh} "<LM id='t-$s_id'><atree.rf>a#a-$a_s_id</atree.rf>\n<nodetype>root</nodetype>\n<deepord>0</deepord>";
+
+    # multiword expressions in the PDT-like format:
+    
+    my $ref_mwes = $ttree->get_attr('mwes');
+    my @mwes = ();
+    if ($ref_mwes) {
+        @mwes = @{$ref_mwes};
+    }
+    if (@mwes) {
+        print {$t_fh} "\n<mwes>";
+        foreach my $mwe (@mwes) {
+	    my $id = $mwe->{'id'};
+            print {$t_fh} "\n<LM id=\"$id\">";
+            # simple attrs
+            foreach my $attr (qw(basic-form type)) {
+                my $val = $self->escape_xml($mwe->{$attr});
+                print {$t_fh} "\n<$attr>$val</$attr>" if defined $val;
+            }
+
+            my $ref_target_ids = $mwe->{'tnode.rfs'};
+            my @target_ids = ();
+            if ($ref_target_ids) {
+                @target_ids = @{$ref_target_ids};
+            }
+            if (@target_ids) {
+                print {$t_fh} "\n<tnode.rfs>";
+                foreach my $target_id (@target_ids) {
+		    $target_id =~ s/^t-//;
+                    print {$t_fh} "\n<LM>t-$target_id</LM>";
+                }
+                print {$t_fh} "\n</tnode.rfs>";
+            }
+
+            print {$t_fh} "\n</LM>";
+        }
+        print {$t_fh} "\n</mwes>";
+    }
+
+    print {$t_fh} "\n<children>";
     foreach my $child ($ttree->get_children()) { $self->print_tsubtree($child); }
     print {$t_fh} "</children>\n</LM>\n";
     return;
@@ -178,31 +217,31 @@ sub print_tsubtree {
     my ($self, $tnode) = @_;
     my ($id, $ord) = $tnode->get_attrs(qw(id ord), {undefs=>'?'});
     $id =~ s/^t-//;
-    print {$t_fh} "<LM id='t-$id'><deepord>$ord</deepord>";
+    print {$t_fh} "\n<LM id='t-$id'><deepord>$ord</deepord>";
 
     # boolean attrs
     foreach my $attr (qw(is_dsp_root is_generated is_member is_name_of_person is_parenthesis is_state)){
-        print {$t_fh} "<$attr>1</$attr>" if $tnode->get_attr($attr);
+        print {$t_fh} "\n<$attr>1</$attr>" if $tnode->get_attr($attr);
     }
 
     # simple attrs
     foreach my $attr (qw(coref_special discourse_special functor nodetype sentmod subfunctor t_lemma tfa val_frame.rf)){
         my $val = $self->escape_xml($tnode->get_attr($attr));
         $val = 'RSTR' if $attr eq 'functor' and (!$val or $val eq '???'); #TODO functor is required in PDT
-        print {$t_fh} "<$attr>$val</$attr>" if defined $val;
+        print {$t_fh} "\n<$attr>$val</$attr>" if defined $val;
     }
 
     # list attrs
     foreach my $attr (qw(compl.rf coref_gram.rf)){
         my @antes = $tnode->_get_node_list($attr);
         if (@antes) {
-            print {$t_fh} "<$attr>";
+            print {$t_fh} "\n<$attr>";
             foreach my $ante (@antes) {
                 my $ante_id = $ante->id;
 		$ante_id =~ s/^t-//;
-                print {$t_fh} "<LM>t-$ante_id</LM>";
+                print {$t_fh} "\n<LM>t-$ante_id</LM>";
             }
-            print {$t_fh} "</$attr>";
+            print {$t_fh} "\n</$attr>";
         }
     }
 
@@ -210,22 +249,22 @@ sub print_tsubtree {
     my @antes = $tnode->_get_node_list('coref_text.rf');
     if (@antes) { 
 	if ($self->version eq "3.0" or $self->version eq '3.5' or $self->version eq 'C') { # transform the old-fashioned coref_text.rf to structured coref_text (with default SPEC type)
-            print {$t_fh} "<coref_text>";
+            print {$t_fh} "\n<coref_text>";
             foreach my $ante (@antes) {
                 my $ante_id = $ante->id;
 		$ante_id =~ s/^t-//;
-                print {$t_fh} "<LM><target_node.rf>t-$ante_id</target_node.rf><type>SPEC</type></LM>";
+                print {$t_fh} "\n<LM><target_node.rf>t-$ante_id</target_node.rf><type>SPEC</type></LM>";
             }
-            print {$t_fh} "</coref_text>";
+            print {$t_fh} "\n</coref_text>";
 	}
         else { # just keep the original old-fashioned coref_text.rf
-            print {$t_fh} "<coref_text.rf>";
+            print {$t_fh} "\n<coref_text.rf>";
             foreach my $ante (@antes) {
                 my $ante_id = $ante->id;
 		$ante_id =~ s/^t-//;
-                print {$t_fh} "<LM>t-$ante_id</LM>";
+                print {$t_fh} "\n<LM>t-$ante_id</LM>";
             }
-            print {$t_fh} "</coref_text.rf>";
+            print {$t_fh} "\n</coref_text.rf>";
         }
     }
 
@@ -236,9 +275,9 @@ sub print_tsubtree {
         @arrows = @{$ref_arrows};
     }
     if (@arrows) {
-        print {$t_fh} "<coref_text>";
+        print {$t_fh} "\n<coref_text>";
         foreach my $arrow (@arrows) { # take all coref_text arrows starting at the given node
-	    print {$t_fh} "<LM>";
+	    print {$t_fh} "\n<LM>";
             # simple attrs
             # foreach my $attr (qw(target_node.rf type comment src)) {
             foreach my $attr (qw(target_node.rf type comment)) {
@@ -247,11 +286,11 @@ sub print_tsubtree {
 		  $val =~ s/^t-//;
                   $val = "t-$val";
                 }
-                print {$t_fh} "<$attr>$val</$attr>" if defined $val;
+                print {$t_fh} "\n<$attr>$val</$attr>" if defined $val;
             }
-	    print {$t_fh} "</LM>";
+	    print {$t_fh} "\n</LM>";
         }
-        print {$t_fh} "</coref_text>";
+        print {$t_fh} "\n</coref_text>";
     }
 
     # bridging
@@ -261,9 +300,9 @@ sub print_tsubtree {
         @arrows = @{$ref_arrows};
     }
     if (@arrows) {
-        print {$t_fh} "<bridging>";
+        print {$t_fh} "\n<bridging>";
         foreach my $arrow (@arrows) { # take all bridging arrows starting at the given node
-	    print {$t_fh} "<LM>";
+	    print {$t_fh} "\n<LM>";
             # simple attrs
             # foreach my $attr (qw(target_node.rf type comment src)) {
             foreach my $attr (qw(target_node.rf type comment)) {
@@ -272,11 +311,11 @@ sub print_tsubtree {
 		  $val =~ s/^t-//;
                   $val = "t-$val";
                 }
-                print {$t_fh} "<$attr>$val</$attr>" if defined $val;
+                print {$t_fh} "\n<$attr>$val</$attr>" if defined $val;
             }
-	    print {$t_fh} "</LM>";
+	    print {$t_fh} "\n</LM>";
         }
-        print {$t_fh} "</bridging>";
+        print {$t_fh} "\n</bridging>";
     }
 
     # discourse
@@ -286,9 +325,9 @@ sub print_tsubtree {
         @discourse_arrows = @{$ref_discourse_arrows};
     }
     if (@discourse_arrows) {
-        print {$t_fh} "<discourse>";
+        print {$t_fh} "\n<discourse>";
         foreach my $arrow (@discourse_arrows) { # take all discourse arrows starting at the given node
-	    print {$t_fh} "<LM>";
+	    print {$t_fh} "\n<LM>";
             # simple attrs
             # foreach my $attr (qw(target_node.rf type start_group_id start_range target_group_id target_range discourse_type is_negated comment src is_altlex is_compositional connective_inserted is_implicit is_NP)) {
             foreach my $attr (qw(target_node.rf type start_group_id start_range target_group_id target_range discourse_type is_negated comment is_altlex is_compositional connective_inserted is_implicit is_NP)) {
@@ -299,7 +338,7 @@ sub print_tsubtree {
                     $val = "t-$val";
 		  }
                 }
-                print {$t_fh} "<$attr>$val</$attr>" if defined $val;
+                print {$t_fh} "\n<$attr>$val</$attr>" if defined $val;
             }
             # list attrs
             foreach my $attr (qw(a-connectors.rf t-connectors.rf a-connectors_ext.rf t-connectors_ext.rf)) {
@@ -309,7 +348,7 @@ sub print_tsubtree {
                     @target_ids = @{$ref_target_ids};
                 }
                 if (@target_ids) {
-                    print {$t_fh} "<$attr>";
+                    print {$t_fh} "\n<$attr>";
                     foreach my $target_id (@target_ids) {
                         my $prefix = "t-";
                         if ($attr =~ /^a-/) {
@@ -319,18 +358,18 @@ sub print_tsubtree {
 			else {
 			    $target_id =~ s/^t-//;
 			}
-                        print {$t_fh} "<LM>$prefix$target_id</LM>";
+                        print {$t_fh} "\n<LM>$prefix$target_id</LM>";
                     }
-                    print {$t_fh} "</$attr>";
+                    print {$t_fh} "\n</$attr>";
                 }
             }
-	    print {$t_fh} "</LM>";
+	    print {$t_fh} "\n</LM>";
         }
-        print {$t_fh} "</discourse>";
+        print {$t_fh} "\n</discourse>";
     }
 
     # grammatemes
-    print {$t_fh} "<gram>";
+    print {$t_fh} "\n<gram>";
     foreach my $attr (qw(sempos gender number typgroup degcmp verbmod deontmod tense aspect resultative dispmod iterativeness indeftype person numertype number politeness negation diatgram factmod)){ # definiteness diathesis
         my $val = $tnode->get_attr("gram/$attr") // '';
         $val = 'n.denot' if !$val and $attr eq 'sempos'; #TODO sempos is required in PDT
@@ -359,32 +398,32 @@ sub print_tsubtree {
         }
         print {$t_fh} "<$attr>$val</$attr>" if $val;
     }
-    print {$t_fh} "</gram>\n";
+    print {$t_fh} "\n</gram>\n";
 
     # references
     my $lex = $tnode->get_lex_anode();
     my @aux = $tnode->get_aux_anodes();
     if ($lex || @aux){
-        print {$t_fh} "<a>";
+        print {$t_fh} "\n<a>";
 	if ($lex) {
             my $id = $lex->id;
 	    $id =~ s/^a-//;
-	    printf {$t_fh} "<lex.rf>a#a-$id</lex.rf>"
+	    printf {$t_fh} "\n<lex.rf>a#a-$id</lex.rf>"
 	}
         if (@aux==1){
 	    my $id = $aux[0]->id;
 	    $id =~ s/^a-//;
-            printf {$t_fh} "<aux.rf>a#a-$id</aux.rf>";
+            printf {$t_fh} "\n<aux.rf>a#a-$id</aux.rf>";
         }
         if (@aux>1){
-            print {$t_fh} "<aux.rf>";
+            print {$t_fh} "\n<aux.rf>";
 	    for my $id (map {$_->id} @aux) {
 	        $id =~ s/^a-//;
-                printf {$t_fh} "<LM>a#a-$id</LM>";
+                printf {$t_fh} "\n<LM>a#a-$id</LM>";
 	    }
-            print {$t_fh} "</aux.rf>";
+            print {$t_fh} "\n</aux.rf>";
         }
-        print {$t_fh} "</a>\n";
+        print {$t_fh} "\n</a>";
     }
 
 
@@ -435,7 +474,7 @@ Optional XML pretty printing (e.g. via xmllint --format), but anyone can do this
 =head1 AUTHOR
 
 Martin Popel <popel@ufal.mff.cuni.cz>
-Jiri Mirovsky <mirovsky@ufal.mff.cuni.cz> (bridging, discourse and coref_text related parts)
+Jiri Mirovsky <mirovsky@ufal.mff.cuni.cz> (bridging, discourse, coref_text and mwe related parts)
 
 =head1 COPYRIGHT AND LICENSE
 
