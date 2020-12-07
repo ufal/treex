@@ -268,7 +268,10 @@ sub get_sentence_id
         $sid = sprintf("4%02d%02d%03d", $igenre, $ifile, $isentence);
     }
     # Option 3: The input file comes from the Prague Dependency Treebank.
-    elsif($ptb_section_file =~ m/^(cmpr|lnd?|mf)(9\d)(\d+)_(\d+)$/)
+    # We introduced all-numeric ids in SemEval SDP shared task 2015 and kept it in CoNLL MRP shared tasks 2019 and 2020.
+    # However, since all-numeric ids are not a requirement any more, and since in PDT-C we would have to invent new ones for PDTSL and Faust,
+    # I am turning this off and the else block below will use the alphanumeric document name instead.
+    elsif(0 && $ptb_section_file =~ m/^(cmpr|lnd?|mf)(9\d)(\d+)_(\d+)$/)
     {
         my $source = $1;
         my $year = $2;
@@ -287,7 +290,7 @@ sub get_sentence_id
     }
     else
     {
-        log_warn("File name '$ptb_section_file' does not follow expected patterns, cannot construct sentence identifier");
+        $sid = sprintf("%s-s%03d", $ptb_section_file, $isentence);
     }
     return $sid;
 }
