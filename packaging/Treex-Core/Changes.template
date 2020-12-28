@@ -1,7 +1,8 @@
 Revision history of the Treex-Core distribution:
 
-VERSION     DATE
-    - TODO describe changes
+2.20201228     2020-12-28
+    - add support for reading/writing PDT-C files
+    - many changes from the last four years
 
 2.20160630     2016-06-30
     - fixing missing Treex::Block::Read::BaseSplitterRole
