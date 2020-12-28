@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # coding=utf-8
 
 """
@@ -54,7 +54,7 @@ while True:
         #print >> stderr, "Read line:\n" + line
         #stderr.flush()
         cmd += line
-    except Exception, e:
+    except Exception as e:
         print >> sys.stderr, str(type(e)), ':', e
         break
     # execute each command when it's fully read
@@ -65,7 +65,7 @@ while True:
             output.flush()
             #print >> stderr, "Exec\'d:\n" + cmd
             #stderr.flush()
-        except Exception, e:
+        except Exception as e:
             cmd = re.sub(r'[^\n]+\n$', '', cmd)
             _, _, tb = sys.exc_info()
             print >> stderr, '\n\nCommand:', '\n', cmd, '\nException:\n', str(type(e)), ':', e, '\n\n', ''.join(traceback.format_tb(tb))
