@@ -1,5 +1,8 @@
 Revision history of the Treex-Core distribution:
 
+2.20210102     2021-01-02
+    - fix #73 in Treex/Core/CacheBlock.pm
+
 2.20201228     2020-12-28
     - add support for reading/writing PDT-C files
     - many changes from the last four years
