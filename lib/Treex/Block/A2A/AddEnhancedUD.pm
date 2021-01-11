@@ -822,6 +822,58 @@ sub get_empty_node_position
 
 
 
+#------------------------------------------------------------------------------
+# Converts the old hack for empty nodes to a new hack. The old hack does not
+# use a Node object for an empty node. Instead, the enhanced dependency encodes
+# the path between two real nodes via one or more empty nodes: 'conj>3.5>obj'.
+# In the new hack, there will be a Node object for the empty node. It will have
+# a fake basic dependency, directly on the artificial root node, with the
+# deprel 'dep:empty'. It will have an integer ord at the end of the sentence,
+# while its decimal ord for CoNLL-U will be saved in a wild attribute. All
+# blocks that deal with a UD tree must be aware of the possibility that there
+# are empty nodes, and these nodes must be excluded from operations with basic
+# dependencies.
+#------------------------------------------------------------------------------
+sub expand_empty_nodes
+{
+    my $self = shift;
+    my $root = shift;
+    # This method should not be applied to a tree where empty nodes are already
+    # expanded.
+    my @enodes = grep {$_->deprel() eq 'dep:empty'} ($root->children());
+    if(scalar(@enodes) > 0)
+    {
+        log_fatal("Method 'expand_empty_nodes()' applied to a tree where empty nodes are already expanded.");
+    }
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    # We already have a hash of empty nodes we have created in this block.
+    # However, I want to make this method as independent as possible, so we
+    # will populate the hash here again.
+    my %emptynodes;
+    foreach my $node (@nodes)
+    {
+        my @iedges = $self->get_enhanced_deps($node);
+        foreach my $ie (@iedges)
+        {
+            # We are looking for deprels of the form 'conj>3.5>obj' (there may
+            # be multiple empty nodes in the chain).
+            if($ie->[1] =~ m/>/)
+            {
+                my @parts = split(/>/, $ie->[1]);
+                foreach my $part (@parts)
+                {
+                    if($part =~ m/^\d+\.\d+$/)
+                    {
+                        $emptynodes{$part}++;
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
 #==============================================================================
 # Helper functions for manipulation of the enhanced graph.
 #==============================================================================
