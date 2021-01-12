@@ -79,6 +79,9 @@ sub process_atree
         {
             $self->add_enhanced_empty_node($node, \%emptynodes);
         }
+        ###!!! In the future we may want to directly generate this kind of empty nodes.
+        ###!!! At present we keep the enhanced methods intact and convert the empty nodes when everything else has been done.
+        $self->expand_empty_nodes($root);
     }
 }
 
@@ -869,6 +872,17 @@ sub expand_empty_nodes
                 }
             }
         }
+    }
+    # Create empty nodes at the end of the sentence.
+    my $lastnode = $nodes[-1];
+    my @enords = sort {$a <=> $b} (keys(%emptynodes));
+    foreach my $enord (@enords)
+    {
+        my $node = $root->create_child();
+        $node->set_deprel('dep:empty');
+        $node->wild()->{enord} = $enord;
+        $node->shift_after_node($lastnode);
+        $lastnode = $node;
     }
 }
 
