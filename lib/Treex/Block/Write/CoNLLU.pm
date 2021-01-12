@@ -162,6 +162,7 @@ sub process_atree
     }
     # Before writing any nodes, search the wild attributes for enhanced dependencies.
     my %edeps_to_write;
+    my %enodes_to_write;
     foreach my $node (@nodes)
     {
         ###!!! DEBUG:
@@ -204,6 +205,7 @@ sub process_atree
                         my $major = $1;
                         my $minor = $2;
                         $edeps_to_write{$major}{$minor}{$epord}{$edeprel}++;
+                        $enodes_to_write{$major}{$minor} = $node;
                     }
                     else
                     {
@@ -217,9 +219,11 @@ sub process_atree
             }
         }
     }
+    ###!!! This is the old way of passing through attributes of empty nodes from
+    ###!!! third-party UD data (e.g., Ukrainian). We should modify Read::CoNLLU
+    ###!!! to also create fake anodes.
     # In addition, attributes of empty nodes, including leaf empty nodes, may
     # be stored in a wild attribute of the bundle.
-    my %enodes_to_write;
     if(exists($bwild->{empty_nodes}))
     {
         my @empty_nodes = @{$bwild->{empty_nodes}};
@@ -412,7 +416,16 @@ sub print_empty_nodes
         if(exists($enodes_to_write{$major}{$minor}))
         {
             my $en = $enodes_to_write{$major}{$minor};
-            ($form, $lemma, $upos, $xpos, $feats, $deps, $misc) = ($en->{form}, $en->{lemma}, $en->{upos}, $en->{xpos}, $en->{feats}, $en->{deps}, $en->{misc});
+            ###!!! The old way: $en is just a hash reference, not a Node object.
+            if(ref($en) eq 'HASH')
+            {
+                ($form, $lemma, $upos, $xpos, $feats, $deps, $misc) = ($en->{form}, $en->{lemma}, $en->{upos}, $en->{xpos}, $en->{feats}, $en->{deps}, $en->{misc});
+            }
+            ###!!! The new way: $en is a fake a-node, i.e., a Node object.
+            else
+            {
+                ($form, $lemma, $upos) = ($en->form(), $en->lemma(), $en->tag());
+            }
         }
         if(exists($edeps_to_write{$major}{$minor}))
         {
