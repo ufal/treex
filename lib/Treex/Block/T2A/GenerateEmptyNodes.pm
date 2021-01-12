@@ -149,7 +149,103 @@ sub process_zone
             # which case we cannot use it.
             if(defined($aparent) && $aparent->get_root() == $aroot)
             {
-                $self->add_enhanced_dependency($anode, $aparent, 'dep');
+                # Guess the UD dependency relation based on the tectogrammatical functor.
+                ###!!! This is currently very rough and it could be improved!
+                my $deprel = 'dep';
+                my $functor = $tnode->functor();
+                if(defined($functor))
+                {
+                    if($functor =~ m/^(DENOM|PAR|PRED)$/)
+                    {
+                        $deprel = 'parataxis';
+                    }
+                    elsif($functor =~ m/^(PARTL)$/)
+                    {
+                        $deprel = 'discourse';
+                    }
+                    elsif($functor =~ m/^(VOCAT)$/)
+                    {
+                        $deprel = 'vocative';
+                    }
+                    ###!!! The arguments may correspond to nsubj, obj or obl:arg.
+                    ###!!! We should consider the voice to distinguish between nsubj and nsubj:pass;
+                    ###!!! even then it will not work for certain classes of verbs.
+                    ###!!! We also don't know whether the argument is nominal (nsubj) or clausal (csubj)
+                    ###!!! but since we typically pretend the empty node corresponds to a pronoun, it should be nominal.
+                    elsif($functor =~ m/^(ACT)$/)
+                    {
+                        $deprel = 'nsubj';
+                    }
+                    elsif($functor =~ m/^(PAT)$/)
+                    {
+                        $deprel = 'obj';
+                    }
+                    elsif($functor =~ m/^(ADDR|EFF|ORIG)$/)
+                    {
+                        $deprel = 'obl:arg';
+                    }
+                    # Adjuncts could be obl, advmod, advcl; we use always obl.
+                    elsif($functor =~ m/^(ACMP|AIM|BEN|CAUS|CNCS|COMPL|COND|CONTRD|CPR|CRIT|DIFF|DIR[123]|EXT|HER|INTT|LOC|MANN|MEANS|REG|RESL|RESTR|SUBS|TFHL|TFRWH|THL|THO|TOWH|TPAR|TSIN|TTILL|TWHEN)$/)
+                    {
+                        $deprel = 'obl';
+                    }
+                    # Adnominal arguments and adjuncts could be nmod, amod, det, nummod; we use always nmod.
+                    elsif($functor =~ m/^(APP|AUTH|DESCR|ID|MAT|RSTR)$/)
+                    {
+                        $deprel = 'nmod';
+                    }
+                    # ATT = speaker's attitude
+                    elsif($functor =~ m/^(ATT)$/)
+                    {
+                        $deprel = 'advmod';
+                    }
+                    # CM = modification of coordination ("ale _dokonce_...")
+                    elsif($functor =~ m/^(CM)$/)
+                    {
+                        $deprel = 'cc';
+                    }
+                    # CPHR = nominal part of compound predicate ("dostali _rozkaz_")
+                    elsif($functor =~ m/^(CPHR)$/)
+                    {
+                        $deprel = 'obj';
+                    }
+                    # DPHR = dependent part of idiom (phraseme) ("jde mi _na nervy_"; "široko _daleko_"; "křížem _krážem_")
+                    elsif($functor =~ m/^(DPHR)$/)
+                    {
+                        # DPHR could be various things in the surface syntax.
+                        $deprel = 'dep';
+                    }
+                    # FPHR = part of foreign expression
+                    elsif($functor =~ m/^(FPHR)$/)
+                    {
+                        $deprel = 'flat:foreign';
+                    }
+                    # NE = part of named entity (only PCEDT)
+                    elsif($functor =~ m/^(NE)$/)
+                    {
+                        $deprel = 'flat:name';
+                    }
+                    # INTF = expletive subject
+                    elsif($functor =~ m/^(INTF)$/)
+                    {
+                        $deprel = 'expl';
+                    }
+                    # MOD = some modal expressions ("_pravděpodobně_ přijdeme"; "_asi_ před týdnem jsem dostal dopis").
+                    # PREC = preceding context ("pak", "naopak")
+                    # RHEM = rhematizer ("jen", "teprve", "ještě")
+                    elsif($functor =~ m/^(MOD|PREC|RHEM)$/)
+                    {
+                        $deprel = 'advmod';
+                    }
+                    # The functors for head nodes of paratactic structures should not be used in UD
+                    # where paratactic structures are annotated in the Stanford style. Nevertheless,
+                    # we list them here for completeness.
+                    elsif($functor =~ m/^(ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS)$/)
+                    {
+                        $deprel = 'cc';
+                    }
+                }
+                $self->add_enhanced_dependency($anode, $aparent, $deprel);
             }
             # Without connecting the empty node at least to the root, it would not
             # be printed and the graph would not be valid.
