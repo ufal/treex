@@ -151,9 +151,6 @@ sub process_atree
         }
     }
     # Before writing any nodes, search the wild attributes for enhanced dependencies.
-    # If the enhanced graph involves empty nodes, they will be encoded in the deps:
-    # '0:root>34.1>cc' means that there should be a root edge from 0 to 34.1,
-    # and a cc edge from 34.1 to the actual node.
     my %edeps_to_write;
     foreach my $node (@nodes)
     {
@@ -164,41 +161,7 @@ sub process_atree
             {
                 my $epord = $edep->[0];
                 my $edeprel = $edep->[1];
-                if($edeprel =~ m/>\d+\.\d+>/)
-                {
-                    # There is at least one empty node embedded in the edge/path.
-                    # Decompose the path to parent-type-child triplets.
-                    my @path = split(/>/, $edeprel);
-                    unshift(@path, $epord);
-                    push(@path, $node->ord());
-                    for(my $i = 0; $i <= $#path-2; $i += 2)
-                    {
-                        my $p = $path[$i];
-                        my $t = $path[$i+1];
-                        my $c = $path[$i+2];
-                        log_fatal("Ord is not numeric in '$edeprel'.") if($p !~ m/^\d+(\.\d+)?$/ || $c !~ m/^\d+(\.\d+)?$/);
-                        # Store edeps of empty nodes in a temporary hash.
-                        if($c =~ m/^(\d+)\.(\d+)$/)
-                        {
-                            my $major = $1;
-                            my $minor = $2;
-                            $edeps_to_write{$major}{$minor}{$p}{$t}++;
-                        }
-                        # Store my modified edeps in a temporary hash.
-                        elsif($c == $node->ord())
-                        {
-                            $edeps_to_write{$c}{0}{$p}{$t}++;
-                        }
-                        else
-                        {
-                            log_fatal("Unexpected child ord 'c' in '$edeprel'.");
-                        }
-                    }
-                }
-                else
-                {
-                    $edeps_to_write{$node->ord()}{0}{$epord}{$edeprel}++;
-                }
+                $edeps_to_write{$node->ord()}{0}{$epord}{$edeprel}++;
             }
         }
     }
