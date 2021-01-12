@@ -44,10 +44,6 @@ annotations in certain formats, we may have to access t-nodes from their
 lexical a-nodes. This block generates such references and stores them as wild
 attributes of the a-nodes.
 
-Furthermore, it generates empty a-nodes corresponding to generated t-nodes, in
-the form recognized by Write::CoNLLU. The empty nodes can thus be exported as
-empty nodes in enhanced UD graphs.
-
 =head1 AUTHORS
 
 Dan Zeman <zeman@ufal.mff.cuni.cz>
