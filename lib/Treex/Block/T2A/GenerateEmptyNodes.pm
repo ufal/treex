@@ -15,7 +15,7 @@ sub process_zone
     my @tnodes = $troot->get_descendants({ordered => 1});
     my @anodes = $aroot->get_descendants({ordered => 1});
     my $lastanode = $anodes[-1];
-    my $major = $lastanode->ord();
+    my $major = 0;
     my $minor = 0;
     foreach my $tnode (@tnodes)
     {
@@ -151,6 +151,19 @@ sub process_zone
             else
             {
                 $self->add_enhanced_dependency($anode, $aroot, 'root');
+            }
+        }
+        else # t-node is not generated
+        {
+            # Remember the ord of the a-node corresponding to the last non-generated
+            # t-node. We will use it as the major number for approximate placement of
+            # subsequent generated nodes.
+            my $anode = $tnode->get_lex_anode();
+            # Lexical a-node of a non-generated t-node should be in the same sentence
+            # but check it anyway.
+            if(defined($anode) and $anode->get_root() == $aroot)
+            {
+                $major = $anode->ord();
             }
         }
     }
