@@ -164,6 +164,21 @@ sub process_atree
     my %edeps_to_write;
     foreach my $node (@nodes)
     {
+        ###!!! DEBUG:
+        # To test references from a-nodes to t-nodes, copy the t-lemma to a MISC attribute.
+        if(exists($node->wild()->{'tnode.rf'}) && defined($node->wild()->{'tnode.rf'}))
+        {
+            my $document = $node->get_document();
+            my $tnode = $document->get_node_by_id($node->wild()->{'tnode.rf'});
+            if(defined($tnode))
+            {
+                my $tlemma = $tnode->t_lemma();
+                if(defined($tlemma) && $tlemma ne '')
+                {
+                    $node->set_misc_attr('TLemma', $tlemma);
+                }
+            }
+        }
         my $is_empty = $node->deprel() eq 'dep:empty';
         if(exists($node->wild()->{enhanced}))
         {
