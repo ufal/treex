@@ -154,6 +154,7 @@ sub process_atree
     my %edeps_to_write;
     foreach my $node (@nodes)
     {
+        my $is_empty = $node->deprel() eq 'dep:empty';
         if(exists($node->wild()->{enhanced}))
         {
             my @edeps = @{$node->wild()->{enhanced}};
@@ -161,7 +162,28 @@ sub process_atree
             {
                 my $epord = $edep->[0];
                 my $edeprel = $edep->[1];
-                $edeps_to_write{$node->ord()}{0}{$epord}{$edeprel}++;
+                if($is_empty)
+                {
+                    my $enord = $node->wild()->{enord};
+                    if(!defined($enord))
+                    {
+                        log_fatal("Unknown ID of an empty node.");
+                    }
+                    if($enord !~ m/^(\d+)\.(\d+)$/)
+                    {
+                        my $major = $1;
+                        my $minor = $2;
+                        $edeps_to_write{$enord}{$major}{$minor}{$epord}{$edeprel}++;
+                    }
+                    else
+                    {
+                        log_fatal("Unrecognized empty node ID '$enord'.");
+                    }
+                }
+                else
+                {
+                    $edeps_to_write{$node->ord()}{0}{$epord}{$edeprel}++;
+                }
             }
         }
     }
@@ -191,6 +213,9 @@ sub process_atree
     for(my $i = 0; $i<=$#nodes; $i++)
     {
         my $node = $nodes[$i];
+        # We store UD empty nodes at the end of the sentence and in the basic tree,
+        # we attach them to the artificial root via a fake dependency 'dep:empty'.
+        last if($node->deprel() eq 'dep:empty');
         if($node->fused_with_next() && ($i==0 || !$nodes[$i-1]->fused_with_next()))
         {
             my $last_fused_node = $node->get_fusion_end();
