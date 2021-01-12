@@ -150,6 +150,16 @@ sub process_atree
             }
         }
     }
+    # If there are any empty nodes, they are stored after the last real node of the tree
+    # (but we will want to write them at different positions).
+    my @enode_ords;
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'dep:empty')
+        {
+            $enode_ords[$node->ord()] = $node->wild()->{enord};
+        }
+    }
     # Before writing any nodes, search the wild attributes for enhanced dependencies.
     my %edeps_to_write;
     foreach my $node (@nodes)
@@ -162,6 +172,11 @@ sub process_atree
             {
                 my $epord = $edep->[0];
                 my $edeprel = $edep->[1];
+                # If the parent is an empty node, translate its ID (ord).
+                if(defined(!$enode_ords[$epord]))
+                {
+                    $epord = $enode_ords[$epord];
+                }
                 if($is_empty)
                 {
                     my $enord = $node->wild()->{enord};
