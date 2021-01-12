@@ -188,7 +188,7 @@ sub process_atree
                     {
                         my $major = $1;
                         my $minor = $2;
-                        $edeps_to_write{$enord}{$major}{$minor}{$epord}{$edeprel}++;
+                        $edeps_to_write{$major}{$minor}{$epord}{$edeprel}++;
                     }
                     else
                     {
