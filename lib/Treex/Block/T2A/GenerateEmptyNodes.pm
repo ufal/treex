@@ -16,7 +16,12 @@ sub process_zone
     my @anodes = $aroot->get_descendants({ordered => 1});
     my $lastanode = $anodes[-1];
     my $major = 0;
-    my $minor = 0;
+    # Remember the last used minor number for each major number (each anode's ord and zero).
+    my @lastminor = (0);
+    foreach my $anode (@anodes)
+    {
+        $lastminor[$anode->ord()] = 0;
+    }
     foreach my $tnode (@tnodes)
     {
         if($tnode->is_generated())
@@ -25,8 +30,8 @@ sub process_zone
             $anode->set_deprel('dep:empty');
             $anode->wild()->{'tnode.rf'} = $tnode->id();
             $anode->wild()->{enhanced} = [];
-            $minor++;
-            $anode->wild()->{enord} = "$major.$minor";
+            $lastminor[$major]++;
+            $anode->wild()->{enord} = "$major.$lastminor[$major]";
             $anode->shift_after_node($lastanode);
             $lastanode = $anode;
             $anode->set_lemma($tnode->t_lemma());
