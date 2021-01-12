@@ -881,6 +881,7 @@ sub expand_empty_nodes
     {
         my $node = $root->create_child();
         $node->set_deprel('dep:empty');
+        $node->wild()->{enhanced} = [];
         $node->wild()->{enord} = $enord;
         $node->shift_after_node($lastnode);
         $lastnode = $node;
