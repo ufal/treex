@@ -735,6 +735,26 @@ sub get_misc
     return @misc;
 }
 
+# get_misc_attr() returns the first value of given misc attr, or undef
+sub get_misc_attr
+{
+    my $self = shift;
+    my $attr = shift;
+    my @misc = grep {m/^$attr=.+$/} ($self->get_misc());
+    if(scalar(@misc) > 1)
+    {
+        log_warn("Multiple values of MISC attribute '$attr'.");
+    }
+    if(scalar(@misc) > 0)
+    {
+        if($misc[0] =~ m/^$attr=(.+)$/)
+        {
+            return $1;
+        }
+    }
+    return undef;
+}
+
 # set_misc() takes a list of MISC attributes (possibly empty list)
 sub set_misc
 {
