@@ -29,6 +29,17 @@ sub process_zone
             $anode->wild()->{enord} = "$major.$minor";
             $anode->shift_after_node($lastanode);
             $lastanode = $anode;
+            $anode->set_form('_');
+            $anode->set_lemma($tnode->t_lemma());
+            if($tnode->t_lemma() =~ m/^\#(PersPron|Gen|Cor)$/)
+            {
+                $anode->set_tag('PRON');
+                $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs'});
+            }
+            else
+            {
+                $anode->set_tag('X');
+            }
         }
     }
 }
