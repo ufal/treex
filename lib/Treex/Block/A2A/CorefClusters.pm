@@ -27,7 +27,7 @@ sub process_anode
             # Get coreference edges.
             my @gcoref = $tnode->get_coref_gram_nodes();
             my @tcoref = $tnode->get_coref_text_nodes();
-            foreach my $ctnode (@tcoref)
+            foreach my $ctnode (@gcoref, @tcoref)
             {
                 # $ctnode is the target t-node of the coreference edge.
                 # We need to access its corresponding lexical a-node.
