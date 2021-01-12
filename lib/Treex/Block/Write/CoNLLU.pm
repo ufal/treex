@@ -427,6 +427,23 @@ sub print_empty_nodes
                 $form = $en->form() if(defined($en->form()) && $en->form() ne '');
                 $lemma = $en->lemma() if(defined($en->lemma()) && $en->lemma() ne '');
                 $upos = $en->tag() if(defined($en->tag()) && $en->tag() ne '');
+                my @misc = $en->get_misc();
+                if($self->sort_misc())
+                {
+                    @misc = sort {lc($a) cmp lc($b)} (@misc);
+                }
+                # No MISC element should contain a vertical bar because we are going to
+                # join them using the vertical bar as a separator. We will issue a
+                # a warning if there is a vertical bar but we will not try to fix it
+                # because the CoNLL-U format does not define any escaping method.
+                foreach my $m (@misc)
+                {
+                    if($m =~ m/\|/)
+                    {
+                        log_warn("MISC element '$m' should not contain the vertical bar '|'");
+                    }
+                }
+                $misc = scalar(@misc)>0 ? join('|', @misc) : '_';
             }
         }
         if(exists($edeps_to_write{$major}{$minor}))
