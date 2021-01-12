@@ -841,13 +841,6 @@ sub expand_empty_nodes
 {
     my $self = shift;
     my $root = shift;
-    # This method should not be applied to a tree where empty nodes are already
-    # expanded.
-    my @enodes = grep {$_->deprel() eq 'dep:empty'} ($root->children());
-    if(scalar(@enodes) > 0)
-    {
-        log_fatal("Method 'expand_empty_nodes()' applied to a tree where empty nodes are already expanded.");
-    }
     my @nodes = $root->get_descendants({'ordered' => 1});
     # We already have a hash of empty nodes we have created in this block.
     # However, I want to make this method as independent as possible, so we
