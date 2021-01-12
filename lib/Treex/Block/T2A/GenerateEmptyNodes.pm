@@ -82,6 +82,12 @@ sub process_zone
             {
                 $self->add_enhanced_dependency($anode, $aparent, 'dep');
             }
+            # Without connecting the empty node at least to the root, it would not
+            # be printed and the graph would not be valid.
+            else
+            {
+                $self->add_enhanced_dependency($anode, $aroot, 'root');
+            }
         }
     }
 }
