@@ -29,7 +29,6 @@ sub process_zone
             $anode->wild()->{enord} = "$major.$minor";
             $anode->shift_after_node($lastanode);
             $lastanode = $anode;
-            $anode->set_form('_');
             $anode->set_lemma($tnode->t_lemma());
             # If the generated node is a copy of a real node, we may be able to
             # copy its attributes.
@@ -40,19 +39,37 @@ sub process_zone
                 $anode->set_tag($source_anode->tag());
                 $anode->iset()->set_hash($source_anode->iset()->get_hash());
             }
-            if($tnode->t_lemma() =~ m/^\#(PersPron|Gen|Q?Cor|Rcp)$/)
-            {
-                $anode->set_tag('PRON');
-                $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs'});
-            }
-            elsif($tnode->t_lemma() eq '#Neg')
-            {
-                $anode->set_tag('PART');
-                $anode->iset()->set_hash({'pos' => 'part', 'polarity' => 'neg'});
-            }
             else
             {
-                $anode->set_tag('X');
+                $anode->set_form('_');
+                if($tnode->t_lemma() =~ m/^\#(PersPron|Gen|Q?Cor|Rcp)$/)
+                {
+                    $anode->set_tag('PRON');
+                    $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs'});
+                }
+                elsif($tnode->t_lemma() eq '#Neg')
+                {
+                    $anode->set_tag('PART');
+                    $anode->iset()->set_hash({'pos' => 'part', 'polarity' => 'neg'});
+                }
+                # Empty verb that cannot be copied from an overt node but it has overt dependents.
+                # Example: "jak [je] vidno" (missing "je"; the other two words should depend on it in the Prague style).
+                elsif($tnode->t_lemma() eq '#EmpVerb')
+                {
+                    $anode->set_tag('VERB');
+                    $anode->iset()->set_hash({'pos' => 'verb'});
+                }
+                # Empty noun that cannot be copied from an overt node but it has overt dependents.
+                # Example: "příliš [peněz] prodělává" (missing "peněz"; it should be a child of "prodělává" and the parent of "příliš").
+                elsif($tnode->t_lemma() eq '#EmpNoun')
+                {
+                    $anode->set_tag('NOUN');
+                    $anode->iset()->set_hash({'pos' => 'noun', 'nountype' => 'com'});
+                }
+                else
+                {
+                    $anode->set_tag('X');
+                }
             }
             # We need an enhanced relation to make the empty node connected with
             # the enhanced dependency graph. Try to propagate the dependency from
