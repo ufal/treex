@@ -173,7 +173,7 @@ sub process_atree
                 my $epord = $edep->[0];
                 my $edeprel = $edep->[1];
                 # If the parent is an empty node, translate its ID (ord).
-                if(defined(!$enode_ords[$epord]))
+                if(defined($enode_ords[$epord]))
                 {
                     $epord = $enode_ords[$epord];
                 }
