@@ -169,7 +169,7 @@ sub process_atree
                     {
                         log_fatal("Unknown ID of an empty node.");
                     }
-                    if($enord !~ m/^(\d+)\.(\d+)$/)
+                    if($enord =~ m/^(\d+)\.(\d+)$/)
                     {
                         my $major = $1;
                         my $minor = $2;
