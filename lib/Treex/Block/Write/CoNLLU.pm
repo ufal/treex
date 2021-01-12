@@ -424,7 +424,9 @@ sub print_empty_nodes
             ###!!! The new way: $en is a fake a-node, i.e., a Node object.
             else
             {
-                ($form, $lemma, $upos) = ($en->form(), $en->lemma(), $en->tag());
+                $form = $en->form() if(defined($en->form()) && $en->form() ne '');
+                $lemma = $en->lemma() if(defined($en->lemma()) && $en->lemma() ne '');
+                $upos = $en->tag() if(defined($en->tag()) && $en->tag() ne '');
             }
         }
         if(exists($edeps_to_write{$major}{$minor}))

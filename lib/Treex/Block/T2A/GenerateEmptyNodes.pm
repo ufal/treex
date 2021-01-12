@@ -31,10 +31,24 @@ sub process_zone
             $lastanode = $anode;
             $anode->set_form('_');
             $anode->set_lemma($tnode->t_lemma());
-            if($tnode->t_lemma() =~ m/^\#(PersPron|Gen|Cor)$/)
+            # If the generated node is a copy of a real node, we may be able to
+            # copy its attributes.
+            my $source_anode = $tnode->get_lex_anode();
+            if(defined($source_anode))
+            {
+                $anode->set_form($source_anode->form());
+                $anode->set_tag($source_anode->tag());
+                $anode->iset()->set_hash($source_anode->iset()->get_hash());
+            }
+            if($tnode->t_lemma() =~ m/^\#(PersPron|Gen|Q?Cor|Rcp)$/)
             {
                 $anode->set_tag('PRON');
                 $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs'});
+            }
+            elsif($tnode->t_lemma() eq '#Neg')
+            {
+                $anode->set_tag('PART');
+                $anode->iset()->set_hash({'pos' => 'part', 'polarity' => 'neg'});
             }
             else
             {
