@@ -234,7 +234,7 @@ sub add_enhanced_parent_of_coordination
                     ###!!! We should now also check whether a preposition or a case label should be added!
                     $deprel = 'obl';
                 }
-                $self->add_enhanced_dependency($node, $node->get_node_by_ord($edep->[0]), $deprel);
+                $node->add_enhanced_dependency($node->get_node_by_ord($edep->[0]), $deprel);
                 # The coordination may function as a shared dependent of other coordination.
                 # In that case, make me depend on every conjunct in the parent coordination.
                 if($inode->is_shared_modifier())
@@ -242,7 +242,7 @@ sub add_enhanced_parent_of_coordination
                     my @conjuncts = $self->recursively_collect_conjuncts($node->get_node_by_ord($edep->[0]));
                     foreach my $conjunct (@conjuncts)
                     {
-                        $self->add_enhanced_dependency($node, $conjunct, $deprel);
+                        $node->add_enhanced_dependency($conjunct, $deprel);
                     }
                 }
             }
@@ -281,7 +281,7 @@ sub add_enhanced_shared_dependent_of_coordination
             my @conjuncts = $self->recursively_collect_conjuncts($parent);
             foreach my $conjunct (@conjuncts)
             {
-                $self->add_enhanced_dependency($node, $conjunct, $edeprel);
+                $node->add_enhanced_dependency($conjunct, $edeprel);
             }
         }
     }
@@ -425,7 +425,7 @@ sub add_enhanced_external_subject
                 }
                 # We could now add the ':xsubj' subtype to the relation label.
                 # But we would first have to remove the previous subtype, if any.
-                $self->add_enhanced_dependency($subject, $node, $edeprel);
+                $subject->add_enhanced_dependency($node, $edeprel);
             }
         }
         # Is this a dative-control verb?
@@ -463,7 +463,7 @@ sub add_enhanced_external_subject
                 {
                     $edeprel = 'nsubj:pass';
                 }
-                $self->add_enhanced_dependency($object, $node, $edeprel);
+                $object->add_enhanced_dependency($node, $edeprel);
             }
         }
         # Is this an accusative-control verb?
@@ -509,7 +509,7 @@ sub add_enhanced_external_subject
                 {
                     $edeprel = 'nsubj:pass';
                 }
-                $self->add_enhanced_dependency($object, $node, $edeprel);
+                $object->add_enhanced_dependency($node, $edeprel);
             }
         }
     }
@@ -595,7 +595,7 @@ sub add_enhanced_relative_clause
     foreach my $noun (@nouns)
     {
         # Add an enhanced relation 'ref' from the modified noun to the relativizer.
-        $self->add_enhanced_dependency($relativizer, $noun, 'ref');
+        $relativizer->add_enhanced_dependency($noun, 'ref');
         # If the relativizer is the root of the relative clause, there is no other
         # node in the relative clause from which a new relation should go to the
         # modified noun. However, the relative clause has a nominal predicate,
@@ -606,7 +606,7 @@ sub add_enhanced_relative_clause
             my @subjects = grep {$_->deprel() =~ m/^[nc]subj(:|$)/} ($node->children());
             foreach my $subject (@subjects)
             {
-                $self->add_enhanced_dependency($subject, $noun, $subject->deprel());
+                $subject->add_enhanced_dependency($noun, $subject->deprel());
             }
         }
         # If the relativizer is not the root of the relative clause, we remove its
@@ -642,7 +642,7 @@ sub add_enhanced_relative_clause
                 # for the substitute relation.
                 $reldeprel =~ s/^advmod(:.+)?$/obl/;
                 $reldeprel =~ s/^det(:.+)?$/nmod/;
-                $self->add_enhanced_dependency($noun, $relparentnode, $reldeprel);
+                $noun->add_enhanced_dependency($relparentnode, $reldeprel);
             }
         }
     }
@@ -909,7 +909,7 @@ sub expand_empty_nodes
                         log_fatal("Unknown empty node '$cord'.");
                     }
                     my $child = $emptynodes{$cord};
-                    $self->add_enhanced_dependency($child, $parent, $deprel);
+                    $child->add_enhanced_dependency($parent, $deprel);
                     $parent = $child;
                 }
                 # The remaining part is a deprel, and we know the current parent.
@@ -932,35 +932,6 @@ sub expand_empty_nodes
 #==============================================================================
 # Helper functions for manipulation of the enhanced graph.
 #==============================================================================
-
-
-
-#------------------------------------------------------------------------------
-# Adds a new enhanced edge incoming to a node, unless the same relation with
-# the same parent already exists.
-#------------------------------------------------------------------------------
-sub add_enhanced_dependency
-{
-    my $self = shift;
-    my $child = shift;
-    my $parent = shift;
-    my $deprel = shift;
-    # Self-loops are not allowed in enhanced dependencies.
-    # We could silently ignore the call but there is probably something wrong
-    # at the caller's side, so we will throw an exception.
-    if($parent == $child)
-    {
-        my $ord = $child->ord();
-        my $form = $child->form() // '';
-        log_fatal("Self-loops are not allowed in the enhanced graph but we are attempting to attach the node no. $ord ('$form') to itself.");
-    }
-    my $pord = $parent->ord();
-    my @edeps = $child->get_enhanced_deps();
-    unless(any {$_->[0] == $pord && $_->[1] eq $deprel} (@edeps))
-    {
-        push(@{$child->wild()->{enhanced}}, [$pord, $deprel]);
-    }
-}
 
 
 

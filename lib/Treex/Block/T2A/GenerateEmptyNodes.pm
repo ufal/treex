@@ -247,13 +247,13 @@ sub process_zone
                         $deprel = 'cc';
                     }
                 }
-                $self->add_enhanced_dependency($anode, $aparent, $deprel);
+                $anode->add_enhanced_dependency($aparent, $deprel);
             }
             # Without connecting the empty node at least to the root, it would not
             # be printed and the graph would not be valid.
             else
             {
-                $self->add_enhanced_dependency($anode, $aroot, 'root');
+                $anode->add_enhanced_dependency($aroot, 'root');
             }
         }
         else # t-node is not generated
@@ -269,41 +269,6 @@ sub process_zone
                 $major = $anode->ord();
             }
         }
-    }
-}
-
-
-
-#==============================================================================
-# Helper functions for manipulation of the enhanced graph.
-#==============================================================================
-
-
-
-#------------------------------------------------------------------------------
-# Adds a new enhanced edge incoming to a node, unless the same relation with
-# the same parent already exists.
-#------------------------------------------------------------------------------
-sub add_enhanced_dependency
-{
-    my $self = shift;
-    my $child = shift;
-    my $parent = shift;
-    my $deprel = shift;
-    # Self-loops are not allowed in enhanced dependencies.
-    # We could silently ignore the call but there is probably something wrong
-    # at the caller's side, so we will throw an exception.
-    if($parent == $child)
-    {
-        my $ord = $child->ord();
-        my $form = $child->form() // '';
-        log_fatal("Self-loops are not allowed in the enhanced graph but we are attempting to attach the node no. $ord ('$form') to itself.");
-    }
-    my $pord = $parent->ord();
-    my @edeps = $child->get_enhanced_deps();
-    unless(any {$_->[0] == $pord && $_->[1] eq $deprel} (@edeps))
-    {
-        push(@{$child->wild()->{enhanced}}, [$pord, $deprel]);
     }
 }
 

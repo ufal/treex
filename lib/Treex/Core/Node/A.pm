@@ -495,6 +495,34 @@ sub get_enhanced_deps
 
 
 
+#------------------------------------------------------------------------------
+# Adds a new enhanced edge incoming to the current node, unless the same
+# relation with the same parent already exists.
+#------------------------------------------------------------------------------
+sub add_enhanced_dependency
+{
+    my $self = shift; # child
+    my $parent = shift;
+    my $deprel = shift;
+    # Self-loops are not allowed in enhanced dependencies.
+    # We could silently ignore the call but there is probably something wrong
+    # at the caller's side, so we will throw an exception.
+    if($parent == $self)
+    {
+        my $ord = $self->ord();
+        my $form = $self->form() // '';
+        log_fatal("Self-loops are not allowed in the enhanced graph but we are attempting to attach the node no. $ord ('$form') to itself.");
+    }
+    my $pord = $parent->ord();
+    my @edeps = $self->get_enhanced_deps();
+    unless(any {$_->[0] == $pord && $_->[1] eq $deprel} (@edeps))
+    {
+        push(@{$self->wild()->{enhanced}}, [$pord, $deprel]);
+    }
+}
+
+
+
 #----------- CoNLL attributes -------------
 
 sub conll_deprel { return $_[0]->get_attr('conll/deprel'); }
