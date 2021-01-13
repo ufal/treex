@@ -14,6 +14,7 @@ sub process_anode
 {
     my $self = shift;
     my $anode = shift;
+    my $document = $anode->document();
     my $last_cluster_id = $self->last_cluster_id();
     # Only nodes linked to t-layer can have coreference annotation.
     if(exists($anode->wild()->{'tnode.rf'}))
@@ -41,21 +42,40 @@ sub process_anode
                         # Are we merging two clusters that were created independently?
                         if($current_cluster_id ne $current_target_cluster_id)
                         {
-                            log_warn("Coreference between two nodes that already have two different cluster ids ($current_cluster_id, $current_target_cluster_id.");
-                            ###!!! We should take the minimum of ($current_cluster_id, $current_target_cluster_id)
-                            ###!!! and replace the other id with the minimum. Unfortunately, there is no easy way
-                            ###!!! of finding all nodes in a cluster.
-                            ###!!! For now, at least note the equivalence of the ids in the document.
-                            $canode->set_misc_attr('ClusterIdEq', "$current_cluster_id,$current_target_cluster_id");
+                            # Merge the two clusters. Use the lower id. The higher id will remain unused.
+                            my $id1 = $current_cluster_id;
+                            my $id2 = $current_target_cluster_id;
+                            $id1 =~ s/^c//;
+                            $id2 =~ s/^c//;
+                            my $merged_id = 'c'.($id1 < $id2 ? $id1 : $id2);
+                            my @cluster_members = sort(@{$anode->wild()->{cluster_members}}, @{$canode->wild()->{cluster_members}});
+                            foreach my $id (@cluster_members)
+                            {
+                                my $node = $document->get_node_by_id($id);
+                                $node->set_misc_attr('ClusterId', $merged_id);
+                                @{$node->wild()->{cluster_members}} = @cluster_members;
+                            }
                         }
                     }
                     elsif(defined($current_cluster_id))
                     {
                         $canode->set_misc_attr('ClusterId', $current_cluster_id);
+                        my @cluster_members = sort(@{$anode->wild()->{cluster_members}}, $canode->id());
+                        foreach my $id (@cluster_members)
+                        {
+                            my $node = $document->get_node_by_id($id);
+                            @{$node->wild()->{cluster_members}} = @cluster_members;
+                        }
                     }
                     elsif(defined($current_target_cluster_id))
                     {
                         $anode->set_misc_attr('ClusterId', $current_target_cluster_id);
+                        my @cluster_members = sort(@{$canode->wild()->{cluster_members}}, $anode->id());
+                        foreach my $id (@cluster_members)
+                        {
+                            my $node = $document->get_node_by_id($id);
+                            @{$node->wild()->{cluster_members}} = @cluster_members;
+                        }
                     }
                     else
                     {
@@ -65,6 +85,12 @@ sub process_anode
                         $current_cluster_id = 'c'.$last_cluster_id;
                         $anode->set_misc_attr('ClusterId', $current_cluster_id);
                         $canode->set_misc_attr('ClusterId', $current_cluster_id);
+                        # Remember references to all cluster members from all cluster members.
+                        # We may later need to revisit all cluster members and this will help
+                        # us find them.
+                        my @cluster_members = sort($anode->id(), $canode->id());
+                        @{$anode->wild()->{cluster_members}} = @cluster_members;
+                        @{$canode->wild()->{cluster_members}} = @cluster_members;
                     }
                 }
             }
