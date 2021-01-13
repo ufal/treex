@@ -281,24 +281,6 @@ sub process_zone
 
 
 #------------------------------------------------------------------------------
-# Returns the list of incoming enhanced edges for a node. Each element of the
-# list is a pair: 1. ord of the parent node; 2. relation label.
-#------------------------------------------------------------------------------
-sub get_enhanced_deps
-{
-    my $self = shift;
-    my $node = shift;
-    my $wild = $node->wild();
-    if(!exists($wild->{enhanced}) || !defined($wild->{enhanced}) || ref($wild->{enhanced}) ne 'ARRAY')
-    {
-        log_fatal("Wild attribute 'enhanced' does not exist or is not an array reference.");
-    }
-    return @{$wild->{enhanced}};
-}
-
-
-
-#------------------------------------------------------------------------------
 # Adds a new enhanced edge incoming to a node, unless the same relation with
 # the same parent already exists.
 #------------------------------------------------------------------------------
@@ -318,7 +300,7 @@ sub add_enhanced_dependency
         log_fatal("Self-loops are not allowed in the enhanced graph but we are attempting to attach the node no. $ord ('$form') to itself.");
     }
     my $pord = $parent->ord();
-    my @edeps = $self->get_enhanced_deps($child);
+    my @edeps = $child->get_enhanced_deps();
     unless(any {$_->[0] == $pord && $_->[1] eq $deprel} (@edeps))
     {
         push(@{$child->wild()->{enhanced}}, [$pord, $deprel]);

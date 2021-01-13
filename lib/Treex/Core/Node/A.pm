@@ -477,6 +477,24 @@ sub collect_sentence_text
 
 
 
+#------------------------------------------------------------------------------
+# Returns the list of incoming enhanced edges for a node. Each element of the
+# list is a pair: 1. ord of the parent node; 2. relation label.
+#------------------------------------------------------------------------------
+sub get_enhanced_deps
+{
+    my $self = shift;
+    my $wild = $self->wild();
+    if(!exists($wild->{enhanced}) || !defined($wild->{enhanced}) || ref($wild->{enhanced}) ne 'ARRAY')
+    {
+        # Silently create the wild attribute: an empty array.
+        $wild->{enhanced} = [];
+    }
+    return @{$wild->{enhanced}};
+}
+
+
+
 #----------- CoNLL attributes -------------
 
 sub conll_deprel { return $_[0]->get_attr('conll/deprel'); }

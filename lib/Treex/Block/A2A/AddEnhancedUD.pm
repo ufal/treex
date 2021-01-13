@@ -196,7 +196,7 @@ sub add_enhanced_parent_of_coordination
 {
     my $self = shift;
     my $node = shift;
-    my @edeps = $self->get_enhanced_deps($node);
+    my @edeps = $node->get_enhanced_deps();
     if(any {$_->[1] =~ m/^conj(:|$)/} (@edeps))
     {
         my @edeps_to_propagate;
@@ -211,7 +211,7 @@ sub add_enhanced_parent_of_coordination
             if(scalar(@eparents) == 0)
             {
                 # There are no higher conj parents. So we will now look for the non-conj parents. Those are the relations we want to propagate.
-                @edeps_to_propagate = grep {$_->[1] !~ m/^conj(:|$)/} ($self->get_enhanced_deps($inode));
+                @edeps_to_propagate = grep {$_->[1] !~ m/^conj(:|$)/} ($inode->get_enhanced_deps());
                 last;
             }
             $inode = $eparents[0];
@@ -273,7 +273,7 @@ sub add_enhanced_shared_dependent_of_coordination
     if($node->is_shared_modifier())
     {
         # Get all suitable incoming enhanced relations.
-        my @iedges = grep {$_->[1] !~ m/^(conj|cc|punct)(:|$)/} ($self->get_enhanced_deps($node));
+        my @iedges = grep {$_->[1] !~ m/^(conj|cc|punct)(:|$)/} ($node->get_enhanced_deps());
         foreach my $iedge (@iedges)
         {
             my $parent = $node->get_node_by_ord($iedge->[0]);
@@ -307,7 +307,7 @@ sub recursively_collect_conjuncts
     return () if($visited->[$node->ord()]);
     $visited->[$node->ord()]++;
     my @echildren = $self->get_enhanced_children($node);
-    my @conjuncts = grep {my $x = $_; any {$_->[0] == $node->ord() && $_->[1] =~ m/^conj(:|$)/} ($self->get_enhanced_deps($x))} (@echildren);
+    my @conjuncts = grep {my $x = $_; any {$_->[0] == $node->ord() && $_->[1] =~ m/^conj(:|$)/} ($x->get_enhanced_deps())} (@echildren);
     my @conjuncts2;
     foreach my $c (@conjuncts)
     {
@@ -400,7 +400,7 @@ sub add_enhanced_external_subject
             my @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
             foreach my $subject (@subjects)
             {
-                my @edeps = grep {$_->[0] == $gv->ord() && $_->[1] =~ m/^[nc]subj(:|$)/} ($self->get_enhanced_deps($subject));
+                my @edeps = grep {$_->[0] == $gv->ord() && $_->[1] =~ m/^[nc]subj(:|$)/} ($subject->get_enhanced_deps());
                 if(scalar(@edeps) == 0)
                 {
                     # This should not happen, as we explicitly asked for nodes that are in the subject relation.
@@ -570,7 +570,7 @@ sub add_enhanced_relative_clause
     ###!!! Assume that the leftmost relativizer is the one that relates to the
     ###!!! current relative clause. This is an Indo-European bias.
     my $relativizer = $relativizers[0];
-    my @edeps = $self->get_enhanced_deps($relativizer);
+    my @edeps = $relativizer->get_enhanced_deps();
     # All relations other than 'ref' will be copied to the noun.
     # Besides 'ref', we should also exclude any collapsed paths over empty nodes
     # (unless we can give them the special treatment they need). This is because
@@ -667,7 +667,7 @@ sub remove_enhanced_non_ref_relations
     my $node = shift;
     # Only do this to relativizers. Every relativizer has at least one incoming
     # ref edge by now.
-    my @edeps = $self->get_enhanced_deps($node);
+    my @edeps = $node->get_enhanced_deps();
     return if(!any {$_->[1] =~ m/^ref(:|$)/} (@edeps));
     # Do not do this to relativizers that are heads of their relative clauses,
     # i.e., they also have an acl:relcl incoming edge.
@@ -702,7 +702,7 @@ sub add_enhanced_empty_node
     ###!!! There should not be any 'orphan' among the relations to the parents.
     ###!!! If there is one, we should process the parent first. However, for now
     ###!!! we simply ignore the 'orphan' and change it to 'dep'.
-    my @origiedges = $self->get_enhanced_deps($node);
+    my @origiedges = $node->get_enhanced_deps();
     foreach my $ie (@origiedges)
     {
         $ie->[1] =~ s/^orphan(:|$)/dep$1/;
@@ -732,7 +732,7 @@ sub add_enhanced_empty_node
     my @children = $self->get_enhanced_children($node);
     foreach my $child (@children)
     {
-        my @origchildiedges = $self->get_enhanced_deps($child);
+        my @origchildiedges = $child->get_enhanced_deps();
         my %childiedges;
         my $ccdeprel = $child->is_adverb() ? 'advmod' : 'dep';
         foreach my $cie (@origchildiedges)
@@ -848,7 +848,7 @@ sub expand_empty_nodes
     my %enords;
     foreach my $node (@nodes)
     {
-        my @iedges = $self->get_enhanced_deps($node);
+        my @iedges = $node->get_enhanced_deps();
         foreach my $ie (@iedges)
         {
             # We are looking for deprels of the form 'conj>3.5>obj' (there may
@@ -884,7 +884,7 @@ sub expand_empty_nodes
     # @nodes still holds only the regular nodes.
     foreach my $node (@nodes)
     {
-        my @iedges = $self->get_enhanced_deps($node);
+        my @iedges = $node->get_enhanced_deps();
         my $modified = 0;
         foreach my $ie (@iedges)
         {
@@ -936,24 +936,6 @@ sub expand_empty_nodes
 
 
 #------------------------------------------------------------------------------
-# Returns the list of incoming enhanced edges for a node. Each element of the
-# list is a pair: 1. ord of the parent node; 2. relation label.
-#------------------------------------------------------------------------------
-sub get_enhanced_deps
-{
-    my $self = shift;
-    my $node = shift;
-    my $wild = $node->wild();
-    if(!exists($wild->{enhanced}) || !defined($wild->{enhanced}) || ref($wild->{enhanced}) ne 'ARRAY')
-    {
-        log_fatal("Wild attribute 'enhanced' does not exist or is not an array reference.");
-    }
-    return @{$wild->{enhanced}};
-}
-
-
-
-#------------------------------------------------------------------------------
 # Adds a new enhanced edge incoming to a node, unless the same relation with
 # the same parent already exists.
 #------------------------------------------------------------------------------
@@ -973,7 +955,7 @@ sub add_enhanced_dependency
         log_fatal("Self-loops are not allowed in the enhanced graph but we are attempting to attach the node no. $ord ('$form') to itself.");
     }
     my $pord = $parent->ord();
-    my @edeps = $self->get_enhanced_deps($child);
+    my @edeps = $child->get_enhanced_deps();
     unless(any {$_->[0] == $pord && $_->[1] eq $deprel} (@edeps))
     {
         push(@{$child->wild()->{enhanced}}, [$pord, $deprel]);
@@ -995,7 +977,7 @@ sub get_enhanced_parents
     my $node = shift;
     my $relregex = shift;
     my $negate = shift; # return parents that do not match $relregex
-    my @edeps = $self->get_enhanced_deps($node);
+    my @edeps = $node->get_enhanced_deps();
     if(defined($relregex))
     {
         if($negate)
@@ -1034,7 +1016,7 @@ sub get_enhanced_children
     my @children;
     foreach my $n (@nodes)
     {
-        my @edeps = $self->get_enhanced_deps($n);
+        my @edeps = $n->get_enhanced_deps();
         if(defined($relregex))
         {
             if($negate)
@@ -1111,7 +1093,7 @@ sub get_first_edeprel_to_parent_n
     my $self = shift;
     my $node = shift;
     my $parentord = shift;
-    my @edeps = $self->get_enhanced_deps($node);
+    my @edeps = $node->get_enhanced_deps();
     my @edges_from_n = grep {$_->[0] == $parentord} (@edeps);
     if(scalar(@edges_from_n) == 0)
     {
