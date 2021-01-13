@@ -66,7 +66,9 @@ sub process_anode
                             my $node = $document->get_node_by_id($id);
                             @{$node->wild()->{cluster_members}} = @cluster_members;
                         }
-                        $canode->set_misc_attr('MentionSpan', $self->get_mention_span($canode));
+                        my ($mspan, $mtext) = $self->get_mention_span($canode);
+                        $canode->set_misc_attr('MentionSpan', $mspan);
+                        $canode->set_misc_attr('MentionText', $mtext);
                     }
                     elsif(defined($current_target_cluster_id))
                     {
@@ -77,7 +79,9 @@ sub process_anode
                             my $node = $document->get_node_by_id($id);
                             @{$node->wild()->{cluster_members}} = @cluster_members;
                         }
-                        $anode->set_misc_attr('MentionSpan', $self->get_mention_span($anode));
+                        my ($mspan, $mtext) = $self->get_mention_span($anode);
+                        $anode->set_misc_attr('MentionSpan', $mspan);
+                        $anode->set_misc_attr('MentionText', $mtext);
                     }
                     else
                     {
@@ -93,8 +97,12 @@ sub process_anode
                         my @cluster_members = sort($anode->id(), $canode->id());
                         @{$anode->wild()->{cluster_members}} = @cluster_members;
                         @{$canode->wild()->{cluster_members}} = @cluster_members;
-                        $anode->set_misc_attr('MentionSpan', $self->get_mention_span($anode));
-                        $canode->set_misc_attr('MentionSpan', $self->get_mention_span($canode));
+                        my ($mspan, $mtext) = $self->get_mention_span($anode);
+                        $anode->set_misc_attr('MentionSpan', $mspan);
+                        $anode->set_misc_attr('MentionText', $mtext);
+                        ($mspan, $mtext) = $self->get_mention_span($canode);
+                        $canode->set_misc_attr('MentionSpan', $mspan);
+                        $canode->set_misc_attr('MentionText', $mtext);
                     }
                 }
             }
@@ -118,6 +126,7 @@ sub get_mention_span
     my $self = shift;
     my $anode = shift;
     my @result = ();
+    my @snodes = ();
     my $document = $anode->get_document();
     if(exists($anode->wild()->{'tnode.rf'}))
     {
@@ -137,6 +146,7 @@ sub get_mention_span
                         if(defined($asn) && $asn->deprel() eq 'dep:empty')
                         {
                             push(@result, $asn->wild()->{enord});
+                            push(@snodes, $asn);
                         }
                     }
                 }
@@ -147,6 +157,7 @@ sub get_mention_span
                     if(defined($asn) && $asn->get_root() == $anode->get_root())
                     {
                         push(@result, $asn->ord());
+                        push(@snodes, $asn);
                     }
                 }
             }
@@ -185,7 +196,8 @@ sub get_mention_span
             last if(scalar(@result) == 0);
         }
     }
-    return join(',', @result2);
+    # For debugging purposes it is useful to also see the word forms of the span, so we will provide them, too.
+    return (join(',', @result2), join(' ', map {$_->form()} (sort_nodes_by_ids(@snodes))));
 }
 
 
@@ -196,29 +208,53 @@ sub get_mention_span
 sub sort_node_ids
 {
     my $self = shift;
-    my @ids = @_;
+    return sort {cmp_node_ids($a, $b)} (@_);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sorts a sequence of nodes that may contain empty nodes by their ids.
+#------------------------------------------------------------------------------
+sub sort_nodes_by_ids
+{
+    my $self = shift;
     return sort
     {
-        my $amaj = $a;
-        my $amin = 0;
-        my $bmaj = $b;
-        my $bmin = 0;
-        if($amaj =~ s/^(\d+)\.(\d+)$/$1/)
-        {
-            $amin = $2;
-        }
-        if($bmaj =~ s/^(\d+)\.(\d+)$/$1/)
-        {
-            $bmin = $2;
-        }
-        my $r = $amaj <=> $bmaj;
-        unless($r)
-        {
-            $r = $amin <=> $bmin;
-        }
-        $r
+        my $aid = $a->deprel() eq 'dep:empty' ? $a->wild()->{enord} : $a->ord();
+        my $bid = $b->deprel() eq 'dep:empty' ? $b->wild()->{enord} : $b->ord();
+        cmp_node_ids($aid, $bid)
     }
-    (@ids);
+    (@_);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Compares two CoNLL-U node ids (there can be empty nodes with decimal ids).
+#------------------------------------------------------------------------------
+sub cmp_node_ids
+{
+    my $a = shift;
+    my $b = shift;
+    my $amaj = $a;
+    my $amin = 0;
+    my $bmaj = $b;
+    my $bmin = 0;
+    if($amaj =~ s/^(\d+)\.(\d+)$/$1/)
+    {
+        $amin = $2;
+    }
+    if($bmaj =~ s/^(\d+)\.(\d+)$/$1/)
+    {
+        $bmin = $2;
+    }
+    my $r = $amaj <=> $bmaj;
+    unless($r)
+    {
+        $r = $amin <=> $bmin;
+    }
+    return $r;
 }
 
 
