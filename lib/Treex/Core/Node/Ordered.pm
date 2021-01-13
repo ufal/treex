@@ -26,6 +26,35 @@ sub follows {
     return $self->ord() > $another_node->ord();
 }
 
+
+
+#------------------------------------------------------------------------------
+# Finds a node with a given ord in the same tree. This is useful if we are
+# looking at the list of incoming enhanced edges and need to actually access
+# one of the parents listed there by ord. We assume that if the method is
+# called, the caller is confident that the node should exist. The method will
+# throw an exception if there is no node or multiple nodes with the given ord.
+#------------------------------------------------------------------------------
+sub get_node_by_ord
+{
+    my $self = shift;
+    my $ord = shift;
+    my $root = $self->get_root();
+    return $root if($ord == 0);
+    my @results = grep {$_->ord() == $ord} ($root->get_descendants());
+    if(scalar(@results) == 0)
+    {
+        log_fatal("No node with ord '$ord' found.");
+    }
+    if(scalar(@results) > 1)
+    {
+        log_fatal("There are multiple nodes with ord '$ord'.");
+    }
+    return $results[0];
+}
+
+
+
 # Methods get_next_node and get_prev_node are implemented
 # so they can handle deprecated fractional ords.
 # When no "fract-ords" will be used in the whole TectoMT nor Treex

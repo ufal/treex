@@ -234,12 +234,12 @@ sub add_enhanced_parent_of_coordination
                     ###!!! We should now also check whether a preposition or a case label should be added!
                     $deprel = 'obl';
                 }
-                $self->add_enhanced_dependency($node, $self->get_node_by_ord($node, $edep->[0]), $deprel);
+                $self->add_enhanced_dependency($node, $node->get_node_by_ord($edep->[0]), $deprel);
                 # The coordination may function as a shared dependent of other coordination.
                 # In that case, make me depend on every conjunct in the parent coordination.
                 if($inode->is_shared_modifier())
                 {
-                    my @conjuncts = $self->recursively_collect_conjuncts($self->get_node_by_ord($node, $edep->[0]));
+                    my @conjuncts = $self->recursively_collect_conjuncts($node->get_node_by_ord($edep->[0]));
                     foreach my $conjunct (@conjuncts)
                     {
                         $self->add_enhanced_dependency($node, $conjunct, $deprel);
@@ -276,7 +276,7 @@ sub add_enhanced_shared_dependent_of_coordination
         my @iedges = grep {$_->[1] !~ m/^(conj|cc|punct)(:|$)/} ($self->get_enhanced_deps($node));
         foreach my $iedge (@iedges)
         {
-            my $parent = $self->get_node_by_ord($node, $iedge->[0]);
+            my $parent = $node->get_node_by_ord($iedge->[0]);
             my $edeprel = $iedge->[1];
             my @conjuncts = $self->recursively_collect_conjuncts($parent);
             foreach my $conjunct (@conjuncts)
@@ -635,7 +635,7 @@ sub add_enhanced_relative_clause
                 # Second clause: lapset huutavat = the children cry (joilla is oblique argument of this)
                 # Third clause: ja kiirettä tuntuu olevan kokoajan arjen keskellä (joilla oblique here too) = and hurry seems to be in the middle of everyday life
                 # I.e.: those, whose are station wagons, whose children cry and who feel in a hurry
-                my $relparentnode = $self->get_node_by_ord($node, $relparent);
+                my $relparentnode = $node->get_node_by_ord($relparent);
                 next if($relparentnode == $noun);
                 # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
                 # Discard subtypes of the original relation, if present. Such subtypes may not be available
@@ -899,7 +899,7 @@ sub expand_empty_nodes
                     log_fatal("Cannot understand enhanced deprel '$ie->[1]': even number of parts.");
                 }
                 my $pord = $ie->[0];
-                my $parent = $self->get_node_by_ord($root, $pord);
+                my $parent = $root->get_node_by_ord($pord);
                 while(scalar(@parts) > 1)
                 {
                     my $deprel = shift(@parts);
@@ -983,33 +983,6 @@ sub add_enhanced_dependency
 
 
 #------------------------------------------------------------------------------
-# Finds a node with a given ord in the same tree. This is useful if we are
-# looking at the list of incoming enhanced edges and need to actually access
-# one of the parents listed there by ord. We assume that if the method is
-# called, the caller is confident that the node should exist. The method will
-# throw an exception if there is no node or multiple nodes with the given ord.
-#------------------------------------------------------------------------------
-sub get_node_by_ord
-{
-    my $self = shift;
-    my $node = shift; # some node in the same tree
-    my $ord = shift;
-    return $node->get_root() if($ord == 0);
-    my @results = grep {$_->ord() == $ord} ($node->get_root()->get_descendants());
-    if(scalar(@results) == 0)
-    {
-        log_fatal("No node with ord '$ord' found.");
-    }
-    if(scalar(@results) > 1)
-    {
-        log_fatal("There are multiple nodes with ord '$ord'.");
-    }
-    return $results[0];
-}
-
-
-
-#------------------------------------------------------------------------------
 # Returns the list of parents of a node in the enhanced graph, i.e., the list
 # of nodes from which there is at least one edge incoming to the given node.
 # The list is ordered by their ord value.
@@ -1036,7 +1009,7 @@ sub get_enhanced_parents
     }
     # Remove duplicates.
     my %epmap; map {$epmap{$_->[0]}++} (@edeps);
-    my @parents = sort {$a->ord() <=> $b->ord()} (map {$self->get_node_by_ord($node, $_)} (keys(%epmap)));
+    my @parents = sort {$a->ord() <=> $b->ord()} (map {$node->get_node_by_ord($_)} (keys(%epmap)));
     return @parents;
 }
 
