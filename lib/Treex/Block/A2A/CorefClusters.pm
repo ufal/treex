@@ -38,9 +38,15 @@ sub process_anode
                     my $current_target_cluster_id = $canode->get_misc_attr('ClusterId');
                     if(defined($current_cluster_id) && defined($current_target_cluster_id))
                     {
-                        if($current_cluster_id != $current_target_cluster_id)
+                        # Are we merging two clusters that were created independently?
+                        if($current_cluster_id ne $current_target_cluster_id)
                         {
-                            log_warn("Coreference between two nodes that already have two different cluster ids.");
+                            log_warn("Coreference between two nodes that already have two different cluster ids ($current_cluster_id, $current_target_cluster_id.");
+                            ###!!! We should take the minimum of ($current_cluster_id, $current_target_cluster_id)
+                            ###!!! and replace the other id with the minimum. Unfortunately, there is no easy way
+                            ###!!! of finding all nodes in a cluster.
+                            ###!!! For now, at least note the equivalence of the ids in the document.
+                            $canode->set_misc_attr('ClusterIdEq', "$current_cluster_id,$current_target_cluster_id");
                         }
                     }
                     elsif(defined($current_cluster_id))
@@ -56,9 +62,9 @@ sub process_anode
                         # We need a new cluster id.
                         $last_cluster_id++;
                         $self->set_last_cluster_id($last_cluster_id);
-                        $anode->set_misc_attr('ClusterId', $last_cluster_id);
-                        $canode->set_misc_attr('ClusterId', $last_cluster_id);
-                        $current_cluster_id = $last_cluster_id;
+                        $current_cluster_id = 'c'.$last_cluster_id;
+                        $anode->set_misc_attr('ClusterId', $current_cluster_id);
+                        $canode->set_misc_attr('ClusterId', $current_cluster_id);
                     }
                 }
             }
