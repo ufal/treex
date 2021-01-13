@@ -114,7 +114,7 @@ sub process_anode
 
 #------------------------------------------------------------------------------
 # For a given a-node, finds its corresponding t-node, gets the list of all
-# t-nodes in its subtree (including the head), gets their corresponding lexical
+# t-nodes in its subtree (including the head), gets their corresponding
 # a-nodes (only those that are in the same sentence), returns the ordered list
 # of ords of these a-nodes (surface span of a t-node). For generated t-nodes
 # (which either don't have a lexical a-node, or share it with another t-node,
@@ -127,6 +127,7 @@ sub get_mention_span
     my $anode = shift;
     my @result = ();
     my @snodes = ();
+    my $aroot = $anode->get_root();
     my $document = $anode->get_document();
     if(exists($anode->wild()->{'tnode.rf'}))
     {
@@ -152,12 +153,16 @@ sub get_mention_span
                 }
                 else
                 {
-                    my $asn = $tsn->get_lex_anode();
-                    # For non-generated nodes, the lexical a-node should be in the same sentence, but to be on the safe side, check it.
-                    if(defined($asn) && $asn->get_root() == $anode->get_root())
+                    # Get both the lexical and the auxiliary a-nodes. It would be odd to exclude e.g. prepositions from the span.
+                    my @anodes = ($tsn->get_lex_anode(), $tsn->get_aux_anodes());
+                    foreach my $asn (@anodes)
                     {
-                        push(@result, $asn->ord());
-                        push(@snodes, $asn);
+                        # For non-generated nodes, the lexical a-node should be in the same sentence, but to be on the safe side, check it.
+                        if(defined($asn) && $asn->get_root() == $aroot)
+                        {
+                            push(@result, $asn->ord());
+                            push(@snodes, $asn);
+                        }
                     }
                 }
             }
