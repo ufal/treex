@@ -66,9 +66,10 @@ sub process_anode
                             my $node = $document->get_node_by_id($id);
                             @{$node->wild()->{cluster_members}} = @cluster_members;
                         }
-                        my ($mspan, $mtext) = $self->get_mention_span($canode);
+                        my ($mspan, $mtext, $mhead) = $self->get_mention_span($canode);
                         $canode->set_misc_attr('MentionSpan', $mspan);
                         $canode->set_misc_attr('MentionText', $mtext);
+                        $canode->set_misc_attr('MentionHead', $mhead);
                     }
                     elsif(defined($current_target_cluster_id))
                     {
@@ -79,9 +80,10 @@ sub process_anode
                             my $node = $document->get_node_by_id($id);
                             @{$node->wild()->{cluster_members}} = @cluster_members;
                         }
-                        my ($mspan, $mtext) = $self->get_mention_span($anode);
+                        my ($mspan, $mtext, $mhead) = $self->get_mention_span($anode);
                         $anode->set_misc_attr('MentionSpan', $mspan);
                         $anode->set_misc_attr('MentionText', $mtext);
+                        $anode->set_misc_attr('MentionHead', $mhead);
                     }
                     else
                     {
@@ -97,12 +99,14 @@ sub process_anode
                         my @cluster_members = sort($anode->id(), $canode->id());
                         @{$anode->wild()->{cluster_members}} = @cluster_members;
                         @{$canode->wild()->{cluster_members}} = @cluster_members;
-                        my ($mspan, $mtext) = $self->get_mention_span($anode);
+                        my ($mspan, $mtext, $mhead) = $self->get_mention_span($anode);
                         $anode->set_misc_attr('MentionSpan', $mspan);
                         $anode->set_misc_attr('MentionText', $mtext);
-                        ($mspan, $mtext) = $self->get_mention_span($canode);
+                        $anode->set_misc_attr('MentionHead', $mhead);
+                        ($mspan, $mtext, $mhead) = $self->get_mention_span($canode);
                         $canode->set_misc_attr('MentionSpan', $mspan);
                         $canode->set_misc_attr('MentionText', $mtext);
+                        $canode->set_misc_attr('MentionHead', $mhead);
                     }
                 }
             }
@@ -192,6 +196,11 @@ sub get_mention_span
             if(scalar(@current_gap) > 0)
             {
                 push(@current_segment, @current_gap);
+                # Update also %snodes, we will need it later.
+                foreach my $gnode (@current_gap)
+                {
+                    $snodes{$self->get_conllu_id($gnode)} = $gnode;
+                }
                 @current_gap = ();
             }
             push(@current_segment, $node);
@@ -229,8 +238,35 @@ sub get_mention_span
             }
         }
     }
+    # The span is normally a connected subtree but it is probably not guaranteed
+    # (after the conversion from t-trees to a-trees and to UD). In any case, we
+    # want to annotate the mention on the head (or one of the heads) of the span.
+    # Find the head(s).
+    my @sheads = ();
+    foreach my $snode (@snodes)
+    {
+        # We must use the enhanced graph because empty nodes do not have parents
+        # in the basic tree. Therefore there might be multiple top ancestors even
+        # for one node, and we cannot say which one is higher. The span could
+        # even form a cycle.
+        # Let's define a head as a node that is in the span and none of its
+        # enhanced parents are in the span. There may be any number of heads.
+        my @ineparents = grep {exists($snodes{$self->get_conllu_id($_)})} ($snode->get_enhanced_parents());
+        if(scalar(@ineparents) == 0)
+        {
+            push(@sheads, $snode);
+        }
+    }
+    if(scalar(@sheads) == 0)
+    {
+        log_warn("Mention span has no clear head (perhaps it forms a cycle in the enhanced graph).");
+    }
+    elsif(scalar(@sheads) > 1)
+    {
+        log_warn("Mention span has multiple heads in the enhanced graph.");
+    }
     # For debugging purposes it is useful to also see the word forms of the span, so we will provide them, too.
-    return (join(',', @result2), join(' ', map {$_->form()} (@snodes)));
+    return (join(',', @result2), join(' ', map {$_->form()} (@snodes)), join(',', map {$self->get_conllu_id($_)} (@sheads)));
 }
 
 
