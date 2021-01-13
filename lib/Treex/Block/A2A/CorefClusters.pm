@@ -152,7 +152,52 @@ sub get_mention_span
             }
         }
     }
-    @result = sort
+    @result = $self->sort_node_ids(@result);
+    # If a contiguous sequence of two or more nodes is a part of the mention,
+    # it should be represented using a hyphen (i.e., "8-9" instead of "8,9",
+    # and "8-10" instead of "8,9,10"). We must be careful though. There may
+    # be empty nodes that are not included, e.g., we may have to write "8,9"
+    # because there is 8.1 and it is not a part of the mention.
+    my @allids = $self->sort_node_ids(map {$_->deprel() eq 'dep:empty' ? $_->wild()->{enord} : $_->ord()} ($anode->get_root()->get_descendants()));
+    my @result2 = ();
+    my @current_segment = ();
+    # Add -1 to enforce flushing of the current segment at the end.
+    foreach my $id (@allids, -1)
+    {
+        if(scalar(@result) > 0 && $result[0] == $id)
+        {
+            # The current segment is uninterrupted (but it may also be a new segment that starts with this id).
+            push(@current_segment, shift(@result));
+        }
+        else
+        {
+            # The current segment is interrupted (but it may be empty anyway).
+            if(scalar(@current_segment) > 1)
+            {
+                push(@result2, "$current_segment[0]-$current_segment[-1]");
+                @current_segment = ();
+            }
+            elsif(scalar(@current_segment) == 1)
+            {
+                push(@result2, $current_segment[0]);
+                @current_segment = ();
+            }
+            last if(scalar(@result) == 0);
+        }
+    }
+    return join(',', @result2);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sorts a sequence of node ids that may contain empty nodes.
+#------------------------------------------------------------------------------
+sub sort_node_ids
+{
+    my $self = shift;
+    my @ids = @_;
+    return sort
     {
         my $amaj = $a;
         my $amin = 0;
@@ -173,8 +218,7 @@ sub get_mention_span
         }
         $r
     }
-    (@result);
-    return join(',', @result);
+    (@ids);
 }
 
 
