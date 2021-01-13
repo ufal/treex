@@ -66,10 +66,7 @@ sub process_anode
                             my $node = $document->get_node_by_id($id);
                             @{$node->wild()->{cluster_members}} = @cluster_members;
                         }
-                        my ($mspan, $mtext, $mhead) = $self->get_mention_span($canode);
-                        $canode->set_misc_attr('MentionSpan', $mspan);
-                        $canode->set_misc_attr('MentionText', $mtext);
-                        $canode->set_misc_attr('MentionHead', $mhead);
+                        $self->mark_mention($canode);
                     }
                     elsif(defined($current_target_cluster_id))
                     {
@@ -80,10 +77,7 @@ sub process_anode
                             my $node = $document->get_node_by_id($id);
                             @{$node->wild()->{cluster_members}} = @cluster_members;
                         }
-                        my ($mspan, $mtext, $mhead) = $self->get_mention_span($anode);
-                        $anode->set_misc_attr('MentionSpan', $mspan);
-                        $anode->set_misc_attr('MentionText', $mtext);
-                        $anode->set_misc_attr('MentionHead', $mhead);
+                        $self->mark_mention($anode);
                     }
                     else
                     {
@@ -99,19 +93,39 @@ sub process_anode
                         my @cluster_members = sort($anode->id(), $canode->id());
                         @{$anode->wild()->{cluster_members}} = @cluster_members;
                         @{$canode->wild()->{cluster_members}} = @cluster_members;
-                        my ($mspan, $mtext, $mhead) = $self->get_mention_span($anode);
-                        $anode->set_misc_attr('MentionSpan', $mspan);
-                        $anode->set_misc_attr('MentionText', $mtext);
-                        $anode->set_misc_attr('MentionHead', $mhead);
-                        ($mspan, $mtext, $mhead) = $self->get_mention_span($canode);
-                        $canode->set_misc_attr('MentionSpan', $mspan);
-                        $canode->set_misc_attr('MentionText', $mtext);
-                        $canode->set_misc_attr('MentionHead', $mhead);
+                        $self->mark_mention($anode);
+                        $self->mark_mention($canode);
                     }
                 }
             }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Saves mention attributes in misc of a node. It may occasionally decide to
+# select a different node as the mention head. In that case it will return
+# the node with the new head (because the caller will want to use that other
+# node as the representative of the mention in the cluster).
+#------------------------------------------------------------------------------
+sub mark_mention
+{
+    my $self = shift;
+    my $anode = shift;
+    my ($mspan, $mtext, $mhead) = $self->get_mention_span($anode);
+    $anode->set_misc_attr('MentionSpan', $mspan);
+    $anode->set_misc_attr('MentionText', $mtext);
+    $anode->set_misc_attr('MentionHead', $mhead);
+    # If there is a single mention head and it is different from the current
+    # node, we should mark the mention there instead.
+    ###!!! However, it is also possible that the new head is a head of a different
+    ###!!! mention, in which case we do not want to go there (overwriting one
+    ###!!! mention with another). At this point it is not even guraranteed that
+    ###!!! the other node already has its MISC attributes. We would have to do
+    ###!!! it in another block, which would be invoked later.
+    return $anode;
 }
 
 
