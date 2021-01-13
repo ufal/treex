@@ -201,13 +201,13 @@ sub add_enhanced_parent_of_coordination
     {
         my @edeps_to_propagate;
         # Find the nearest non-conj ancestor, i.e., the first conjunct.
-        my @eparents = $self->get_enhanced_parents($node, '^conj(:|$)');
+        my @eparents = $node->get_enhanced_parents('^conj(:|$)');
         # There should be normally at most one conj parent for any node. So we take the first one and assume it is the only one.
         log_fatal("Did not find the 'conj' enhanced parent.") if(scalar(@eparents) == 0);
         my $inode = $eparents[0];
         while(defined($inode))
         {
-            @eparents = $self->get_enhanced_parents($inode, '^conj(:|$)');
+            @eparents = $inode->get_enhanced_parents('^conj(:|$)');
             if(scalar(@eparents) == 0)
             {
                 # There are no higher conj parents. So we will now look for the non-conj parents. Those are the relations we want to propagate.
@@ -306,7 +306,7 @@ sub recursively_collect_conjuncts
     }
     return () if($visited->[$node->ord()]);
     $visited->[$node->ord()]++;
-    my @echildren = $self->get_enhanced_children($node);
+    my @echildren = $node->get_enhanced_children();
     my @conjuncts = grep {my $x = $_; any {$_->[0] == $node->ord() && $_->[1] =~ m/^conj(:|$)/} ($x->get_enhanced_deps())} (@echildren);
     my @conjuncts2;
     foreach my $c (@conjuncts)
@@ -365,7 +365,7 @@ sub add_enhanced_external_subject
     return if($visited->[$node->ord()]);
     $visited->[$node->ord()]++;
     # Are there any incoming xcomp edges?
-    my @gverbs = $self->get_enhanced_parents($node, '^xcomp(:|$)');
+    my @gverbs = $node->get_enhanced_parents('^xcomp(:|$)');
     return if(scalar(@gverbs) == 0);
     # The governing verb may itself be an infinitive controlled by another verb.
     # Make sure it is processed before myself, otherwise we may not be able to
@@ -397,7 +397,7 @@ sub add_enhanced_external_subject
         if($is_nomcontrol || $gv->iset()->is_passive() && $is_acccontrol)
         {
             # Does the control verb have an overt subject?
-            my @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
+            my @subjects = $gv->get_enhanced_children('^[nc]subj(:|$)');
             foreach my $subject (@subjects)
             {
                 my @edeps = grep {$_->[0] == $gv->ord() && $_->[1] =~ m/^[nc]subj(:|$)/} ($subject->get_enhanced_deps());
@@ -432,25 +432,25 @@ sub add_enhanced_external_subject
         elsif($is_datcontrol)
         {
             # Does the control verb have an overt dative argument?
-            my @objects = $self->get_enhanced_children($gv, '^(i?obj|obl:arg)(:|$)');
+            my @objects = $gv->get_enhanced_children('^(i?obj|obl:arg)(:|$)');
             # Select those arguments that are dative nominals without adpositions.
             @objects = grep
             {
                 my $x = $_;
-                my @casechildren = $self->get_enhanced_children($x, '^case(:|$)');
+                my @casechildren = $x->get_enhanced_children('^case(:|$)');
                 $x->is_dative() && scalar(@casechildren) == 0
             }
             (@objects);
             # If there are no dative objects, maybe there are reflexive dative expletives ("si").
             if(scalar(@objects) == 0)
             {
-                my @expletives = grep {$_->is_dative() && $_->is_reflexive()} ($self->get_enhanced_children($gv, '^expl(:|$)'));
+                my @expletives = grep {$_->is_dative() && $_->is_reflexive()} ($gv->get_enhanced_children('^expl(:|$)'));
                 if(scalar(@expletives) > 0)
                 {
                     # We will not mark coreference with the expletive. It is
                     # reflexive, so we have also a coreference with the subject;
                     # let's look for the subject then.
-                    my @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
+                    my @subjects = $gv->get_enhanced_children('^[nc]subj(:|$)');
                     @objects = @subjects;
                 }
             }
@@ -459,7 +459,7 @@ sub add_enhanced_external_subject
                 # Switch to 'nsubj:pass' if the controlled infinitive is passive.
                 # Example: Zákon mu umožňuje být zvolen.
                 my $edeprel = 'nsubj';
-                if($node->iset()->is_passive() || scalar($self->get_enhanced_children($node, '^(aux|expl):pass(:|$)')) > 0)
+                if($node->iset()->is_passive() || scalar($node->get_enhanced_children('^(aux|expl):pass(:|$)')) > 0)
                 {
                     $edeprel = 'nsubj:pass';
                 }
@@ -470,16 +470,16 @@ sub add_enhanced_external_subject
         elsif($is_acccontrol)
         {
             # Does the control verb have an overt accusative argument?
-            my @objects = $self->get_enhanced_children($gv, '^(i?obj|obl:arg)(:|$)');
+            my @objects = $gv->get_enhanced_children('^(i?obj|obl:arg)(:|$)');
             # Select those arguments that are accusative nominals without adpositions.
             @objects = grep
             {
                 my $x = $_;
-                my @casechildren = $self->get_enhanced_children($x, '^case(:|$)');
+                my @casechildren = $x->get_enhanced_children('^case(:|$)');
                 # In Slavic and some other languages, the case of a quantified phrase may
                 # be determined by the quantifier rather than by the quantified head noun.
                 # We can recognize such quantifiers by the relation nummod:gov or det:numgov.
-                my @qgov = $self->get_enhanced_children($x, '^(nummod:gov|det:numgov)$');
+                my @qgov = $x->get_enhanced_children('^(nummod:gov|det:numgov)$');
                 my $qgov = scalar(@qgov);
                 # There is probably just one quantifier. We do not have any special rule
                 # for the possibility that there are more than one.
@@ -490,13 +490,13 @@ sub add_enhanced_external_subject
             # If there are no accusative objects, maybe there are reflexive accusative expletives ("se").
             if(scalar(@objects) == 0)
             {
-                my @expletives = grep {$_->is_accusative() && $_->is_reflexive()} ($self->get_enhanced_children($gv, '^expl(:|$)'));
+                my @expletives = grep {$_->is_accusative() && $_->is_reflexive()} ($gv->get_enhanced_children('^expl(:|$)'));
                 if(scalar(@expletives) > 0)
                 {
                     # We will not mark coreference with the expletive. It is
                     # reflexive, so we have also a coreference with the subject;
                     # let's look for the subject then.
-                    my @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
+                    my @subjects = $gv->get_enhanced_children('^[nc]subj(:|$)');
                     @objects = @subjects;
                 }
             }
@@ -505,7 +505,7 @@ sub add_enhanced_external_subject
                 # Switch to 'nsubj:pass' if the controlled infinitive is passive.
                 # Example: Zákon ho opravňuje být zvolen.
                 my $edeprel = 'nsubj';
-                if($node->iset()->is_passive() || scalar($self->get_enhanced_children($node, '^(aux|expl):pass(:|$)')) > 0)
+                if($node->iset()->is_passive() || scalar($node->get_enhanced_children('^(aux|expl):pass(:|$)')) > 0)
                 {
                     $edeprel = 'nsubj:pass';
                 }
@@ -544,7 +544,7 @@ sub add_enhanced_relative_clause
     # This node is the root of a relative clause if at least one of its parents
     # is connected via the acl:relcl relation. We refer to the parent of the
     # clause as the modified $noun, although it may be a pronoun.
-    my @nouns = $self->get_enhanced_parents($node, '^acl:relcl(:|$)');
+    my @nouns = $node->get_enhanced_parents('^acl:relcl(:|$)');
     return if(scalar(@nouns)==0);
     # If there are coordinate relative clauses, we may have already added a
     # cycle, meaning that the modified noun is now also a descendant of the
@@ -694,7 +694,7 @@ sub add_enhanced_empty_node
     my $node = shift;
     my $emptynodes = shift; # hash ref, keys are ids of empty nodes
     # We have to generate an empty node if a node has one or more orphan children.
-    my @orphans = $self->get_enhanced_children($node, '^orphan(:|$)');
+    my @orphans = $node->get_enhanced_children('^orphan(:|$)');
     return if(scalar(@orphans) == 0);
     my $emppos = $self->get_empty_node_position($node, $emptynodes);
     $emptynodes->{$emppos}++;
@@ -729,7 +729,7 @@ sub add_enhanced_empty_node
     # Create the path to each child via the empty node. Also use just 'dep' for
     # now, unless the node is an adverb, when it is probably safe to say
     # that it is 'advmod'.
-    my @children = $self->get_enhanced_children($node);
+    my @children = $node->get_enhanced_children();
     foreach my $child (@children)
     {
         my @origchildiedges = $child->get_enhanced_deps();
@@ -793,13 +793,13 @@ sub get_empty_node_position
     my $emptynodes = shift; # hash ref, keys are ids of existing empty nodes
     # The current node and all its current children will become children of the
     # empty node.
-    my @children = $self->get_enhanced_children($node);
+    my @children = $node->get_enhanced_children();
     my @empchildren = sort {$a->ord() <=> $b->ord()} ($node, @children);
     my $posmajor = $empchildren[0]->ord() - 1;
     my $posminor = 1;
     # If the current node is a conj child of another node, discard children that
     # occur before that other node.
-    my @conjparents = sort {$a->ord() <=> $b->ord()} ($self->get_enhanced_parents($node, '^conj(:|$)'));
+    my @conjparents = sort {$a->ord() <=> $b->ord()} ($node->get_enhanced_parents('^conj(:|$)'));
     if(scalar(@conjparents) > 0)
     {
         @empchildren = grep {$_->ord() > $conjparents[-1]->ord()} (@empchildren);
@@ -936,83 +936,6 @@ sub expand_empty_nodes
 
 
 #------------------------------------------------------------------------------
-# Returns the list of parents of a node in the enhanced graph, i.e., the list
-# of nodes from which there is at least one edge incoming to the given node.
-# The list is ordered by their ord value.
-#
-# Optionally the parents will be filtered by regex on relation type.
-#------------------------------------------------------------------------------
-sub get_enhanced_parents
-{
-    my $self = shift;
-    my $node = shift;
-    my $relregex = shift;
-    my $negate = shift; # return parents that do not match $relregex
-    my @edeps = $node->get_enhanced_deps();
-    if(defined($relregex))
-    {
-        if($negate)
-        {
-            @edeps = grep {$_->[1] !~ m/$relregex/} (@edeps);
-        }
-        else
-        {
-            @edeps = grep {$_->[1] =~ m/$relregex/} (@edeps);
-        }
-    }
-    # Remove duplicates.
-    my %epmap; map {$epmap{$_->[0]}++} (@edeps);
-    my @parents = sort {$a->ord() <=> $b->ord()} (map {$node->get_node_by_ord($_)} (keys(%epmap)));
-    return @parents;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Returns the list of children of a node in the enhanced graph, i.e., the list
-# of nodes that have at least one incoming edge from the given start node.
-# The list is ordered by their ord value.
-#
-# Optionally the children will be filtered by regex on relation type.
-#------------------------------------------------------------------------------
-sub get_enhanced_children
-{
-    my $self = shift;
-    my $node = shift;
-    my $relregex = shift;
-    my $negate = shift; # return children that do not match $relregex
-    # We do not maintain an up-to-date list of outgoing enhanced edges, only
-    # the incoming ones. Therefore we must search all nodes of the sentence.
-    my @nodes = $node->get_root()->get_descendants({'ordered' => 1});
-    my @children;
-    foreach my $n (@nodes)
-    {
-        my @edeps = $n->get_enhanced_deps();
-        if(defined($relregex))
-        {
-            if($negate)
-            {
-                @edeps = grep {$_->[1] !~ m/$relregex/} (@edeps);
-            }
-            else
-            {
-                @edeps = grep {$_->[1] =~ m/$relregex/} (@edeps);
-            }
-        }
-        if(any {$_->[0] == $node->ord()} (@edeps))
-        {
-            push(@children, $n);
-        }
-    }
-    # Remove duplicates.
-    my %ecmap; map {$ecmap{$_->ord()} = $_ unless(exists($ecmap{$_->ord()}))} (@children);
-    @children = map {$ecmap{$_}} (sort {$a <=> $b} (keys(%ecmap)));
-    return @children;
-}
-
-
-
-#------------------------------------------------------------------------------
 # Returns the list of nodes to which there is a path from the current node in
 # the enhanced graph.
 #------------------------------------------------------------------------------
@@ -1029,7 +952,7 @@ sub get_enhanced_descendants
     }
     return () if($visited->[$node->ord()]);
     $visited->[$node->ord()]++;
-    my @echildren = $self->get_enhanced_children($node);
+    my @echildren = $node->get_enhanced_children();
     my @echildren2;
     foreach my $ec (@echildren)
     {

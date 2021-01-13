@@ -523,6 +523,81 @@ sub add_enhanced_dependency
 
 
 
+#------------------------------------------------------------------------------
+# Returns the list of parents of a node in the enhanced graph, i.e., the list
+# of nodes from which there is at least one edge incoming to the given node.
+# The list is ordered by their ord value.
+#
+# Optionally the parents will be filtered by regex on relation type.
+#------------------------------------------------------------------------------
+sub get_enhanced_parents
+{
+    my $self = shift;
+    my $relregex = shift;
+    my $negate = shift; # return parents that do not match $relregex
+    my @edeps = $self->get_enhanced_deps();
+    if(defined($relregex))
+    {
+        if($negate)
+        {
+            @edeps = grep {$_->[1] !~ m/$relregex/} (@edeps);
+        }
+        else
+        {
+            @edeps = grep {$_->[1] =~ m/$relregex/} (@edeps);
+        }
+    }
+    # Remove duplicates.
+    my %epmap; map {$epmap{$_->[0]}++} (@edeps);
+    my @parents = sort {$a->ord() <=> $b->ord()} (map {$self->get_node_by_ord($_)} (keys(%epmap)));
+    return @parents;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of children of a node in the enhanced graph, i.e., the list
+# of nodes that have at least one incoming edge from the given start node.
+# The list is ordered by their ord value.
+#
+# Optionally the children will be filtered by regex on relation type.
+#------------------------------------------------------------------------------
+sub get_enhanced_children
+{
+    my $self = shift;
+    my $relregex = shift;
+    my $negate = shift; # return children that do not match $relregex
+    # We do not maintain an up-to-date list of outgoing enhanced edges, only
+    # the incoming ones. Therefore we must search all nodes of the sentence.
+    my @nodes = $self->get_root()->get_descendants({'ordered' => 1});
+    my @children;
+    foreach my $n (@nodes)
+    {
+        my @edeps = $n->get_enhanced_deps();
+        if(defined($relregex))
+        {
+            if($negate)
+            {
+                @edeps = grep {$_->[1] !~ m/$relregex/} (@edeps);
+            }
+            else
+            {
+                @edeps = grep {$_->[1] =~ m/$relregex/} (@edeps);
+            }
+        }
+        if(any {$_->[0] == $self->ord()} (@edeps))
+        {
+            push(@children, $n);
+        }
+    }
+    # Remove duplicates.
+    my %ecmap; map {$ecmap{$_->ord()} = $_ unless(exists($ecmap{$_->ord()}))} (@children);
+    @children = map {$ecmap{$_}} (sort {$a <=> $b} (keys(%ecmap)));
+    return @children;
+}
+
+
+
 #----------- CoNLL attributes -------------
 
 sub conll_deprel { return $_[0]->get_attr('conll/deprel'); }
