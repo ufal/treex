@@ -28,7 +28,9 @@ sub process_zone
         {
             my $anode = $aroot->create_child();
             $anode->set_deprel('dep:empty');
+            # Make sure we can access the t-node from the new a-node and vice versa.
             $anode->wild()->{'tnode.rf'} = $tnode->id();
+            $tnode->wild()->{'anode.rf'} = $anode->id();
             $anode->wild()->{enhanced} = [];
             $lastminor[$major]++;
             $anode->wild()->{enord} = "$major.$lastminor[$major]";

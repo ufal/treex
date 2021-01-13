@@ -66,6 +66,7 @@ sub process_anode
                             my $node = $document->get_node_by_id($id);
                             @{$node->wild()->{cluster_members}} = @cluster_members;
                         }
+                        $canode->set_misc_attr('MentionSpan', $self->get_mention_span($canode));
                     }
                     elsif(defined($current_target_cluster_id))
                     {
@@ -76,6 +77,7 @@ sub process_anode
                             my $node = $document->get_node_by_id($id);
                             @{$node->wild()->{cluster_members}} = @cluster_members;
                         }
+                        $anode->set_misc_attr('MentionSpan', $self->get_mention_span($anode));
                     }
                     else
                     {
@@ -91,11 +93,88 @@ sub process_anode
                         my @cluster_members = sort($anode->id(), $canode->id());
                         @{$anode->wild()->{cluster_members}} = @cluster_members;
                         @{$canode->wild()->{cluster_members}} = @cluster_members;
+                        $anode->set_misc_attr('MentionSpan', $self->get_mention_span($anode));
+                        $canode->set_misc_attr('MentionSpan', $self->get_mention_span($canode));
                     }
                 }
             }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# For a given a-node, finds its corresponding t-node, gets the list of all
+# t-nodes in its subtree (including the head), gets their corresponding lexical
+# a-nodes (only those that are in the same sentence), returns the ordered list
+# of ords of these a-nodes (surface span of a t-node). For generated t-nodes
+# (which either don't have a lexical a-node, or share it with another t-node,
+# possibly even in another sentence) the method tries to find their
+# corresponding empty a-nodes, added by T2A::GenerateEmptyNodes.
+#------------------------------------------------------------------------------
+sub get_mention_span
+{
+    my $self = shift;
+    my $anode = shift;
+    my @result = ();
+    my $document = $anode->get_document();
+    if(exists($anode->wild()->{'tnode.rf'}))
+    {
+        my $tnode = $document->get_node_by_id($anode->wild()->{'tnode.rf'});
+        if(defined($tnode))
+        {
+            my @tsubtree = $tnode->get_descendants({'ordered' => 1, 'add_self' => 1});
+            foreach my $tsn (@tsubtree)
+            {
+                if($tsn->is_generated())
+                {
+                    # The lexical a-node may not exist and if it exists, we do not want it because it belongs to another mention.
+                    # However, there should be an empty a-node generated for enhanced ud, corresponding to this node.
+                    if(exists($tsn->wild()->{'anode.rf'}))
+                    {
+                        my $asn = $document->get_node_by_id($tsn->wild()->{'tnode.rf'});
+                        if(defined($asn) && $asn->deprel() eq 'dep:empty')
+                        {
+                            push(@result, $asn->wild()->{enord});
+                        }
+                    }
+                }
+                else
+                {
+                    my $asn = $tsn->get_lex_anode();
+                    # For non-generated nodes, the lexical a-node should be in the same sentence, but to be on the safe side, check it.
+                    if(defined($asn) && $asn->get_root() == $anode->get_root())
+                    {
+                        push(@result, $asn->ord());
+                    }
+                }
+            }
+        }
+    }
+    @result = sort
+    {
+        my $amaj = $a;
+        my $amin = 0;
+        my $bmaj = $b;
+        my $bmin = 0;
+        if($amaj =~ s/^(\d+)\.(\d+)$/$1/)
+        {
+            $amin = $2;
+        }
+        if($bmaj =~ s/^(\d+)\.(\d+)$/$1/)
+        {
+            $bmin = $2;
+        }
+        my $r = $amaj <=> $bmaj;
+        unless($r)
+        {
+            $r = $amin <=> $bmin;
+        }
+        $r
+    }
+    (@result);
+    return join(',', @result);
 }
 
 
