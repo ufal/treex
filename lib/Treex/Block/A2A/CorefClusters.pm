@@ -14,7 +14,7 @@ sub process_anode
 {
     my $self = shift;
     my $anode = shift;
-    my $document = $anode->document();
+    my $document = $anode->get_document();
     my $last_cluster_id = $self->last_cluster_id();
     # Only nodes linked to t-layer can have coreference annotation.
     if(exists($anode->wild()->{'tnode.rf'}))
