@@ -166,41 +166,84 @@ sub get_mention_span
         }
     }
     my @result = $self->sort_node_ids(keys(%snodes));
-    my @snodes = map {$snodes{$_}} (@result);
     # If a contiguous sequence of two or more nodes is a part of the mention,
     # it should be represented using a hyphen (i.e., "8-9" instead of "8,9",
     # and "8-10" instead of "8,9,10"). We must be careful though. There may
     # be empty nodes that are not included, e.g., we may have to write "8,9"
     # because there is 8.1 and it is not a part of the mention.
-    my @allids = $self->sort_node_ids(map {$_->deprel() eq 'dep:empty' ? $_->wild()->{enord} : $_->ord()} ($anode->get_root()->get_descendants()));
-    my @result2 = ();
+    # We want to minimize unnecessary splits of spans. The current span does
+    # not include punctuation (unless it has a t-node as a head of coordination)
+    # but we will add punctuation nodes if it helps merge two subspans.
+    my @allnodes = $self->sort_nodes_by_ids($aroot->get_descendants());
+    my $i = 0; # index to @result
+    my $n = scalar(@result);
     my @current_segment = ();
-    # Add -1 to enforce flushing of the current segment at the end.
-    foreach my $id (@allids, -1)
+    my @current_gap = ();
+    my @result2 = ();
+    my @snodes = ();
+    # Add undef to enforce flushing of the current segment at the end.
+    foreach my $node (@allnodes, undef)
     {
-        if(scalar(@result) > 0 && $result[0] == $id)
+        my $id = defined($node) ? $self->get_conllu_id($node) : -1;
+        if($i < $n && $result[$i] == $id)
         {
-            # The current segment is uninterrupted (but it may also be a new segment that starts with this id).
-            push(@current_segment, shift(@result));
+            # The current segment is uninterrupted (but it may also be a new segment that starts with this node).
+            # If we have collected gap nodes (punctuation) since the last node in the current segment, add them now to the segment.
+            if(scalar(@current_gap) > 0)
+            {
+                push(@current_segment, @current_gap);
+                @current_gap = ();
+            }
+            push(@current_segment, $node);
+            $i++;
         }
         else
         {
             # The current segment is interrupted (but it may be empty anyway).
-            if(scalar(@current_segment) > 1)
+            # If there is a non-empty segment and we have not exhausted the
+            # span nodes, we can try to add one or more punctuation nodes and
+            # see if it helps bridge the gap.
+            if(scalar(@current_segment) > 0)
             {
-                push(@result2, "$current_segment[0]-$current_segment[-1]");
-                @current_segment = ();
+                if($i < $n && defined($node) && $node->deprel() =~ m/^punct(:|$)/)
+                {
+                    push(@current_gap, $node);
+                }
+                else
+                {
+                    # Flush the current segment, if any, and forget the current gap, if any.
+                    if(scalar(@current_segment) > 1)
+                    {
+                        push(@result2, $self->get_conllu_id($current_segment[0]).'-'.$self->get_conllu_id($current_segment[-1]));
+                        push(@snodes, @current_segment);
+                    }
+                    elsif(scalar(@current_segment) == 1)
+                    {
+                        push(@result2, $self->get_conllu_id($current_segment[0]));
+                        push(@snodes, @current_segment);
+                    }
+                    @current_segment = ();
+                    @current_gap = ();
+                }
+                last if($i >= $n);
             }
-            elsif(scalar(@current_segment) == 1)
-            {
-                push(@result2, $current_segment[0]);
-                @current_segment = ();
-            }
-            last if(scalar(@result) == 0);
         }
     }
     # For debugging purposes it is useful to also see the word forms of the span, so we will provide them, too.
     return (join(',', @result2), join(' ', map {$_->form()} (@snodes)));
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the number that will be used as node ID when the node is exported in
+# CoNLL-U: ord for regular nodes and wild/enord for empty nodes.
+#------------------------------------------------------------------------------
+sub get_conllu_id
+{
+    my $self = shift;
+    my $node = shift;
+    return $node->deprel() eq 'dep:empty' ? $node->wild()->{enord} : $node->ord();
 }
 
 
@@ -224,8 +267,8 @@ sub sort_nodes_by_ids
     my $self = shift;
     return sort
     {
-        my $aid = $a->deprel() eq 'dep:empty' ? $a->wild()->{enord} : $a->ord();
-        my $bid = $b->deprel() eq 'dep:empty' ? $b->wild()->{enord} : $b->ord();
+        my $aid = $self->get_conllu_id($a);
+        my $bid = $self->get_conllu_id($b);
         cmp_node_ids($aid, $bid)
     }
     (@_);
