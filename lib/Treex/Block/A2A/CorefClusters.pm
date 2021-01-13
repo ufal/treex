@@ -125,8 +125,7 @@ sub get_mention_span
 {
     my $self = shift;
     my $anode = shift;
-    my @result = ();
-    my @snodes = ();
+    my %snodes; # indexed by CoNLL-U id; a hash to prevent auxiliary a-nodes occurring repeatedly (because they are shared by multiple nodes)
     my $aroot = $anode->get_root();
     my $document = $anode->get_document();
     if(exists($anode->wild()->{'tnode.rf'}))
@@ -146,8 +145,7 @@ sub get_mention_span
                         my $asn = $document->get_node_by_id($tsn->wild()->{'anode.rf'});
                         if(defined($asn) && $asn->deprel() eq 'dep:empty')
                         {
-                            push(@result, $asn->wild()->{enord});
-                            push(@snodes, $asn);
+                            $snodes{$asn->wild()->{enord}} = $asn;
                         }
                     }
                 }
@@ -160,16 +158,15 @@ sub get_mention_span
                         # For non-generated nodes, the lexical a-node should be in the same sentence, but to be on the safe side, check it.
                         if(defined($asn) && $asn->get_root() == $aroot)
                         {
-                            push(@result, $asn->ord());
-                            push(@snodes, $asn);
+                            $snodes{$asn->ord()} = $asn;
                         }
                     }
                 }
             }
         }
     }
-    @result = $self->sort_node_ids(@result);
-    @snodes = $self->sort_nodes_by_ids(@snodes);
+    my @result = $self->sort_node_ids(keys(%snodes));
+    my @snodes = map {$snodes{$_}} (@result);
     # If a contiguous sequence of two or more nodes is a part of the mention,
     # it should be represented using a hyphen (i.e., "8-9" instead of "8,9",
     # and "8-10" instead of "8,9,10"). We must be careful though. There may
