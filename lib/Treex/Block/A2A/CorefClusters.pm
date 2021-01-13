@@ -133,7 +133,7 @@ sub get_mention_span
                     # However, there should be an empty a-node generated for enhanced ud, corresponding to this node.
                     if(exists($tsn->wild()->{'anode.rf'}))
                     {
-                        my $asn = $document->get_node_by_id($tsn->wild()->{'tnode.rf'});
+                        my $asn = $document->get_node_by_id($tsn->wild()->{'anode.rf'});
                         if(defined($asn) && $asn->deprel() eq 'dep:empty')
                         {
                             push(@result, $asn->wild()->{enord});
