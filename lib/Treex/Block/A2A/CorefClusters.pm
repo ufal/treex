@@ -164,6 +164,7 @@ sub get_mention_span
         }
     }
     @result = $self->sort_node_ids(@result);
+    @snodes = $self->sort_nodes_by_ids(@snodes);
     # If a contiguous sequence of two or more nodes is a part of the mention,
     # it should be represented using a hyphen (i.e., "8-9" instead of "8,9",
     # and "8-10" instead of "8,9,10"). We must be careful though. There may
@@ -197,7 +198,7 @@ sub get_mention_span
         }
     }
     # For debugging purposes it is useful to also see the word forms of the span, so we will provide them, too.
-    return (join(',', @result2), join(' ', map {$_->form()} (sort_nodes_by_ids(@snodes))));
+    return (join(',', @result2), join(' ', map {$_->form()} (@snodes)));
 }
 
 
