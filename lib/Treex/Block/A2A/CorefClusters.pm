@@ -271,14 +271,14 @@ sub get_mention_span
             push(@sheads, $snode);
         }
     }
-    if(scalar(@sheads) == 0)
-    {
-        log_warn("Mention span has no clear head (perhaps it forms a cycle in the enhanced graph).");
-    }
-    elsif(scalar(@sheads) > 1)
-    {
-        log_warn("Mention span has multiple heads in the enhanced graph.");
-    }
+#    if(scalar(@sheads) == 0)
+#    {
+#        log_warn("Mention span has no clear head (perhaps it forms a cycle in the enhanced graph).");
+#    }
+#    elsif(scalar(@sheads) > 1)
+#    {
+#        log_warn("Mention span has multiple heads in the enhanced graph.");
+#    }
     # For debugging purposes it is useful to also see the word forms of the span, so we will provide them, too.
     return (join(',', @result2), join(' ', map {$_->form()} (@snodes)), join(',', map {$_->get_conllu_id()} (@sheads)));
 }

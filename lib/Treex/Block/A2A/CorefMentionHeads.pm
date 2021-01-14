@@ -35,7 +35,7 @@ sub process_anode
                     my $value = $anode->get_misc_attr($attr);
                     if(defined($value))
                     {
-                        $hnode->set_misc_attr($attr);
+                        $hnode->set_misc_attr($attr, $value);
                         $anode->clear_misc_attr($attr);
                     }
                 }
