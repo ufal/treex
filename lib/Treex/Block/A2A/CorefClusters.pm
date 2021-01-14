@@ -26,10 +26,11 @@ sub process_anode
             # Do we already have a cluster id?
             my $current_cluster_id = $anode->get_misc_attr('ClusterId');
             # Get coreference edges.
-            my @gcoref = $tnode->get_coref_gram_nodes();
-            my @tcoref = $tnode->get_coref_text_nodes();
-            foreach my $ctnode (@gcoref, @tcoref)
+            my ($cnodes, $ctypes) = $tnode->get_coref_nodes({'with_types' => 1});
+            for(my $i = 0; $i <= $#{$cnodes}; $i++)
             {
+                my $ctnode = $cnodes->[$i];
+                my $ctype = $ctypes->[$i];
                 # $ctnode is the target t-node of the coreference edge.
                 # We need to access its corresponding lexical a-node.
                 my $canode = $ctnode->get_lex_anode();
@@ -53,6 +54,7 @@ sub process_anode
                             {
                                 my $node = $document->get_node_by_id($id);
                                 $node->set_misc_attr('ClusterId', $merged_id);
+                                $node->set_misc_attr('CorefType', $ctype);
                                 @{$node->wild()->{cluster_members}} = @cluster_members;
                             }
                         }
@@ -60,6 +62,7 @@ sub process_anode
                     elsif(defined($current_cluster_id))
                     {
                         $canode->set_misc_attr('ClusterId', $current_cluster_id);
+                        $canode->set_misc_attr('CorefType', $ctype);
                         my @cluster_members = sort(@{$anode->wild()->{cluster_members}}, $canode->id());
                         foreach my $id (@cluster_members)
                         {
@@ -71,6 +74,7 @@ sub process_anode
                     elsif(defined($current_target_cluster_id))
                     {
                         $anode->set_misc_attr('ClusterId', $current_target_cluster_id);
+                        $anode->set_misc_attr('CorefType', $ctype);
                         my @cluster_members = sort(@{$canode->wild()->{cluster_members}}, $anode->id());
                         foreach my $id (@cluster_members)
                         {
@@ -86,7 +90,9 @@ sub process_anode
                         $self->set_last_cluster_id($last_cluster_id);
                         $current_cluster_id = 'c'.$last_cluster_id;
                         $anode->set_misc_attr('ClusterId', $current_cluster_id);
+                        $anode->set_misc_attr('CorefType', $ctype);
                         $canode->set_misc_attr('ClusterId', $current_cluster_id);
+                        $canode->set_misc_attr('CorefType', $ctype);
                         # Remember references to all cluster members from all cluster members.
                         # We may later need to revisit all cluster members and this will help
                         # us find them.
@@ -118,13 +124,8 @@ sub mark_mention
     $anode->set_misc_attr('MentionSpan', $mspan);
     $anode->set_misc_attr('MentionText', $mtext);
     $anode->set_misc_attr('MentionHead', $mhead);
-    # If there is a single mention head and it is different from the current
-    # node, we should mark the mention there instead.
-    ###!!! However, it is also possible that the new head is a head of a different
-    ###!!! mention, in which case we do not want to go there (overwriting one
-    ###!!! mention with another). At this point it is not even guraranteed that
-    ###!!! the other node already has its MISC attributes. We would have to do
-    ###!!! it in another block, which would be invoked later.
+    # We will want to later run A2A::CorefMentionHeads to move the mention
+    # annotation to the head node.
     return $anode;
 }
 
