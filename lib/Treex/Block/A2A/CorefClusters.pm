@@ -155,7 +155,13 @@ sub get_mention_span
             # dependents of coordination if this node is a conjunct. The
             # or_topological switch turns off the warning that would otherwise
             # appear if $tnode is a coap root.
-            my @tsubtree = $tnode->get_edescendants({'ordered' => 1, 'add_self' => 1, 'or_topological' => 1});
+            # We actually need to search topological descendants anyway because
+            # edescendants do not include coordinating conjunctions, which would
+            # fragment the span.
+            my @edescendants = $tnode->get_edescendants({'add_self' => 1, 'or_topological' => 1});
+            my @descendants = $tnode->get_descendants({'add_self' => 1});
+            my %subtree; map {$subtree{$_->ord()} = $_} (@descendants, @edescendants);
+            my @tsubtree = map {$subtree{$_}} (sort {$a <=> $b} (keys(%subtree)));
             foreach my $tsn (@tsubtree)
             {
                 if($tsn->is_generated())
