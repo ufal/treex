@@ -43,7 +43,7 @@ sub process_anode
                 }
                 else
                 {
-                    log_warning("Unknown coreference cluster type '$ctype'.");
+                    log_warn("Unknown coreference cluster type '$ctype'.");
                 }
                 # $ctnode is the target t-node of the coreference edge.
                 # We need to access its corresponding lexical a-node.
