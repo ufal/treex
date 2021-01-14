@@ -156,7 +156,7 @@ sub process_anode
             {
                 my $btnode = $bridgenodes->[$i];
                 my $btype = $bridgetypes->[$i];
-                $self->set_misc_attr('Bridging', "c?:$btype");
+                $anode->set_misc_attr('Bridging', "c?:$btype");
                 $self->mark_mention($anode);
             }
         }
