@@ -152,8 +152,10 @@ sub get_mention_span
         if(defined($tnode))
         {
             # We should look for effective descendants, i.e., including shared
-            # dependents of coordination if this node is a conjunct.
-            my @tsubtree = $tnode->get_edescendants({'ordered' => 1, 'add_self' => 1});
+            # dependents of coordination if this node is a conjunct. The
+            # or_topological switch turns off the warning that would otherwise
+            # appear if $tnode is a coap root.
+            my @tsubtree = $tnode->get_edescendants({'ordered' => 1, 'add_self' => 1, 'or_topological' => 1});
             foreach my $tsn (@tsubtree)
             {
                 if($tsn->is_generated())
