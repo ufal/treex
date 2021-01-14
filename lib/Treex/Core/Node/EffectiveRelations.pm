@@ -287,7 +287,7 @@ sub get_esiblings {
     my $eff_arg_ref = $self->_extract_eff_args($arg_ref);
 
     my @eparents = $self->get_eparents($eff_arg_ref);
-    
+
     my %esiblings_hash;
     foreach my $eparent (@eparents) {
         my @esiblings = grep { $_ ne $self } $eparent->get_echildren($eff_arg_ref);
@@ -298,6 +298,30 @@ sub get_esiblings {
     my @esiblings = values %esiblings_hash;
 
     return $self->_process_switches($arg_ref, @esiblings);
+}
+
+sub get_edescendants {
+    my ( $self, $arg_ref ) = @_;
+    log_fatal('Incorrect number of arguments') if @_ > 2;
+    if ( !defined $arg_ref ) {
+        $arg_ref = {};
+    }
+    my $eff_arg_ref = $self->_extract_eff_args($arg_ref);
+    my @edescendants;
+    if ( $arg_ref && $arg_ref->{except} ) {
+        my $except_node = delete $arg_ref->{except};
+        return () if $self == $except_node;
+        @edescendants = map {
+            $_->get_edescendants( { except => $except_node, add_self => 1 } )
+        } $self->get_echildren($eff_arg_ref);
+    }
+    else {
+        @edescendants = map {
+            $_->get_edescendants( { add_self => 1 } )
+        } $self->get_echildren($eff_arg_ref);
+    }
+    return @edescendants if !$arg_ref;
+    return $self->_process_switches( $arg_ref, @edescendants );
 }
 
 1;

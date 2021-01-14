@@ -151,7 +151,9 @@ sub get_mention_span
         my $tnode = $document->get_node_by_id($anode->wild()->{'tnode.rf'});
         if(defined($tnode))
         {
-            my @tsubtree = $tnode->get_descendants({'ordered' => 1, 'add_self' => 1});
+            # We should look for effective descendants, i.e., including shared
+            # dependents of coordination if this node is a conjunct.
+            my @tsubtree = $tnode->get_edescendants({'ordered' => 1, 'add_self' => 1});
             foreach my $tsn (@tsubtree)
             {
                 if($tsn->is_generated())
