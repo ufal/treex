@@ -31,7 +31,16 @@ sub process_anode
             {
                 my $ctnode = $cnodes->[$i];
                 my $ctype = $ctypes->[$i];
-                if($ctype eq 'GEN')
+                # The type is sometimes undefined. Perhaps it is for grammatical coreference?
+                ###!!! What do we do then?
+                if(!defined($ctype))
+                {
+                    my $tl1 = $tnode->t_lemma();
+                    my $tl2 = $ctnode->t_lemma();
+                    log_warn("Undefined type of coreference from '$tl1' to '$tl2'.");
+                    $ctype = 'Unknown';
+                }
+                elsif($ctype eq 'GEN')
                 {
                     # Generic entity, e.g., "úředníci".
                     $ctype = 'Gen';
