@@ -161,9 +161,9 @@ sub get_mention_span
                     if(exists($tsn->wild()->{'anode.rf'}))
                     {
                         my $asn = $document->get_node_by_id($tsn->wild()->{'anode.rf'});
-                        if(defined($asn) && $asn->deprel() eq 'dep:empty')
+                        if(defined($asn) && $asn->is_empty())
                         {
-                            $snodes{$asn->wild()->{enord}} = $asn;
+                            $snodes{$asn->get_conllu_id()} = $asn;
                         }
                     }
                 }
@@ -202,7 +202,7 @@ sub get_mention_span
     # Add undef to enforce flushing of the current segment at the end.
     foreach my $node (@allnodes, undef)
     {
-        my $id = defined($node) ? $self->get_conllu_id($node) : -1;
+        my $id = defined($node) ? $node->get_conllu_id() : -1;
         if($i < $n && $result[$i] == $id)
         {
             # The current segment is uninterrupted (but it may also be a new segment that starts with this node).
@@ -213,7 +213,7 @@ sub get_mention_span
                 # Update also %snodes, we will need it later.
                 foreach my $gnode (@current_gap)
                 {
-                    $snodes{$self->get_conllu_id($gnode)} = $gnode;
+                    $snodes{$gnode->get_conllu_id()} = $gnode;
                 }
                 @current_gap = ();
             }
@@ -237,12 +237,12 @@ sub get_mention_span
                     # Flush the current segment, if any, and forget the current gap, if any.
                     if(scalar(@current_segment) > 1)
                     {
-                        push(@result2, $self->get_conllu_id($current_segment[0]).'-'.$self->get_conllu_id($current_segment[-1]));
+                        push(@result2, $current_segment[0]->get_conllu_id().'-'.$current_segment[-1]->get_conllu_id());
                         push(@snodes, @current_segment);
                     }
                     elsif(scalar(@current_segment) == 1)
                     {
-                        push(@result2, $self->get_conllu_id($current_segment[0]));
+                        push(@result2, $current_segment[0]->get_conllu_id());
                         push(@snodes, @current_segment);
                     }
                     @current_segment = ();
@@ -265,7 +265,7 @@ sub get_mention_span
         # even form a cycle.
         # Let's define a head as a node that is in the span and none of its
         # enhanced parents are in the span. There may be any number of heads.
-        my @ineparents = grep {exists($snodes{$self->get_conllu_id($_)})} ($snode->get_enhanced_parents());
+        my @ineparents = grep {exists($snodes{$_->get_conllu_id()})} ($snode->get_enhanced_parents());
         if(scalar(@ineparents) == 0)
         {
             push(@sheads, $snode);
@@ -280,20 +280,7 @@ sub get_mention_span
         log_warn("Mention span has multiple heads in the enhanced graph.");
     }
     # For debugging purposes it is useful to also see the word forms of the span, so we will provide them, too.
-    return (join(',', @result2), join(' ', map {$_->form()} (@snodes)), join(',', map {$self->get_conllu_id($_)} (@sheads)));
-}
-
-
-
-#------------------------------------------------------------------------------
-# Returns the number that will be used as node ID when the node is exported in
-# CoNLL-U: ord for regular nodes and wild/enord for empty nodes.
-#------------------------------------------------------------------------------
-sub get_conllu_id
-{
-    my $self = shift;
-    my $node = shift;
-    return $node->deprel() eq 'dep:empty' ? $node->wild()->{enord} : $node->ord();
+    return (join(',', @result2), join(' ', map {$_->form()} (@snodes)), join(',', map {$_->get_conllu_id()} (@sheads)));
 }
 
 
@@ -317,9 +304,7 @@ sub sort_nodes_by_ids
     my $self = shift;
     return sort
     {
-        my $aid = $self->get_conllu_id($a);
-        my $bid = $self->get_conllu_id($b);
-        cmp_node_ids($aid, $bid)
+        cmp_node_ids($a->get_conllu_id(), $b->get_conllu_id())
     }
     (@_);
 }

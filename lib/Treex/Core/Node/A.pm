@@ -477,6 +477,12 @@ sub collect_sentence_text
 
 
 
+#==============================================================================
+# Enhanced Universal Dependencies and empty nodes
+#==============================================================================
+
+
+
 #------------------------------------------------------------------------------
 # Returns the list of incoming enhanced edges for a node. Each element of the
 # list is a pair: 1. ord of the parent node; 2. relation label.
@@ -594,6 +600,33 @@ sub get_enhanced_children
     my %ecmap; map {$ecmap{$_->ord()} = $_ unless(exists($ecmap{$_->ord()}))} (@children);
     @children = map {$ecmap{$_}} (sort {$a <=> $b} (keys(%ecmap)));
     return @children;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Empty nodes in enhanced UD graphs are modeled using fake a-nodes at the end
+# of the sentence. In the a-tree they are attached directly to the artificial
+# root, with the deprel 'dep:empty'. Their ord is used internally in Treex,
+# e.g., in the wild attributes that model the enhanced dependencies. Their
+# CoNLL-U id ("decimal ord") is stored in a wild attribute.
+#------------------------------------------------------------------------------
+sub is_empty
+{
+    my $self = shift;
+    return $self->deprel() eq 'dep:empty';
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the CoNLL-U node ID. For regular nodes it is their ord; for empty
+# nodes the decimal id is stored in a wild attribute.
+#------------------------------------------------------------------------------
+sub get_conllu_id
+{
+    my $self = shift;
+    return $self->is_empty() ? $node->wild()->{enord} : $node->ord();
 }
 
 
