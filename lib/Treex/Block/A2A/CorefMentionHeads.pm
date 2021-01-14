@@ -30,7 +30,7 @@ sub process_anode
             unless(defined($hnode->get_misc_attr('MentionSpan')))
             {
                 # Move annotation of the mention and its cluster from the current node to the head.
-                foreach my $attr (qw(ClusterId MentionSpan MentionText MentionHead))
+                foreach my $attr (qw(ClusterId ClusterType MentionSpan MentionText MentionHead))
                 {
                     my $value = $anode->get_misc_attr($attr);
                     if(defined($value))

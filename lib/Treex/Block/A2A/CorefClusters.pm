@@ -31,6 +31,20 @@ sub process_anode
             {
                 my $ctnode = $cnodes->[$i];
                 my $ctype = $ctypes->[$i];
+                if($ctype eq 'GEN')
+                {
+                    # Generic entity, e.g., "úředníci".
+                    $ctype = 'Gen';
+                }
+                elsif($ctype eq 'SPEC')
+                {
+                    # Specific entity or event, e.g., "Václav Klaus".
+                    $ctype = 'Spec';
+                }
+                else
+                {
+                    log_warning("Unknown coreference cluster type '$ctype'.");
+                }
                 # $ctnode is the target t-node of the coreference edge.
                 # We need to access its corresponding lexical a-node.
                 my $canode = $ctnode->get_lex_anode();
@@ -54,7 +68,6 @@ sub process_anode
                             {
                                 my $node = $document->get_node_by_id($id);
                                 $node->set_misc_attr('ClusterId', $merged_id);
-                                $node->set_misc_attr('CorefType', $ctype);
                                 @{$node->wild()->{cluster_members}} = @cluster_members;
                             }
                         }
@@ -62,7 +75,7 @@ sub process_anode
                     elsif(defined($current_cluster_id))
                     {
                         $canode->set_misc_attr('ClusterId', $current_cluster_id);
-                        $canode->set_misc_attr('CorefType', $ctype);
+                        $canode->set_misc_attr('ClusterType', $ctype);
                         my @cluster_members = sort(@{$anode->wild()->{cluster_members}}, $canode->id());
                         foreach my $id (@cluster_members)
                         {
@@ -74,7 +87,7 @@ sub process_anode
                     elsif(defined($current_target_cluster_id))
                     {
                         $anode->set_misc_attr('ClusterId', $current_target_cluster_id);
-                        $anode->set_misc_attr('CorefType', $ctype);
+                        $anode->set_misc_attr('ClusterType', $ctype);
                         my @cluster_members = sort(@{$canode->wild()->{cluster_members}}, $anode->id());
                         foreach my $id (@cluster_members)
                         {
@@ -90,9 +103,9 @@ sub process_anode
                         $self->set_last_cluster_id($last_cluster_id);
                         $current_cluster_id = 'c'.$last_cluster_id;
                         $anode->set_misc_attr('ClusterId', $current_cluster_id);
-                        $anode->set_misc_attr('CorefType', $ctype);
+                        $anode->set_misc_attr('ClusterType', $ctype);
                         $canode->set_misc_attr('ClusterId', $current_cluster_id);
-                        $canode->set_misc_attr('CorefType', $ctype);
+                        $canode->set_misc_attr('ClusterType', $ctype);
                         # Remember references to all cluster members from all cluster members.
                         # We may later need to revisit all cluster members and this will help
                         # us find them.
