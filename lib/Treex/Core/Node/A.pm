@@ -626,7 +626,7 @@ sub is_empty
 sub get_conllu_id
 {
     my $self = shift;
-    return $self->is_empty() ? $node->wild()->{enord} : $node->ord();
+    return $self->is_empty() ? $self->wild()->{enord} : $self->ord();
 }
 
 
