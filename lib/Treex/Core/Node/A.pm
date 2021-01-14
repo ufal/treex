@@ -605,6 +605,45 @@ sub get_enhanced_children
 
 
 #------------------------------------------------------------------------------
+# Returns the list of nodes to which there is a path from the current node in
+# the enhanced graph. The list is not ordered and does not include $self.
+#------------------------------------------------------------------------------
+sub get_enhanced_descendants
+{
+    my $self = shift;
+    my $visited = shift;
+    # Keep track of visited nodes. Avoid endless loops.
+    my @_dummy;
+    if(!defined($visited))
+    {
+        $visited = \@_dummy;
+    }
+    return () if($visited->[$self->ord()]);
+    $visited->[$self->ord()]++;
+    my @echildren = $self->get_enhanced_children();
+    my @echildren2;
+    foreach my $ec (@echildren)
+    {
+        my @ec2 = $ec->get_enhanced_descendants($visited);
+        if(scalar(@ec2) > 0)
+        {
+            push(@echildren2, @ec2);
+        }
+    }
+    # Unlike the method Node::get_descendants(), we currently do not support
+    # the parameters add_self, ordered, preceding_only etc. The caller has
+    # to take care of sort and grep themselves. (We could do sorting but it
+    # would be inefficient to do it in each step of the recursion. And in any
+    # case we would not know whether to add self or not; if yes, then the
+    # sorting would have to be repeated again.)
+    #my @result = sort {$a->ord() <=> $b->ord()} (@echildren, @echildren2);
+    my @result = (@echildren, @echildren2);
+    return @result;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Empty nodes in enhanced UD graphs are modeled using fake a-nodes at the end
 # of the sentence. In the a-tree they are attached directly to the artificial
 # root, with the deprel 'dep:empty'. Their ord is used internally in Treex,

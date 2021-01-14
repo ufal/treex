@@ -563,7 +563,7 @@ sub add_enhanced_relative_clause
         grep {$_->ord() <= $node->ord() && $_->is_relative()}
         (
             $node,
-            $self->get_enhanced_descendants($node, \@visited)
+            $node->get_enhanced_descendants(\@visited)
         )
     );
     return unless(scalar(@relativizers) > 0);
@@ -932,46 +932,6 @@ sub expand_empty_nodes
 #==============================================================================
 # Helper functions for manipulation of the enhanced graph.
 #==============================================================================
-
-
-
-#------------------------------------------------------------------------------
-# Returns the list of nodes to which there is a path from the current node in
-# the enhanced graph.
-#------------------------------------------------------------------------------
-sub get_enhanced_descendants
-{
-    my $self = shift;
-    my $node = shift;
-    my $visited = shift;
-    # Keep track of visited nodes. Avoid endless loops.
-    my @_dummy;
-    if(!defined($visited))
-    {
-        $visited = \@_dummy;
-    }
-    return () if($visited->[$node->ord()]);
-    $visited->[$node->ord()]++;
-    my @echildren = $node->get_enhanced_children();
-    my @echildren2;
-    foreach my $ec (@echildren)
-    {
-        my @ec2 = $self->get_enhanced_descendants($ec, $visited);
-        if(scalar(@ec2) > 0)
-        {
-            push(@echildren2, @ec2);
-        }
-    }
-    # Unlike the method Node::get_descendants(), we currently do not support
-    # the parameters add_self, ordered, preceding_only etc. The caller has
-    # to take care of sort and grep themselves. (We could do sorting but it
-    # would be inefficient to do it in each step of the recursion. And in any
-    # case we would not know whether to add self or not; if yes, then the
-    # sorting would have to be repeated again.)
-    #my @result = sort {$a->ord() <=> $b->ord()} (@echildren, @echildren2);
-    my @result = (@echildren, @echildren2);
-    return @result;
-}
 
 
 
