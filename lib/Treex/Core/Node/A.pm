@@ -614,7 +614,7 @@ sub get_enhanced_children
 sub is_empty
 {
     my $self = shift;
-    return $self->deprel() eq 'dep:empty';
+    return defined($self->deprel()) && $self->deprel() eq 'dep:empty';
 }
 
 
