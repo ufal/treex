@@ -160,27 +160,32 @@ sub process_anode
             {
                 my $btnode = $bridgenodes->[$i];
                 my $btype = $bridgetypes->[$i];
-                if($btype eq 'PART_WHOLE')
+                if($btype eq 'WHOLE_PART')
                 {
+                    # kraje <-- obce
                     $btype = 'Part';
                 }
-                elsif($btype eq 'SUB_SET')
+                elsif($btype eq 'SET_SUB')
                 {
+                    # veřejní činitelé <-- poslanci
+                    # poslanci <-- konkrétní poslanec
                     $btype = 'Subset';
                 }
                 elsif($btype eq 'P_FUNCT')
                 {
+                    # obě dvě ministerstva <-- ministři kultury a financí | Pavel Tigrid a Ivan Kočárník
                     $btype = 'Funct';
                 }
                 elsif($btype eq 'ANAF')
                 {
+                    # "loterie mohou provozovat pouze organizace k tomu účelu zvláště zřízené" <-- uvedená pasáž
                     $btype = 'Anaf';
                 }
                 elsif($btype eq 'REST')
                 {
                     $btype = 'Other';
                 }
-                elsif($btype =~ m/^(WHOLE_PART|SET_SUB|FUNCT_P|CONTRAST)$/)
+                elsif($btype =~ m/^(PART_WHOLE|SUB_SET|FUNCT_P|CONTRAST)$/)
                 {
                     # At present, do nothing.
                 }
