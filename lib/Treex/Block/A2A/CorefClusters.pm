@@ -57,6 +57,15 @@ sub process_anode
                 {
                     log_warn("Unknown coreference cluster type '$ctype'.");
                 }
+                # Sanity check: All coreference edges in a cluster should have the same type (or undefined type).
+                if(defined($current_cluster_type) && defined($ctype) && $current_cluster_type ne $ctype)
+                {
+                    log_warn("Cluster type mismatch.");
+                }
+                if(!defined($current_cluster_type) && defined($ctype))
+                {
+                    $current_cluster_type = $ctype;
+                }
                 # $ctnode is the target t-node of the coreference edge.
                 # We need to access its corresponding lexical a-node.
                 my $canode = $ctnode->get_lex_anode();
@@ -64,6 +73,17 @@ sub process_anode
                 {
                     # Does the target node already have a cluster id?
                     my $current_target_cluster_id = $canode->get_misc_attr('ClusterId');
+                    my $current_target_cluster_type = $canode->get_misc_attr('ClusterType');
+                    # Sanity check: All coreference edges in a cluster should have the same type (or undefined type).
+                    # If the current coreference edge does not have a type, check whether we can copy the type from the target mention.
+                    if(defined($current_cluster_type) && defined($current_target_cluster_type) && $current_cluster_type ne $current_target_cluster_type)
+                    {
+                        log_warn("Cluster type mismatch.");
+                    }
+                    if(!defined($current_cluster_type) && defined($current_target_cluster_type))
+                    {
+                        $current_cluster_type = $current_target_cluster_type;
+                    }
                     if(defined($current_cluster_id) && defined($current_target_cluster_id))
                     {
                         # Are we merging two clusters that were created independently?
@@ -80,6 +100,7 @@ sub process_anode
                             {
                                 my $node = $document->get_node_by_id($id);
                                 $node->set_misc_attr('ClusterId', $merged_id);
+                                $node->set_misc_attr('ClusterType', $current_cluster_type) if(defined($current_cluster_type));
                                 @{$node->wild()->{cluster_members}} = @cluster_members;
                             }
                         }
@@ -87,7 +108,7 @@ sub process_anode
                     elsif(defined($current_cluster_id))
                     {
                         $canode->set_misc_attr('ClusterId', $current_cluster_id);
-                        $canode->set_misc_attr('ClusterType', $ctype) if(defined($ctype));
+                        $canode->set_misc_attr('ClusterType', $current_cluster_type) if(defined($current_cluster_type));
                         my @cluster_members = sort(@{$anode->wild()->{cluster_members}}, $canode->id());
                         foreach my $id (@cluster_members)
                         {
@@ -99,7 +120,7 @@ sub process_anode
                     elsif(defined($current_target_cluster_id))
                     {
                         $anode->set_misc_attr('ClusterId', $current_target_cluster_id);
-                        $anode->set_misc_attr('ClusterType', $ctype) if(defined($ctype));
+                        $anode->set_misc_attr('ClusterType', $current_cluster_type) if(defined($current_cluster_type));
                         my @cluster_members = sort(@{$canode->wild()->{cluster_members}}, $anode->id());
                         foreach my $id (@cluster_members)
                         {
@@ -115,9 +136,9 @@ sub process_anode
                         $self->set_last_cluster_id($last_cluster_id);
                         $current_cluster_id = 'c'.$last_cluster_id;
                         $anode->set_misc_attr('ClusterId', $current_cluster_id);
-                        $anode->set_misc_attr('ClusterType', $ctype) if(defined($ctype));
+                        $anode->set_misc_attr('ClusterType', $current_cluster_type) if(defined($current_cluster_type));
                         $canode->set_misc_attr('ClusterId', $current_cluster_id);
-                        $canode->set_misc_attr('ClusterType', $ctype) if(defined($ctype));
+                        $canode->set_misc_attr('ClusterType', $current_cluster_type) if(defined($current_cluster_type));
                         # Remember references to all cluster members from all cluster members.
                         # We may later need to revisit all cluster members and this will help
                         # us find them.
