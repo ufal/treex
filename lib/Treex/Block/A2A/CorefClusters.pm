@@ -61,6 +61,7 @@ sub process_anode
                 if(defined($current_cluster_type) && defined($ctype) && $current_cluster_type ne $ctype)
                 {
                     log_warn("Cluster type mismatch.");
+                    $anode->set_misc_attr('ClusterTypeMismatch', "$current_cluster_type:$ctype:1"); # :1 identifies where the error occurred in the source code
                 }
                 if(!defined($current_cluster_type) && defined($ctype))
                 {
@@ -79,6 +80,8 @@ sub process_anode
                     if(defined($current_cluster_type) && defined($current_target_cluster_type) && $current_cluster_type ne $current_target_cluster_type)
                     {
                         log_warn("Cluster type mismatch.");
+                        $anode->set_misc_attr('ClusterTypeMismatch', "$current_cluster_type:$current_target_cluster_type:2"); # :2 identifies where the error occurred in the source code
+                        $canode->set_misc_attr('ClusterTypeMismatch', "$current_cluster_type:$current_target_cluster_type:2"); # :2 identifies where the error occurred in the source code
                     }
                     if(!defined($current_cluster_type) && defined($current_target_cluster_type))
                     {
