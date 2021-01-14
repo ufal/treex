@@ -25,20 +25,23 @@ sub process_anode
         {
             # Do we already have a cluster id?
             my $current_cluster_id = $anode->get_misc_attr('ClusterId');
+            my $current_cluster_type = $anode->get_misc_attr('ClusterType');
             # Get coreference edges.
             my ($cnodes, $ctypes) = $tnode->get_coref_nodes({'with_types' => 1});
             for(my $i = 0; $i <= $#{$cnodes}; $i++)
             {
                 my $ctnode = $cnodes->[$i];
                 my $ctype = $ctypes->[$i];
-                # The type is sometimes undefined. Perhaps it is for grammatical coreference?
-                ###!!! What do we do then?
+                # The type is undefined for grammatical coreference. We will
+                # try to copy it from other members of the cluster if possible
+                # (it is the type of the entity/event corresponding to the
+                # cluster).
                 if(!defined($ctype))
                 {
-                    my $tl1 = $tnode->t_lemma();
-                    my $tl2 = $ctnode->t_lemma();
-                    log_warn("Undefined type of coreference from '$tl1' to '$tl2'.");
-                    $ctype = 'Unknown';
+                    if(defined($current_cluster_type))
+                    {
+                        $ctype = $current_cluster_type;
+                    }
                 }
                 elsif($ctype eq 'GEN')
                 {
@@ -84,7 +87,7 @@ sub process_anode
                     elsif(defined($current_cluster_id))
                     {
                         $canode->set_misc_attr('ClusterId', $current_cluster_id);
-                        $canode->set_misc_attr('ClusterType', $ctype);
+                        $canode->set_misc_attr('ClusterType', $ctype) if(defined($ctype));
                         my @cluster_members = sort(@{$anode->wild()->{cluster_members}}, $canode->id());
                         foreach my $id (@cluster_members)
                         {
@@ -96,7 +99,7 @@ sub process_anode
                     elsif(defined($current_target_cluster_id))
                     {
                         $anode->set_misc_attr('ClusterId', $current_target_cluster_id);
-                        $anode->set_misc_attr('ClusterType', $ctype);
+                        $anode->set_misc_attr('ClusterType', $ctype) if(defined($ctype));
                         my @cluster_members = sort(@{$canode->wild()->{cluster_members}}, $anode->id());
                         foreach my $id (@cluster_members)
                         {
@@ -112,9 +115,9 @@ sub process_anode
                         $self->set_last_cluster_id($last_cluster_id);
                         $current_cluster_id = 'c'.$last_cluster_id;
                         $anode->set_misc_attr('ClusterId', $current_cluster_id);
-                        $anode->set_misc_attr('ClusterType', $ctype);
+                        $anode->set_misc_attr('ClusterType', $ctype) if(defined($ctype));
                         $canode->set_misc_attr('ClusterId', $current_cluster_id);
-                        $canode->set_misc_attr('ClusterType', $ctype);
+                        $canode->set_misc_attr('ClusterType', $ctype) if(defined($ctype));
                         # Remember references to all cluster members from all cluster members.
                         # We may later need to revisit all cluster members and this will help
                         # us find them.
