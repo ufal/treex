@@ -150,6 +150,15 @@ sub process_anode
                     }
                 }
             }
+            # Get bridging edges.
+            my ($bridgenodes, $bridgetypes) = $tnode->get_bridging_nodes();
+            for(my $i = 0; $i <= $#{$bridgenodes}; $i++)
+            {
+                my $btnode = $bridgenodes->[$i];
+                my $btype = $bridgetypes->[$i];
+                $self->set_misc_attr('Bridging', "c?:$btype");
+                $self->mark_mention($anode);
+            }
         }
     }
 }
