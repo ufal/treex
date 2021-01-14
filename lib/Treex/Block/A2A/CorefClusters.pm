@@ -152,11 +152,42 @@ sub process_anode
             }
             # Get bridging edges.
             my ($bridgenodes, $bridgetypes) = $tnode->get_bridging_nodes();
+            my @bridging = ();
             for(my $i = 0; $i <= $#{$bridgenodes}; $i++)
             {
                 my $btnode = $bridgenodes->[$i];
                 my $btype = $bridgetypes->[$i];
-                $anode->set_misc_attr('Bridging', "c?:$btype");
+                # $btnode is the target t-node of the bridging edge.
+                # We need to access its corresponding lexical a-node.
+                my $banode = $ctnode->get_lex_anode();
+                if(defined($banode))
+                {
+                    # Does the target node already have a cluster id?
+                    my $current_target_cluster_id = $banode->get_misc_attr('ClusterId');
+                    if(defined($current_target_cluster_id))
+                    {
+                        push(@bridging, "$current_target_cluster_id:$btype");
+                    }
+                }
+            }
+            if(scalar(@bridging) > 0)
+            {
+                @bridging = sort
+                {
+                    my $aid = 0;
+                    my $bid = 0;
+                    if($a =~ m/^c(\d+):$/)
+                    {
+                        $aid = $1;
+                    }
+                    if($b =~ m/^c(\d+):$/)
+                    {
+                        $bid = $1;
+                    }
+                    $aid <=> $bid
+                }
+                (@bridging);
+                $anode->set_misc_attr('Bridging', join('+', @bridging));
                 $self->mark_mention($anode);
             }
         }
