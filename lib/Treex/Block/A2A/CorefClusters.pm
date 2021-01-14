@@ -160,6 +160,34 @@ sub process_anode
             {
                 my $btnode = $bridgenodes->[$i];
                 my $btype = $bridgetypes->[$i];
+                if($btype eq 'PART_WHOLE')
+                {
+                    $btype = 'Part';
+                }
+                elsif($btype eq 'SUB_SET')
+                {
+                    $btype = 'Subset';
+                }
+                elsif($btype eq 'P_FUNCT')
+                {
+                    $btype = 'Funct';
+                }
+                elsif($btype eq 'ANAF')
+                {
+                    $btype = 'Anaf';
+                }
+                elsif($btype eq 'REST')
+                {
+                    $btype = 'Other';
+                }
+                elsif($btype =~ m/^(WHOLE_PART|SET_SUB|FUNCT_P|CONTRAST)$/)
+                {
+                    # At present, do nothing.
+                }
+                else
+                {
+                    log_warn("Unknown bridging relation type '$btype'.");
+                }
                 # $btnode is the target t-node of the bridging edge.
                 # We need to access its corresponding lexical a-node.
                 my $banode = $btnode->get_lex_anode();
