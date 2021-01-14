@@ -159,7 +159,7 @@ sub process_anode
                 my $btype = $bridgetypes->[$i];
                 # $btnode is the target t-node of the bridging edge.
                 # We need to access its corresponding lexical a-node.
-                my $banode = $ctnode->get_lex_anode();
+                my $banode = $btnode->get_lex_anode();
                 if(defined($banode))
                 {
                     # Does the target node already have a cluster id?
