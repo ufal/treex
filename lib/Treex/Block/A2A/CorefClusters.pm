@@ -155,78 +155,121 @@ sub process_anode
             }
             # Get bridging edges.
             my ($bridgenodes, $bridgetypes) = $tnode->get_bridging_nodes();
-            my @bridging = ();
             for(my $i = 0; $i <= $#{$bridgenodes}; $i++)
             {
                 my $btnode = $bridgenodes->[$i];
                 my $btype = $bridgetypes->[$i];
-                if($btype eq 'WHOLE_PART')
-                {
-                    # kraje <-- obce
-                    $btype = 'Part';
-                }
-                elsif($btype eq 'SET_SUB')
-                {
-                    # veřejní činitelé <-- poslanci
-                    # poslanci <-- konkrétní poslanec
-                    $btype = 'Subset';
-                }
-                elsif($btype eq 'P_FUNCT')
-                {
-                    # obě dvě ministerstva <-- ministři kultury a financí | Pavel Tigrid a Ivan Kočárník
-                    $btype = 'Funct';
-                }
-                elsif($btype eq 'ANAF')
-                {
-                    # "loterie mohou provozovat pouze organizace k tomu účelu zvláště zřízené" <-- uvedená pasáž
-                    $btype = 'Anaf';
-                }
-                elsif($btype eq 'REST')
-                {
-                    $btype = 'Other';
-                }
-                elsif($btype =~ m/^(PART_WHOLE|SUB_SET|FUNCT_P|CONTRAST)$/)
-                {
-                    # At present, do nothing.
-                }
-                else
-                {
-                    log_warn("Unknown bridging relation type '$btype'.");
-                }
                 # $btnode is the target t-node of the bridging edge.
                 # We need to access its corresponding lexical a-node.
                 my $banode = $btnode->get_lex_anode();
                 if(defined($banode))
                 {
-                    # Does the target node already have a cluster id?
-                    my $current_target_cluster_id = $banode->get_misc_attr('ClusterId');
-                    if(defined($current_target_cluster_id))
-                    {
-                        push(@bridging, "$current_target_cluster_id:$btype");
-                    }
+                    $self->mark_bridging($anode, $banode, $btype);
                 }
-            }
-            if(scalar(@bridging) > 0)
-            {
-                @bridging = sort
+                else
                 {
-                    my $aid = 0;
-                    my $bid = 0;
-                    if($a =~ m/^c(\d+):$/)
-                    {
-                        $aid = $1;
-                    }
-                    if($b =~ m/^c(\d+):$/)
-                    {
-                        $bid = $1;
-                    }
-                    $aid <=> $bid
+                    log_warn("Target of bridging does not have a corresponding a-node.");
                 }
-                (@bridging);
-                $anode->set_misc_attr('Bridging', join('+', @bridging));
-                $self->mark_mention($anode);
             }
         }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Saves a bridging relation between two nodes in their misc attributes.
+#------------------------------------------------------------------------------
+sub mark_bridging
+{
+    my $self = shift;
+    my $srcnode = shift;
+    my $tgtnode = shift;
+    my $btype = shift;
+    if($btype eq 'WHOLE_PART')
+    {
+        # kraje <-- obce
+        $btype = 'Part';
+    }
+    elsif($btype eq 'PART_WHOLE')
+    {
+        $btype = 'Part';
+        my $x = $srcnode;
+        $srcnode = $tgtnode;
+        $tgtnode = $x;
+    }
+    elsif($btype eq 'SET_SUB')
+    {
+        # veřejní činitelé <-- poslanci
+        # poslanci <-- konkrétní poslanec
+        $btype = 'Subset';
+    }
+    elsif($btype eq 'SUB_SET')
+    {
+        $btype = 'Subset';
+        my $x = $srcnode;
+        $srcnode = $tgtnode;
+        $tgtnode = $x;
+    }
+    elsif($btype eq 'P_FUNCT')
+    {
+        # obě dvě ministerstva <-- ministři kultury a financí | Pavel Tigrid a Ivan Kočárník
+        $btype = 'Funct';
+    }
+    elsif($btype eq 'FUNCT_P')
+    {
+        $btype = 'Funct';
+        my $x = $srcnode;
+        $srcnode = $tgtnode;
+        $tgtnode = $x;
+    }
+    elsif($btype eq 'ANAF')
+    {
+        # "loterie mohou provozovat pouze organizace k tomu účelu zvláště zřízené" <-- uvedená pasáž
+        $btype = 'Anaf';
+    }
+    elsif($btype eq 'REST')
+    {
+        $btype = 'Other';
+    }
+    elsif($btype =~ m/^(CONTRAST)$/)
+    {
+        # At present, do nothing.
+    }
+    else
+    {
+        log_warn("Unknown bridging relation type '$btype'.");
+    }
+    my @bridging = ();
+    # Does the target node already have a cluster id?
+    my $current_target_cluster_id = $tgtnode->get_misc_attr('ClusterId');
+    if(defined($current_target_cluster_id))
+    {
+        push(@bridging, "$current_target_cluster_id:$btype");
+    }
+    else
+    {
+        log_warn("NOT YET IMPLEMENTED: TARGET NODE DOES NOT HAVE CLUSTER");
+    }
+    if(scalar(@bridging) > 0)
+    {
+        @bridging = sort
+        {
+            my $aid = 0;
+            my $bid = 0;
+            if($a =~ m/^c(\d+):$/)
+            {
+                $aid = $1;
+            }
+            if($b =~ m/^c(\d+):$/)
+            {
+                $bid = $1;
+            }
+            $aid <=> $bid
+        }
+        (@bridging);
+        $srcnode->set_misc_attr('Bridging', join('+', @bridging));
+        $self->mark_mention($srcnode);
     }
 }
 
