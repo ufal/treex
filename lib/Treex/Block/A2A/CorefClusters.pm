@@ -134,22 +134,7 @@ sub process_anode
                     }
                     else
                     {
-                        # We need a new cluster id.
-                        $last_cluster_id++;
-                        $self->set_last_cluster_id($last_cluster_id);
-                        $current_cluster_id = 'c'.$last_cluster_id;
-                        $anode->set_misc_attr('ClusterId', $current_cluster_id);
-                        $anode->set_misc_attr('ClusterType', $current_cluster_type) if(defined($current_cluster_type));
-                        $canode->set_misc_attr('ClusterId', $current_cluster_id);
-                        $canode->set_misc_attr('ClusterType', $current_cluster_type) if(defined($current_cluster_type));
-                        # Remember references to all cluster members from all cluster members.
-                        # We may later need to revisit all cluster members and this will help
-                        # us find them.
-                        my @cluster_members = sort($anode->id(), $canode->id());
-                        @{$anode->wild()->{cluster_members}} = @cluster_members;
-                        @{$canode->wild()->{cluster_members}} = @cluster_members;
-                        $self->mark_mention($anode);
-                        $self->mark_mention($canode);
+                        $current_cluster_id = $self->create_cluster($current_cluster_type, $anode, $canode);
                     }
                 }
             }
@@ -248,7 +233,7 @@ sub mark_bridging
     my $current_target_cluster_id = $tgtnode->get_misc_attr('ClusterId');
     if(!defined($current_target_cluster_id))
     {
-        $current_target_cluster_id = $self->create_cluster($tgtnode);
+        $current_target_cluster_id = $self->create_cluster(undef, $tgtnode);
     }
     push(@bridging, "$current_target_cluster_id:$btype");
     if(scalar(@bridging) > 0)
@@ -287,16 +272,21 @@ sub mark_bridging
 sub create_cluster
 {
     my $self = shift;
+    my $type = shift; # may be undef
     my @nodes = @_;
     # We need a new cluster id.
     my $last_cluster_id = $self->last_cluster_id();
     $last_cluster_id++;
     $self->set_last_cluster_id($last_cluster_id);
     my $cluster_id = 'c'.$last_cluster_id;
+    # Remember references to all cluster members from all cluster members.
+    # We may later need to revisit all cluster members and this will help
+    # us find them.
     my @cluster_members = map {$_->id()} (@nodes);
     foreach my $node (@nodes)
     {
         $node->set_misc_attr('ClusterId', $cluster_id);
+        $node->set_misc_attr('ClusterType', $type) if(defined($type));
         @{$node->wild()->{cluster_members}} = @cluster_members;
         $self->mark_mention($node);
     }
