@@ -110,27 +110,11 @@ sub process_anode
                     }
                     elsif(defined($current_cluster_id))
                     {
-                        $canode->set_misc_attr('ClusterId', $current_cluster_id);
-                        $canode->set_misc_attr('ClusterType', $current_cluster_type) if(defined($current_cluster_type));
-                        my @cluster_members = sort(@{$anode->wild()->{cluster_members}}, $canode->id());
-                        foreach my $id (@cluster_members)
-                        {
-                            my $node = $document->get_node_by_id($id);
-                            @{$node->wild()->{cluster_members}} = @cluster_members;
-                        }
-                        $self->mark_mention($canode);
+                        $self->add_nodes_to_cluster($current_cluster_id, $current_cluster_type, $anode, $canode);
                     }
                     elsif(defined($current_target_cluster_id))
                     {
-                        $anode->set_misc_attr('ClusterId', $current_target_cluster_id);
-                        $anode->set_misc_attr('ClusterType', $current_cluster_type) if(defined($current_cluster_type));
-                        my @cluster_members = sort(@{$canode->wild()->{cluster_members}}, $anode->id());
-                        foreach my $id (@cluster_members)
-                        {
-                            my $node = $document->get_node_by_id($id);
-                            @{$node->wild()->{cluster_members}} = @cluster_members;
-                        }
-                        $self->mark_mention($anode);
+                        $self->add_nodes_to_cluster($current_target_cluster_id, $current_cluster_type, $canode, $anode);
                     }
                     else
                     {
@@ -278,19 +262,50 @@ sub create_cluster
     my $last_cluster_id = $self->last_cluster_id();
     $last_cluster_id++;
     $self->set_last_cluster_id($last_cluster_id);
-    my $cluster_id = 'c'.$last_cluster_id;
+    my $id = 'c'.$last_cluster_id;
     # Remember references to all cluster members from all cluster members.
     # We may later need to revisit all cluster members and this will help
     # us find them.
-    my @cluster_members = map {$_->id()} (@nodes);
+    my @cluster_member_ids = map {$_->id()} (@nodes);
     foreach my $node (@nodes)
     {
-        $node->set_misc_attr('ClusterId', $cluster_id);
+        $node->set_misc_attr('ClusterId', $id);
         $node->set_misc_attr('ClusterType', $type) if(defined($type));
-        @{$node->wild()->{cluster_members}} = @cluster_members;
+        @{$node->wild()->{cluster_members}} = @cluster_member_ids;
         $self->mark_mention($node);
     }
-    return $cluster_id;
+    return $id;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds a new node (meaning the entire mention headed by that node) to an
+# existing cluster.
+#------------------------------------------------------------------------------
+sub add_nodes_to_cluster
+{
+    my $self = shift;
+    my $id = shift;
+    my $type = shift; # may be undef
+    my $current_member_node = shift; # a node that already bears a mention that is in the cluster
+    my $current_members = $current_member_node->wild()->{cluster_members};
+    # Do not try to add nodes that are already in the cluster.
+    my @new_members = grep {my $id = $_->id(); !any {$_ eq $id} (@{$current_members})} (@_);
+    return if(scalar(@new_members) == 0);
+    my @cluster_member_ids = sort(@{$current_members}, map {$_->id()} (@nodes));
+    my $document = $current_member_node->get_document();
+    foreach my $id (@cluster_member_ids)
+    {
+        my $node = $document->get_node_by_id($id);
+        @{$node->wild()->{cluster_members}} = @cluster_member_ids;
+    }
+    foreach my $node (@new_members)
+    {
+        $node->set_misc_attr('ClusterId', $id);
+        $node->set_misc_attr('ClusterType', $type) if(defined($type));
+        $self->mark_mention($node);
+    }
 }
 
 
