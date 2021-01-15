@@ -240,7 +240,10 @@ sub mark_bridging
     {
         log_warn("Unknown bridging relation type '$btype'.");
     }
+    # Does the source node already have other bridging relations?
+    my $bridging = $srcnode->get_misc_attr('Bridging');
     my @bridging = ();
+    @bridging = split(/\+/, $bridging) if(defined($bridging));
     # Does the target node already have a cluster id?
     my $current_target_cluster_id = $tgtnode->get_misc_attr('ClusterId');
     if(!defined($current_target_cluster_id))
@@ -274,7 +277,12 @@ sub mark_bridging
         }
         (@bridging);
         $srcnode->set_misc_attr('Bridging', join('+', @bridging));
-        $self->mark_mention($srcnode);
+        # If this is the first bridging relation, we may need to mark the source mention.
+        # (It may not be needed if the source node is also a member of a coreference cluster, but we do not know that.)
+        if(scalar(@bridging) == 1)
+        {
+            $self->mark_mention($srcnode);
+        }
     }
 }
 
