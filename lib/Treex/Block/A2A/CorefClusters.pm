@@ -248,15 +248,7 @@ sub mark_bridging
     my $current_target_cluster_id = $tgtnode->get_misc_attr('ClusterId');
     if(!defined($current_target_cluster_id))
     {
-        # We need a new cluster id.
-        my $last_cluster_id = $self->last_cluster_id();
-        $last_cluster_id++;
-        $self->set_last_cluster_id($last_cluster_id);
-        $current_target_cluster_id = 'c'.$last_cluster_id;
-        $tgtnode->set_misc_attr('ClusterId', $current_target_cluster_id);
-        my @cluster_members = ($tgtnode->id());
-        @{$tgtnode->wild()->{cluster_members}} = @cluster_members;
-        $self->mark_mention($tgtnode);
+        $current_target_cluster_id = $self->create_cluster($tgtnode);
     }
     push(@bridging, "$current_target_cluster_id:$btype");
     if(scalar(@bridging) > 0)
@@ -284,6 +276,31 @@ sub mark_bridging
             $self->mark_mention($srcnode);
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes a list of nodes and creates a new cluster around them. Returns the id
+# of the cluster.
+#------------------------------------------------------------------------------
+sub create_cluster
+{
+    my $self = shift;
+    my @nodes = @_;
+    # We need a new cluster id.
+    my $last_cluster_id = $self->last_cluster_id();
+    $last_cluster_id++;
+    $self->set_last_cluster_id($last_cluster_id);
+    my $cluster_id = 'c'.$last_cluster_id;
+    my @cluster_members = map {$_->id()} (@nodes);
+    foreach my $node (@nodes)
+    {
+        $node->set_misc_attr('ClusterId', $cluster_id);
+        @{$node->wild()->{cluster_members}} = @cluster_members;
+        $self->mark_mention($node);
+    }
+    return $cluster_id;
 }
 
 
