@@ -311,7 +311,7 @@ sub get_edescendants {
     if ( $arg_ref && $arg_ref->{except} ) {
         my $except_node = delete $arg_ref->{except};
         return () if $self == $except_node;
-        if ( $self->is_coap_root() && $arg_ref->{or_topological} ) {
+        if ( $self->is_coap_root() && $eff_arg_ref->{or_topological} ) {
             my @children = $self->get_children();
             @edescendants = map {
                 $_->get_descendants( { add_self => 1 } )
@@ -324,7 +324,7 @@ sub get_edescendants {
         }
     }
     else {
-        if ( $self->is_coap_root() && $arg_ref->{or_topological} ) {
+        if ( $self->is_coap_root() && $eff_arg_ref->{or_topological} ) {
             my @children = $self->get_children();
             @edescendants = map {
                 $_->get_descendants( { add_self => 1 } )
