@@ -93,19 +93,7 @@ sub process_anode
                         if($current_cluster_id ne $current_target_cluster_id)
                         {
                             # Merge the two clusters. Use the lower id. The higher id will remain unused.
-                            my $id1 = $current_cluster_id;
-                            my $id2 = $current_target_cluster_id;
-                            $id1 =~ s/^c//;
-                            $id2 =~ s/^c//;
-                            my $merged_id = 'c'.($id1 < $id2 ? $id1 : $id2);
-                            my @cluster_members = sort(@{$anode->wild()->{cluster_members}}, @{$canode->wild()->{cluster_members}});
-                            foreach my $id (@cluster_members)
-                            {
-                                my $node = $document->get_node_by_id($id);
-                                $node->set_misc_attr('ClusterId', $merged_id);
-                                $node->set_misc_attr('ClusterType', $current_cluster_type) if(defined($current_cluster_type));
-                                @{$node->wild()->{cluster_members}} = @cluster_members;
-                            }
+                            $self->merge_clusters($current_cluster_id, $anode, $current_target_cluster_id, $canode, $current_cluster_type);
                         }
                     }
                     elsif(defined($current_cluster_id))
@@ -305,6 +293,34 @@ sub add_nodes_to_cluster
         $node->set_misc_attr('ClusterId', $id);
         $node->set_misc_attr('ClusterType', $type) if(defined($type));
         $self->mark_mention($node);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Merges two clusters.
+#------------------------------------------------------------------------------
+sub merge_clusters
+{
+    my $self = shift;
+    my $id1 = shift;
+    my $node1 = shift; # a node from cluster 1
+    my $id2 = shift;
+    my $node2 = shift; # a node from cluster 2
+    my $type = shift; # may be undef
+    # Merge the two clusters. Use the lower id. The higher id will remain unused.
+    $id1 =~ s/^c//;
+    $id2 =~ s/^c//;
+    my $merged_id = 'c'.($id1 < $id2 ? $id1 : $id2);
+    my @cluster_member_ids = sort(@{$node1->wild()->{cluster_members}}, @{$node2->wild()->{cluster_members}});
+    my $document = $current_member_node->get_document();
+    foreach my $id (@cluster_member_ids)
+    {
+        my $node = $document->get_node_by_id($id);
+        $node->set_misc_attr('ClusterId', $merged_id);
+        $node->set_misc_attr('ClusterType', $type) if(defined($type));
+        @{$node->wild()->{cluster_members}} = @cluster_member_ids;
     }
 }
 
