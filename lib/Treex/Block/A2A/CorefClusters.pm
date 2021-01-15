@@ -293,7 +293,7 @@ sub add_nodes_to_cluster
     # Do not try to add nodes that are already in the cluster.
     my @new_members = grep {my $id = $_->id(); !any {$_ eq $id} (@{$current_members})} (@_);
     return if(scalar(@new_members) == 0);
-    my @cluster_member_ids = sort(@{$current_members}, map {$_->id()} (@nodes));
+    my @cluster_member_ids = sort(@{$current_members}, map {$_->id()} (@new_members));
     my $document = $current_member_node->get_document();
     foreach my $id (@cluster_member_ids)
     {
