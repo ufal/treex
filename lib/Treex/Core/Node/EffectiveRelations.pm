@@ -311,14 +311,30 @@ sub get_edescendants {
     if ( $arg_ref && $arg_ref->{except} ) {
         my $except_node = delete $arg_ref->{except};
         return () if $self == $except_node;
-        @edescendants = map {
-            $_->get_edescendants( { except => $except_node, add_self => 1 } )
-        } $self->get_echildren($eff_arg_ref);
+        if ( $self->is_coap_root() && $arg_ref->{or_topological} ) {
+            my @children = $self->get_children();
+            @edescendants = map {
+                $_->get_descendants( { add_self => 1 } )
+            } @children;
+        } else {
+            my @echildren = $self->get_echildren($eff_arg_ref);
+            @edescendants = map {
+                $_->get_edescendants( { except => $except_node, add_self => 1 } )
+            } @echildren;
+        }
     }
     else {
-        @edescendants = map {
-            $_->get_edescendants( { add_self => 1 } )
-        } $self->get_echildren($eff_arg_ref);
+        if ( $self->is_coap_root() && $arg_ref->{or_topological} ) {
+            my @children = $self->get_children();
+            @edescendants = map {
+                $_->get_descendants( { add_self => 1 } )
+            } @children;
+        } else {
+            my @echildren = $self->get_echildren($eff_arg_ref);
+            @edescendants = map {
+                $_->get_edescendants( { add_self => 1 } )
+            } @echildren;
+        }
     }
     return @edescendants if !$arg_ref;
     return $self->_process_switches( $arg_ref, @edescendants );
