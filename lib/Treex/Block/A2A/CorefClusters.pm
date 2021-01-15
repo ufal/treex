@@ -314,7 +314,7 @@ sub merge_clusters
     $id2 =~ s/^c//;
     my $merged_id = 'c'.($id1 < $id2 ? $id1 : $id2);
     my @cluster_member_ids = sort(@{$node1->wild()->{cluster_members}}, @{$node2->wild()->{cluster_members}});
-    my $document = $current_member_node->get_document();
+    my $document = $node1->get_document();
     foreach my $id (@cluster_member_ids)
     {
         my $node = $document->get_node_by_id($id);
