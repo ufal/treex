@@ -209,7 +209,9 @@ sub mark_bridging
     }
     elsif($btype =~ m/^(CONTRAST)$/)
     {
-        # At present, do nothing.
+        # This type is not really bridging (it holds between two mentions rather than two clusters).
+        # We ignore it.
+        return;
     }
     else
     {
