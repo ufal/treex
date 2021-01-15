@@ -243,14 +243,19 @@ sub mark_bridging
     my @bridging = ();
     # Does the target node already have a cluster id?
     my $current_target_cluster_id = $tgtnode->get_misc_attr('ClusterId');
-    if(defined($current_target_cluster_id))
+    if(!defined($current_target_cluster_id))
     {
-        push(@bridging, "$current_target_cluster_id:$btype");
+        # We need a new cluster id.
+        my $last_cluster_id = $self->last_cluster_id();
+        $last_cluster_id++;
+        $self->set_last_cluster_id($last_cluster_id);
+        $current_target_cluster_id = 'c'.$last_cluster_id;
+        $tgtnode->set_misc_attr('ClusterId', $current_target_cluster_id);
+        my @cluster_members = ($tgtnode->id());
+        @{$tgtnode->wild()->{cluster_members}} = @cluster_members;
+        $self->mark_mention($tgtnode);
     }
-    else
-    {
-        log_warn("NOT YET IMPLEMENTED: TARGET NODE DOES NOT HAVE CLUSTER");
-    }
+    push(@bridging, "$current_target_cluster_id:$btype");
     if(scalar(@bridging) > 0)
     {
         @bridging = sort
