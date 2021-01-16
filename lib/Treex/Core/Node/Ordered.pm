@@ -127,14 +127,14 @@ sub _normalize_node_ordering {
     my $enhanced = 0;
     my %o2n;
     for(my $i = 0; $i <= $#nodes; $i++) {
-        $o2n{$node[$i]->ord()} = $i;
-        $node[$i]->_set_ord($i);
-        $enhanced = 1 if(exists($node[$i]->wild()->{enhanced}));
+        $o2n{$nodes[$i]->ord()} = $i;
+        $nodes[$i]->_set_ord($i);
+        $enhanced = 1 if(exists($nodes[$i]->wild()->{enhanced}));
     }
     if ( $enhanced ) {
         foreach my $node (@nodes) {
-            if ( exists($node[$i]->wild()->{enhanced}) ) {
-                foreach my $edep (@{$node[$i]->wild()->{enhanced}}) {
+            if ( exists($node->wild()->{enhanced}) ) {
+                foreach my $edep (@{$node->wild()->{enhanced}}) {
                     $edep->[0] = $o2n{$edep->[0]};
                 }
             }
