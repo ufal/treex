@@ -41,6 +41,33 @@ sub process_zone
             # Store the functor in MISC. It may be useful to understand why the empty node is there.
             my $functor = $tnode->functor() // 'Unknown';
             $anode->set_misc_attr('Functor', $functor);
+            # We need an enhanced relation to make the empty node connected with
+            # the enhanced dependency graph. Try to propagate the dependency from
+            # the t-tree. (The parent may also help us estimate features of the
+            # generated node, such as person of #PersPron. Note however that some
+            # of the features may also be available as grammatemes.)
+            my $tparent = $tnode->parent();
+            my $aparent = $tparent->get_lex_anode();
+            # The $aparent may not exist or it may be in another sentence, in
+            # which case we cannot use it.
+            if(defined($aparent) && $aparent->get_root() == $aroot)
+            {
+                my $deprel = 'dep';
+                if(defined($functor))
+                {
+                    $deprel = $self->guess_deprel($aparent, $functor);
+                }
+                $anode->add_enhanced_dependency($aparent, $deprel);
+            }
+            # Without connecting the empty node at least to the root, it would not
+            # be printed and the graph would not be valid.
+            ###!!! It may be possible to attach the node to another empty node.
+            ###!!! We would have to generate all nodes first, then to connect them.
+            ###!!! However, at present we generate all empty nodes as leaves.
+            else
+            {
+                $anode->add_enhanced_dependency($aroot, 'root');
+            }
             # If the generated node is a copy of a real node, we may be able to
             # copy its attributes.
             my $source_anode = $tnode->get_lex_anode();
@@ -166,28 +193,6 @@ sub process_zone
                     $anode->set_tag('X');
                 }
             }
-            # We need an enhanced relation to make the empty node connected with
-            # the enhanced dependency graph. Try to propagate the dependency from
-            # the t-tree.
-            my $tparent = $tnode->parent();
-            my $aparent = $tparent->get_lex_anode();
-            # The $aparent may not exist or it may be in another sentence, in
-            # which case we cannot use it.
-            if(defined($aparent) && $aparent->get_root() == $aroot)
-            {
-                my $deprel = 'dep';
-                if(defined($functor))
-                {
-                    $deprel = $self->guess_deprel($functor);
-                }
-                $anode->add_enhanced_dependency($aparent, $deprel);
-            }
-            # Without connecting the empty node at least to the root, it would not
-            # be printed and the graph would not be valid.
-            else
-            {
-                $anode->add_enhanced_dependency($aroot, 'root');
-            }
         }
         else # t-node is not generated
         {
@@ -214,6 +219,7 @@ sub process_zone
 sub guess_deprel
 {
     my $self = shift;
+    my $aparent = shift;
     my $functor = shift;
     my $deprel = 'dep';
     if($functor =~ m/^(DENOM|PAR|PRED)$/)
@@ -235,20 +241,20 @@ sub guess_deprel
     ###!!! but since we typically pretend the empty node corresponds to a pronoun, it should be nominal.
     elsif($functor =~ m/^(ACT)$/)
     {
-        $deprel = 'nsubj';
+        $deprel = $aparent->is_noun() ? 'nmod' : 'nsubj';
     }
     elsif($functor =~ m/^(PAT)$/)
     {
-        $deprel = 'obj';
+        $deprel = $aparent->is_noun() ? 'nmod' : 'obj';
     }
     elsif($functor =~ m/^(ADDR|EFF|ORIG)$/)
     {
-        $deprel = 'obl:arg';
+        $deprel = $aparent->is_noun() ? 'nmod' : 'obl:arg';
     }
     # Adjuncts could be obl, advmod, advcl; we use always obl.
     elsif($functor =~ m/^(ACMP|AIM|BEN|CAUS|CNCS|COMPL|COND|CONTRD|CPR|CRIT|DIFF|DIR[123]|EXT|HER|INTT|LOC|MANN|MEANS|REG|RESL|RESTR|SUBS|TFHL|TFRWH|THL|THO|TOWH|TPAR|TSIN|TTILL|TWHEN)$/)
     {
-        $deprel = 'obl';
+        $deprel = $aparent->is_noun() ? 'nmod' : 'obl';
     }
     # Adnominal arguments and adjuncts could be nmod, amod, det, nummod; we use always nmod.
     elsif($functor =~ m/^(APP|AUTH|DESCR|ID|MAT|RSTR)$/)
