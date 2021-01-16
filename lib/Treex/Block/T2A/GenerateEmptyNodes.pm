@@ -301,9 +301,9 @@ sub get_verb_features
         $number = $niset->number() if($niset->number() ne '');
         $gender = $niset->gender() if($niset->gender() ne '');
     }
-    $iset->set_person($person) if($person ne '');
-    $iset->set_number($number) if($number ne '');
-    $iset->set_gender($gender) if($gender ne '');
+    $iset->set_person($person) if(defined($person) && $person ne '');
+    $iset->set_number($number) if(defined($number) && $number ne '');
+    $iset->set_gender($gender) if(defined($gender) && $gender ne '');
 }
 
 
