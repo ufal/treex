@@ -45,62 +45,16 @@ sub process_anode
                 my $canode = $self->get_anode_for_tnode($ctnode);
                 if(defined($canode))
                 {
-                    # The type is undefined for grammatical coreference. We will
-                    # try to copy it from other members of the cluster if possible
-                    # (it is the type of the entity/event corresponding to the
-                    # cluster).
-                    if(!defined($ctype))
+                    if(!defined($ctype) && $ng >= 2)
                     {
-                        if($ng >= 2)
-                        {
-                            ###!!! Debugging: Mark instances of grammatical coreference with multiple antecedents.
-                            $canode->set_misc_attr('GramCoref', 'SplitTo');
-                            $anode->set_misc_attr('GramCoref', 'SplitFrom');
-                        }
-                        if(defined($current_cluster_type))
-                        {
-                            $ctype = $current_cluster_type;
-                        }
+                        ###!!! Debugging: Mark instances of grammatical coreference with multiple antecedents.
+                        $canode->set_misc_attr('GramCoref', 'SplitTo');
+                        $anode->set_misc_attr('GramCoref', 'SplitFrom');
                     }
-                    elsif($ctype eq 'GEN')
-                    {
-                        # Generic entity, e.g., "úředníci".
-                        $ctype = 'Gen';
-                    }
-                    elsif($ctype eq 'SPEC')
-                    {
-                        # Specific entity or event, e.g., "Václav Klaus".
-                        $ctype = 'Spec';
-                    }
-                    else
-                    {
-                        log_warn("Unknown coreference cluster type '$ctype'.");
-                    }
-                    # Sanity check: All coreference edges in a cluster should have the same type (or undefined type).
-                    if(defined($current_cluster_type) && defined($ctype) && $current_cluster_type ne $ctype)
-                    {
-                        log_warn("Cluster type mismatch.");
-                        $anode->set_misc_attr('ClusterTypeMismatch', "$current_cluster_type:$ctype:1"); # :1 identifies where the error occurred in the source code
-                    }
-                    if(!defined($current_cluster_type) && defined($ctype))
-                    {
-                        $current_cluster_type = $ctype;
-                    }
-                    # Does the target node already have a cluster id?
+                    # Does the target node already have a cluster id and type?
                     my $current_target_cluster_id = $canode->get_misc_attr('ClusterId');
                     my $current_target_cluster_type = $canode->get_misc_attr('ClusterType');
-                    # Sanity check: All coreference edges in a cluster should have the same type (or undefined type).
-                    # If the current coreference edge does not have a type, check whether we can copy the type from the target mention.
-                    if(defined($current_cluster_type) && defined($current_target_cluster_type) && $current_cluster_type ne $current_target_cluster_type)
-                    {
-                        log_warn("Cluster type mismatch.");
-                        $anode->set_misc_attr('ClusterTypeMismatch', "$current_cluster_type:$current_target_cluster_type:2"); # :2 identifies where the error occurred in the source code
-                        $canode->set_misc_attr('ClusterTypeMismatch', "$current_cluster_type:$current_target_cluster_type:2"); # :2 identifies where the error occurred in the source code
-                    }
-                    if(!defined($current_cluster_type) && defined($current_target_cluster_type))
-                    {
-                        $current_cluster_type = $current_target_cluster_type;
-                    }
+                    $current_cluster_type = $self->process_cluster_type($ctype, $current_cluster_type, $anode, $current_target_cluster_type, $canode);
                     if(defined($current_cluster_id) && defined($current_target_cluster_id))
                     {
                         # Are we merging two clusters that were created independently?
@@ -180,6 +134,71 @@ sub get_anode_for_tnode
         $anode = $tnode->get_lex_anode();
     }
     return $anode;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Converts coreference cluster type, compares and merges it with the existing
+# cluster type (if already known) of the coreferred nodes. Returns the type
+# (we want to remember it as the current source node's cluster type).
+#------------------------------------------------------------------------------
+sub process_cluster_type
+{
+    my $self = shift;
+    my $ctype = shift; # type from the current coreference edge (can be undef for grammatical coreference)
+    my $srctype = shift; # type already marked on the source node (can be undef)
+    my $srcnode = shift; # source node of the edge (needed only to mark errors)
+    my $tgttype = shift; # type already marked on the target node (can be undef)
+    my $tgtnode = shift; # target node of the edge (needed only to mark errors)
+    # The type is undefined for grammatical coreference. We will
+    # try to copy it from other members of the cluster if possible
+    # (it is the type of the entity/event corresponding to the
+    # cluster).
+    if(!defined($ctype))
+    {
+        if(defined($srctype))
+        {
+            $ctype = $srctype;
+        }
+    }
+    elsif($ctype eq 'GEN')
+    {
+        # Generic entity, e.g., "úředníci".
+        $ctype = 'Gen';
+    }
+    elsif($ctype eq 'SPEC')
+    {
+        # Specific entity or event, e.g., "Václav Klaus".
+        $ctype = 'Spec';
+    }
+    else
+    {
+        log_warn("Unknown coreference cluster type '$ctype'.");
+    }
+    # Sanity check: All coreference edges in a cluster should have the same type (or undefined type).
+    if(defined($srctype) && defined($ctype) && $srctype ne $ctype)
+    {
+        log_warn("Cluster type mismatch.");
+        $srcnode->set_misc_attr('ClusterTypeMismatch', "$srctype:$ctype:1"); # :1 identifies where the error occurred in the source code
+    }
+    if(!defined($srctype) && defined($ctype))
+    {
+        $srctype = $ctype;
+    }
+    # Sanity check: All coreference edges in a cluster should have the same type (or undefined type).
+    # If the current coreference edge does not have a type, check whether we can copy the type from the target mention.
+    if(defined($srctype) && defined($tgttype) && $srctype ne $tgttype)
+    {
+        log_warn("Cluster type mismatch.");
+        $srcnode->set_misc_attr('ClusterTypeMismatch', "$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
+        $tgtnode->set_misc_attr('ClusterTypeMismatch', "$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
+    }
+    if(!defined($srctype) && defined($tgttype))
+    {
+        $srctype = $tgttype;
+    }
+    return $srctype;
 }
 
 
