@@ -67,6 +67,13 @@ sub mark_mention
     my $self = shift;
     my $anode = shift;
     my ($mspan, $mtext, $mhead) = $self->get_mention_span($anode);
+    # A span of an existing a-node always contains at least that node.
+    if(!defined($mspan) || $mspan eq '')
+    {
+        my $address = $anode->get_address();
+        my $form = $anode->form() // '';
+        log_fatal("Failed to determine the span of node '$form' ($address).\n");
+    }
     $anode->set_misc_attr('MentionSpan', $mspan);
     $anode->set_misc_attr('MentionHead', $mhead);
     $anode->set_misc_attr('MentionText', $mtext);
