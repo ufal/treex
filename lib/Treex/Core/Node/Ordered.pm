@@ -121,10 +121,24 @@ sub _normalize_node_ordering {
     # Otherwise normalization will not work as expected if the current ord of the root is nonzero and/or a non-root node has zero.
     my @nodes = $self->get_descendants( { ordered => 1 } );
     unshift(@nodes, $self);
-    my $new_ord = 0;
-    foreach my $node (@nodes) {
-        $node->_set_ord($new_ord);
-        $new_ord++
+    # If there are enhanced dependencies, we will have to adjust them, too.
+    # But first we must collect the mapping between old and new ords.
+    ###!!! This is not a good solution because enhanced dependencies are in Node::A and Node::Ordered should not have to know about them.
+    my $enhanced = 0;
+    my %o2n;
+    for(my $i = 0; $i <= $#nodes; $i++) {
+        $o2n{$node[$i]->ord()} = $i;
+        $node[$i]->_set_ord($i);
+        $enhanced = 1 if(exists($node[$i]->wild()->{enhanced}));
+    }
+    if ( $enhanced ) {
+        foreach my $node (@nodes) {
+            if ( exists($node[$i]->wild()->{enhanced}) ) {
+                foreach my $edep (@{$node[$i]->wild()->{enhanced}}) {
+                    $edep->[0] = $o2n{$edep->[0]};
+                }
+            }
+        }
     }
     return;
 }
