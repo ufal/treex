@@ -340,6 +340,105 @@ sub get_subtree_dependency_string
 
 
 
+# The MISC attributes from CoNLL-U files are stored as wild attributes.
+# These methods should be in a Universal Dependencies related role but we don't have one.
+# get_misc() returns a list of MISC attributes (possibly empty list)
+sub get_misc
+{
+    my $self = shift;
+    my @misc;
+    my $wild = $self->wild();
+    if (exists($wild->{misc}) && defined($wild->{misc}))
+    {
+        @misc = split(/\|/, $wild->{misc});
+    }
+    return @misc;
+}
+
+# get_misc_attr() returns the first value of given misc attr, or undef
+sub get_misc_attr
+{
+    my $self = shift;
+    my $attr = shift;
+    my @misc = grep {m/^$attr=.+$/} ($self->get_misc());
+    if(scalar(@misc) > 1)
+    {
+        log_warn("Multiple values of MISC attribute '$attr'.");
+    }
+    if(scalar(@misc) > 0)
+    {
+        if($misc[0] =~ m/^$attr=(.+)$/)
+        {
+            return $1;
+        }
+    }
+    return undef;
+}
+
+# set_misc() takes a list of MISC attributes (possibly empty list)
+sub set_misc
+{
+    my $self = shift;
+    my @misc = @_;
+    my $wild = $self->wild();
+    if (scalar(@misc) > 0)
+    {
+        $wild->{misc} = join('|', @misc);
+    }
+    else
+    {
+        delete($wild->{misc});
+    }
+}
+
+# set_misc_attr() takes an attribute name and value; assumes that MISC elements are attr=value pairs; replaces first or pushes at the end
+sub set_misc_attr
+{
+    my $self = shift;
+    my $attr = shift;
+    my $value = shift;
+    if (defined($attr) && defined($value))
+    {
+        my @misc = $self->get_misc();
+        my $found = 0;
+        for(my $i = 0; $i <= $#misc; $i++)
+        {
+            if ($misc[$i] =~ m/^(.+?)=(.+)$/ && $1 eq $attr)
+            {
+                if ($found)
+                {
+                    splice(@misc, $i--, 1);
+                }
+                else
+                {
+                    $misc[$i] = "$attr=$value";
+                    $found = 1;
+                }
+            }
+        }
+        if (!$found)
+        {
+            push(@misc, "$attr=$value");
+        }
+        $self->set_misc(@misc);
+    }
+}
+
+# clear_misc_attr() takes an attribute name; assumes that MISC elements are attr=value pairs; removes all occurrences of that attribute
+sub clear_misc_attr
+{
+    my $self = shift;
+    my $attr = shift;
+    if (defined($attr))
+    {
+        my @misc = $self->get_misc();
+        @misc = grep {!(m/^(.+?)=/ && $1 eq $attr)} (@misc);
+        $self->set_misc(@misc);
+    }
+}
+
+
+
 #------------------------------------------------------------------------------
 # Says whether this node is member of a fused ("multiword") token.
 #------------------------------------------------------------------------------
@@ -666,6 +765,24 @@ sub get_conllu_id
 {
     my $self = shift;
     return $self->is_empty() ? $self->wild()->{enord} : $self->ord();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the CoNLL-U node ID split to major and minor number (useful for
+# sorting).
+#------------------------------------------------------------------------------
+sub get_major_minor_id
+{
+    my $self = shift;
+    my $major = $self->get_conllu_id();
+    my $minor = 0;
+    if($major =~ s/^(\d+)\.(\d+)$/$1/)
+    {
+        $minor = $2;
+    }
+    return ($major, $minor);
 }
 
 
