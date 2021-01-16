@@ -404,6 +404,9 @@ sub mark_cluster_type
     my $node1 = shift; # a node in the cluster
     my $type = shift; # cannot be undef this time, it wouldn't make sense
     log_fatal("Missing parameter.") if(!defined($node1) || !defined($type));
+    # If we try to mark cluster type on a node that is not yet in the cluster,
+    # do nothing. It will be marked later.
+    return if(!exists($node1->wild()->{cluster_members}));
     my @cluster_member_ids = sort(@{$node1->wild()->{cluster_members}});
     my $document = $node1->get_document();
     foreach my $id (@cluster_member_ids)
