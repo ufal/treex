@@ -79,7 +79,15 @@ sub process_zone
                 }
                 elsif($tlemma eq '#Gen')
                 {
-                    $anode->set_form('někdo');
+                    # Very often, if a #Gen is used in coreference, its functor is BEN (beneficiary).
+                    if($functor eq 'BEN')
+                    {
+                        $anode->set_form('pro_někoho');
+                    }
+                    else
+                    {
+                        $anode->set_form('někdo');
+                    }
                     $anode->set_tag('PRON');
                     $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs'});
                 }
