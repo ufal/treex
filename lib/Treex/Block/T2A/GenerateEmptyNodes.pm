@@ -36,7 +36,11 @@ sub process_zone
             $anode->wild()->{enord} = "$major.$lastminor[$major]";
             $anode->shift_after_node($lastanode);
             $lastanode = $anode;
-            $anode->set_lemma($tnode->t_lemma());
+            my $tlemma = $tnode->t_lemma();
+            $anode->set_lemma($tlemma);
+            # Store the functor in MISC. It may be useful to understand why the empty node is there.
+            my $functor = $tnode->functor() // 'Unknown';
+            $anode->set_misc_attr('Functor', $functor);
             # If the generated node is a copy of a real node, we may be able to
             # copy its attributes.
             my $source_anode = $tnode->get_lex_anode();
@@ -68,19 +72,26 @@ sub process_zone
                 # Some ... nepřítomná jmenná část verbonominálního predikátu, zejména ve srovnávacích konstrukcích (7.4 Konstrukce s významem srovnání)
                 # Total ... nepřítomný totalizátor v konstrukcích vyjadřujících způsob uvedením výjimky (7.6 Konstrukce s významem omezení a výjimečného slučování)
                 # Unsp ... nepřítomné blíže nespecifikované valenční doplnění (5.2.4.1 Všeobecný aktant a blíže nespecifikovaný aktor)
-                if($tnode->t_lemma() =~ m/^\#(PersPron|Gen|Unsp|Q?Cor|Rcp|Oblfm|Benef)$/)
+                if($tlemma =~ m/^\#(PersPron|Unsp|Q?Cor|Rcp|Oblfm|Benef)$/)
                 {
                     $anode->set_tag('PRON');
                     $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs'});
                 }
-                elsif($tnode->t_lemma() eq '#Neg')
+                elsif($tlemma eq '#Gen')
                 {
+                    $anode->set_form('někdo');
+                    $anode->set_tag('PRON');
+                    $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs'});
+                }
+                elsif($tlemma eq '#Neg')
+                {
+                    $anode->set_form('ne');
                     $anode->set_tag('PART');
                     $anode->iset()->set_hash({'pos' => 'part', 'polarity' => 'neg'});
                 }
                 # Empty verb that cannot be copied from an overt node but it has overt dependents.
                 # Example: "jak [je] vidno" (missing "je"; the other two words should depend on it in the Prague style).
-                elsif($tnode->t_lemma() eq '#EmpVerb')
+                elsif($tlemma eq '#EmpVerb')
                 {
                     $anode->set_tag('VERB');
                     $anode->iset()->set_hash({'pos' => 'verb'});
@@ -89,7 +100,7 @@ sub process_zone
                 # Example: "příliš [peněz] prodělává" (missing "peněz"; it should be a child of "prodělává" and the parent of "příliš").
                 # Elided identification expressions ('#Idph') typically also correspond to nominals.
                 # Example: "Bydlíme [v ulici] Mezi Zahrádkami 21".
-                elsif($tnode->t_lemma() =~ m/^\#(EmpNoun|Idph)$/)
+                elsif($tlemma =~ m/^\#(EmpNoun|Idph)$/)
                 {
                     $anode->set_tag('NOUN');
                     $anode->iset()->set_hash({'pos' => 'noun', 'nountype' => 'com'});
@@ -97,39 +108,44 @@ sub process_zone
                 # Elided adverbial expression corresponding to as little / as much / as well...
                 # Example: Opravil nám televizor [tak špatně], že za dva dny nefungoval.
                 # Example: Zpívali [tak moc], až se hory zelenaly.
-                elsif($tnode->t_lemma() eq '#AsMuch')
+                elsif($tlemma eq '#AsMuch')
                 {
+                    $anode->set_form('tak');
                     $anode->set_tag('ADV');
                     $anode->iset()->set_hash({'pos' => 'adv'});
                 }
                 # Elided positive in comparison.
                 # Example: Udělal to [stejně], jako to udělal Tonda.
                 # Example: Poslanec je [stejný] člověk jako [je] každý jiný [člověk].
-                elsif($tnode->t_lemma() eq '#Equal')
+                elsif($tlemma eq '#Equal')
                 {
+                    $anode->set_form('stejný/stejně');
                     # We do not know whether it should be ADJ or ADV, so we go by X.
                     $anode->set_tag('X');
                 }
                 # #Some
                 # Example: Je stejný jako já [jsem nějaký]. (We cannot copy "stejný" here, so we generate '#Some'.)
-                elsif($tnode->t_lemma() eq '#Some')
+                elsif($tlemma eq '#Some')
                 {
+                    $anode->set_form('nějaký');
                     $anode->set_tag('ADJ');
                     $anode->iset()->set_hash({'pos' => 'adj'});
                 }
                 # Missing totalizer '#Total'.
                 # Example: Mimo datum se píší [všechny] řadové číslice slovy.
                 # Example: Kromě Jihočeské keramiky nepatří tyto firmy mezi nejsilnější. (annotated as "firmy [všechny] kromě Jihočeské keramiky")
-                elsif($tnode->t_lemma() eq '#Total')
+                elsif($tlemma eq '#Total')
                 {
+                    $anode->set_form('všichni');
                     $anode->set_tag('DET');
                     $anode->iset()->set_hash({'pos' => 'adj', 'prontype' => 'tot'});
                 }
                 # Missing coordinating conjunction/punctuation that could serve
                 # as the coap head in the Prague coordination style.
                 # Example: "Oběžoval ho hmyz [#Separ] apod."
-                elsif($tnode->t_lemma() eq '#Separ')
+                elsif($tlemma eq '#Separ')
                 {
+                    $anode->set_form('a');
                     $anode->set_tag('CCONJ');
                     $anode->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'coor'});
                 }
@@ -151,101 +167,10 @@ sub process_zone
             # which case we cannot use it.
             if(defined($aparent) && $aparent->get_root() == $aroot)
             {
-                # Guess the UD dependency relation based on the tectogrammatical functor.
-                ###!!! This is currently very rough and it could be improved!
                 my $deprel = 'dep';
-                my $functor = $tnode->functor();
                 if(defined($functor))
                 {
-                    if($functor =~ m/^(DENOM|PAR|PRED)$/)
-                    {
-                        $deprel = 'parataxis';
-                    }
-                    elsif($functor =~ m/^(PARTL)$/)
-                    {
-                        $deprel = 'discourse';
-                    }
-                    elsif($functor =~ m/^(VOCAT)$/)
-                    {
-                        $deprel = 'vocative';
-                    }
-                    ###!!! The arguments may correspond to nsubj, obj or obl:arg.
-                    ###!!! We should consider the voice to distinguish between nsubj and nsubj:pass;
-                    ###!!! even then it will not work for certain classes of verbs.
-                    ###!!! We also don't know whether the argument is nominal (nsubj) or clausal (csubj)
-                    ###!!! but since we typically pretend the empty node corresponds to a pronoun, it should be nominal.
-                    elsif($functor =~ m/^(ACT)$/)
-                    {
-                        $deprel = 'nsubj';
-                    }
-                    elsif($functor =~ m/^(PAT)$/)
-                    {
-                        $deprel = 'obj';
-                    }
-                    elsif($functor =~ m/^(ADDR|EFF|ORIG)$/)
-                    {
-                        $deprel = 'obl:arg';
-                    }
-                    # Adjuncts could be obl, advmod, advcl; we use always obl.
-                    elsif($functor =~ m/^(ACMP|AIM|BEN|CAUS|CNCS|COMPL|COND|CONTRD|CPR|CRIT|DIFF|DIR[123]|EXT|HER|INTT|LOC|MANN|MEANS|REG|RESL|RESTR|SUBS|TFHL|TFRWH|THL|THO|TOWH|TPAR|TSIN|TTILL|TWHEN)$/)
-                    {
-                        $deprel = 'obl';
-                    }
-                    # Adnominal arguments and adjuncts could be nmod, amod, det, nummod; we use always nmod.
-                    elsif($functor =~ m/^(APP|AUTH|DESCR|ID|MAT|RSTR)$/)
-                    {
-                        $deprel = 'nmod';
-                    }
-                    # ATT = speaker's attitude
-                    elsif($functor =~ m/^(ATT)$/)
-                    {
-                        $deprel = 'advmod';
-                    }
-                    # CM = modification of coordination ("ale _dokonce_...")
-                    elsif($functor =~ m/^(CM)$/)
-                    {
-                        $deprel = 'cc';
-                    }
-                    # CPHR = nominal part of compound predicate ("dostali _rozkaz_")
-                    elsif($functor =~ m/^(CPHR)$/)
-                    {
-                        $deprel = 'obj';
-                    }
-                    # DPHR = dependent part of idiom (phraseme) ("jde mi _na nervy_"; "široko _daleko_"; "křížem _krážem_")
-                    elsif($functor =~ m/^(DPHR)$/)
-                    {
-                        # DPHR could be various things in the surface syntax.
-                        $deprel = 'dep';
-                    }
-                    # FPHR = part of foreign expression
-                    elsif($functor =~ m/^(FPHR)$/)
-                    {
-                        $deprel = 'flat:foreign';
-                    }
-                    # NE = part of named entity (only PCEDT)
-                    elsif($functor =~ m/^(NE)$/)
-                    {
-                        $deprel = 'flat:name';
-                    }
-                    # INTF = expletive subject
-                    elsif($functor =~ m/^(INTF)$/)
-                    {
-                        $deprel = 'expl';
-                    }
-                    # MOD = some modal expressions ("_pravděpodobně_ přijdeme"; "_asi_ před týdnem jsem dostal dopis").
-                    # PREC = preceding context ("pak", "naopak")
-                    # RHEM = rhematizer ("jen", "teprve", "ještě")
-                    elsif($functor =~ m/^(MOD|PREC|RHEM)$/)
-                    {
-                        $deprel = 'advmod';
-                    }
-                    # The functors for head nodes of paratactic structures should not be used in UD
-                    # where paratactic structures are annotated in the Stanford style. Nevertheless,
-                    # we list them here for completeness.
-                    elsif($functor =~ m/^(ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS)$/)
-                    {
-                        $deprel = 'cc';
-                    }
+                    $deprel = $self->guess_deprel($functor);
                 }
                 $anode->add_enhanced_dependency($aparent, $deprel);
             }
@@ -270,6 +195,109 @@ sub process_zone
             }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Guesses the UD dependency relation based on tectogrammatical functor.
+###!!! This is currently very rough and it could be improved!
+#------------------------------------------------------------------------------
+sub guess_deprel
+{
+    my $self = shift;
+    my $functor = shift;
+    my $deprel = 'dep';
+    if($functor =~ m/^(DENOM|PAR|PRED)$/)
+    {
+        $deprel = 'parataxis';
+    }
+    elsif($functor =~ m/^(PARTL)$/)
+    {
+        $deprel = 'discourse';
+    }
+    elsif($functor =~ m/^(VOCAT)$/)
+    {
+        $deprel = 'vocative';
+    }
+    ###!!! The arguments may correspond to nsubj, obj or obl:arg.
+    ###!!! We should consider the voice to distinguish between nsubj and nsubj:pass;
+    ###!!! even then it will not work for certain classes of verbs.
+    ###!!! We also don't know whether the argument is nominal (nsubj) or clausal (csubj)
+    ###!!! but since we typically pretend the empty node corresponds to a pronoun, it should be nominal.
+    elsif($functor =~ m/^(ACT)$/)
+    {
+        $deprel = 'nsubj';
+    }
+    elsif($functor =~ m/^(PAT)$/)
+    {
+        $deprel = 'obj';
+    }
+    elsif($functor =~ m/^(ADDR|EFF|ORIG)$/)
+    {
+        $deprel = 'obl:arg';
+    }
+    # Adjuncts could be obl, advmod, advcl; we use always obl.
+    elsif($functor =~ m/^(ACMP|AIM|BEN|CAUS|CNCS|COMPL|COND|CONTRD|CPR|CRIT|DIFF|DIR[123]|EXT|HER|INTT|LOC|MANN|MEANS|REG|RESL|RESTR|SUBS|TFHL|TFRWH|THL|THO|TOWH|TPAR|TSIN|TTILL|TWHEN)$/)
+    {
+        $deprel = 'obl';
+    }
+    # Adnominal arguments and adjuncts could be nmod, amod, det, nummod; we use always nmod.
+    elsif($functor =~ m/^(APP|AUTH|DESCR|ID|MAT|RSTR)$/)
+    {
+        $deprel = 'nmod';
+    }
+    # ATT = speaker's attitude
+    elsif($functor =~ m/^(ATT)$/)
+    {
+        $deprel = 'advmod';
+    }
+    # CM = modification of coordination ("ale _dokonce_...")
+    elsif($functor =~ m/^(CM)$/)
+    {
+        $deprel = 'cc';
+    }
+    # CPHR = nominal part of compound predicate ("dostali _rozkaz_")
+    elsif($functor =~ m/^(CPHR)$/)
+    {
+        $deprel = 'obj';
+    }
+    # DPHR = dependent part of idiom (phraseme) ("jde mi _na nervy_"; "široko _daleko_"; "křížem _krážem_")
+    elsif($functor =~ m/^(DPHR)$/)
+    {
+        # DPHR could be various things in the surface syntax.
+        $deprel = 'dep';
+    }
+    # FPHR = part of foreign expression
+    elsif($functor =~ m/^(FPHR)$/)
+    {
+        $deprel = 'flat:foreign';
+    }
+    # NE = part of named entity (only PCEDT)
+    elsif($functor =~ m/^(NE)$/)
+    {
+        $deprel = 'flat:name';
+    }
+    # INTF = expletive subject
+    elsif($functor =~ m/^(INTF)$/)
+    {
+        $deprel = 'expl';
+    }
+    # MOD = some modal expressions ("_pravděpodobně_ přijdeme"; "_asi_ před týdnem jsem dostal dopis").
+    # PREC = preceding context ("pak", "naopak")
+    # RHEM = rhematizer ("jen", "teprve", "ještě")
+    elsif($functor =~ m/^(MOD|PREC|RHEM)$/)
+    {
+        $deprel = 'advmod';
+    }
+    # The functors for head nodes of paratactic structures should not be used in UD
+    # where paratactic structures are annotated in the Stanford style. Nevertheless,
+    # we list them here for completeness.
+    elsif($functor =~ m/^(ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS)$/)
+    {
+        $deprel = 'cc';
+    }
+    return $deprel;
 }
 
 
