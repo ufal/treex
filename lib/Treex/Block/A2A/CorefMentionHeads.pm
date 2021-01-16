@@ -68,8 +68,8 @@ sub mark_mention
     my $anode = shift;
     my ($mspan, $mtext, $mhead) = $self->get_mention_span($anode);
     $anode->set_misc_attr('MentionSpan', $mspan);
-    $anode->set_misc_attr('MentionText', $mtext);
     $anode->set_misc_attr('MentionHead', $mhead);
+    $anode->set_misc_attr('MentionText', $mtext);
     # We will want to later run A2A::CorefMentionHeads to move the mention
     # annotation to the head node.
     return $anode;
