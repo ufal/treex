@@ -317,11 +317,17 @@ sub create_cluster
     my $self = shift;
     my $type = shift; # may be undef
     my @nodes = @_;
+    log_fatal("At least one node is needed to create a cluster.") if(scalar(@nodes)==0);
     # We need a new cluster id.
     my $last_cluster_id = $self->last_cluster_id();
     $last_cluster_id++;
     $self->set_last_cluster_id($last_cluster_id);
-    my $id = 'c'.$last_cluster_id;
+    # In released data, the ClusterId should be just 'c' + natural number.
+    # However, larger unique strings are allowed during intermediate stages,
+    # and we need them in order to ensure uniqueness across multiple documents
+    # in one file. Clusters never span multiple documents, so we will insert
+    # the document id.
+    my $id = $nodes[0]->get_document()->id().'-c'.$last_cluster_id;
     # Remember references to all cluster members from all cluster members.
     # We may later need to revisit all cluster members and this will help
     # us find them.
@@ -381,9 +387,9 @@ sub merge_clusters
     my $node2 = shift; # a node from cluster 2
     my $type = shift; # may be undef
     # Merge the two clusters. Use the lower id. The higher id will remain unused.
-    $id1 =~ s/^c//;
-    $id2 =~ s/^c//;
-    my $merged_id = 'c'.($id1 < $id2 ? $id1 : $id2);
+    $id1 =~ s/^(.*)c(\d+)$/$2/;
+    $id2 =~ s/^(.*)c(\d+)$/$2/;
+    my $merged_id = $1.'c'.($id1 < $id2 ? $id1 : $id2);
     my @cluster_member_ids = sort(@{$node1->wild()->{cluster_members}}, @{$node2->wild()->{cluster_members}});
     my $document = $node1->get_document();
     foreach my $id (@cluster_member_ids)
