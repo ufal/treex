@@ -147,6 +147,11 @@ sub get_mention_span
             }
         }
     }
+    else
+    {
+        my $form = $anode->form() // '';
+        log_warn("Trying to mark a mention headed by a node that is not linked to the t-layer: '$form'.\n");
+    }
     my @result = $self->sort_node_ids(keys(%snodes));
     # If a contiguous sequence of two or more nodes is a part of the mention,
     # it should be represented using a hyphen (i.e., "8-9" instead of "8,9",
