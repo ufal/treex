@@ -58,6 +58,7 @@ sub process_zone
                     $deprel = $self->guess_deprel($aparent, $functor);
                 }
                 $anode->add_enhanced_dependency($aparent, $deprel);
+                $self->get_verb_features($aparent, $anode->iset());
             }
             # Without connecting the empty node at least to the root, it would not
             # be printed and the graph would not be valid.
@@ -99,10 +100,74 @@ sub process_zone
                 # Some ... nepřítomná jmenná část verbonominálního predikátu, zejména ve srovnávacích konstrukcích (7.4 Konstrukce s významem srovnání)
                 # Total ... nepřítomný totalizátor v konstrukcích vyjadřujících způsob uvedením výjimky (7.6 Konstrukce s významem omezení a výjimečného slučování)
                 # Unsp ... nepřítomné blíže nespecifikované valenční doplnění (5.2.4.1 Všeobecný aktant a blíže nespecifikovaný aktor)
-                if($tlemma =~ m/^\#(PersPron|Unsp|Q?Cor|Rcp|Oblfm|Benef)$/)
+                if($tlemma =~ m/^\#(Unsp|Q?Cor|Rcp|Oblfm|Benef)$/)
                 {
                     $anode->set_tag('PRON');
                     $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs'});
+                }
+                elsif($tlemma eq '#PersPron')
+                {
+                    $anode->set_tag('PRON');
+                    # Do not use set_hash() because it would reset the features that we may have set above based on the verb.
+                    my $iset = $anode->iset();
+                    $iset->set('pos' => 'noun');
+                    $iset->set('prontype' => 'prs');
+                    if($iset->number() eq 'plur')
+                    {
+                        if($iset->person() eq '1')
+                        {
+                            $anode->set_form('my');
+                        }
+                        elsif($iset->person() eq '2')
+                        {
+                            $anode->set_form('vy');
+                        }
+                        else
+                        {
+                            if($iset->gender() eq 'fem')
+                            {
+                                $anode->set_form('ony');
+                            }
+                            elsif($iset->gender() eq 'neut')
+                            {
+                                $anode->set_form('ona');
+                            }
+                            elsif($iset->animacy() eq 'inan')
+                            {
+                                $anode->set_form('ony');
+                            }
+                            else
+                            {
+                                $anode->set_form('oni');
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if($iset->person() eq '1')
+                        {
+                            $anode->set_form('já');
+                        }
+                        elsif($iset->person() eq '2')
+                        {
+                            $anode->set_form('ty');
+                        }
+                        else
+                        {
+                            if($iset->gender() eq 'fem')
+                            {
+                                $anode->set_form('ona');
+                            }
+                            elsif($iset->gender() eq 'neut')
+                            {
+                                $anode->set_form('ono');
+                            }
+                            else
+                            {
+                                $anode->set_form('on');
+                            }
+                        }
+                    }
                 }
                 elsif($tlemma eq '#Gen')
                 {
@@ -208,6 +273,37 @@ sub process_zone
             }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Gets morphological features of the parent. It may be useful if the parent is
+# a verb and the empty node is a personal pronoun.
+#------------------------------------------------------------------------------
+sub get_verb_features
+{
+    my $self = shift;
+    my $node = shift; # node where to get the features from
+    my $iset = shift; # iset structure where to set the pronominal features
+    # The node may not be verb but it may be a nominal predicate and there may
+    # still be auxiliary children with more information.
+    my ($person, $number, $gender);
+    my $niset = $node->iset();
+    $person = $niset->person() if($niset->person() ne '');
+    $number = $niset->number() if($niset->number() ne '');
+    $gender = $niset->gender() if($niset->gender() ne '');
+    my @auxiliaries = grep {$_->is_auxiliary()} ($node->get_children());
+    foreach my $aux (@auxiliaries)
+    {
+        $niset = $aux->iset();
+        $person = $niset->person() if($niset->person() ne '');
+        $number = $niset->number() if($niset->number() ne '');
+        $gender = $niset->gender() if($niset->gender() ne '');
+    }
+    $iset->set_person($person) if($person ne '');
+    $iset->set_number($number) if($number ne '');
+    $iset->set_gender($gender) if($gender ne '');
 }
 
 
