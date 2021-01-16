@@ -89,7 +89,7 @@ sub process_zone
                         $anode->set_form('někdo');
                     }
                     $anode->set_tag('PRON');
-                    $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs'});
+                    $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'ind'});
                 }
                 elsif($tlemma eq '#Neg')
                 {

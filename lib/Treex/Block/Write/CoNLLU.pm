@@ -412,6 +412,7 @@ sub print_empty_nodes
                 $form = $en->form() if(defined($en->form()) && $en->form() ne '');
                 $lemma = $en->lemma() if(defined($en->lemma()) && $en->lemma() ne '');
                 $upos = $en->tag() if(defined($en->tag()) && $en->tag() ne '');
+                $feats = $self->_get_feats($en);
                 my @misc = $en->get_misc();
                 if($self->sort_misc())
                 {
