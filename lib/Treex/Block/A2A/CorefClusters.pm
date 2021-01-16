@@ -354,6 +354,7 @@ sub create_cluster
     my @cluster_member_ids = map {$_->id()} (@nodes);
     foreach my $node (@nodes)
     {
+        $self->anode_must_have_tnode($node);
         $node->set_misc_attr('ClusterId', $id);
         $node->set_misc_attr('ClusterType', $type) if(defined($type));
         @{$node->wild()->{cluster_members}} = @cluster_member_ids;
@@ -386,6 +387,7 @@ sub add_nodes_to_cluster
     }
     foreach my $node (@new_members)
     {
+        $self->anode_must_have_tnode($node);
         $node->set_misc_attr('ClusterId', $id);
         $node->set_misc_attr('ClusterType', $type) if(defined($type));
     }
@@ -442,6 +444,24 @@ sub merge_clusters
         $node->set_misc_attr('ClusterId', $merged_id);
         $node->set_misc_attr('ClusterType', $type) if(defined($type));
         @{$node->wild()->{cluster_members}} = @cluster_member_ids;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Checks whether a node can represent a mention in a cluster, and throws an
+# exception if not. A-nodes of function words and punctuation are not eligible
+# because they are not linked to the t-layer.
+#------------------------------------------------------------------------------
+sub anode_must_have_tnode
+{
+    my $self = shift;
+    my $anode = shift;
+    if(!exists($anode->wild()->{'tnode.rf'}))
+    {
+        my $form = $anode->form() // '';
+        log_fatal("Node '$form' cannot represent a mention because it is not linked to the t-layer.");
     }
 }
 
