@@ -14,7 +14,7 @@ sub process_atree
     my $document = $root->get_document();
     for(my $i = 0; $i <= $#nodes; $i++)
     {
-        $node = $nodes[$i];
+        my $node = $nodes[$i];
         if($node->is_empty() && exists($node->wild()->{'tnode.rf'}))
         {
             my $cid = $node->get_misc_attr('ClusterId');
