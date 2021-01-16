@@ -42,7 +42,7 @@ sub process_anode
                 my $ctype = $ctypes->[$i];
                 # $ctnode is the target t-node of the coreference edge.
                 # We need to access its corresponding lexical a-node.
-                my $canode = $ctnode->get_lex_anode();
+                my $canode = $self->get_anode_for_tnode($ctnode);
                 if(defined($canode))
                 {
                     # The type is undefined for grammatical coreference. We will
@@ -136,7 +136,7 @@ sub process_anode
                 my $btype = $bridgetypes->[$i];
                 # $btnode is the target t-node of the bridging edge.
                 # We need to access its corresponding lexical a-node.
-                my $banode = $btnode->get_lex_anode();
+                my $banode = $self->get_anode_for_tnode($btnode);
                 if(defined($banode))
                 {
                     $self->mark_bridging($anode, $banode, $btype);
@@ -148,6 +148,38 @@ sub process_anode
             }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds a corresponding a-node for a given t-node. For non-generated t-nodes,
+# this is their lexical a-node via the standard reference from the t-layer.
+# For generated t-nodes we have created empty a-nodes in the block T2A::
+# GenerateEmptyNodes; the reference to such a node is stored in a wild
+# attribute.
+#------------------------------------------------------------------------------
+sub get_anode_for_tnode
+{
+    my $self = shift;
+    my $tnode = shift;
+    my $anode;
+    if($tnode->is_generated())
+    {
+        if(exists($tnode->wild()->{'anode.rf'}))
+        {
+            $anode = $tnode->get_document()->get_node_by_id($tnode->wild()->{'anode.rf'});
+        }
+        else
+        {
+            log_warn("Generated t-node does not have a wild reference to a corresponding empty a-node.");
+        }
+    }
+    else
+    {
+        $anode = $tnode->get_lex_anode();
+    }
+    return $anode;
 }
 
 
