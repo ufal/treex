@@ -181,6 +181,10 @@ sub process_cluster_type
     {
         log_warn("Cluster type mismatch.");
         $srcnode->set_misc_attr('ClusterTypeMismatch', "$srctype:$ctype:1"); # :1 identifies where the error occurred in the source code
+        # This mismatch is less likely than the other one below, as it would occur
+        # between two coreference edges originating at the same source node. We
+        # do not change $srctype, so the current edge will, too, use the previously
+        # used cluster type.
     }
     if(!defined($srctype) && defined($ctype))
     {
@@ -193,10 +197,18 @@ sub process_cluster_type
         log_warn("Cluster type mismatch.");
         $srcnode->set_misc_attr('ClusterTypeMismatch', "$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
         $tgtnode->set_misc_attr('ClusterTypeMismatch', "$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
+        # The conflict can be only between 'Gen' and 'Spec'. We will unify the type and give priority to 'Gen' (Anja says that the annotators looked specifically for 'Gen', then batch-annotated everything else as 'Spec').
+        # This method was called before the new node was added to the cluster (or the clusters were merged), so we will access the cluster via both nodes.
+        $self->mark_cluster_type($srcnode, 'Gen');
+        $self->mark_cluster_type($tgtnode, 'Gen');
     }
     if(!defined($srctype) && defined($tgttype))
     {
         $srctype = $tgttype;
+    }
+    if(defined($srctype) && defined($tgtnode) && !defined($tgttype))
+    {
+        $self->mark_cluster_type($tgtnode, $srctype);
     }
     return $srctype;
 }
@@ -375,6 +387,29 @@ sub add_nodes_to_cluster
         $node->set_misc_attr('ClusterId', $id);
         $node->set_misc_attr('ClusterType', $type) if(defined($type));
         $self->mark_mention($node);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Marks a cluster type at all nodes in the cluster. This method can be used if
+# the cluster type was originally unknown (because the cluster was created
+# around grammatical coreference) but later we learned the type from a new
+# text coreference edge.
+#------------------------------------------------------------------------------
+sub mark_cluster_type
+{
+    my $self = shift;
+    my $node1 = shift; # a node in the cluster
+    my $type = shift; # cannot be undef this time, it wouldn't make sense
+    log_fatal("Missing parameter.") if(!defined($node1) || !defined($type));
+    my @cluster_member_ids = sort(@{$node1->wild()->{cluster_members}});
+    my $document = $node1->get_document();
+    foreach my $id (@cluster_member_ids)
+    {
+        my $node = $document->get_node_by_id($id);
+        $node->set_misc_attr('ClusterType', $type);
     }
 }
 
