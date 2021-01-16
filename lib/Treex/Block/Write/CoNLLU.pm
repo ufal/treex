@@ -155,7 +155,7 @@ sub process_atree
     my @enode_ords;
     foreach my $node (@nodes)
     {
-        if($node->deprel() eq 'dep:empty')
+        if($node->is_empty())
         {
             $enode_ords[$node->ord()] = $node->wild()->{enord};
         }
@@ -165,7 +165,7 @@ sub process_atree
     my %enodes_to_write;
     foreach my $node (@nodes)
     {
-        my $is_empty = $node->deprel() eq 'dep:empty';
+        my $is_empty = $node->is_empty();
         if(exists($node->wild()->{enhanced}))
         {
             my @edeps = @{$node->wild()->{enhanced}};
@@ -234,7 +234,7 @@ sub process_atree
         my $node = $nodes[$i];
         # We store UD empty nodes at the end of the sentence and in the basic tree,
         # we attach them to the artificial root via a fake dependency 'dep:empty'.
-        last if($node->deprel() eq 'dep:empty');
+        last if($node->is_empty());
         if($node->fused_with_next() && ($i==0 || !$nodes[$i-1]->fused_with_next()))
         {
             my $last_fused_node = $node->get_fusion_end();

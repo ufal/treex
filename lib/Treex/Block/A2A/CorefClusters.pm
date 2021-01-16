@@ -327,7 +327,9 @@ sub create_cluster
     # and we need them in order to ensure uniqueness across multiple documents
     # in one file. Clusters never span multiple documents, so we will insert
     # the document id.
-    my $id = $nodes[0]->get_document()->id().'-c'.$last_cluster_id;
+    my $docid = $nodes[0]->get_bundle()->id();
+    $docid =~ s/-p[0-9A-Z]+s[0-9A-Z]+$//;
+    my $id = $docid.'-c'.$last_cluster_id;
     # Remember references to all cluster members from all cluster members.
     # We may later need to revisit all cluster members and this will help
     # us find them.
