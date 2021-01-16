@@ -284,6 +284,15 @@ sub mark_bridging
     my $bridging = $srcnode->get_misc_attr('Bridging');
     my @bridging = ();
     @bridging = split(/\+/, $bridging) if(defined($bridging));
+    # Does the source node already have a cluster id?
+    # We don't need it (unlike for target node) and the specification currently
+    # does not require it but it is cleaner to create a singleton cluster anyway
+    # because bridging is defined as a relation between clusters.
+    my $current_source_cluster_id = $srcnode->get_misc_attr('ClusterId');
+    if(!defined($current_source_cluster_id))
+    {
+        $current_source_cluster_id = $self->create_cluster(undef, $srcnode);
+    }
     # Does the target node already have a cluster id?
     my $current_target_cluster_id = $tgtnode->get_misc_attr('ClusterId');
     if(!defined($current_target_cluster_id))
