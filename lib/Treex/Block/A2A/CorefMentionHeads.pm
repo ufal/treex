@@ -20,25 +20,28 @@ sub process_anode
         # using fake a-nodes at the end of the sentence), the ID is stored in
         # a wild attribute.
         my $conlluid = $anode->get_conllu_id();
+        # We will remove and re-add the attributes even if the current node is
+        # the head because we want to normalize the order of the attributes.
+        my $hnode = $anode;
         if($mhead ne $conlluid)
         {
             # Find the head node.
             my @hnodes = grep {$_->get_conllu_id() eq $mhead} ($anode->get_root()->get_descendants());
             log_fatal("Did not find unique node with CoNLL-U id '$mhead'.") if(scalar(@hnodes) != 1);
-            my $hnode = $hnodes[0];
             # Check that the head does not bear annotation of another mention.
-            unless(defined($hnode->get_misc_attr('MentionSpan')))
+            unless(defined($hnodes[0]->get_misc_attr('MentionSpan')))
             {
-                # Move annotation of the mention and its cluster from the current node to the head.
-                foreach my $attr (qw(ClusterId ClusterType Bridging MentionSpan MentionText MentionHead))
-                {
-                    my $value = $anode->get_misc_attr($attr);
-                    if(defined($value))
-                    {
-                        $hnode->set_misc_attr($attr, $value);
-                        $anode->clear_misc_attr($attr);
-                    }
-                }
+                $hnode = $hnodes[0];
+            }
+        }
+        # Move annotation of the mention and its cluster from the current node to the head.
+        foreach my $attr (qw(ClusterId ClusterType Bridging MentionSpan MentionHead MentionText))
+        {
+            my $value = $anode->get_misc_attr($attr);
+            if(defined($value))
+            {
+                $anode->clear_misc_attr($attr);
+                $hnode->set_misc_attr($attr, $value);
             }
         }
     }
