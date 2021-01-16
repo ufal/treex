@@ -329,6 +329,9 @@ sub create_cluster
     # the document id.
     my $docid = $nodes[0]->get_bundle()->id();
     $docid =~ s/-p[0-9A-Z]+s[0-9A-Z]+$//;
+    # Certain characters cannot be used in cluster ids because they are used
+    # as delimiters in the coreference annotation.
+    $docid =~ s/[|=:,+\s]/-/g;
     my $id = $docid.'-c'.$last_cluster_id;
     # Remember references to all cluster members from all cluster members.
     # We may later need to revisit all cluster members and this will help
