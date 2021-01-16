@@ -12,8 +12,9 @@ sub process_atree
     my $root = shift;
     my @nodes = $root->get_descendants();
     my $document = $root->get_document();
-    foreach my $node (@nodes)
+    for(my $i = 0; $i <= $#nodes; $i++)
     {
+        $node = $nodes[$i];
         if($node->is_empty() && exists($node->wild()->{'tnode.rf'}))
         {
             my $cid = $node->get_misc_attr('ClusterId');
@@ -48,6 +49,8 @@ sub process_atree
                     }
                 }
                 $node->remove();
+                splice(@nodes, $i, 1);
+                $i--;
             }
         }
     }
