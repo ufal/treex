@@ -87,6 +87,7 @@ sub get_mention_span
                 {
                     # The lexical a-node may not exist and if it exists, we do not want it because it belongs to another mention.
                     # However, there should be an empty a-node generated for enhanced ud, corresponding to this node.
+                    # We still have to check for its existence because it may have been considered unnecessary and removed (A2A::RemoveUnusedEmptyNodes).
                     if(exists($tsn->wild()->{'anode.rf'}))
                     {
                         my $asn = $document->get_node_by_id($tsn->wild()->{'anode.rf'});

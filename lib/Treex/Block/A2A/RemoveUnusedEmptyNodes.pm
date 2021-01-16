@@ -11,6 +11,7 @@ sub process_atree
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
+    my $document = $root->get_document();
     foreach my $node (@nodes)
     {
         if($node->is_empty() && exists($node->wild()->{'tnode.rf'}))
@@ -24,6 +25,15 @@ sub process_atree
                 if(scalar(@echildren) > 0)
                 {
                     log_fatal("Cannot remove empty node that is not leaf.");
+                }
+                # Remove reference to this node from the t-layer.
+                if(exists($node->wild()->{'tnode.rf'}))
+                {
+                    my $tnode = $document->get_node_by_id($node->wild()->{'tnode.rf'});
+                    if(defined($tnode))
+                    {
+                        delete($tnode->wild()->{'anode.rf'});
+                    }
                 }
                 # We must adjust the ids of empty nodes. All nodes that have
                 # the same major and larger minor must decrease the minor by 1.
