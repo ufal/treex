@@ -44,7 +44,7 @@ sub process_atree
                     my ($major2, $minor2) = $node2->get_major_minor_id();
                     if($major2 == $major && $minor2 > $minor)
                     {
-                        my $id2 = $major2.($minor2-1);
+                        my $id2 = $major2.'.'.($minor2-1);
                         $node2->wild()->{enord} = $id2;
                     }
                 }
