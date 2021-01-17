@@ -419,6 +419,18 @@ sub get_parent
     my $aparent = $tparent->get_lex_anode();
     return ($tparent, $aparent) if(!defined($aparent));
     my $functor = $tnode->functor();
+    # In PDT, coordination of verbs is headed by the coordinating conjunction.
+    # In UD, it is headed by the first conjunct.
+    if($tparent->is_coap_root())
+    {
+        my @tmembers = sort {$a->ord() <=> $b->ord()} ($tparent->get_coap_members());
+        if(scalar(@tmembers) > 0)
+        {
+            $tparent = $tmembers[0];
+            $aparent = $tparent->get_lex_anode();
+            return ($tparent, $aparent) if(!defined($aparent));
+        }
+    }
     # In PDT, copula verb heads the subject (ACT) and the nominal predicate (PAT).
     # In UD, the copula depends on the nominal predicate, and the subject should be attached to it.
     if($aparent->deprel() =~ m/^cop(:|$)/ && $functor eq 'ACT')
