@@ -289,17 +289,30 @@ sub get_verb_features
     # The node may not be verb but it may be a nominal predicate and there may
     # still be auxiliary children with more information.
     my ($person, $number, $gender);
-    my $niset = $node->iset();
-    $person = $niset->person() if($niset->person() ne '');
-    $number = $niset->number() if($niset->number() ne '');
-    $gender = $niset->gender() if($niset->gender() ne '');
-    my @auxiliaries = grep {$_->is_auxiliary()} ($node->get_children());
-    foreach my $aux (@auxiliaries)
+    while(1)
     {
-        $niset = $aux->iset();
-        $person = $niset->person() if($niset->person() ne '');
-        $number = $niset->number() if($niset->number() ne '');
-        $gender = $niset->gender() if($niset->gender() ne '');
+        my $niset = $node->iset();
+        $person = $niset->person() if(!defined($person) && $niset->person() ne '');
+        $number = $niset->number() if(!defined($number) && $niset->number() ne '');
+        $gender = $niset->gender() if(!defined($gender) && $niset->gender() ne '');
+        my @auxiliaries = grep {$_->is_auxiliary()} ($node->get_children());
+        foreach my $aux (@auxiliaries)
+        {
+            $niset = $aux->iset();
+            $person = $niset->person() if(!defined($person) && $niset->person() ne '');
+            $number = $niset->number() if(!defined($number) && $niset->number() ne '');
+            $gender = $niset->gender() if(!defined($gender) && $niset->gender() ne '');
+        }
+        # An open complement (xcomp) of another verb is often non-finite and the
+        # features can be found at the matrix verb and its auxiliaries.
+        if($node->deprel() =~ m/^xcomp(:|$)/)
+        {
+            $node = $node->parent();
+        }
+        else
+        {
+            last;
+        }
     }
     $iset->set_person($person) if(defined($person) && $person ne '');
     $iset->set_number($number) if(defined($number) && $number ne '');
