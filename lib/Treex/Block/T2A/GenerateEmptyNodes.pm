@@ -32,8 +32,6 @@ sub process_zone
             $anode->wild()->{'tnode.rf'} = $tnode->id();
             $tnode->wild()->{'anode.rf'} = $anode->id();
             $anode->wild()->{enhanced} = [];
-            $lastminor[$major]++;
-            $anode->wild()->{enord} = "$major.$lastminor[$major]";
             $anode->shift_after_node($lastanode);
             $lastanode = $anode;
             my $tlemma = $tnode->t_lemma();
@@ -56,7 +54,6 @@ sub process_zone
                 {
                     $deprel = $self->guess_deprel($aparent, $functor);
                 }
-                $anode->add_enhanced_dependency($aparent, $deprel);
             }
             # Without connecting the empty node at least to the root, it would not
             # be printed and the graph would not be valid.
@@ -65,9 +62,12 @@ sub process_zone
             ###!!! However, at present we generate all empty nodes as leaves.
             else
             {
+                $aparent = $aroot;
                 $deprel = 'root';
-                $anode->add_enhanced_dependency($aroot, $deprel);
             }
+            $anode->add_enhanced_dependency($aparent, $deprel);
+            # Find a position for the empty node between real nodes.
+            $self->position_empty_node($anode, $aparent, $major, \@lastminor);
             # If the generated node is a copy of a real node, we may be able to
             # copy its attributes.
             my $source_anode = $tnode->get_lex_anode();
@@ -218,6 +218,196 @@ sub process_zone
             }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Gets the parent of the generated node in the t-tree, and the corresponding
+# a-node in the a-tree (enhanced graph). Tries to adjust the parent based on
+# the known differences between the UD guidelines and the Prague style.
+#------------------------------------------------------------------------------
+sub get_parent
+{
+    my $self = shift;
+    my $tnode = shift; # the generated t-node for which we are creating a counterpart in the enhanced graph
+    my $tparent = $tnode->parent();
+    my $aparent = $tparent->get_lex_anode();
+    return ($tparent, $aparent) if(!defined($aparent));
+    my $functor = $tnode->functor();
+    # In PDT, coordination of verbs is headed by the coordinating conjunction.
+    # In UD, it is headed by the first conjunct.
+    if($tparent->is_coap_root())
+    {
+        my @tmembers = sort {$a->ord() <=> $b->ord()} ($tparent->get_coap_members());
+        if(scalar(@tmembers) > 0)
+        {
+            $tparent = $tmembers[0];
+            $aparent = $tparent->get_lex_anode();
+            return ($tparent, $aparent) if(!defined($aparent));
+        }
+    }
+    # In PDT, copula verb heads the subject (ACT) and the nominal predicate (PAT).
+    # In UD, the copula depends on the nominal predicate, and the subject should be attached to it.
+    if($aparent->deprel() =~ m/^cop(:|$)/ && $functor eq 'ACT')
+    {
+        $aparent = $aparent->parent();
+        ###!!! It is not clear whether we need to synchronize the $tparent.
+    }
+    # In PDT, modal verb lacks a t-node.
+    # In UD (for Czech), it heads the lexical verb, which is its xcomp.
+    if($aparent->deprel() =~ m/^xcomp(:|$)/ && $functor eq 'ACT')
+    {
+        while($aparent->deprel() =~ m/^xcomp(:|$)/)
+        {
+            my $agp = $aparent->parent();
+            if($agp->lemma() =~ m/^(muset|mít|smět|moci|chtít)$/)
+            {
+                $aparent = $agp;
+            }
+            else
+            {
+                last;
+            }
+        }
+    }
+    return ($tparent, $aparent);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Guesses the UD dependency relation based on tectogrammatical functor.
+###!!! This is currently very rough and it could be improved!
+#------------------------------------------------------------------------------
+sub guess_deprel
+{
+    my $self = shift;
+    my $aparent = shift;
+    my $functor = shift;
+    my $deprel = 'dep';
+    if($functor =~ m/^(DENOM|PAR|PRED)$/)
+    {
+        $deprel = 'parataxis';
+    }
+    elsif($functor =~ m/^(PARTL)$/)
+    {
+        $deprel = 'discourse';
+    }
+    elsif($functor =~ m/^(VOCAT)$/)
+    {
+        $deprel = 'vocative';
+    }
+    ###!!! The arguments may correspond to nsubj, obj or obl:arg.
+    ###!!! We should consider the voice to distinguish between nsubj and nsubj:pass;
+    ###!!! even then it will not work for certain classes of verbs.
+    ###!!! We also don't know whether the argument is nominal (nsubj) or clausal (csubj)
+    ###!!! but since we typically pretend the empty node corresponds to a pronoun, it should be nominal.
+    elsif($functor =~ m/^(ACT)$/)
+    {
+        $deprel = $aparent->is_noun() ? 'nmod' : 'nsubj';
+    }
+    elsif($functor =~ m/^(PAT)$/)
+    {
+        $deprel = $aparent->is_noun() ? 'nmod' : 'obj';
+    }
+    elsif($functor =~ m/^(ADDR|EFF|ORIG)$/)
+    {
+        $deprel = $aparent->is_noun() ? 'nmod' : 'obl:arg';
+    }
+    # Adjuncts could be obl, advmod, advcl; we use always obl.
+    elsif($functor =~ m/^(ACMP|AIM|BEN|CAUS|CNCS|COMPL|COND|CONTRD|CPR|CRIT|DIFF|DIR[123]|EXT|HER|INTT|LOC|MANN|MEANS|REG|RESL|RESTR|SUBS|TFHL|TFRWH|THL|THO|TOWH|TPAR|TSIN|TTILL|TWHEN)$/)
+    {
+        $deprel = $aparent->is_noun() ? 'nmod' : 'obl';
+    }
+    # Adnominal arguments and adjuncts could be nmod, amod, det, nummod; we use always nmod.
+    elsif($functor =~ m/^(APP|AUTH|DESCR|ID|MAT|RSTR)$/)
+    {
+        $deprel = 'nmod';
+    }
+    # ATT = speaker's attitude
+    elsif($functor =~ m/^(ATT)$/)
+    {
+        $deprel = 'advmod';
+    }
+    # CM = modification of coordination ("ale _dokonce_...")
+    elsif($functor =~ m/^(CM)$/)
+    {
+        $deprel = 'cc';
+    }
+    # CPHR = nominal part of compound predicate ("dostali _rozkaz_")
+    elsif($functor =~ m/^(CPHR)$/)
+    {
+        $deprel = 'obj';
+    }
+    # DPHR = dependent part of idiom (phraseme) ("jde mi _na nervy_"; "široko _daleko_"; "křížem _krážem_")
+    elsif($functor =~ m/^(DPHR)$/)
+    {
+        # DPHR could be various things in the surface syntax.
+        $deprel = 'dep';
+    }
+    # FPHR = part of foreign expression
+    elsif($functor =~ m/^(FPHR)$/)
+    {
+        $deprel = 'flat:foreign';
+    }
+    # NE = part of named entity (only PCEDT)
+    elsif($functor =~ m/^(NE)$/)
+    {
+        $deprel = 'flat:name';
+    }
+    # INTF = expletive subject
+    elsif($functor =~ m/^(INTF)$/)
+    {
+        $deprel = 'expl';
+    }
+    # MOD = some modal expressions ("_pravděpodobně_ přijdeme"; "_asi_ před týdnem jsem dostal dopis").
+    # PREC = preceding context ("pak", "naopak")
+    # RHEM = rhematizer ("jen", "teprve", "ještě")
+    elsif($functor =~ m/^(MOD|PREC|RHEM)$/)
+    {
+        $deprel = 'advmod';
+    }
+    # The functors for head nodes of paratactic structures should not be used in UD
+    # where paratactic structures are annotated in the Stanford style. Nevertheless,
+    # we list them here for completeness.
+    elsif($functor =~ m/^(ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS)$/)
+    {
+        $deprel = 'cc';
+    }
+    return $deprel;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds a linear position for the empty node. We used to place it between the
+# current and the previous t-node based on their deep order, and using lexical
+# a-node references to map t-nodes on non-empty a-nodes. However, it did not
+# always yield acceptable results (due to different UD tree structure, ignored
+# function words etc.) Some empty nodes occurred far from their parents, and
+# there were spurious non-projectivities.
+#------------------------------------------------------------------------------
+sub position_empty_node
+{
+    my $self = shift;
+    my $anode = shift; # the empty node to be positioned (decimal id)
+    my $aparent = shift; # the parent of the empty node in the enhanced graph
+    my $lastmajor = shift; # the major id (ord) of the last (following deep order of t-nodes) a-node that is a lexical counterpart of a t-node
+    my $lastminor = shift; # array reference: for each major id, the highest minor id used so far
+    my ($major, $minor);
+    if($aparent->is_root())
+    {
+        $major = $lastmajor;
+    }
+    else
+    {
+        # Insert the empty node right before its parent in the enhanced graph.
+        # That will prevent non-projectivities and make the data more easily readable for a human.
+        $major = $aparent->ord()-1;
+    }
+    $minor = ++$lastminor->[$major];
+    $anode->wild()->{enord} = "$major.$minor";
 }
 
 
@@ -402,164 +592,6 @@ sub get_verb_features
     $iset->set_person($person) if(defined($person) && $person ne '');
     $iset->set_number($number) if(defined($number) && $number ne '');
     $iset->set_gender($gender) if(defined($gender) && $gender ne '');
-}
-
-
-
-#------------------------------------------------------------------------------
-# Gets the parent of the generated node in the t-tree, and the corresponding
-# a-node in the a-tree (enhanced graph). Tries to adjust the parent based on
-# the known differences between the UD guidelines and the Prague style.
-#------------------------------------------------------------------------------
-sub get_parent
-{
-    my $self = shift;
-    my $tnode = shift; # the generated t-node for which we are creating a counterpart in the enhanced graph
-    my $tparent = $tnode->parent();
-    my $aparent = $tparent->get_lex_anode();
-    return ($tparent, $aparent) if(!defined($aparent));
-    my $functor = $tnode->functor();
-    # In PDT, coordination of verbs is headed by the coordinating conjunction.
-    # In UD, it is headed by the first conjunct.
-    if($tparent->is_coap_root())
-    {
-        my @tmembers = sort {$a->ord() <=> $b->ord()} ($tparent->get_coap_members());
-        if(scalar(@tmembers) > 0)
-        {
-            $tparent = $tmembers[0];
-            $aparent = $tparent->get_lex_anode();
-            return ($tparent, $aparent) if(!defined($aparent));
-        }
-    }
-    # In PDT, copula verb heads the subject (ACT) and the nominal predicate (PAT).
-    # In UD, the copula depends on the nominal predicate, and the subject should be attached to it.
-    if($aparent->deprel() =~ m/^cop(:|$)/ && $functor eq 'ACT')
-    {
-        $aparent = $aparent->parent();
-        ###!!! It is not clear whether we need to synchronize the $tparent.
-    }
-    # In PDT, modal verb lacks a t-node.
-    # In UD (for Czech), it heads the lexical verb, which is its xcomp.
-    if($aparent->deprel() =~ m/^xcomp(:|$)/ && $functor eq 'ACT')
-    {
-        while($aparent->deprel() =~ m/^xcomp(:|$)/)
-        {
-            my $agp = $aparent->parent();
-            if($agp->lemma() =~ m/^(muset|mít|smět|moci|chtít)$/)
-            {
-                $aparent = $agp;
-            }
-            else
-            {
-                last;
-            }
-        }
-    }
-    return ($tparent, $aparent);
-}
-
-
-
-#------------------------------------------------------------------------------
-# Guesses the UD dependency relation based on tectogrammatical functor.
-###!!! This is currently very rough and it could be improved!
-#------------------------------------------------------------------------------
-sub guess_deprel
-{
-    my $self = shift;
-    my $aparent = shift;
-    my $functor = shift;
-    my $deprel = 'dep';
-    if($functor =~ m/^(DENOM|PAR|PRED)$/)
-    {
-        $deprel = 'parataxis';
-    }
-    elsif($functor =~ m/^(PARTL)$/)
-    {
-        $deprel = 'discourse';
-    }
-    elsif($functor =~ m/^(VOCAT)$/)
-    {
-        $deprel = 'vocative';
-    }
-    ###!!! The arguments may correspond to nsubj, obj or obl:arg.
-    ###!!! We should consider the voice to distinguish between nsubj and nsubj:pass;
-    ###!!! even then it will not work for certain classes of verbs.
-    ###!!! We also don't know whether the argument is nominal (nsubj) or clausal (csubj)
-    ###!!! but since we typically pretend the empty node corresponds to a pronoun, it should be nominal.
-    elsif($functor =~ m/^(ACT)$/)
-    {
-        $deprel = $aparent->is_noun() ? 'nmod' : 'nsubj';
-    }
-    elsif($functor =~ m/^(PAT)$/)
-    {
-        $deprel = $aparent->is_noun() ? 'nmod' : 'obj';
-    }
-    elsif($functor =~ m/^(ADDR|EFF|ORIG)$/)
-    {
-        $deprel = $aparent->is_noun() ? 'nmod' : 'obl:arg';
-    }
-    # Adjuncts could be obl, advmod, advcl; we use always obl.
-    elsif($functor =~ m/^(ACMP|AIM|BEN|CAUS|CNCS|COMPL|COND|CONTRD|CPR|CRIT|DIFF|DIR[123]|EXT|HER|INTT|LOC|MANN|MEANS|REG|RESL|RESTR|SUBS|TFHL|TFRWH|THL|THO|TOWH|TPAR|TSIN|TTILL|TWHEN)$/)
-    {
-        $deprel = $aparent->is_noun() ? 'nmod' : 'obl';
-    }
-    # Adnominal arguments and adjuncts could be nmod, amod, det, nummod; we use always nmod.
-    elsif($functor =~ m/^(APP|AUTH|DESCR|ID|MAT|RSTR)$/)
-    {
-        $deprel = 'nmod';
-    }
-    # ATT = speaker's attitude
-    elsif($functor =~ m/^(ATT)$/)
-    {
-        $deprel = 'advmod';
-    }
-    # CM = modification of coordination ("ale _dokonce_...")
-    elsif($functor =~ m/^(CM)$/)
-    {
-        $deprel = 'cc';
-    }
-    # CPHR = nominal part of compound predicate ("dostali _rozkaz_")
-    elsif($functor =~ m/^(CPHR)$/)
-    {
-        $deprel = 'obj';
-    }
-    # DPHR = dependent part of idiom (phraseme) ("jde mi _na nervy_"; "široko _daleko_"; "křížem _krážem_")
-    elsif($functor =~ m/^(DPHR)$/)
-    {
-        # DPHR could be various things in the surface syntax.
-        $deprel = 'dep';
-    }
-    # FPHR = part of foreign expression
-    elsif($functor =~ m/^(FPHR)$/)
-    {
-        $deprel = 'flat:foreign';
-    }
-    # NE = part of named entity (only PCEDT)
-    elsif($functor =~ m/^(NE)$/)
-    {
-        $deprel = 'flat:name';
-    }
-    # INTF = expletive subject
-    elsif($functor =~ m/^(INTF)$/)
-    {
-        $deprel = 'expl';
-    }
-    # MOD = some modal expressions ("_pravděpodobně_ přijdeme"; "_asi_ před týdnem jsem dostal dopis").
-    # PREC = preceding context ("pak", "naopak")
-    # RHEM = rhematizer ("jen", "teprve", "ještě")
-    elsif($functor =~ m/^(MOD|PREC|RHEM)$/)
-    {
-        $deprel = 'advmod';
-    }
-    # The functors for head nodes of paratactic structures should not be used in UD
-    # where paratactic structures are annotated in the Stanford style. Nevertheless,
-    # we list them here for completeness.
-    elsif($functor =~ m/^(ADVS|APPS|CONFR|CONJ|CONTRA|CSQ|DISJ|GRAD|OPER|REAS)$/)
-    {
-        $deprel = 'cc';
-    }
-    return $deprel;
 }
 
 
