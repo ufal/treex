@@ -46,8 +46,7 @@ sub process_zone
             # the t-tree. (The parent may also help us estimate features of the
             # generated node, such as person of #PersPron. Note however that some
             # of the features may also be available as grammatemes.)
-            my $tparent = $tnode->parent();
-            my $aparent = $tparent->get_lex_anode();
+            my ($tparent, $aparent) = $self->get_parent($tnode);
             my $deprel = 'dep';
             # The $aparent may not exist or it may be in another sentence, in
             # which case we cannot use it.
@@ -403,6 +402,31 @@ sub get_verb_features
     $iset->set_person($person) if(defined($person) && $person ne '');
     $iset->set_number($number) if(defined($number) && $number ne '');
     $iset->set_gender($gender) if(defined($gender) && $gender ne '');
+}
+
+
+
+#------------------------------------------------------------------------------
+# Gets the parent of the generated node in the t-tree, and the corresponding
+# a-node in the a-tree (enhanced graph). Tries to adjust the parent based on
+# the known differences between the UD guidelines and the Prague style.
+#------------------------------------------------------------------------------
+sub get_parent
+{
+    my $self = shift;
+    my $tnode = shift; # the generated t-node for which we are creating a counterpart in the enhanced graph
+    my $tparent = $tnode->parent();
+    my $aparent = $tparent->get_lex_anode();
+    return ($tparent, $aparent) if(!defined($aparent));
+    my $functor = $tnode->functor();
+    # In PDT, copula verb heads the subject (ACT) and the nominal predicate (PAT).
+    # In UD, the copula depends on the nominal predicate, and the subject should be attached to it.
+    if($aparent->deprel() =~ m/^cop(:|$)/ && $functor eq 'ACT')
+    {
+        $aparent = $aparent->parent();
+        ###!!! It is not clear whether we need to synchronize the $tparent.
+    }
+    return ($tparent, $aparent);
 }
 
 
