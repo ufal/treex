@@ -112,7 +112,12 @@ sub process_zone
                     my $iset = $anode->iset();
                     $iset->set('pos' => 'noun');
                     $iset->set('prontype' => 'prs');
-                    if($iset->number() eq 'plur')
+                    # Some verbs have just Gender=Fem,Neut|Number=Plur,Sing ('ona').
+                    if($iset->is_singular() && $iset->is_plural() && $iset->is_feminine() && $iset->is_neuter())
+                    {
+                        $anode->set_form('ona');
+                    }
+                    elsif($iset->number() eq 'plur')
                     {
                         if($iset->person() eq '1')
                         {
