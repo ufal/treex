@@ -426,6 +426,23 @@ sub get_parent
         $aparent = $aparent->parent();
         ###!!! It is not clear whether we need to synchronize the $tparent.
     }
+    # In PDT, modal verb lacks a t-node.
+    # In UD (for Czech), it heads the lexical verb, which is its xcomp.
+    if($aparent->deprel() =~ m/^xcomp(:|$)/ && $functor eq 'ACT')
+    {
+        while($aparent->deprel() =~ m/^xcomp(:|$))
+        {
+            my $agp = $aparent->parent();
+            if($agp->lemma() =~ m/^(muset|mít|smět|moci|chtít)$/)
+            {
+                $aparent = $agp;
+            }
+            else
+            {
+                last;
+            }
+        }
+    }
     return ($tparent, $aparent);
 }
 
