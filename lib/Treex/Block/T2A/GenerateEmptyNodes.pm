@@ -81,25 +81,6 @@ sub process_zone
             # The generated node is not a copy of a real node.
             else
             {
-                # We can guess the morphological features from the governing verb.
-                if(defined($aparent))
-                {
-                    $self->get_verb_features($aparent, $anode->iset());
-                    my $case = 'nom';
-                    if($deprel =~ m/^nmod(:|$)/)
-                    {
-                        $case = 'gen';
-                    }
-                    elsif($functor eq 'PAT')
-                    {
-                        $case = 'acc';
-                    }
-                    elsif($functor eq 'ADDR')
-                    {
-                        $case = 'dat';
-                    }
-                    $anode->iset()->set_case($case);
-                }
                 $anode->set_form('_');
                 # https://ufal.mff.cuni.cz/~hajic/2018/docs/PDT20-t-man-cz.pdf
                 # AsMuch ... míra okolnosti řídícího děje, v jejímž důsledku nastane nějaký účinek (7.7 Konstrukce se závislou klauzí účinkovou)
@@ -132,7 +113,7 @@ sub process_zone
                     my $iset = $anode->iset();
                     $iset->set('pos' => 'noun');
                     $iset->set('prontype' => 'prs');
-                    $anode->set_form($self->get_personal_pronoun_form($iset));
+                    $self->set_personal_pronoun_form($anode, $aparent, $deprel, $functor);
                 }
                 elsif($tlemma eq '#Gen')
                 {
@@ -243,57 +224,37 @@ sub process_zone
 
 
 #------------------------------------------------------------------------------
-# Gets morphological features of the parent. It may be useful if the parent is
-# a verb and the empty node is a personal pronoun.
-#------------------------------------------------------------------------------
-sub get_verb_features
-{
-    my $self = shift;
-    my $node = shift; # node where to get the features from
-    my $iset = shift; # iset structure where to set the pronominal features
-    # The node may not be verb but it may be a nominal predicate and there may
-    # still be auxiliary children with more information.
-    my ($person, $number, $gender);
-    while(1)
-    {
-        my $niset = $node->iset();
-        $person = $niset->person() if(!defined($person) && $niset->person() ne '');
-        $number = $niset->number() if(!defined($number) && $niset->number() ne '');
-        $gender = $niset->gender() if(!defined($gender) && $niset->gender() ne '');
-        my @auxiliaries = grep {$_->is_auxiliary()} ($node->get_children());
-        foreach my $aux (@auxiliaries)
-        {
-            $niset = $aux->iset();
-            $person = $niset->person() if(!defined($person) && $niset->person() ne '');
-            $number = $niset->number() if(!defined($number) && $niset->number() ne '');
-            $gender = $niset->gender() if(!defined($gender) && $niset->gender() ne '');
-        }
-        # An open complement (xcomp) of another verb is often non-finite and the
-        # features can be found at the matrix verb and its auxiliaries.
-        if($node->deprel() =~ m/^xcomp(:|$)/)
-        {
-            $node = $node->parent();
-        }
-        else
-        {
-            last;
-        }
-    }
-    $iset->set_person($person) if(defined($person) && $person ne '');
-    $iset->set_number($number) if(defined($number) && $number ne '');
-    $iset->set_gender($gender) if(defined($gender) && $gender ne '');
-}
-
-
-
-#------------------------------------------------------------------------------
 # According to morphological features collected from the governing verb,
 # generates the corresponding form of a personal pronoun.
 #------------------------------------------------------------------------------
-sub get_personal_pronoun_form
+sub set_personal_pronoun_form
 {
     my $self = shift;
-    my $iset = shift; # interset of the pronoun (the features have been set based on the verb)
+    my $anode = shift; # the pronoun node
+    my $aparent = shift; # parent of the pronoun in the enhanced a-graph (at most one now; undef if the pronoun is attached to the root)
+    my $deprel = shift; # proposed deprel for the pronoun node with respect to $aparent
+    my $functor = shift; # functor of the corresponding t-node
+    my $iset = $anode->iset();
+    my $case = 'nom';
+    if($deprel =~ m/^nmod(:|$)/)
+    {
+        $case = 'gen';
+    }
+    elsif($functor eq 'PAT')
+    {
+        $case = 'acc';
+    }
+    elsif($functor eq 'ADDR')
+    {
+        $case = 'dat';
+    }
+    $iset->set_case($case);
+    # If the pronoun represents the subject of a verb, we can guess its morphological
+    # features from the governing verb.
+    if(defined($aparent) && $deprel =~ m/^nsubj(:|$)/)
+    {
+        $self->get_verb_features($aparent, $iset);
+    }
     my $form = 'on';
     # If the pronoun modifies an eventive noun ('spojování obcí někým'), it is
     # attached as 'nmod' and its case is set to genitive (although it could be
@@ -383,7 +344,52 @@ sub get_personal_pronoun_form
             }
         }
     }
+    $anode->set_form($form);
     return $form;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Gets morphological features of the parent. It may be useful if the parent is
+# a verb and the empty node is a personal pronoun.
+#------------------------------------------------------------------------------
+sub get_verb_features
+{
+    my $self = shift;
+    my $node = shift; # node where to get the features from
+    my $iset = shift; # iset structure where to set the pronominal features
+    # The node may not be verb but it may be a nominal predicate and there may
+    # still be auxiliary children with more information.
+    my ($person, $number, $gender);
+    while(1)
+    {
+        my $niset = $node->iset();
+        $person = $niset->person() if(!defined($person) && $niset->person() ne '');
+        $number = $niset->number() if(!defined($number) && $niset->number() ne '');
+        $gender = $niset->gender() if(!defined($gender) && $niset->gender() ne '');
+        my @auxiliaries = grep {$_->is_auxiliary()} ($node->get_children());
+        foreach my $aux (@auxiliaries)
+        {
+            $niset = $aux->iset();
+            $person = $niset->person() if(!defined($person) && $niset->person() ne '');
+            $number = $niset->number() if(!defined($number) && $niset->number() ne '');
+            $gender = $niset->gender() if(!defined($gender) && $niset->gender() ne '');
+        }
+        # An open complement (xcomp) of another verb is often non-finite and the
+        # features can be found at the matrix verb and its auxiliaries.
+        if($node->deprel() =~ m/^xcomp(:|$)/)
+        {
+            $node = $node->parent();
+        }
+        else
+        {
+            last;
+        }
+    }
+    $iset->set_person($person) if(defined($person) && $person ne '');
+    $iset->set_number($number) if(defined($number) && $number ne '');
+    $iset->set_gender($gender) if(defined($gender) && $gender ne '');
 }
 
 
