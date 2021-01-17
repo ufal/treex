@@ -113,7 +113,7 @@ sub process_zone
                     my $iset = $anode->iset();
                     $iset->set('pos' => 'noun');
                     $iset->set('prontype' => 'prs');
-                    $self->set_personal_pronoun_form($anode, $aparent, $deprel, $functor);
+                    $self->set_personal_pronoun_form($anode, $aparent, $tparent, $deprel, $functor);
                 }
                 elsif($tlemma eq '#Gen')
                 {
@@ -232,13 +232,23 @@ sub set_personal_pronoun_form
     my $self = shift;
     my $anode = shift; # the pronoun node
     my $aparent = shift; # parent of the pronoun in the enhanced a-graph (at most one now; undef if the pronoun is attached to the root)
+    my $tparent = shift; # parent of the pronoun in the t-tree
     my $deprel = shift; # proposed deprel for the pronoun node with respect to $aparent
     my $functor = shift; # functor of the corresponding t-node
     my $iset = $anode->iset();
     my $case = 'nom';
     if($deprel =~ m/^nmod(:|$)/)
     {
-        $case = 'gen';
+        # Actors of intransitive nouns are likely to be expressed in genitive: 'někoho (něčí) chůze, pád, spánek, chrápání'
+        # Actors of transitives sometimes sound better in the instrumental: 'spojování něčeho někým'
+        if($functor eq 'ACT' && defined($tparent) && scalar(grep {$_->functor() eq 'PAT'} ($tparent->children())) > 0)
+        {
+            $case = 'ins';
+        }
+        else
+        {
+            $case = 'gen';
+        }
     }
     elsif($functor eq 'PAT')
     {
@@ -257,13 +267,16 @@ sub set_personal_pronoun_form
     }
     my $form = 'on';
     # If the pronoun modifies an eventive noun ('spojování obcí někým'), it is
-    # attached as 'nmod' and its case is set to genitive (although it could be
-    # also instrumental, as in the example above). We don't know its person,
-    # number and gender, so it is better to use an indefinite rather than a
-    # personal form.
+    # attached as 'nmod' and its case is set to genitive or instrumental. We
+    # don't know its person,  number and gender, so it is better to use an
+    # indefinite rather than a personal form.
     if($iset->is_genitive())
     {
         $form = 'někoho';
+    }
+    elsif($iset->is_instrumental())
+    {
+        $form = 'někým';
     }
     # If the functor of the pronoun is PAT (patient), its case is set to
     # accusative. Person, number and gender that we may have collected from the
