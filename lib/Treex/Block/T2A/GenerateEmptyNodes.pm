@@ -48,17 +48,16 @@ sub process_zone
             # of the features may also be available as grammatemes.)
             my $tparent = $tnode->parent();
             my $aparent = $tparent->get_lex_anode();
+            my $deprel = 'dep';
             # The $aparent may not exist or it may be in another sentence, in
             # which case we cannot use it.
             if(defined($aparent) && $aparent->get_root() == $aroot)
             {
-                my $deprel = 'dep';
                 if(defined($functor))
                 {
                     $deprel = $self->guess_deprel($aparent, $functor);
                 }
                 $anode->add_enhanced_dependency($aparent, $deprel);
-                $self->get_verb_features($aparent, $anode->iset());
             }
             # Without connecting the empty node at least to the root, it would not
             # be printed and the graph would not be valid.
@@ -67,7 +66,8 @@ sub process_zone
             ###!!! However, at present we generate all empty nodes as leaves.
             else
             {
-                $anode->add_enhanced_dependency($aroot, 'root');
+                $deprel = 'root';
+                $anode->add_enhanced_dependency($aroot, $deprel);
             }
             # If the generated node is a copy of a real node, we may be able to
             # copy its attributes.
@@ -78,8 +78,28 @@ sub process_zone
                 $anode->set_tag($source_anode->tag());
                 $anode->iset()->set_hash($source_anode->iset()->get_hash());
             }
+            # The generated node is not a copy of a real node.
             else
             {
+                # We can guess the morphological features from the governing verb.
+                if(defined($aparent))
+                {
+                    $self->get_verb_features($aparent, $anode->iset());
+                    my $case = 'nom';
+                    if($deprel =~ m/^nmod(:|$)/)
+                    {
+                        $case = 'gen';
+                    }
+                    elsif($functor eq 'PAT')
+                    {
+                        $case = 'acc';
+                    }
+                    elsif($functor eq 'ADDR')
+                    {
+                        $case = 'dat';
+                    }
+                    $anode->iset()->set_case($case);
+                }
                 $anode->set_form('_');
                 # https://ufal.mff.cuni.cz/~hajic/2018/docs/PDT20-t-man-cz.pdf
                 # AsMuch ... míra okolnosti řídícího děje, v jejímž důsledku nastane nějaký účinek (7.7 Konstrukce se závislou klauzí účinkovou)
@@ -112,67 +132,7 @@ sub process_zone
                     my $iset = $anode->iset();
                     $iset->set('pos' => 'noun');
                     $iset->set('prontype' => 'prs');
-                    # Some verbs have just Gender=Fem,Neut|Number=Plur,Sing ('ona').
-                    if($iset->is_singular() && $iset->is_plural() && $iset->is_feminine() && $iset->is_neuter())
-                    {
-                        $anode->set_form('ona');
-                    }
-                    elsif($iset->number() eq 'plur')
-                    {
-                        if($iset->person() eq '1')
-                        {
-                            $anode->set_form('my');
-                        }
-                        elsif($iset->person() eq '2')
-                        {
-                            $anode->set_form('vy');
-                        }
-                        else
-                        {
-                            if($iset->gender() eq 'fem')
-                            {
-                                $anode->set_form('ony');
-                            }
-                            elsif($iset->gender() eq 'neut')
-                            {
-                                $anode->set_form('ona');
-                            }
-                            elsif($iset->animacy() eq 'inan')
-                            {
-                                $anode->set_form('ony');
-                            }
-                            else
-                            {
-                                $anode->set_form('oni');
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if($iset->person() eq '1')
-                        {
-                            $anode->set_form('já');
-                        }
-                        elsif($iset->person() eq '2')
-                        {
-                            $anode->set_form('ty');
-                        }
-                        else
-                        {
-                            if($iset->gender() eq 'fem')
-                            {
-                                $anode->set_form('ona');
-                            }
-                            elsif($iset->gender() eq 'neut')
-                            {
-                                $anode->set_form('ono');
-                            }
-                            else
-                            {
-                                $anode->set_form('on');
-                            }
-                        }
-                    }
+                    $anode->set_form($self->get_personal_pronoun_form($iset));
                 }
                 elsif($tlemma eq '#Gen')
                 {
@@ -322,6 +282,108 @@ sub get_verb_features
     $iset->set_person($person) if(defined($person) && $person ne '');
     $iset->set_number($number) if(defined($number) && $number ne '');
     $iset->set_gender($gender) if(defined($gender) && $gender ne '');
+}
+
+
+
+#------------------------------------------------------------------------------
+# According to morphological features collected from the governing verb,
+# generates the corresponding form of a personal pronoun.
+#------------------------------------------------------------------------------
+sub get_personal_pronoun_form
+{
+    my $self = shift;
+    my $iset = shift; # interset of the pronoun (the features have been set based on the verb)
+    my $form = 'on';
+    # If the pronoun modifies an eventive noun ('spojování obcí někým'), it is
+    # attached as 'nmod' and its case is set to genitive (although it could be
+    # also instrumental, as in the example above). We don't know its person,
+    # number and gender, so it is better to use an indefinite rather than a
+    # personal form.
+    if($iset->is_genitive())
+    {
+        $form = 'někoho';
+    }
+    # If the functor of the pronoun is PAT (patient), its case is set to
+    # accusative. Person, number and gender that we may have collected from the
+    # verb is incorrect (it pertains to the subject, i.e., probably to the
+    # agent and not the patient). It seems better to use an indefinite rather
+    # than a personal form.
+    elsif($iset->is_accusative())
+    {
+        $form = 'někoho'; # ho, ji, je
+    }
+    # If the functor of the pronoun is ADDR (patient), its case is set to
+    # dative. Person, number and gender that we may have collected from the
+    # verb is incorrect (it pertains to the subject, i.e., probably to the
+    # agent and not the addressee). It seems better to use an indefinite rather
+    # than a personal form.
+    elsif($iset->is_dative())
+    {
+        $form = 'někomu'; # mu, jí, jim
+    }
+    # Some verbs have just Gender=Fem,Neut|Number=Plur,Sing ('ona dělala').
+    elsif($iset->is_singular() && $iset->is_plural() && $iset->is_feminine() && $iset->is_neuter())
+    {
+        $form = 'ona';
+    }
+    elsif($iset->number() eq 'plur')
+    {
+        if($iset->person() eq '1')
+        {
+            $form = 'my';
+        }
+        elsif($iset->person() eq '2')
+        {
+            $form = 'vy';
+        }
+        else
+        {
+            if($iset->contains('gender', 'fem'))
+            {
+                $form = 'ony';
+            }
+            elsif($iset->contains('gender', 'neut'))
+            {
+                $form = 'ona';
+            }
+            elsif($iset->contains('animacy', 'inan'))
+            {
+                $form = 'ony';
+            }
+            else
+            {
+                $form = 'oni';
+            }
+        }
+    }
+    else
+    {
+        if($iset->person() eq '1')
+        {
+            $form = 'já';
+        }
+        elsif($iset->person() eq '2')
+        {
+            $form = 'ty';
+        }
+        else
+        {
+            if($iset->contains('gender', 'fem'))
+            {
+                $form = 'ona';
+            }
+            elsif($iset->contains('gender', 'neut'))
+            {
+                $form = 'ono';
+            }
+            else
+            {
+                $form = 'on';
+            }
+        }
+    }
+    return $form;
 }
 
 
