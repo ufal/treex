@@ -430,7 +430,7 @@ sub get_parent
     # In UD (for Czech), it heads the lexical verb, which is its xcomp.
     if($aparent->deprel() =~ m/^xcomp(:|$)/ && $functor eq 'ACT')
     {
-        while($aparent->deprel() =~ m/^xcomp(:|$))
+        while($aparent->deprel() =~ m/^xcomp(:|$)/)
         {
             my $agp = $aparent->parent();
             if($agp->lemma() =~ m/^(muset|mít|smět|moci|chtít)$/)
