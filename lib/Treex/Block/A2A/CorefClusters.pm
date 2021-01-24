@@ -50,8 +50,6 @@ sub process_anode
                         ###!!! Debugging: Mark instances of grammatical coreference with multiple antecedents.
                         $canode->set_misc_attr('GramCoref', 'SplitTo');
                         $anode->set_misc_attr('GramCoref', 'SplitFrom');
-                        my $srcform = $anode->form() // '';
-                        my $tgtform = $canode->form() // '';
                     }
                     # Does the target node already have a cluster id and type?
                     my $current_target_cluster_id = $canode->get_misc_attr('ClusterId');
@@ -59,6 +57,8 @@ sub process_anode
                     if(!defined($ctype) && $ng >= 2)
                     {
                         ###!!! Debugging grammatical coreference with multiple antecedents.
+                        my $srcform = $anode->form() // '';
+                        my $tgtform = $canode->form() // '';
                         log_warn("Processing grammatical coreference from '$srcform' to '$tgtform'.");
                         log_warn("Current cluster id = ".(defined($current_cluster_id) ? "'$current_cluster_id'" : "undef"));
                         log_warn("Current cluster type = ".(defined($current_cluster_type) ? "'$current_cluster_type'" : "undef");
