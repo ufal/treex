@@ -54,17 +54,6 @@ sub process_anode
                     # Does the target node already have a cluster id and type?
                     my $current_target_cluster_id = $canode->get_misc_attr('ClusterId');
                     my $current_target_cluster_type = $canode->get_misc_attr('ClusterType');
-                    if(!defined($ctype) && $ng >= 2)
-                    {
-                        ###!!! Debugging grammatical coreference with multiple antecedents.
-                        my $srcform = $anode->form() // '';
-                        my $tgtform = $canode->form() // '';
-                        log_warn("Processing grammatical coreference from '$srcform' to '$tgtform'.");
-                        log_warn("Current cluster id = ".(defined($current_cluster_id) ? "'$current_cluster_id'" : "undef"));
-                        log_warn("Current cluster type = ".(defined($current_cluster_type) ? "'$current_cluster_type'" : "undef"));
-                        log_warn("Current target cluster id = ".(defined($current_target_cluster_id) ? "'$current_target_cluster_id'" : "undef"));
-                        log_warn("Current target cluster type = ".(defined($current_target_cluster_type) ? "'$current_target_cluster_type'" : "undef"));
-                    }
                     $current_cluster_type = $self->process_cluster_type($ctype, $current_cluster_type, $anode, $current_target_cluster_type, $canode);
                     if(defined($current_cluster_id) && defined($current_target_cluster_id))
                     {
