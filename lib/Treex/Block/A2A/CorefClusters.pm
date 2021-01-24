@@ -82,6 +82,7 @@ sub process_anode
                     elsif(defined($current_target_cluster_id))
                     {
                         $self->add_nodes_to_cluster($current_target_cluster_id, $current_cluster_type, $canode, $anode);
+                        $current_cluster_id = $current_target_cluster_id;
                     }
                     else
                     {
