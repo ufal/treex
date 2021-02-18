@@ -80,128 +80,7 @@ sub process_zone
             # The generated node is not a copy of a real node.
             else
             {
-                $anode->set_form('_');
-                # https://ufal.mff.cuni.cz/~hajic/2018/docs/PDT20-t-man-cz.pdf
-                # AsMuch ... míra okolnosti řídícího děje, v jejímž důsledku nastane nějaký účinek (7.7 Konstrukce se závislou klauzí účinkovou)
-                # Benef ... benefaktor v konstrukcích s kontrolou (8.2.4 Kontrola)
-                # Cor ... povrchově nevyjádřitelný kontrolovaný člen (8.2.4 Kontrola)
-                # EmpNoun ... nepřítomný člen řídící syntaktická adjektiva (5.12.1.2.2 Gramatická elipsa řídícího substantiva)
-                # EmpVerb ... nepřítomný řídící predikát slovesných klauzí (5.12.1.1.2 Gramatická elipsa řídícího slovesa)
-                # Equal ... nepřítomný pozitiv v konstrukcích se srovnáním (7.4 Konstrukce s významem srovnání)
-                # Forn ... nepřítomný řídící uzel cizojazyčného výrazu (7.9 Cizojazyčné výrazy)
-                # Gen ... všeobecný aktant (5.2.4.1 Všeobecný aktant a blíže nespecifikovaný aktor)
-                # Idph ... pomocný uzel pro zachycení identifikačních výrazů (7.8 Identifikační výrazy)
-                # Neg ... pomocný uzel pro zachycení syntaktické negace vyjádřené morfematicky (7.13 Negační a afirmační výrazy)
-                # Oblfm ... nepřítomné obligatorní volné doplnění (5.12.2.1.3 Elipsa obligatorního volného doplnění)
-                # PersPron ... osobní nebo přivlastňovací zájmeno, může a nemusí být přítomno na povrchu (pokud není, jde o aktuální elipsu) (5.12.2.1.1 Aktuální elipsa obligatorního aktantu)
-                # QCor ... povrchově nevyjádřitelné valenční doplnění v konstrukcích s kvazikontrolou (8.2.5 Kvazikontrola)
-                # Rcp ... valenční doplnění, které na povrchu není vyjádřeno z důvodu reciprokalizace (5.2.4.2 Reciprocita)
-                # Separ ... pomocný uzel pro zachycení souřadnosti, nemá protějšek na povrchu (5.6.1 Zachycení souřadnosti v tektogramatickém stromu)
-                # Some ... nepřítomná jmenná část verbonominálního predikátu, zejména ve srovnávacích konstrukcích (7.4 Konstrukce s významem srovnání)
-                # Total ... nepřítomný totalizátor v konstrukcích vyjadřujících způsob uvedením výjimky (7.6 Konstrukce s významem omezení a výjimečného slučování)
-                # Unsp ... nepřítomné blíže nespecifikované valenční doplnění (5.2.4.1 Všeobecný aktant a blíže nespecifikovaný aktor)
-                if($tlemma =~ m/^\#(Unsp|Q?Cor|Rcp|Oblfm|Benef)$/)
-                {
-                    $anode->set_tag('PRON');
-                    $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs'});
-                }
-                elsif($tlemma eq '#PersPron')
-                {
-                    $anode->set_tag('PRON');
-                    # Do not use set_hash() because it would reset the features that we may have set above based on the verb.
-                    my $iset = $anode->iset();
-                    $iset->set('pos' => 'noun');
-                    $iset->set('prontype' => 'prs');
-                    $self->set_personal_pronoun_form($anode, $aparent, $tparent, $deprel, $functor);
-                }
-                elsif($tlemma eq '#Gen')
-                {
-                    # Very often, if a #Gen is used in coreference, its functor is BEN (beneficiary).
-                    if($functor eq 'BEN')
-                    {
-                        $anode->set_form('pro_někoho');
-                    }
-                    else
-                    {
-                        $anode->set_form('někdo');
-                    }
-                    $anode->set_tag('PRON');
-                    $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'ind'});
-                }
-                elsif($tlemma eq '#Neg')
-                {
-                    $anode->set_form('ne');
-                    $anode->set_tag('PART');
-                    $anode->iset()->set_hash({'pos' => 'part', 'polarity' => 'neg'});
-                }
-                # Empty verb that cannot be copied from an overt node but it has overt dependents.
-                # Example: "jak [je] vidno" (missing "je"; the other two words should depend on it in the Prague style).
-                elsif($tlemma eq '#EmpVerb')
-                {
-                    $anode->set_tag('VERB');
-                    $anode->iset()->set_hash({'pos' => 'verb'});
-                }
-                # Empty noun that cannot be copied from an overt node but it has overt dependents.
-                # Example: "příliš [peněz] prodělává" (missing "peněz"; it should be a child of "prodělává" and the parent of "příliš").
-                # Elided identification expressions ('#Idph') typically also correspond to nominals.
-                # Example: "Bydlíme [v ulici] Mezi Zahrádkami 21".
-                elsif($tlemma =~ m/^\#(EmpNoun|Idph)$/)
-                {
-                    $anode->set_tag('NOUN');
-                    $anode->iset()->set_hash({'pos' => 'noun', 'nountype' => 'com'});
-                }
-                # Elided adverbial expression corresponding to as little / as much / as well...
-                # Example: Opravil nám televizor [tak špatně], že za dva dny nefungoval.
-                # Example: Zpívali [tak moc], až se hory zelenaly.
-                elsif($tlemma eq '#AsMuch')
-                {
-                    $anode->set_form('tak');
-                    $anode->set_tag('ADV');
-                    $anode->iset()->set_hash({'pos' => 'adv'});
-                }
-                # Elided positive in comparison.
-                # Example: Udělal to [stejně], jako to udělal Tonda.
-                # Example: Poslanec je [stejný] člověk jako [je] každý jiný [člověk].
-                elsif($tlemma eq '#Equal')
-                {
-                    $anode->set_form('stejný/stejně');
-                    # We do not know whether it should be ADJ or ADV, so we go by X.
-                    $anode->set_tag('X');
-                }
-                # #Some
-                # Example: Je stejný jako já [jsem nějaký]. (We cannot copy "stejný" here, so we generate '#Some'.)
-                elsif($tlemma eq '#Some')
-                {
-                    $anode->set_form('nějaký');
-                    $anode->set_tag('ADJ');
-                    $anode->iset()->set_hash({'pos' => 'adj'});
-                }
-                # Missing totalizer '#Total'.
-                # Example: Mimo datum se píší [všechny] řadové číslice slovy.
-                # Example: Kromě Jihočeské keramiky nepatří tyto firmy mezi nejsilnější. (annotated as "firmy [všechny] kromě Jihočeské keramiky")
-                elsif($tlemma eq '#Total')
-                {
-                    $anode->set_form('všichni');
-                    $anode->set_tag('DET');
-                    $anode->iset()->set_hash({'pos' => 'adj', 'prontype' => 'tot'});
-                }
-                # Missing coordinating conjunction/punctuation that could serve
-                # as the coap head in the Prague coordination style.
-                # Example: "Oběžoval ho hmyz [#Separ] apod."
-                elsif($tlemma eq '#Separ')
-                {
-                    $anode->set_form('a');
-                    $anode->set_tag('CCONJ');
-                    $anode->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'coor'});
-                }
-                # Foreign expressions are captured as lists of nodes, they are
-                # headed by a generated node '#Forn', this node has the functor
-                # that corresponds to the function of the foreign expression in
-                # the surrounding sentence. It should get 'X'.
-                else
-                {
-                    $anode->set_tag('X');
-                }
+                $self->guess_and_set_morphology($anode, $tlemma, $tparent, $functor, $aparent, $deprel);
             }
         }
         else # t-node is not generated
@@ -217,6 +96,149 @@ sub process_zone
                 $major = $anode->ord();
             }
         }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Guesses UPOS, morphological features and form based on tectogrammatical
+# lemma and functor (and language).
+#------------------------------------------------------------------------------
+sub guess_and_set_morphology
+{
+    my $self = shift;
+    my $anode = shift;
+    my $tlemma = shift;
+    my $tparent = shift;
+    my $functor = shift;
+    my $aparent = shift;
+    my $deprel = shift;
+    my $language = $self->language();
+    $anode->set_form('_');
+    # https://ufal.mff.cuni.cz/~hajic/2018/docs/PDT20-t-man-cz.pdf
+    # AsMuch ... míra okolnosti řídícího děje, v jejímž důsledku nastane nějaký účinek (7.7 Konstrukce se závislou klauzí účinkovou)
+    # Benef ... benefaktor v konstrukcích s kontrolou (8.2.4 Kontrola)
+    # Cor ... povrchově nevyjádřitelný kontrolovaný člen (8.2.4 Kontrola)
+    # EmpNoun ... nepřítomný člen řídící syntaktická adjektiva (5.12.1.2.2 Gramatická elipsa řídícího substantiva)
+    # EmpVerb ... nepřítomný řídící predikát slovesných klauzí (5.12.1.1.2 Gramatická elipsa řídícího slovesa)
+    # Equal ... nepřítomný pozitiv v konstrukcích se srovnáním (7.4 Konstrukce s významem srovnání)
+    # Forn ... nepřítomný řídící uzel cizojazyčného výrazu (7.9 Cizojazyčné výrazy)
+    # Gen ... všeobecný aktant (5.2.4.1 Všeobecný aktant a blíže nespecifikovaný aktor)
+    # Idph ... pomocný uzel pro zachycení identifikačních výrazů (7.8 Identifikační výrazy)
+    # Neg ... pomocný uzel pro zachycení syntaktické negace vyjádřené morfematicky (7.13 Negační a afirmační výrazy)
+    # Oblfm ... nepřítomné obligatorní volné doplnění (5.12.2.1.3 Elipsa obligatorního volného doplnění)
+    # PersPron ... osobní nebo přivlastňovací zájmeno, může a nemusí být přítomno na povrchu (pokud není, jde o aktuální elipsu) (5.12.2.1.1 Aktuální elipsa obligatorního aktantu)
+    # QCor ... povrchově nevyjádřitelné valenční doplnění v konstrukcích s kvazikontrolou (8.2.5 Kvazikontrola)
+    # Rcp ... valenční doplnění, které na povrchu není vyjádřeno z důvodu reciprokalizace (5.2.4.2 Reciprocita)
+    # Separ ... pomocný uzel pro zachycení souřadnosti, nemá protějšek na povrchu (5.6.1 Zachycení souřadnosti v tektogramatickém stromu)
+    # Some ... nepřítomná jmenná část verbonominálního predikátu, zejména ve srovnávacích konstrukcích (7.4 Konstrukce s významem srovnání)
+    # Total ... nepřítomný totalizátor v konstrukcích vyjadřujících způsob uvedením výjimky (7.6 Konstrukce s významem omezení a výjimečného slučování)
+    # Unsp ... nepřítomné blíže nespecifikované valenční doplnění (5.2.4.1 Všeobecný aktant a blíže nespecifikovaný aktor)
+    if($tlemma =~ m/^\#(Unsp|Q?Cor|Rcp|Oblfm|Benef)$/)
+    {
+        $anode->set_tag('PRON');
+        $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs'});
+    }
+    elsif($tlemma eq '#PersPron')
+    {
+        $anode->set_tag('PRON');
+        # Do not use set_hash() because it would reset the features that we may have set above based on the verb.
+        my $iset = $anode->iset();
+        $iset->set('pos' => 'noun');
+        $iset->set('prontype' => 'prs');
+        $self->set_personal_pronoun_form($anode, $aparent, $tparent, $deprel, $functor) if($language eq 'cs');
+    }
+    elsif($tlemma eq '#Gen')
+    {
+        # Very often, if a #Gen is used in coreference, its functor is BEN (beneficiary).
+        if($language eq 'cs')
+        {
+            if($functor eq 'BEN')
+            {
+                $anode->set_form('pro_někoho');
+            }
+            else
+            {
+                $anode->set_form('někdo');
+            }
+        }
+        $anode->set_tag('PRON');
+        $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'ind'});
+    }
+    elsif($tlemma eq '#Neg')
+    {
+        $anode->set_form('ne') if($language eq 'cs');
+        $anode->set_tag('PART');
+        $anode->iset()->set_hash({'pos' => 'part', 'polarity' => 'neg'});
+    }
+    # Empty verb that cannot be copied from an overt node but it has overt dependents.
+    # Example: "jak [je] vidno" (missing "je"; the other two words should depend on it in the Prague style).
+    elsif($tlemma eq '#EmpVerb')
+    {
+        $anode->set_tag('VERB');
+        $anode->iset()->set_hash({'pos' => 'verb'});
+    }
+    # Empty noun that cannot be copied from an overt node but it has overt dependents.
+    # Example: "příliš [peněz] prodělává" (missing "peněz"; it should be a child of "prodělává" and the parent of "příliš").
+    # Elided identification expressions ('#Idph') typically also correspond to nominals.
+    # Example: "Bydlíme [v ulici] Mezi Zahrádkami 21".
+    elsif($tlemma =~ m/^\#(EmpNoun|Idph)$/)
+    {
+        $anode->set_tag('NOUN');
+        $anode->iset()->set_hash({'pos' => 'noun', 'nountype' => 'com'});
+    }
+    # Elided adverbial expression corresponding to as little / as much / as well...
+    # Example: Opravil nám televizor [tak špatně], že za dva dny nefungoval.
+    # Example: Zpívali [tak moc], až se hory zelenaly.
+    elsif($tlemma eq '#AsMuch')
+    {
+        $anode->set_form('tak') if($language eq 'cs');
+        $anode->set_tag('ADV');
+        $anode->iset()->set_hash({'pos' => 'adv'});
+    }
+    # Elided positive in comparison.
+    # Example: Udělal to [stejně], jako to udělal Tonda.
+    # Example: Poslanec je [stejný] člověk jako [je] každý jiný [člověk].
+    elsif($tlemma eq '#Equal')
+    {
+        $anode->set_form('stejný/stejně') if($language eq 'cs');
+        # We do not know whether it should be ADJ or ADV, so we go by X.
+        $anode->set_tag('X');
+    }
+    # #Some
+    # Example: Je stejný jako já [jsem nějaký]. (We cannot copy "stejný" here, so we generate '#Some'.)
+    elsif($tlemma eq '#Some')
+    {
+        $anode->set_form('nějaký') if($language eq 'cs');
+        $anode->set_tag('ADJ');
+        $anode->iset()->set_hash({'pos' => 'adj'});
+    }
+    # Missing totalizer '#Total'.
+    # Example: Mimo datum se píší [všechny] řadové číslice slovy.
+    # Example: Kromě Jihočeské keramiky nepatří tyto firmy mezi nejsilnější. (annotated as "firmy [všechny] kromě Jihočeské keramiky")
+    elsif($tlemma eq '#Total')
+    {
+        $anode->set_form('všichni') if($language eq 'cs');
+        $anode->set_tag('DET');
+        $anode->iset()->set_hash({'pos' => 'adj', 'prontype' => 'tot'});
+    }
+    # Missing coordinating conjunction/punctuation that could serve
+    # as the coap head in the Prague coordination style.
+    # Example: "Oběžoval ho hmyz [#Separ] apod."
+    elsif($tlemma eq '#Separ')
+    {
+        $anode->set_form('a') if($language eq 'cs');
+        $anode->set_tag('CCONJ');
+        $anode->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'coor'});
+    }
+    # Foreign expressions are captured as lists of nodes, they are
+    # headed by a generated node '#Forn', this node has the functor
+    # that corresponds to the function of the foreign expression in
+    # the surrounding sentence. It should get 'X'.
+    else
+    {
+        $anode->set_tag('X');
     }
 }
 
