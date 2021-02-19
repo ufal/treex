@@ -17,13 +17,20 @@ has iset_driver =>
 has change_bundle_id => (is=>'ro', isa=>'Bool', default=>1, documentation=>'use id of a-tree roots as the bundle id');
 
 #------------------------------------------------------------------------------
-# Reads the Czech tree and transforms it to adhere to the HamleDT guidelines.
+# Reads the English tree and transforms it to adhere to the HamleDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    # Make sure that bundle id includes the document id and is thus unique in the whole corpus.
+    # In the original treex files from PCEDT, this information is in tree node ids while bundle id is simply 's1', 's2' etc.
+    my $id = $root->id();
+    $id =~ s/^EnglishA-//;
+    $id =~ s/_/-/g;
+    my $bundle = $zone->get_bundle();
+    $bundle->set_id($id);
 }
 
 
