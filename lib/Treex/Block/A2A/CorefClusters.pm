@@ -6,7 +6,8 @@ extends 'Treex::Core::Block';
 
 
 
-has last_cluster_id => (is => 'rw', default => 0);
+has last_document_id => (is => 'rw', default => '');
+has last_cluster_id  => (is => 'rw', default => 0);
 
 
 
@@ -334,14 +335,12 @@ sub create_cluster
     my @nodes = @_;
     log_fatal("At least one node is needed to create a cluster.") if(scalar(@nodes)==0);
     # We need a new cluster id.
-    my $last_cluster_id = $self->last_cluster_id();
-    $last_cluster_id++;
-    $self->set_last_cluster_id($last_cluster_id);
     # In released data, the ClusterId should be just 'c' + natural number.
     # However, larger unique strings are allowed during intermediate stages,
     # and we need them in order to ensure uniqueness across multiple documents
     # in one file. Clusters never span multiple documents, so we will insert
-    # the document id.
+    # the document id. Since Treex documents do not have an id attribute, we
+    # will assume that a prefix of the bundle id uniquely identifies the document.
     my $docid = $nodes[0]->get_bundle()->id();
     # In PDT, remove trailing '-p1s1' (paragraph and sentence number).
     # In PCEDT, remove trailing '-s1' (there are no paragraph boundaries).
@@ -349,6 +348,16 @@ sub create_cluster
     # Certain characters cannot be used in cluster ids because they are used
     # as delimiters in the coreference annotation.
     $docid =~ s/[|=:,+\s]/-/g;
+    my $last_document_id = $self->last_document_id();
+    my $last_cluster_id = $self->last_cluster_id();
+    if($docid ne $last_document_id)
+    {
+        $last_document_id = $docid;
+        $self->set_last_document_id($last_document_id);
+        $last_cluster_id = 0;
+    }
+    $last_cluster_id++;
+    $self->set_last_cluster_id($last_cluster_id);
     my $id = $docid.'-c'.$last_cluster_id;
     # Remember references to all cluster members from all cluster members.
     # We may later need to revisit all cluster members and this will help
