@@ -14,7 +14,6 @@ sub process_anode
 {
     my $self = shift;
     my $anode = shift;
-    my $document = $anode->get_document();
     my $last_cluster_id = $self->last_cluster_id();
     # Only nodes linked to t-layer can have coreference annotation.
     if(exists($anode->wild()->{'tnode.rf'}))
@@ -344,7 +343,9 @@ sub create_cluster
     # in one file. Clusters never span multiple documents, so we will insert
     # the document id.
     my $docid = $nodes[0]->get_bundle()->id();
-    $docid =~ s/-p[0-9A-Z]+s[0-9A-Z]+$//;
+    # In PDT, remove trailing '-p1s1' (paragraph and sentence number).
+    # In PCEDT, remove trailing '-s1' (there are no paragraph boundaries).
+    $docid =~ s/-(p[0-9A-Z]+)?s[0-9A-Z]+$//;
     # Certain characters cannot be used in cluster ids because they are used
     # as delimiters in the coreference annotation.
     $docid =~ s/[|=:,+\s]/-/g;
