@@ -14,30 +14,37 @@ has 'sent_in_file'     => ( is => 'rw', isa => 'Int', default => 0 );
 #------------------------------------------------------------------------------
 # Reads a Prague-style tree and transforms it to Universal Dependencies.
 #------------------------------------------------------------------------------
-sub process_atree {
+sub process_atree
+{
     my ($self, $root) = @_;
 
     # Add the name of the input file and the number of the sentence inside
     # the file as a comment that will be written in the CoNLL-U format.
     # (In any case, Write::CoNLLU will print the sentence id. But this additional
     # information is also very useful for debugging, as it ensures a user can find the sentence in Tred.)
-    if ($self->store_orig_filename){
+    if($self->store_orig_filename)
+    {
         my $bundle = $root->get_bundle();
         my $loaded_from = $bundle->get_document()->loaded_from(); # the full path to the input file
         my $file_stem = $bundle->get_document()->file_stem(); # this will be used in the comment
-        if($loaded_from eq $self->last_loaded_from()) {
+        if($loaded_from eq $self->last_loaded_from())
+        {
             $self->set_sent_in_file($self->sent_in_file() + 1);
-        } else {
+        }
+        else
+        {
             $self->set_last_loaded_from($loaded_from);
             $self->set_sent_in_file(1);
         }
         my $sent_in_file = $self->sent_in_file();
         my $comment = "orig_file_sentence $file_stem\#$sent_in_file";
         my @comments;
-        if(defined($bundle->wild()->{comment})) {
+        if(defined($bundle->wild()->{comment}))
+        {
             @comments = split(/\n/, $bundle->wild()->{comment});
         }
-        if (! any {$_ eq $comment} (@comments)) {
+        if(!any {$_ eq $comment} (@comments))
+        {
             push(@comments, $comment);
             $bundle->wild()->{comment} = join("\n", @comments);
         }
@@ -58,7 +65,8 @@ sub process_atree {
     # below say how should the resulting dependency tree look like. The code
     # of the builder knows how the INPUT tree looks like (including the deprels
     # already converted from Prague to the UD set).
-    my $builder = Treex::Tool::PhraseBuilder::PragueToUD->new(
+    my $builder = Treex::Tool::PhraseBuilder::PragueToUD->new
+    (
         'prep_is_head'           => 0,
         'cop_is_head'            => 0,
         'coordination_head_rule' => 'first_conjunct',
