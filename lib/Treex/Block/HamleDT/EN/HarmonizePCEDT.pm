@@ -95,6 +95,30 @@ sub convert_deprels
         {
             $deprel = 'ExD';
         }
+        # Try to guess missing relations (there are thousands of them in PCEDT).
+        if($deprel eq 'NR')
+        {
+            if($node->form() eq ',')
+            {
+                $deprel = 'AuxX';
+            }
+            elsif($node->is_punctuation())
+            {
+                $deprel = 'AuxG';
+            }
+            elsif($node->is_preposition() || $node->is_conjunction() || $node->is_particle())
+            {
+                $deprel = 'AuxY';
+            }
+            elsif($node->parent()->is_verb())
+            {
+                $deprel = 'Adv';
+            }
+            else
+            {
+                $deprel = 'Atr';
+            }
+        }
         $node->set_deprel($deprel);
     }
     # Coordination of prepositional phrases or subordinate clauses:
