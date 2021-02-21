@@ -595,7 +595,16 @@ sub add_enhanced_relative_clause
     foreach my $noun (@nouns)
     {
         # Add an enhanced relation 'ref' from the modified noun to the relativizer.
-        $relativizer->add_enhanced_dependency($noun, 'ref');
+        # Avoid attaching a node to itself, which is forbidden in the enhanced graph.
+        # It should not happen but it can happen if the source data is bad.
+        if($relativizer == $noun)
+        {
+            log_warn('Relativizer is identical to the noun it represents.');
+        }
+        else
+        {
+            $relativizer->add_enhanced_dependency($noun, 'ref');
+        }
         # If the relativizer is the root of the relative clause, there is no other
         # node in the relative clause from which a new relation should go to the
         # modified noun. However, the relative clause has a nominal predicate,
