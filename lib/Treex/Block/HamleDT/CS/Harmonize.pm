@@ -528,6 +528,13 @@ sub remove_features_from_lemmas
                 $iset->set('variant', '2');
                 $iset->set('style', 'rare');
             }
+            # The style flag _,i is new in PDT-C (January 2021) and means "distortion, typo".
+            # http://ufal.mff.cuni.cz/pdt-c/publications/TR_PDT_C_morph_manual.pdf, Section 4.2.3, page 14
+            # It is typically accompanied by a comment that shows the standard form: rozpočed_,i_^(^DS**rozpočet)
+            if($ltags =~ s/_,i//)
+            {
+                $iset->set('typo', 'yes');
+            }
             # Term categories encode (among others) types of named entities.
             # There may be two categories at one lemma.
             # JVC_;K_;R (buď továrna, nebo výrobek)
@@ -562,6 +569,7 @@ sub remove_features_from_lemmas
             # They are especially useful for homonyms, foreign words and abbreviations; but they may appear everywhere.
             my $lgloss = '';
             my $lderiv = '';
+            my $lcorrect = '';
             # A typical comment is a synonym or other explaining text in Czech.
             # Example: jen-1_^(pouze)
             # Unfortunately there are instances where the '^' character is missing. Let's capture them as well.
@@ -606,6 +614,13 @@ sub remove_features_from_lemmas
                             $lderiv = '';
                         }
                     }
+                }
+                # Since PDT-C (January 2021), there is also a special class of comments that encode the standard
+                # lemma when the actual lemma reflects a typo: rozpočed_,i_^(^DS**rozpočet)
+                # http://ufal.mff.cuni.cz/pdt-c/publications/TR_PDT_C_morph_manual.pdf, Section 4.2.3, page 14
+                elsif($comment =~ m/^\(\^DS\*\*(.*)\)$/)
+                {
+                    $lcorrect = $1;
                 }
                 else # normal comment in plain Czech
                 {
@@ -707,6 +722,7 @@ sub remove_features_from_lemmas
             $node->set_misc_attr('LNumValue', $lreference) if($lreference ne '');
             $node->set_misc_attr('LGloss', $lgloss) if($lgloss ne '');
             $node->set_misc_attr('LDeriv', $lderiv) if($lderiv ne '');
+            $node->set_misc_attr('CorrectLemma', $lcorrect) if($lcorrect ne '');
             # And there is one clear bug: lemma "serioznóst" instead of "serióznost".
             $lprop =~ s/^serioznóst$/serióznost/;
             $lemma = $lprop;
