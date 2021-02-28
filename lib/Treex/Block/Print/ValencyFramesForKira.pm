@@ -24,7 +24,7 @@ sub process_tnode
     return if(!defined($anode) || $anode->get_bundle() != $bundle);
     my $form = $anode->form() // 'NOFORM';
     my $lemma = $anode->lemma() // 'NOLEMMA'; ###!!! If the a-layer has not been converted to Universal Dependencies, the lemma will not match the one in UD because it will still contain the "tail tags".
-    my $upos = $anode->iset()->get_upos() // 'NOUPOS';
+    my $tag = $anode->tag() // 'NOPOSTAG';
     my $ord = $anode->ord() // 'NOORD'; ###!!! If the a-layer has not been converted to Universal Dependencies and if there are multi-word tokens in the sentence, the ord will not match the word ID in UD!
     # To find the arguments, first get the list of effective children of the verb.
     my @children = $tnode->get_echildren();
@@ -33,7 +33,7 @@ sub process_tnode
     @children = grep {my $a = $_->get_lex_anode(); defined($a) && $a->get_bundle() == $bundle} (@children);
     @children = sort {$a->functor() cmp $b->functor()} (@children);
     my $children = join(', ', map {my $t = $_; my $a = $t->get_lex_anode(); join(':', ($t->functor(), $a->ord(), $a->form()))} (@children));
-    print(join("\t", ($id, $lemma, $form, $upos, $ord, $frame, $children)), "\n");
+    print(join("\t", ($id, $lemma, $form, $tag, $ord, $frame, $children)), "\n");
 }
 
 
