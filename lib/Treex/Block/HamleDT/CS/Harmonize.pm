@@ -287,6 +287,14 @@ sub fix_morphology
                     $node->iset()->set('prepcase', 'pre');
                 }
             }
+            # In the old cs::pdt tagset, the relative pronoun 'jenž' had its own tag.
+            # In the new cs::pdtc tagset, it is conflated with relative determiners 'jaký', 'který', 'čí'.
+            # Distinguish them here.
+            if($lemma eq 'jenž')
+            {
+                $node->iset()->set('pos', 'noun');
+                $node->iset()->set('prontype', 'rel');
+            }
             # Indefinite pronouns and determiners cannot be distinguished by their PDT tag (PZ*).
             if($lemma =~ m/^((ně|lec|ledas?|kde|bůhví|kdoví|nevím|málo|sotva)?(kdo|cos?)(si|koliv?)?|nikdo|nic|nihil|nothing)$/)
             {
