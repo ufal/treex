@@ -268,10 +268,25 @@ sub fix_morphology
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        my $form = $node->form() // '';
         my $lemma = $node->lemma() // '';
         # Fix Interset features of pronominal words.
         if($node->is_pronominal())
         {
+            # In the old cs::pdt tagset, third-person pronouns had a feature that distinguished their
+            # bare form (without preposition: "je") and form with preposition ("ně"). In the new cs::pdtc
+            # tagset, this distinction is lost but we can re-introduce it here.
+            if($lemma =~ m/^(on|jenž)$/ && $node->iset()->case() =~ m/(gen|dat|acc|loc|ins)/)
+            {
+                if($form =~ m/^(jeho|jej|jemu|jím|jí|ji|jich|jim|je|jimi)ž?$/)
+                {
+                    $node->iset()->set('prepcase', 'npr');
+                }
+                elsif($form =~ m/^(něho|něj|němu|něm|ním|ní|ni|nich|nim|ně|nimi)ž?$/)
+                {
+                    $node->iset()->set('prepcase', 'pre');
+                }
+            }
             # Indefinite pronouns and determiners cannot be distinguished by their PDT tag (PZ*).
             if($lemma =~ m/^((ně|lec|ledas?|kde|bůhví|kdoví|nevím|málo|sotva)?(kdo|cos?)(si|koliv?)?|nikdo|nic|nihil|nothing)$/)
             {
