@@ -276,6 +276,16 @@ sub fix_morphology
             if($lemma =~ m/^((ně|lec|ledas?|kde|bůhví|kdoví|nevím|málo|sotva)?(kdo|cos?)(si|koliv?)?|nikdo|nic|nihil|nothing)$/)
             {
                 $node->iset()->set('pos', 'noun');
+                # In the old cs::pdt tagset, derivates of 'kdo' and 'co' were marked for animacy.
+                # In the new cs::pdtc tagset, this distinction is lost but we can re-introduce it here.
+                if($lemma =~ m/^kdo/ || $lemma =~ m/kdo$/)
+                {
+                    $node->iset()->set('animacy', 'anim');
+                }
+                elsif($lemma =~ m/^co/ || $lemma =~ m/co$/)
+                {
+                    $node->iset()->set('animacy', 'inan');
+                }
             }
             elsif($lemma =~ m/(^(jaký|který)|(jaký|který)$|^(každý|všechen|sám|žádný|some|takýs)$)/)
             {
