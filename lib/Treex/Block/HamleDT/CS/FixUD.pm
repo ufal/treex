@@ -1009,7 +1009,8 @@ sub fix_constructions
     # In PDT-C, these tokens are tagged Q3-------------, converted to NOUN in UD,
     # but they are still attached as punctuation, leading to a violation of the
     # UD guidelines. Make them nmod instead.
-    if($node->deprel() =~ m/^punct(:|$)/ && $node->is_noun())
+    # There is also one occurrence where 'O' is tagged F%-------------, converted to X in UD, yet attached as punctuation.
+    if($node->deprel() =~ m/^punct(:|$)/ && $node->is_noun() || $node->is_foreign())
     {
         $node->set_deprel('nmod');
     }
