@@ -318,7 +318,7 @@ sub mark_bridging
             $aid <=> $bid
         }
         (@bridging);
-        $srcnode->set_misc_attr('Bridging', join('+', @bridging));
+        $srcnode->set_misc_attr('Bridging', join(',', @bridging));
     }
 }
 
