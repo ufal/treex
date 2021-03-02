@@ -48,8 +48,8 @@ sub process_anode
                     if(!defined($ctype) && $ng >= 2)
                     {
                         ###!!! Debugging: Mark instances of grammatical coreference with multiple antecedents.
-                        $canode->set_misc_attr('GramCoref', 'SplitTo');
-                        $anode->set_misc_attr('GramCoref', 'SplitFrom');
+                        $self->add_mention_misc($canode, 'GramCorefSplitTo');
+                        $self->add_mention_misc($anode, 'GramCorefSplitFrom');
                     }
                     # Does the target node already have a cluster id and type?
                     my $current_target_cluster_id = $canode->get_misc_attr('ClusterId');
@@ -181,7 +181,7 @@ sub process_cluster_type
     if(defined($srctype) && defined($ctype) && $srctype ne $ctype)
     {
         log_warn("Cluster type mismatch.");
-        $srcnode->set_misc_attr('ClusterTypeMismatch', "$srctype:$ctype:1"); # :1 identifies where the error occurred in the source code
+        $self->add_mention_misc($srcnode, "ClusterTypeMismatch:$srctype:$ctype:1"); # :1 identifies where the error occurred in the source code
         # This mismatch is less likely than the other one below, as it would occur
         # between two coreference edges originating at the same source node. We
         # do not change $srctype, so the current edge will, too, use the previously
@@ -196,8 +196,8 @@ sub process_cluster_type
     if(defined($srctype) && defined($tgttype) && $srctype ne $tgttype)
     {
         log_warn("Cluster type mismatch.");
-        $srcnode->set_misc_attr('ClusterTypeMismatch', "$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
-        $tgtnode->set_misc_attr('ClusterTypeMismatch', "$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
+        $self->add_mention_misc($srcnode, "ClusterTypeMismatch:$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
+        $self->add_mention_misc($tgtnode, "ClusterTypeMismatch:$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
         # The conflict can be only between 'Gen' and 'Spec'. We will unify the type and give priority to 'Gen' (Anja says that the annotators looked specifically for 'Gen', then batch-annotated everything else as 'Spec').
         # This method was called before the new node was added to the cluster (or the clusters were merged), so we will access the cluster via both nodes.
         $self->mark_cluster_type($srcnode, 'Gen');
@@ -456,6 +456,45 @@ sub merge_clusters
         $node->set_misc_attr('ClusterType', $type) if(defined($type));
         @{$node->wild()->{cluster_members}} = @cluster_member_ids;
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds a temporary attribute that pertains to a mention but is not recognized
+# in our CorefUD specification. We use a double-miscellaneous approach: within
+# the MISC column of CoNLL-U, all such attributes must be compressed within the
+# value of a MentionMisc attribute. This is needed so that Udapi can preserve
+# the attributes when manipulating mention annotation.
+#------------------------------------------------------------------------------
+sub add_mention_misc
+{
+    my $self = shift;
+    my $node = shift;
+    my $attr = shift; # a string to add; it should not contain the '=' character because it could confuse Udapi when it decodes MentionMisc=...
+    if(!defined($attr) || $attr eq '')
+    {
+        log_fatal("Cannot add an empty attribute to MentionMisc.");
+    }
+    # We do not want any whitespace characters in MentionMisc, although the plain space character (' ') would not violate the CoNLL-U format.
+    if($attr =~ m/^[=\|\s]$/)
+    {
+        log_fatal("The MentionMisc attribute '$attr' contains disallowed characters.");
+    }
+    my $mmisc = $node->get_misc_attr('MentionMisc');
+    # Delimiters within the value of MentionMisc are not part of the CorefUD specification.
+    # We will use the comma ','.
+    my @mmisc = ();
+    if(defined($mmisc))
+    {
+        @mmisc = split(',', $mmisc);
+    }
+    unless(any {$_ eq $attr} (@mmisc))
+    {
+        push(@mmisc, $attr);
+    }
+    $mmisc = join(',', @mmisc);
+    $node->set_misc_attr('MentionMisc', $mmisc);
 }
 
 
