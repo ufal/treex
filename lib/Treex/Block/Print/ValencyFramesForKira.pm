@@ -26,13 +26,14 @@ sub process_tnode
     my $lemma = $anode->lemma() // 'NOLEMMA'; ###!!! If the a-layer has not been converted to Universal Dependencies, the lemma will not match the one in UD because it will still contain the "tail tags".
     my $tag = $anode->tag() // 'NOPOSTAG';
     my $ord = $anode->ord() // 'NOORD'; ###!!! If the a-layer has not been converted to Universal Dependencies and if there are multi-word tokens in the sentence, the ord will not match the word ID in UD!
+    $ord .= 'g' if($tnode->is_generated());
     # To find the arguments, first get the list of effective children of the verb.
     my @children = $tnode->get_echildren();
     # We are only interested in children that have a lexical a-node in the same sentence.
     ###!!! We could follow intra-sentence coreference links but we do not do so at present.
     @children = grep {my $a = $_->get_lex_anode(); defined($a) && $a->get_bundle() == $bundle} (@children);
     @children = sort {$a->functor() cmp $b->functor()} (@children);
-    my $children = join(', ', map {my $t = $_; my $a = $t->get_lex_anode(); join(':', ($t->functor(), $a->ord(), $a->form()))} (@children));
+    my $children = join(', ', map {my $t = $_; my $a = $t->get_lex_anode(); join(':', ($t->functor(), $a->ord().($t->is_generated() ? 'g' : ''), $a->form()))} (@children));
     print(join("\t", ($id, $lemma, $form, $tag, $ord, $frame, $children)), "\n");
 }
 
