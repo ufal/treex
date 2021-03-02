@@ -748,7 +748,8 @@ sub fix_constructions
         $kdyz->set_deprel('fixed');
     }
     # "jak" can be ADV or SCONJ. If it is attached as advmod, we will assume that it is ADV.
-    elsif($node->lemma() eq 'jak' && $node->is_conjunction() && $deprel =~ m/^advmod(:|$)/)
+    # same for 'jakkoli' and 'jakkoliv'
+    elsif($node->lemma() =~ m/^jak(koliv?)?$/ && $node->is_conjunction() && $deprel =~ m/^advmod(:|$)/)
     {
         $node->iset()->set('pos' => 'adv');
         $node->iset()->clear('conjtype');
