@@ -1003,6 +1003,16 @@ sub fix_constructions
             $child->set_parent($parent);
         }
     }
+    # In PDT, isolated letters are sometimes attached as punctuation:
+    # - either 'a', 'b', 'c' etc. used as labels of list items,
+    # - or 'o', probably used as a surrogate for a bullet of a list item.
+    # In PDT-C, these tokens are tagged Q3-------------, converted to NOUN in UD,
+    # but they are still attached as punctuation, leading to a violation of the
+    # UD guidelines. Make them nmod instead.
+    if($node->deprel() =~ m/^punct(:|$)/ && $node->is_noun())
+    {
+        $node->set_deprel('nmod');
+    }
 }
 
 
