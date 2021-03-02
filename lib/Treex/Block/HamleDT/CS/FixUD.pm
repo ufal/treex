@@ -1010,7 +1010,7 @@ sub fix_constructions
     # but they are still attached as punctuation, leading to a violation of the
     # UD guidelines. Make them nmod instead.
     # There is also one occurrence where 'O' is tagged F%-------------, converted to X in UD, yet attached as punctuation.
-    if($node->deprel() =~ m/^punct(:|$)/ && $node->is_noun() || $node->is_foreign())
+    if($node->deprel() =~ m/^punct(:|$)/ && ($node->is_noun() || $node->is_foreign()))
     {
         $node->set_deprel('nmod');
     }
