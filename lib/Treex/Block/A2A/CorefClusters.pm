@@ -152,11 +152,28 @@ sub process_cluster_type
     my $srcnode = shift; # source node of the edge (needed only to mark errors)
     my $tgttype = shift; # type already marked on the target node (can be undef)
     my $tgtnode = shift; # target node of the edge (needed only to mark errors)
+    if(defined($ctype))
+    {
+        if($ctype eq 'GEN')
+        {
+            # Generic entity, e.g., "úředníci".
+            $ctype = 'Gen';
+        }
+        elsif($ctype eq 'SPEC')
+        {
+            # Specific entity or event, e.g., "Václav Klaus".
+            $ctype = 'Spec';
+        }
+        else
+        {
+            log_warn("Unknown coreference cluster type '$ctype'.");
+        }
+    }
     # The type is undefined for grammatical coreference. We will
     # try to copy it from other members of the cluster if possible
     # (it is the type of the entity/event corresponding to the
     # cluster).
-    if(!defined($ctype))
+    else # !defined($ctype)
     {
         if(defined($srctype))
         {
@@ -166,33 +183,6 @@ sub process_cluster_type
         {
             $ctype = $tgttype;
         }
-    }
-    elsif($ctype eq 'GEN')
-    {
-        # Generic entity, e.g., "úředníci".
-        $ctype = 'Gen';
-    }
-    elsif($ctype eq 'SPEC')
-    {
-        # Specific entity or event, e.g., "Václav Klaus".
-        $ctype = 'Spec';
-    }
-    else
-    {
-        log_warn("Unknown coreference cluster type '$ctype'.");
-    }
-    # Sanity check: We always assume that cluster type is either undefined or non-empty.
-    if(defined($ctype) && $ctype eq '')
-    {
-        log_fatal('Cluster type can be undefined but not empty');
-    }
-    if(defined($srctype) && $srctype eq '')
-    {
-        log_fatal('Cluster type can be undefined but not empty');
-    }
-    if(defined($tgttype) && $tgttype eq '')
-    {
-        log_fatal('Cluster type can be undefined but not empty');
     }
     # Sanity check: All coreference edges in a cluster should have the same type (or undefined type).
     if(defined($srctype) && defined($ctype) && $srctype ne $ctype)
