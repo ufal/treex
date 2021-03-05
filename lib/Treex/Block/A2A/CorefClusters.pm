@@ -181,6 +181,19 @@ sub process_cluster_type
     {
         log_warn("Unknown coreference cluster type '$ctype'.");
     }
+    # Sanity check: We always assume that cluster type is either undefined or non-empty.
+    if(defined($ctype) && $ctype eq '')
+    {
+        log_fatal('Cluster type can be undefined but not empty');
+    }
+    if(defined($srctype) && $srctype eq '')
+    {
+        log_fatal('Cluster type can be undefined but not empty');
+    }
+    if(defined($tgttype) && $tgttype eq '')
+    {
+        log_fatal('Cluster type can be undefined but not empty');
+    }
     # Sanity check: All coreference edges in a cluster should have the same type (or undefined type).
     if(defined($srctype) && defined($ctype) && $srctype ne $ctype)
     {
@@ -442,6 +455,9 @@ sub mark_cluster_type
     foreach my $id (@cluster_member_ids)
     {
         my $node = $document->get_node_by_id($id);
+        # Clear the attribute if it is already there (it shouldn't...)
+        # set_misc_attr() will do nothing if $type is not defined.
+        $node->clear_misc_attr('ClusterType');
         $node->set_misc_attr('ClusterType', $type);
     }
 }
@@ -469,7 +485,10 @@ sub merge_clusters
     {
         my $node = $document->get_node_by_id($id);
         $node->set_misc_attr('ClusterId', $merged_id);
-        $node->set_misc_attr('ClusterType', $type) if(defined($type));
+        # Clear the attribute if it is already there (it shouldn't...)
+        # set_misc_attr() will do nothing if $type is not defined.
+        $node->clear_misc_attr('ClusterType');
+        $node->set_misc_attr('ClusterType', $type);
         @{$node->wild()->{cluster_members}} = @cluster_member_ids;
     }
 }
