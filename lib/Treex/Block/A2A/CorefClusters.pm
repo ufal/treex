@@ -402,26 +402,27 @@ sub add_nodes_to_cluster
     my $self = shift;
     my $id = shift;
     my $current_member_node = shift; # a node that already bears a mention that is in the cluster
+    my @new_members = @_;
+    my $document = $current_member_node->get_document();
     my $current_members = $current_member_node->wild()->{cluster_members};
     # Sanity check: if $current_member_node already bears a mention, it must have a non-empty list of members.
     if(!defined($current_members) || ref($current_members) ne 'ARRAY' || scalar(@{$current_members}) == 0)
     {
         log_fatal("An existing cluster must have at least one member.");
     }
+    # Figure out the type of the cluster. If the cluster started with undefined type
+    # and a new coreference link contributes the type, then the type must be distributed
+    # to all old members of the cluster before this function (add_nodes_to_cluster()) is called.
+    my $type = $document->get_node_by_id($current_members->[0])->get_misc_attr('ClusterType');
     # Do not try to add nodes that are already in the cluster.
-    my @new_members = grep {my $id = $_->id(); !any {$_ eq $id} (@{$current_members})} (@_);
+    @new_members = grep {my $id = $_->id(); !any {$_ eq $id} (@{$current_members})} (@new_members);
     return if(scalar(@new_members) == 0);
     my @cluster_member_ids = sort(@{$current_members}, (map {$_->id()} (@new_members)));
-    my $document = $current_member_node->get_document();
     foreach my $id (@cluster_member_ids)
     {
         my $node = $document->get_node_by_id($id);
         @{$node->wild()->{cluster_members}} = @cluster_member_ids;
     }
-    # Figure out the type of the cluster. If the cluster started with undefined type
-    # and a new coreference link contributes the type, then the type must be distributed
-    # to all old members of the cluster before this function (add_nodes_to_cluster()) is called.
-    my $type = $document->get_node_by_id($current_members->[0])->get_misc_attr('ClusterType');
     foreach my $node (@new_members)
     {
         $self->anode_must_have_tnode($node);
