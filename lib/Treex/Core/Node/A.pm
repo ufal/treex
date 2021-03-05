@@ -340,9 +340,11 @@ sub get_subtree_dependency_string
 
 
 
-# The MISC attributes from CoNLL-U files are stored as wild attributes.
-# These methods should be in a Universal Dependencies related role but we don't have one.
-# get_misc() returns a list of MISC attributes (possibly empty list)
+#------------------------------------------------------------------------------
+# The MISC attributes from CoNLL-U files are stored as wild attributes. These
+# methods should be in a Universal Dependencies related role but we don't have one.
+# Returns a list of MISC attributes (possibly an empty list).
+#------------------------------------------------------------------------------
 sub get_misc
 {
     my $self = shift;
@@ -355,7 +357,11 @@ sub get_misc
     return @misc;
 }
 
-# get_misc_attr() returns the first value of given misc attr, or undef
+
+
+#------------------------------------------------------------------------------
+# Returns the first value of the given MISC attribute, or undef.
+#------------------------------------------------------------------------------
 sub get_misc_attr
 {
     my $self = shift;
@@ -375,7 +381,12 @@ sub get_misc_attr
     return undef;
 }
 
-# set_misc() takes a list of MISC attributes (possibly empty list)
+
+
+#------------------------------------------------------------------------------
+# Takes a list of MISC attributes (possibly an empty list) and stores it as
+# a wild attribute of the node. Any previous list will be forgotten.
+#------------------------------------------------------------------------------
 sub set_misc
 {
     my $self = shift;
@@ -391,7 +402,14 @@ sub set_misc
     }
 }
 
-# set_misc_attr() takes an attribute name and value; assumes that MISC elements are attr=value pairs; replaces first or pushes at the end
+
+
+#------------------------------------------------------------------------------
+# Takes an attribute name and value. Assumes that MISC elements are attr=value
+# pairs. Replaces the first occurrence of that attribute; if it does not yet
+# occur in MISC, pushes it at the end. Does not do anything if the value is
+# undef! For clearing the attribute in MISC, use clear_misc_attr().
+#------------------------------------------------------------------------------
 sub set_misc_attr
 {
     my $self = shift;
@@ -424,7 +442,12 @@ sub set_misc_attr
     }
 }
 
-# clear_misc_attr() takes an attribute name; assumes that MISC elements are attr=value pairs; removes all occurrences of that attribute
+
+
+#------------------------------------------------------------------------------
+# Takes an attribute name. Assumes that MISC elements are attr=value pairs.
+# Removes all occurrences of that attribute.
+#------------------------------------------------------------------------------
 sub clear_misc_attr
 {
     my $self = shift;
