@@ -162,6 +162,10 @@ sub process_cluster_type
         {
             $ctype = $srctype;
         }
+        elsif(defined($tgttype))
+        {
+            $ctype = $tgttype;
+        }
     }
     elsif($ctype eq 'GEN')
     {
@@ -186,27 +190,28 @@ sub process_cluster_type
         # between two coreference edges originating at the same source node. We
         # do not change $srctype, so the current edge will, too, use the previously
         # used cluster type.
+        $ctype = $srctype;
     }
     if(!defined($srctype) && defined($ctype))
     {
         $srctype = $ctype;
     }
+    # At this point we have unified $ctype and $srctype, and if it is undefined, then also $tgttype is undefined.
     # Sanity check: All coreference edges in a cluster should have the same type (or undefined type).
-    # If the current coreference edge does not have a type, check whether we can copy the type from the target mention.
     if(defined($srctype) && defined($tgttype) && $srctype ne $tgttype)
     {
         log_warn("Cluster type mismatch.");
         $self->add_mention_misc($srcnode, "ClusterTypeMismatch:$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
         $self->add_mention_misc($tgtnode, "ClusterTypeMismatch:$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
-        # The conflict can be only between 'Gen' and 'Spec'. We will unify the type and give priority to 'Gen' (Anja says that the annotators looked specifically for 'Gen', then batch-annotated everything else as 'Spec').
-        # This method was called before the new node was added to the cluster (or the clusters were merged), so we will access the cluster via both nodes.
+        # The conflict can be only between 'Gen' and 'Spec'. We will unify the type and give priority to 'Gen'
+        # (Anja says that the annotators looked specifically for 'Gen', then batch-annotated everything else as 'Spec').
+        # Mark the new type at all nodes that are already in the cluster. We were called before the new coreference link is added,
+        # so we do this for both nodes and both partial clusters.
         $self->mark_cluster_type($srcnode, 'Gen');
         $self->mark_cluster_type($tgtnode, 'Gen');
+        $srctype = $tgttype = $ctype = 'Gen';
     }
-    if(!defined($srctype) && defined($tgttype))
-    {
-        $srctype = $tgttype;
-    }
+    # If the target subcluster did not have a type until now, and we have a type now, propagate it there.
     if(defined($srctype) && defined($tgtnode) && !defined($tgttype))
     {
         $self->mark_cluster_type($tgtnode, $srctype);
