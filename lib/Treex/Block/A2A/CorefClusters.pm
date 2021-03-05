@@ -54,7 +54,9 @@ sub process_anode
                     # Does the target node already have a cluster id and type?
                     my $current_target_cluster_id = $canode->get_misc_attr('ClusterId');
                     my $current_target_cluster_type = $canode->get_misc_attr('ClusterType');
+                    $anode->set_misc_attr("DEBUG: Types before: $ctype, $current_cluster_type, $current_target_cluster_type", 1);
                     $current_cluster_type = $self->process_cluster_type($ctype, $current_cluster_type, $anode, $current_target_cluster_type, $canode);
+                    $anode->set_misc_attr("DEBUG: Types after: $ctype, $current_cluster_type, $current_target_cluster_type", 1);
                     if(defined($current_cluster_id) && defined($current_target_cluster_id))
                     {
                         # Are we merging two clusters that were created independently?
