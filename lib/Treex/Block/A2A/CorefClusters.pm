@@ -426,6 +426,7 @@ sub add_nodes_to_cluster
     {
         $self->anode_must_have_tnode($node);
         $node->set_misc_attr('ClusterId', $id);
+        $node->set_misc_attr("DEBUG: Setting cluster type '$type' copied from node $current_members->[0]", 1);
         # Clear the attribute if it is already there (it shouldn't...)
         # set_misc_attr() will do nothing if $type is not defined.
         $node->clear_misc_attr('ClusterType');
