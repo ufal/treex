@@ -58,24 +58,28 @@ sub process_anode
                     if(defined($current_cluster_id) && defined($current_target_cluster_id))
                     {
                         # Are we merging two clusters that were created independently?
-                        #if($current_cluster_id ne $current_target_cluster_id)
+                        if($current_cluster_id ne $current_target_cluster_id)
                         {
                             # Merge the two clusters. Use the lower id. The higher id will remain unused.
                             $self->merge_clusters($current_cluster_id, $anode, $current_target_cluster_id, $canode, $current_cluster_type);
+                            $anode->set_misc_attr('DEBUG: Merged clusters of '.$anode->id().', cluster id '.$current_cluster_id.' and '.$canode->id().', cluster id '.$current_target_cluster_id.', cluster type '.$current_cluster_type, '1');
                         }
                     }
                     elsif(defined($current_cluster_id))
                     {
                         $self->add_nodes_to_cluster($current_cluster_id, $anode, $canode);
+                        $anode->set_misc_attr('DEBUG: Added '.$canode->id().' to cluster of '.$anode->id().', cluster id '.$current_cluster_id.', cluster type '.$anode->get_misc_attr('ClusterType'), '1');
                     }
                     elsif(defined($current_target_cluster_id))
                     {
                         $self->add_nodes_to_cluster($current_target_cluster_id, $canode, $anode);
                         $current_cluster_id = $current_target_cluster_id;
+                        $anode->set_misc_attr('DEBUG: Added '.$anode->id().' to cluster of '.$canode->id().', cluster id '.$current_target_cluster_id.', cluster type '.$canode->get_misc_attr('ClusterType'), '1');
                     }
                     else
                     {
                         $current_cluster_id = $self->create_cluster($current_cluster_type, $anode, $canode);
+                        $anode->set_misc_attr('DEBUG: Created cluster from '.$anode->id().' and '.$canode->id().', cluster id '.$current_cluster_id.', cluster type '.$anode->get_misc_attr('ClusterType'), '1');
                     }
                 }
                 else
