@@ -70,14 +70,14 @@ sub process_anode
                     elsif(defined($current_cluster_id))
                     {
                         # It is possible that the cluster does not have a type yet.
-                        $self->mark_cluster_type($anode, $current_cluster_type);
+                        $self->mark_cluster_type($anode, $current_cluster_type) if(defined($current_cluster_type));
                         $self->add_nodes_to_cluster($current_cluster_id, $anode, $canode);
                         $anode->set_misc_attr('DEBUG: Added '.$canode->id().' to cluster of '.$anode->id().', cluster id '.$current_cluster_id.', cluster type '.$anode->get_misc_attr('ClusterType'), '1');
                     }
                     elsif(defined($current_target_cluster_id))
                     {
                         # It is possible that the cluster does not have a type yet.
-                        $self->mark_cluster_type($canode, $current_cluster_type);
+                        $self->mark_cluster_type($canode, $current_cluster_type) if(defined($current_cluster_type));
                         $self->add_nodes_to_cluster($current_target_cluster_id, $canode, $anode);
                         $current_cluster_id = $current_target_cluster_id;
                         $anode->set_misc_attr('DEBUG: Added '.$anode->id().' to cluster of '.$canode->id().', cluster id '.$current_target_cluster_id.', cluster type '.$canode->get_misc_attr('ClusterType'), '1');
