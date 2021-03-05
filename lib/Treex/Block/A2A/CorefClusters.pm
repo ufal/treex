@@ -408,7 +408,7 @@ sub add_nodes_to_cluster
     # Figure out the type of the cluster. If the cluster started with undefined type
     # and a new coreference link contributes the type, then the type must be distributed
     # to all old members of the cluster before this function (add_nodes_to_cluster()) is called.
-    my $type = $document->get_node_by_id($current_members->[0]->id())->get_misc_attr('ClusterType');
+    my $type = $document->get_node_by_id($current_members->[0])->get_misc_attr('ClusterType');
     foreach my $node (@new_members)
     {
         $self->anode_must_have_tnode($node);
