@@ -58,7 +58,7 @@ sub process_anode
                     if(defined($current_cluster_id) && defined($current_target_cluster_id))
                     {
                         # Are we merging two clusters that were created independently?
-                        if($current_cluster_id ne $current_target_cluster_id)
+                        #if($current_cluster_id ne $current_target_cluster_id)
                         {
                             # Merge the two clusters. Use the lower id. The higher id will remain unused.
                             $self->merge_clusters($current_cluster_id, $anode, $current_target_cluster_id, $canode, $current_cluster_type);
