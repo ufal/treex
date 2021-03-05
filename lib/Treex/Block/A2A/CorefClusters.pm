@@ -54,9 +54,7 @@ sub process_anode
                     # Does the target node already have a cluster id and type?
                     my $current_target_cluster_id = $canode->get_misc_attr('ClusterId');
                     my $current_target_cluster_type = $canode->get_misc_attr('ClusterType');
-                    $anode->set_misc_attr("DEBUG: Types before: $ctype, $current_cluster_type, $current_target_cluster_type", 1);
                     $current_cluster_type = $self->process_cluster_type($ctype, $current_cluster_type, $anode, $current_target_cluster_type, $canode);
-                    $anode->set_misc_attr("DEBUG: Types after: $ctype, $current_cluster_type, $current_target_cluster_type", 1);
                     if(defined($current_cluster_id) && defined($current_target_cluster_id))
                     {
                         # Are we merging two clusters that were created independently?
@@ -64,7 +62,6 @@ sub process_anode
                         {
                             # Merge the two clusters. Use the lower id. The higher id will remain unused.
                             $self->merge_clusters($current_cluster_id, $anode, $current_target_cluster_id, $canode, $current_cluster_type);
-                            $anode->set_misc_attr('DEBUG: Merged clusters of '.$anode->id().', cluster id '.$current_cluster_id.' and '.$canode->id().', cluster id '.$current_target_cluster_id.', cluster type '.$current_cluster_type, '1');
                         }
                     }
                     elsif(defined($current_cluster_id))
@@ -72,7 +69,6 @@ sub process_anode
                         # It is possible that the cluster does not have a type yet.
                         $self->mark_cluster_type($anode, $current_cluster_type) if(defined($current_cluster_type));
                         $self->add_nodes_to_cluster($current_cluster_id, $anode, $canode);
-                        $anode->set_misc_attr('DEBUG: Added '.$canode->id().' to cluster of '.$anode->id().', cluster id '.$current_cluster_id.', cluster type '.$anode->get_misc_attr('ClusterType'), '1');
                     }
                     elsif(defined($current_target_cluster_id))
                     {
@@ -80,12 +76,10 @@ sub process_anode
                         $self->mark_cluster_type($canode, $current_cluster_type) if(defined($current_cluster_type));
                         $self->add_nodes_to_cluster($current_target_cluster_id, $canode, $anode);
                         $current_cluster_id = $current_target_cluster_id;
-                        $anode->set_misc_attr('DEBUG: Added '.$anode->id().' to cluster of '.$canode->id().', cluster id '.$current_target_cluster_id.', cluster type '.$canode->get_misc_attr('ClusterType'), '1');
                     }
                     else
                     {
                         $current_cluster_id = $self->create_cluster($current_cluster_type, $anode, $canode);
-                        $anode->set_misc_attr('DEBUG: Created cluster from '.$anode->id().' and '.$canode->id().', cluster id '.$current_cluster_id.', cluster type '.$anode->get_misc_attr('ClusterType'), '1');
                     }
                 }
                 else
@@ -427,7 +421,6 @@ sub add_nodes_to_cluster
     {
         $self->anode_must_have_tnode($node);
         $node->set_misc_attr('ClusterId', $id);
-        $node->set_misc_attr("DEBUG: Setting cluster type '$type' copied from node $current_members->[0]", 1);
         # Clear the attribute if it is already there (it shouldn't...)
         # set_misc_attr() will do nothing if $type is not defined.
         $node->clear_misc_attr('ClusterType');
