@@ -366,16 +366,17 @@ sub get_misc_attr
 {
     my $self = shift;
     my $attr = shift;
-    my @misc = grep {m/^$attr=.+$/} ($self->get_misc());
+    my @misc = grep {m/^$attr=/} ($self->get_misc());
     if(scalar(@misc) > 1)
     {
         log_warn("Multiple values of MISC attribute '$attr'.");
     }
     if(scalar(@misc) > 0)
     {
-        if($misc[0] =~ m/^$attr=(.+)$/)
+        if($misc[0] =~ m/^$attr=(.*)$/)
         {
-            return $1;
+            my $value = $1 // '';
+            return $value;
         }
     }
     return undef;

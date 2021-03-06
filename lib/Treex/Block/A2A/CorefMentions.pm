@@ -40,7 +40,7 @@ sub mark_mention
         log_fatal("Failed to determine the span of node '$form' ($address).\n");
     }
     $anode->set_misc_attr('MentionSpan', $mspan);
-    $anode->set_misc_attr('MentionHead', $mhead);
+    $anode->set_misc_attr('MentionHead', $mhead) unless($mhead eq '');
     $anode->set_misc_attr('MentionText', $mtext);
     # We will want to later run A2A::CorefMentionHeads to move the mention
     # annotation to the head node.
