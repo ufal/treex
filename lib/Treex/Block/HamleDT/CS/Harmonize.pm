@@ -273,6 +273,32 @@ sub fix_morphology
         # Fix Interset features of pronominal words.
         if($node->is_pronominal())
         {
+            # In the Prague treebanks until PDT 3.5, plural personal pronouns had a singular lemma,
+            # not only in the third person but also in the first and second ('my' --> 'já'). In PDT-C
+            # this was changed but it would create an inconsistency with other Czech treebanks, so
+            # let's change it back here.
+            if($node->is_personal_pronoun())
+            {
+                if($lemma eq 'my')
+                {
+                    $lemma = 'já';
+                }
+                elsif($lemma eq 'vy')
+                {
+                    $lemma = 'ty';
+                }
+                # DZ: To me, the possessive pronouns are more controversial because their lemmatization
+                # should be analogous to adjectives, and that would not include 'náš' --> 'můj'.
+                # However, the older data did this, too.
+                elsif($lemma eq 'náš')
+                {
+                    $lemma = 'můj';
+                }
+                elsif($lemma eq 'váš')
+                {
+                    $lemma = 'tvůj';
+                }
+            }
             # In the old cs::pdt tagset, third-person pronouns had a feature that distinguished their
             # bare form (without preposition: "je") and form with preposition ("ně"). In the new cs::pdtc
             # tagset, this distinction is lost but we can re-introduce it here.
