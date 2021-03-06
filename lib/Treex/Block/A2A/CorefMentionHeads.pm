@@ -10,6 +10,8 @@ sub process_anode
 {
     my $self = shift;
     my $anode = shift;
+    # List coreference attributes and define their normal order in MISC.
+    my @corefattr = qw(ClusterId ClusterType Bridging MentionSpan MentionHead MentionText MentionMisc);
     my $mhead = $anode->get_misc_attr('MentionHead');
     # Ignore nodes that do not bear annotation of coreference mentions.
     # Ignore mentions that have multiple heads or no head at all.
@@ -35,13 +37,27 @@ sub process_anode
             }
         }
         # Move annotation of the mention and its cluster from the current node to the head.
-        foreach my $attr (qw(ClusterId ClusterType Bridging MentionSpan MentionHead MentionText MentionMisc))
+        foreach my $attr (@corefattr)
         {
             my $value = $anode->get_misc_attr($attr);
             if(defined($value))
             {
                 $anode->clear_misc_attr($attr);
                 $hnode->set_misc_attr($attr, $value);
+            }
+        }
+    }
+    # If the node bears coreference annotation but does not have a single head,
+    # normalize the order of the coreference attributes at least.
+    elsif(defined($anode->get_misc_attr('ClusterId')))
+    {
+        foreach my $attr (@corefattr)
+        {
+            my $value = $anode->get_misc_attr($attr);
+            if(defined($value))
+            {
+                $anode->clear_misc_attr($attr);
+                $anode->set_misc_attr($attr, $value);
             }
         }
     }
