@@ -481,7 +481,7 @@ sub add_bridging_to_cluster
     @referring_nodes = grep {my $id = $_->id(); !any {$_ eq $id} (@bridging)} (@referring_nodes);
     return if(scalar(@referring_nodes) == 0);
     push(@bridging, @referring_nodes);
-    foreach my $id (@cluster_member_ids)
+    foreach my $id (@{$current_members})
     {
         my $node = $document->get_node_by_id($id);
         @{$node->wild()->{bridging_sources}} = @bridging;
