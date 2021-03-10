@@ -541,6 +541,7 @@ sub merge_clusters
     my @bridging_source_ids_2 = exists($node2->wild()->{bridging_sources}) ? @{$node2->wild()->{bridging_sources}} : ();
     my @bridging_source_ids = ();
     my $document = $node1->get_document();
+    log_fatal("Unknown document") if(!defined($document));
     # Update any bridging references to the first cluster.
     foreach my $srcid (@bridging_source_ids_1)
     {
