@@ -480,7 +480,7 @@ sub add_bridging_to_cluster
     # Do not add nodes that are already there.
     @referring_nodes = grep {my $id = $_->id(); !any {$_ eq $id} (@bridging)} (@referring_nodes);
     return if(scalar(@referring_nodes) == 0);
-    push(@bridging, @referring_nodes);
+    push(@bridging, (map {$_->id()} (@referring_nodes)));
     foreach my $id (@{$current_members})
     {
         my $node = $document->get_node_by_id($id);
@@ -541,7 +541,6 @@ sub merge_clusters
     my @bridging_source_ids_2 = exists($node2->wild()->{bridging_sources}) ? @{$node2->wild()->{bridging_sources}} : ();
     my @bridging_source_ids = ();
     my $document = $node1->get_document();
-    log_fatal("Unknown document") if(!defined($document));
     # Update any bridging references to the first cluster.
     foreach my $srcid (@bridging_source_ids_1)
     {
