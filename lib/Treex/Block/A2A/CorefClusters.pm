@@ -296,7 +296,7 @@ sub mark_bridging
     # Does the source node already have other bridging relations?
     my $bridging = $srcnode->get_misc_attr('Bridging');
     my @bridging = ();
-    @bridging = split(/\+/, $bridging) if(defined($bridging));
+    @bridging = split(/,/, $bridging) if(defined($bridging));
     # Does the source node already have a cluster id?
     # We don't need it (unlike for target node) and the specification currently
     # does not require it but it is cleaner to create a singleton cluster anyway
@@ -315,23 +315,34 @@ sub mark_bridging
     push(@bridging, "$current_target_cluster_id:$btype");
     if(scalar(@bridging) > 0)
     {
-        @bridging = sort
-        {
-            my $aid = 0;
-            my $bid = 0;
-            if($a =~ m/^c(\d+):$/)
-            {
-                $aid = $1;
-            }
-            if($b =~ m/^c(\d+):$/)
-            {
-                $bid = $1;
-            }
-            $aid <=> $bid
-        }
-        (@bridging);
+        @bridging = sort_bridging(@bridging);
         $srcnode->set_misc_attr('Bridging', join(',', @bridging));
+        $self->add_bridging_to_cluster($tgtnode, $srcnode);
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sorts an array of bridging relations to be stored in MISC/Bridging.
+#------------------------------------------------------------------------------
+sub sort_bridging
+{
+    return sort
+    {
+        my $aid = 0;
+        my $bid = 0;
+        if($a =~ m/^c(\d+):$/)
+        {
+            $aid = $1;
+        }
+        if($b =~ m/^c(\d+):$/)
+        {
+            $bid = $1;
+        }
+        $aid <=> $bid
+    }
+    (@_);
 }
 
 
@@ -425,6 +436,55 @@ sub add_nodes_to_cluster
         # set_misc_attr() will do nothing if $type is not defined.
         $node->clear_misc_attr('ClusterType');
         $node->set_misc_attr('ClusterType', $type);
+        if(exists($current_member_node->wild()->{bridging_sources}))
+        {
+            @{$node->wild()->{bridging_sources}} = @{$current_member_node->wild()->{bridging_sources}};
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds a bridging reference to a cluster. That is, adds the id of a source node
+# of a bridging relation that ends in this cluster. The source node is in a
+# different cluster. However, it remembers our cluster id and if we change it,
+# the source node must update it accordingly.
+#------------------------------------------------------------------------------
+sub add_bridging_to_cluster
+{
+    my $self = shift;
+    my $current_member_node = shift; # a node that already bears a mention that is in the cluster
+    my @referring_nodes = @_; # list of nodes (not node ids)
+    my $document = $current_member_node->get_document();
+    my $current_members = $current_member_node->wild()->{cluster_members};
+    # Sanity check: if $current_member_node already bears a mention, it must have a non-empty list of members.
+    if(!defined($current_members) || ref($current_members) ne 'ARRAY' || scalar(@{$current_members}) == 0)
+    {
+        log_fatal("An existing cluster must have at least one member.");
+    }
+    # Sanity check: the referring nodes must not be members of the target cluster.
+    foreach my $srcnode (@referring_nodes)
+    {
+        if(any {$_ eq $srcnode->id()} (@{$current_members}))
+        {
+            log_fatal("The source node of bridging must not be a member of the target cluster.");
+        }
+    }
+    # Get the current bridging references, if any.
+    my @bridging = ();
+    if(exists($current_member_node->wild()->{bridging_sources}))
+    {
+        @bridging = @{$current_member_node->wild()->{bridging_sources}};
+    }
+    # Do not add nodes that are already there.
+    @referring_nodes = grep {my $id = $_->id(); !any {$_ eq $id} (@bridging)} (@referring_nodes);
+    return if(scalar(@referring_nodes) == 0);
+    push(@bridging, @referring_nodes);
+    foreach my $id (@cluster_member_ids)
+    {
+        my $node = $document->get_node_by_id($id);
+        @{$node->wild()->{bridging_sources}} = @bridging;
     }
 }
 
@@ -465,17 +525,59 @@ sub mark_cluster_type
 sub merge_clusters
 {
     my $self = shift;
-    my $id1 = shift;
+    my $cid1 = shift;
     my $node1 = shift; # a node from cluster 1
-    my $id2 = shift;
+    my $cid2 = shift;
     my $node2 = shift; # a node from cluster 2
     my $type = shift; # may be undef
     # Merge the two clusters. Use the lower id. The higher id will remain unused.
+    my $id1 = $cid1;
+    my $id2 = $cid2;
     $id1 =~ s/^(.*)c(\d+)$/$2/;
     $id2 =~ s/^(.*)c(\d+)$/$2/;
     my $merged_id = $1.'c'.($id1 < $id2 ? $id1 : $id2);
     my @cluster_member_ids = sort(@{$node1->wild()->{cluster_members}}, @{$node2->wild()->{cluster_members}});
+    my @bridging_source_ids_1 = exists($node1->wild()->{bridging_sources}) ? @{$node1->wild()->{bridging_sources}} : ();
+    my @bridging_source_ids_2 = exists($node2->wild()->{bridging_sources}) ? @{$node2->wild()->{bridging_sources}} : ();
+    my @bridging_source_ids = ();
     my $document = $node1->get_document();
+    # Update any bridging references to the first cluster.
+    foreach my $srcid (@bridging_source_ids_1)
+    {
+        my $srcnode = $document->get_node_by_id($srcid);
+        my $bridging = $srcnode->get_misc_attr('Bridging');
+        my @bridging = split(/,/, $bridging);
+        foreach my $b (@bridging)
+        {
+            my ($cid, $rel) = split(/:/, $b);
+            if($cid eq $cid1)
+            {
+                $b = "$merged_id:$rel";
+            }
+        }
+        $srcnode->set_misc_attr('Bridging', join(',', sort_bridging(@bridging)));
+        push(@bridging_source_ids, $srcid);
+    }
+    # Update any bridging references to the second cluster.
+    foreach my $srcid (@bridging_source_ids_2)
+    {
+        my $srcnode = $document->get_node_by_id($srcid);
+        my $bridging = $srcnode->get_misc_attr('Bridging');
+        my @bridging = split(/,/, $bridging);
+        foreach my $b (@bridging)
+        {
+            my ($cid, $rel) = split(/:/, $b);
+            if($cid eq $cid2)
+            {
+                $b = "$merged_id:$rel";
+            }
+        }
+        $srcnode->set_misc_attr('Bridging', join(',', sort_bridging(@bridging)));
+        if(!any {$_ eq $srcid} (@bridging_source_ids_1))
+        {
+            push(@bridging_source_ids, $srcid);
+        }
+    }
     foreach my $id (@cluster_member_ids)
     {
         my $node = $document->get_node_by_id($id);
@@ -485,6 +587,10 @@ sub merge_clusters
         $node->clear_misc_attr('ClusterType');
         $node->set_misc_attr('ClusterType', $type);
         @{$node->wild()->{cluster_members}} = @cluster_member_ids;
+        if(scalar(@bridging_source_ids) > 0)
+        {
+            @{$node->wild()->{bridging_sources}} = @bridging_source_ids;
+        }
     }
 }
 
