@@ -245,6 +245,9 @@ sub print_tsubtree {
     foreach my $attr (qw(coref_special discourse_special functor nodetype sentmod subfunctor t_lemma tfa val_frame.rf)){
         my $val = $self->escape_xml($tnode->get_attr($attr));
         $val = 'RSTR' if $attr eq 'functor' and (!$val or $val eq '???'); #TODO functor is required in PDT
+        if ($attr eq 'val_frame.rf' and defined $val) {
+            $val =~ s/^[^#]+#/v#/;
+        }
         print {$t_fh} "\n<$attr>$val</$attr>" if defined $val;
     }
 
