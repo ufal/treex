@@ -122,20 +122,40 @@ sub escape_xml {
     return $string;
 }
 
+# adjust an ID to be used on a particular layer
+# if $ref_layer is specified, transform the ID from to be used on $ref_layer instead of $layer
+# if $is_tree is defined, apply also the rules aimed at root ids
+sub adjust_id_to_layer {
+    my ($id, $layer, $ref_layer, $is_tree) = @_;
+    return $id if (!defined $id);
+    if ($id !~ /^$layer-/i) {
+        $id = $layer."-".$id;
+    }
+    if (defined $ref_layer) {
+        $id =~ s/^$layer-/$ref_layer-/i;
+        if ($is_tree) {
+            $id =~ s/$layer\_tree/$ref_layer\_tree/;
+        }
+    }
+    return $id;
+}
+
 sub process_atree {
     my ($self, $atree) = @_;
-    my $s_id = $atree->id;
-    $s_id =~ s/^a-//;
-    print {$m_fh} "<s id='m-$s_id'>\n";
-    foreach my $anode ($atree->get_descendants({ordered=>1})){
-        my ($id, $form, $lemma, $tag) = map{$self->escape_xml($_)} $anode->get_attrs(qw(id form lemma tag), {undefs=>'?'});
-        $id =~ s/^a-//;
+    my $m_root_id = adjust_id_to_layer($atree->id, "a", "m");
+    print {$m_fh} "<s id='$m_root_id'>\n";
+    foreach my $anode ($atree->get_descendants({ordered=>1})) {
+        my ($a_id, $form, $lemma, $tag) = map{$self->escape_xml($_)} $anode->get_attrs(qw(id form lemma tag), {undefs=>'?'});
         my $nsa = $anode->no_space_after ? '<no_space_after>1</no_space_after>' : '';
-        print {$w_fh} "<w id='w-$id'><token>$form</token>$nsa</w>\n";
-        print {$m_fh} "<m id='m-$id'><w.rf>w#w-$id</w.rf><form>$form</form><lemma>$lemma</lemma><tag>$tag</tag></m>\n";
+        my $w_id = adjust_id_to_layer($a_id, "a", "w");
+        my $m_id = adjust_id_to_layer($a_id, "a", "m");
+        print {$w_fh} "<w id='$w_id'><token>$form</token>$nsa</w>\n";
+        print {$m_fh} "<m id='$m_id'><w.rf>w#$w_id</w.rf><form>$form</form><lemma>$lemma</lemma><tag>$tag</tag></m>\n";
     }
     print {$m_fh} "</s>\n";
-    print {$a_fh} "<LM id='a-$s_id'><s.rf>m#m-$s_id</s.rf><ord>0</ord>\n<children>\n";
+    
+    my $a_root_id = adjust_id_to_layer($atree->id, "a");
+    print {$a_fh} "<LM id='$a_root_id'><s.rf>m#$m_root_id</s.rf><ord>0</ord>\n<children>\n";
     foreach my $child ($atree->get_children()) { $self->print_asubtree($child); }
     print {$a_fh} "</children>\n</LM>\n";
     return;
@@ -143,12 +163,13 @@ sub process_atree {
 
 sub print_asubtree {
     my ($self, $anode) = @_;
-    my ($id, $afun, $ord) = $anode->get_attrs(qw(id afun ord));
-    $id = 'missingID-'.rand(1000000) if !defined $id;
-    $id =~ s/^a-//;
+    my ($a_id, $afun, $ord) = $anode->get_attrs(qw(id afun ord));
+    $a_id = 'missingID-'.rand(1000000) if !defined $a_id;
+    $a_id = adjust_id_to_layer($a_id, "a");
+    my $m_id = adjust_id_to_layer($a_id, "a", "m");
     $afun = '???' if !defined $afun;
     $ord = 0 if !defined $ord;
-    print {$a_fh} "<LM id='a-$id'><m.rf>m#m-$id</m.rf><afun>$afun</afun><ord>$ord</ord>";
+    print {$a_fh} "<LM id='$a_id'><m.rf>m#$m_id</m.rf><afun>$afun</afun><ord>$ord</ord>";
     print {$a_fh} '<is_member>1</is_member>' if $anode->is_member;
     print {$a_fh} '<is_parenthesis_root>1</is_parenthesis_root>' if $anode->is_parenthesis_root;
     if (my @children = $anode->get_children()){
@@ -162,15 +183,9 @@ sub print_asubtree {
 
 sub process_ttree {
     my ($self, $ttree) = @_;
-    my $s_id = $ttree->id;
-    $s_id =~ s/^t-//;
-    my $a_s_id = $ttree->get_attr('atree.rf');
-    if (!$a_s_id){
-        $a_s_id = $s_id;
-        $a_s_id =~ s/t_tree/a_tree/;
-    }
-    $a_s_id =~ s/^a-//;
-    print {$t_fh} "<LM id='t-$s_id'><atree.rf>a#a-$a_s_id</atree.rf>\n<nodetype>root</nodetype>\n<deepord>0</deepord>";
+    my $s_id = adjust_id_to_layer($ttree->id, "t");
+    my $a_s_id = adjust_id_to_layer($ttree->get_attr('atree.rf'), "a") // adjust_id_to_layer($s_id, "t", "a", 1);
+    print {$t_fh} "<LM id='$s_id'><atree.rf>a#$a_s_id</atree.rf>\n<nodetype>root</nodetype>\n<deepord>0</deepord>";
 
     # multiword expressions in the PDT-like format:
     
@@ -182,7 +197,7 @@ sub process_ttree {
     if (@mwes) {
         print {$t_fh} "\n<mwes>";
         foreach my $mwe (@mwes) {
-	    my $id = $mwe->{'id'};
+            my $id = $mwe->{'id'};
             print {$t_fh} "\n<LM id=\"$id\">";
             # simple attrs
             foreach my $attr (qw(basic-form type)) {
@@ -198,8 +213,8 @@ sub process_ttree {
             if (@target_ids) {
                 print {$t_fh} "\n<tnode.rfs>";
                 foreach my $target_id (@target_ids) {
-		    $target_id =~ s/^t-//;
-                    print {$t_fh} "\n<LM>t-$target_id</LM>";
+                    $target_id = adjust_id_to_layer($target_id, "t");
+                    print {$t_fh} "\n<LM>$target_id</LM>";
                 }
                 print {$t_fh} "\n</tnode.rfs>";
             }
@@ -218,8 +233,8 @@ sub process_ttree {
 sub print_tsubtree {
     my ($self, $tnode) = @_;
     my ($id, $ord) = $tnode->get_attrs(qw(id ord), {undefs=>'?'});
-    $id =~ s/^t-//;
-    print {$t_fh} "\n<LM id='t-$id'><deepord>$ord</deepord>";
+    $id = adjust_id_to_layer($id, "t");
+    print {$t_fh} "\n<LM id='$id'><deepord>$ord</deepord>";
 
     # boolean attrs
     foreach my $attr (qw(is_dsp_root is_generated is_member is_name_of_person is_parenthesis is_state)){
@@ -239,9 +254,8 @@ sub print_tsubtree {
         if (@antes) {
             print {$t_fh} "\n<$attr>";
             foreach my $ante (@antes) {
-                my $ante_id = $ante->id;
-		$ante_id =~ s/^t-//;
-                print {$t_fh} "\n<LM>t-$ante_id</LM>";
+                my $ante_id = adjust_id_to_layer($ante->id, "t");
+                print {$t_fh} "\n<LM>$ante_id</LM>";
             }
             print {$t_fh} "\n</$attr>";
         }
@@ -250,21 +264,19 @@ sub print_tsubtree {
     # coref_text.rf
     my @antes = $tnode->_get_node_list('coref_text.rf');
     if (@antes) { 
-	if ($self->version eq "3.0" or $self->version eq '3.5' or $self->version eq 'C') { # transform the old-fashioned coref_text.rf to structured coref_text (with default SPEC type)
-            print {$t_fh} "\n<coref_text>";
-            foreach my $ante (@antes) {
-                my $ante_id = $ante->id;
-		$ante_id =~ s/^t-//;
-                print {$t_fh} "\n<LM><target_node.rf>t-$ante_id</target_node.rf><type>SPEC</type></LM>";
-            }
-            print {$t_fh} "\n</coref_text>";
-	}
+        if ($self->version eq "3.0" or $self->version eq '3.5' or $self->version eq 'C') { # transform the old-fashioned coref_text.rf to structured coref_text (with default SPEC type)
+                print {$t_fh} "\n<coref_text>";
+                foreach my $ante (@antes) {
+                    my $ante_id = adjust_id_to_layer($ante->id, "t");
+                    print {$t_fh} "\n<LM><target_node.rf>$ante_id</target_node.rf><type>SPEC</type></LM>";
+                }
+                print {$t_fh} "\n</coref_text>";
+        }
         else { # just keep the original old-fashioned coref_text.rf
             print {$t_fh} "\n<coref_text.rf>";
             foreach my $ante (@antes) {
-                my $ante_id = $ante->id;
-		$ante_id =~ s/^t-//;
-                print {$t_fh} "\n<LM>t-$ante_id</LM>";
+                my $ante_id = adjust_id_to_layer($ante->id);
+                print {$t_fh} "\n<LM>$ante_id</LM>";
             }
             print {$t_fh} "\n</coref_text.rf>";
         }
@@ -279,18 +291,17 @@ sub print_tsubtree {
     if (@arrows) {
         print {$t_fh} "\n<coref_text>";
         foreach my $arrow (@arrows) { # take all coref_text arrows starting at the given node
-	    print {$t_fh} "\n<LM>";
+        print {$t_fh} "\n<LM>";
             # simple attrs
             # foreach my $attr (qw(target_node.rf type comment src)) {
             foreach my $attr (qw(target_node.rf type comment)) {
                 my $val = $self->escape_xml($arrow->{$attr});
                 if ($attr eq 'target_node.rf') {
-		  $val =~ s/^t-//;
-                  $val = "t-$val";
+                    $val = adjust_id_to_layer($val, "t");
                 }
                 print {$t_fh} "\n<$attr>$val</$attr>" if defined $val;
             }
-	    print {$t_fh} "\n</LM>";
+        print {$t_fh} "\n</LM>";
         }
         print {$t_fh} "\n</coref_text>";
     }
@@ -304,18 +315,17 @@ sub print_tsubtree {
     if (@arrows) {
         print {$t_fh} "\n<bridging>";
         foreach my $arrow (@arrows) { # take all bridging arrows starting at the given node
-	    print {$t_fh} "\n<LM>";
+        print {$t_fh} "\n<LM>";
             # simple attrs
             # foreach my $attr (qw(target_node.rf type comment src)) {
             foreach my $attr (qw(target_node.rf type comment)) {
                 my $val = $self->escape_xml($arrow->{$attr});
                 if ($attr eq 'target_node.rf') {
-		  $val =~ s/^t-//;
-                  $val = "t-$val";
+                    $val = adjust_id_to_layer($val, "t");
                 }
                 print {$t_fh} "\n<$attr>$val</$attr>" if defined $val;
             }
-	    print {$t_fh} "\n</LM>";
+        print {$t_fh} "\n</LM>";
         }
         print {$t_fh} "\n</bridging>";
     }
@@ -329,16 +339,13 @@ sub print_tsubtree {
     if (@discourse_arrows) {
         print {$t_fh} "\n<discourse>";
         foreach my $arrow (@discourse_arrows) { # take all discourse arrows starting at the given node
-	    print {$t_fh} "\n<LM>";
+            print {$t_fh} "\n<LM>";
             # simple attrs
             # foreach my $attr (qw(target_node.rf type start_group_id start_range target_group_id target_range discourse_type is_negated comment src is_altlex is_compositional connective_inserted is_implicit is_NP)) {
             foreach my $attr (qw(target_node.rf type start_group_id start_range target_group_id target_range discourse_type is_negated comment is_altlex is_compositional connective_inserted is_implicit is_NP)) {
                 my $val = $self->escape_xml($arrow->{$attr});
                 if ($attr eq 'target_node.rf') {
-		  if ($val) {
-		    $val =~ s/^t-//;
-                    $val = "t-$val";
-		  }
+                    $val = adjust_id_to_layer($val, "t");
                 }
                 print {$t_fh} "\n<$attr>$val</$attr>" if defined $val;
             }
@@ -352,20 +359,13 @@ sub print_tsubtree {
                 if (@target_ids) {
                     print {$t_fh} "\n<$attr>";
                     foreach my $target_id (@target_ids) {
-                        my $prefix = "t-";
-                        if ($attr =~ /^a-/) {
-                          $prefix = "a-";
-		          $target_id =~ s/^a-//;
-                        }
-			else {
-			    $target_id =~ s/^t-//;
-			}
-                        print {$t_fh} "\n<LM>$prefix$target_id</LM>";
+                        $target_id = adjust_id_to_layer($target_id, substr($attr, 0, 1));
+                        print {$t_fh} "\n<LM>$target_id</LM>";
                     }
                     print {$t_fh} "\n</$attr>";
                 }
             }
-	    print {$t_fh} "\n</LM>";
+            print {$t_fh} "\n</LM>";
         }
         print {$t_fh} "\n</discourse>";
     }
@@ -405,24 +405,22 @@ sub print_tsubtree {
     # references
     my $lex = $tnode->get_lex_anode();
     my @aux = $tnode->get_aux_anodes();
-    if ($lex || @aux){
+    if ($lex || @aux) {
         print {$t_fh} "\n<a>";
-	if ($lex) {
-            my $id = $lex->id;
-	    $id =~ s/^a-//;
-	    printf {$t_fh} "\n<lex.rf>a#a-$id</lex.rf>"
-	}
+        if ($lex) {
+            my $id = adjust_id_to_layer($lex->id, "a");
+            printf {$t_fh} "\n<lex.rf>a#$id</lex.rf>"
+        }
         if (@aux==1){
-	    my $id = $aux[0]->id;
-	    $id =~ s/^a-//;
-            printf {$t_fh} "\n<aux.rf>a#a-$id</aux.rf>";
+            my $id = adjust_id_to_layer($aux[0]->id, "a");
+            printf {$t_fh} "\n<aux.rf>a#$id</aux.rf>";
         }
         if (@aux>1){
             print {$t_fh} "\n<aux.rf>";
-	    for my $id (map {$_->id} @aux) {
-	        $id =~ s/^a-//;
-                printf {$t_fh} "\n<LM>a#a-$id</LM>";
-	    }
+            for my $id (map {$_->id} @aux) {
+                $id = adjust_id_to_layer($id, "a");
+                printf {$t_fh} "\n<LM>a#$id</LM>";
+            }
             print {$t_fh} "\n</aux.rf>";
         }
         print {$t_fh} "\n</a>";
