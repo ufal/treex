@@ -149,6 +149,10 @@ sub print_tsubtree {
     # simple attrs
     foreach my $attr (qw(coref_special functor nodetype sentmod subfunctor t_lemma tfa val_frame.rf)){
         my $val = $self->escape_xml($tnode->get_attr($attr));
+        if ($attr eq 'val_frame.rf' and defined $val) {
+            my $vallex_prefix = $self->vallex_prefix;
+            $val =~ s/^[^#]+#/$vallex_prefix#/;
+        }
         print {$t_fh} "<$attr>$val</$attr>" if defined $val;
     }
 
