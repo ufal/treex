@@ -29,7 +29,8 @@ sub process_document{
     # TODO p-file
 
     $self->{extension} = '.t';
-    $t_fn = $self->_get_filename($doc);
+    $t_fn = $print_fn;
+    $t_fn =~ s/.\[at\]/$self->{extension}/;
     $t_fh = $self->_open_file_handle($t_fn);
 
     my $doc_id = $doc->file_stem . $doc->file_number;
@@ -76,10 +77,31 @@ sub escape_xml {
     return $string;
 }
 
+# adjust an ID to be used on a particular layer
+# if $ref_layer is specified, transform the ID from to be used on $ref_layer instead of $layer
+# if $is_tree is defined, apply also the rules aimed at root ids
+sub adjust_id_to_layer {
+    my ($id, $layer, $ref_layer, $is_tree) = @_;
+    return $id if (!defined $id);
+    if ($id !~ /^(english)?$layer-/i) {
+        $id = $layer."-".$id;
+    }
+    if (defined $ref_layer) {
+        if ($id =~ /^(english)?($layer)-/i) {
+            $ref_layer = lc($2) eq $2 ? lc($ref_layer) : uc($ref_layer);
+            $id =~ s/^(english)?$layer-/$1$ref_layer-/i;
+        }
+        if ($is_tree) {
+            $id =~ s/$layer\_tree/$ref_layer\_tree/;
+        }
+    }
+    return $id;
+}
+
 sub process_atree {
     my ($self, $atree) = @_;
-    my $s_id = $atree->id;
-    print {$a_fh} "<LM id='a-$s_id'><ord>0</ord>\n<children>\n";
+    my $s_id = adjust_id_to_layer($atree->id, "a");
+    print {$a_fh} "<LM id='$s_id'><ord>0</ord>\n<children>\n";
     foreach my $child ($atree->get_children()) { $self->print_asubtree($child); }
     print {$a_fh} "</children>\n</LM>\n";
     return;
@@ -87,9 +109,10 @@ sub process_atree {
 
 sub print_asubtree {
     my ($self, $anode) = @_;
-    my ($id, $form, $lemma, $tag, $afun, $ord) = map{$self->escape_xml($_)} $anode->get_attrs(qw(id form lemma tag afun ord), {undefs=>'?'});
+    my ($a_id, $form, $lemma, $tag, $afun, $ord) = map{$self->escape_xml($_)} $anode->get_attrs(qw(id form lemma tag afun ord), {undefs=>'?'});
+    $a_id = adjust_id_to_layer($a_id, "a");
     my $nsa = $anode->no_space_after() ? '<no_space_after>1</no_space_after>' : '';
-    print {$a_fh} "<LM id='a-$id'>";
+    print {$a_fh} "<LM id='$a_id'>";
     print {$a_fh} "<m><form>$form</form><lemma>$lemma</lemma><tag>$tag</tag><w><token>$form</token>$nsa</w></m><afun>$afun</afun><ord>$ord</ord>";
     print {$a_fh} '<is_member>1</is_member>' if $anode->is_member;
     print {$a_fh} '<is_parenthesis_root>1</is_parenthesis_root>' if $anode->is_parenthesis_root;
@@ -104,13 +127,9 @@ sub print_asubtree {
 
 sub process_ttree {
     my ($self, $ttree) = @_;
-    my $s_id = $ttree->id;
-    my $a_s_id = $ttree->get_attr('atree.rf');
-    if (!$a_s_id){
-        $a_s_id = $s_id;
-        $a_s_id =~ s/t_tree/a_tree/;
-    }
-    print {$t_fh} "<LM id='t-$s_id'><atree.rf>a#a-$a_s_id</atree.rf><nodetype>root</nodetype><deepord>0</deepord>\n<children>\n";
+    my $s_id = adjust_id_to_layer($ttree->id, "t");
+    my $a_s_id = adjust_id_to_layer($ttree->get_attr('atree.rf'), "a") // adjust_id_to_layer($s_id, "t", "a", 1);
+    print {$t_fh} "<LM id='$s_id'><atree.rf>a#$a_s_id</atree.rf><nodetype>root</nodetype><deepord>0</deepord>\n<children>\n";
     foreach my $child ($ttree->get_children()) { $self->print_tsubtree($child); }
     print {$t_fh} "</children>\n</LM>\n";
     return;
@@ -119,7 +138,8 @@ sub process_ttree {
 sub print_tsubtree {
     my ($self, $tnode) = @_;
     my ($id, $ord) = $tnode->get_attrs(qw(id ord), {undefs=>'?'});
-    print {$t_fh} "<LM id='t-$id'><deepord>$ord</deepord>";
+    $id = adjust_id_to_layer($id, "t");
+    print {$t_fh} "<LM id='$id'><deepord>$ord</deepord>";
 
     # boolean attrs
     foreach my $attr (qw(is_dsp_root is_generated is_member is_name_of_person is_parenthesis is_state)){
@@ -138,8 +158,8 @@ sub print_tsubtree {
         if (@antes) {
             print {$t_fh} "<$attr>";
             foreach my $ante (@antes) {
-                my $ante_id = $ante->id;
-                print {$t_fh} "<LM>t-$ante_id</LM>";
+                my $ante_id = adjust_id_to_layer($ante->id, "t");
+                print {$t_fh} "<LM>$ante_id</LM>";
             }
             print {$t_fh} "</$attr>";
         }
@@ -150,8 +170,8 @@ sub print_tsubtree {
     if (@antes) {
         print {$t_fh} "<coref_text>";
         foreach my $ante (@antes) {
-            my $ante_id = $ante->id;
-            print {$t_fh} "<LM><target-node.rf>t-$ante_id</target-node.rf><informal-type>SPEC</informal-type></LM>";
+            my $ante_id = adjust_id_to_layer($ante->id, "t");
+            print {$t_fh} "<LM><target-node.rf>$ante_id</target-node.rf><informal-type>SPEC</informal-type></LM>";
         }
         print {$t_fh} "</coref_text>";
     }
@@ -170,13 +190,13 @@ sub print_tsubtree {
     my @aux = $tnode->get_aux_anodes();
     if ($lex || @aux){
         print {$t_fh} "<a>";
-        printf {$t_fh} "<lex.rf>a#a-%s</lex.rf>", $lex->id if $lex;
+        printf {$t_fh} "<lex.rf>a#%s</lex.rf>", adjust_id_to_layer($lex->id, "a") if $lex;
         if (@aux==1){
-            printf {$t_fh} "<aux.rf>a#a-%s</aux.rf>", $aux[0]->id;
+            printf {$t_fh} "<aux.rf>a#%s</aux.rf>", adjust_id_to_layer($aux[0]->id, "a");
         }
         if (@aux>1){
             print {$t_fh} "<aux.rf>";
-            printf {$t_fh} "<LM>a#a-%s</LM>", $_->id for @aux;
+            printf {$t_fh} "<LM>a#%s</LM>", adjust_id_to_layer($_->id, "a") for @aux;
             print {$t_fh} "</aux.rf>";
         }
         print {$t_fh} "</a>\n";
