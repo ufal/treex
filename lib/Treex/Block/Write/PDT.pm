@@ -27,17 +27,20 @@ sub process_document{
 
 
     $self->{extension} = '.m';
-    $m_fn = $self->_get_filename($doc);
+    $m_fn = $print_fn;
+    $m_fn =~ s/.\[wamt\]/$self->{extension}/;
     $m_fh = $self->_open_file_handle($m_fn);
     $m_fn = $doc->file_stem . $self->_document_extension($doc);
 
     $self->{extension} = '.a';
-    $a_fn = $self->_get_filename($doc);
+    $a_fn = $print_fn;
+    $a_fn =~ s/.\[wamt\]/$self->{extension}/;
     $a_fh = $self->_open_file_handle($a_fn);
     $a_fn = $doc->file_stem . $self->_document_extension($doc);
 
     $self->{extension} = '.t';
-    $t_fn = $self->_get_filename($doc);
+    $t_fn = $print_fn;
+    $t_fn =~ s/.\[wamt\]/$self->{extension}/;
     $t_fh = $self->_open_file_handle($t_fn);
 
     my $version_flag = "";
