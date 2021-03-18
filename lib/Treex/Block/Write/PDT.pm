@@ -84,7 +84,6 @@ END
   <schema href="adata$version_flag\_schema.xml" />
   <references>
    <reffile id="m" name="mdata" href="$m_fn" />
-   <reffile id="w" name="wdata" href="$w_fn" />
   </references>
 </head>
 <trees>
@@ -130,7 +129,7 @@ sub process_atree {
     print {$m_fh} "<s id='m-$s_id'>\n";
     foreach my $anode ($atree->get_descendants({ordered=>1})){
         my ($id, $form, $lemma, $tag) = map{$self->escape_xml($_)} $anode->get_attrs(qw(id form lemma tag), {undefs=>'?'});
-	$id =~ s/^a-//;
+        $id =~ s/^a-//;
         my $nsa = $anode->no_space_after ? '<no_space_after>1</no_space_after>' : '';
         print {$w_fh} "<w id='w-$id'><token>$form</token>$nsa</w>\n";
         print {$m_fh} "<m id='m-$id'><w.rf>w#w-$id</w.rf><form>$form</form><lemma>$lemma</lemma><tag>$tag</tag></m>\n";
