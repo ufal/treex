@@ -374,36 +374,41 @@ sub print_tsubtree {
     }
 
     # grammatemes
-    print {$t_fh} "\n<gram>";
-    foreach my $attr (qw(sempos gender number typgroup degcmp verbmod deontmod tense aspect resultative dispmod iterativeness indeftype person numertype number politeness negation diatgram factmod)){ # definiteness diathesis
-        my $val = $tnode->get_attr("gram/$attr") // '';
-        $val = 'n.denot' if !$val and $attr eq 'sempos'; #TODO sempos is required in PDT
+    my @gram_attrs = qw(sempos gender number typgroup degcmp verbmod deontmod tense aspect resultative dispmod iterativeness indeftype person numertype number politeness negation diatgram factmod); # definiteness diathesis
+    my $def_count = 0;
+    my %gram_hash = map {my $val = $tnode->get_attr("gram/$_"); $def_count++ if defined $val; $_ => $val} @gram_attrs;
+    if ($def_count) {
+        print {$t_fh} "\n<gram>";
+        foreach my $attr (@gram_attrs) {
+            my $val = $gram_hash{$attr} // '';
+            $val = 'n.denot' if !$val and $attr eq 'sempos'; #TODO sempos is required in PDT
 
-        if ($self->version eq "3.0" or $self->version eq "3.5") { # grammatemes dispmod and resultative have been canceled, verbmod changed to factmod, and diatgram has been introduced (here ignoring diatgram for now)
-            next if ($attr =~ /^(dispmod|resultative)$/);
-            if ($attr eq 'verbmod') {
-                my $factmod;
-                $factmod = 'asserted' if ($val eq 'ind');
-                $factmod = 'appeal' if ($val eq 'imp');
-                $factmod = 'nil' if ($val =~ /^(nr|nil)$/);
-                if ($val eq 'cdn') {
-                    my $tense = $tnode->get_attr("gram/tense") // '';
-                    $factmod = $tense eq 'ant' ? 'irreal' : 'potential';
-                }
-                print {$t_fh} "<factmod>$factmod</factmod>" if defined $factmod;
-                next;
-            }
-            elsif ($attr eq 'tense') {
-                my $verbmod = $tnode->get_attr("gram/verbmod") // '';
-                if ($verbmod eq 'cdn') { # in PDT 3.0 and 3.5, tense is set to 'nil' in case of factmod values 'irreal' and 'potential' (i.e. originally in PDT 2.0 'cdn' in vebmod)
-                    print {$t_fh} "<tense>nil</tense>";
+            if ($self->version eq "3.0" or $self->version eq "3.5") { # grammatemes dispmod and resultative have been canceled, verbmod changed to factmod, and diatgram has been introduced (here ignoring diatgram for now)
+                next if ($attr =~ /^(dispmod|resultative)$/);
+                if ($attr eq 'verbmod') {
+                    my $factmod;
+                    $factmod = 'asserted' if ($val eq 'ind');
+                    $factmod = 'appeal' if ($val eq 'imp');
+                    $factmod = 'nil' if ($val =~ /^(nr|nil)$/);
+                    if ($val eq 'cdn') {
+                        my $tense = $tnode->get_attr("gram/tense") // '';
+                        $factmod = $tense eq 'ant' ? 'irreal' : 'potential';
+                    }
+                    print {$t_fh} "<factmod>$factmod</factmod>" if defined $factmod;
                     next;
                 }
+                elsif ($attr eq 'tense') {
+                    my $verbmod = $tnode->get_attr("gram/verbmod") // '';
+                    if ($verbmod eq 'cdn') { # in PDT 3.0 and 3.5, tense is set to 'nil' in case of factmod values 'irreal' and 'potential' (i.e. originally in PDT 2.0 'cdn' in vebmod)
+                        print {$t_fh} "<tense>nil</tense>";
+                        next;
+                    }
+                }
             }
+            print {$t_fh} "<$attr>$val</$attr>" if $val;
         }
-        print {$t_fh} "<$attr>$val</$attr>" if $val;
+        print {$t_fh} "\n</gram>\n";
     }
-    print {$t_fh} "\n</gram>\n";
 
     # references
     my $lex = $tnode->get_lex_anode();

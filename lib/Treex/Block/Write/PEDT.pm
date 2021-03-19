@@ -147,7 +147,7 @@ sub print_tsubtree {
     }
 
     # simple attrs
-    foreach my $attr (qw(coref_special functor nodetype sentmod subfunctor t_lemma tfa val_frame.rf nombank_data bbn_tag)){
+    foreach my $attr (qw(coref_special formeme functor nodetype sentmod subfunctor t_lemma tfa val_frame.rf nombank_data bbn_tag)){
         my $val = $self->escape_xml($tnode->get_attr($attr));
         if ($attr eq 'val_frame.rf' and defined $val) {
             my $vallex_prefix = $self->vallex_prefix;
@@ -181,13 +181,18 @@ sub print_tsubtree {
     }
 
     # grammatemes
-    print {$t_fh} "<gram>";
-    foreach my $attr (qw(sempos gender number degcmp verbmod deontmod tense aspect resultative dispmod iterativeness indeftype person number politeness negation)){ # definiteness diathesis
-        my $val = $tnode->get_attr("gram/$attr");
-        $val = 'n.denot' if !defined $val && $attr eq 'sempos'; #TODO sempos is required in PDT
-        print {$t_fh} "<$attr>$val</$attr>" if defined $val;
+    my @gram_attrs = qw(sempos gender number degcmp verbmod deontmod tense aspect resultative dispmod iterativeness indeftype person number politeness negation); # definiteness diathesis
+    my $def_count = 0;
+    my %gram_hash = map {my $val = $tnode->get_attr("gram/$_"); $def_count++ if defined $val; $_ => $val} @gram_attrs;
+    if ($def_count) {
+        $gram_hash{"sempos"} = 'n.denot' if !defined $gram_hash{"sempos"};
+        print {$t_fh} "<gram>";
+        foreach my $attr (@gram_attrs) {
+            my $val = $gram_hash{$attr};
+            print {$t_fh} "<$attr>$val</$attr>" if defined $val;
+        }
+        print {$t_fh} "</gram>\n";
     }
-    print {$t_fh} "</gram>\n";
 
     # references
     my $lex = $tnode->get_lex_anode();
