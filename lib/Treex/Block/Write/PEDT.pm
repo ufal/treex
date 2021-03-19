@@ -170,12 +170,13 @@ sub print_tsubtree {
     }
 
     # coref text
-    my @antes = $tnode->get_coref_text_nodes();
-    if (@antes) {
+    my ($antes, $types) = $tnode->get_coref_text_nodes({with_types => 1});
+    if (@$antes) {
         print {$t_fh} "<coref_text>";
-        foreach my $ante (@antes) {
-            my $ante_id = adjust_id_to_layer($ante->id, "t");
-            print {$t_fh} "<LM><target-node.rf>$ante_id</target-node.rf><informal-type>SPEC</informal-type></LM>";
+        foreach my $i (0 .. $#$antes) {
+            my $ante_id = adjust_id_to_layer($antes->[$i]->id, "t");
+            my $type = $types->[$i] // "SPEC";
+            print {$t_fh} "<LM><target-node.rf>$ante_id</target-node.rf><informal-type>$type</informal-type></LM>";
         }
         print {$t_fh} "</coref_text>";
     }
