@@ -237,7 +237,7 @@ sub next_document {
 
     my $document = $self->new_document();    # pre-fills base name, path
     $base_filename =~ s/.*\///;
-    $base_filename =~ s/_$//;
+    $base_filename =~ s/[_.]$//;
     $document->set_file_stem($base_filename);
 
     $self->_create_val_refs( $pmldoc, $document );

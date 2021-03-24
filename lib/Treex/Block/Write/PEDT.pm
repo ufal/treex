@@ -109,7 +109,7 @@ sub process_atree {
 
 sub print_asubtree {
     my ($self, $anode) = @_;
-    my ($a_id, $form, $lemma, $tag, $afun, $ord) = map{$self->escape_xml($_)} $anode->get_attrs(qw(id form lemma tag afun ord), {undefs=>'?'});
+    my ($a_id, $form, $lemma, $tag, $ord) = map{$self->escape_xml($_)} $anode->get_attrs(qw(id form lemma tag ord), {undefs=>'?'});
     my $afun = $self->escape_xml($anode->afun);
     $a_id = adjust_id_to_layer($a_id, "a");
     my $nsa = $anode->no_space_after() ? '<no_space_after>1</no_space_after>' : '';
