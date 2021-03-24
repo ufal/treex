@@ -181,6 +181,18 @@ sub print_tsubtree {
         print {$t_fh} "</coref_text>";
     }
 
+    # bridging
+    ($antes, $types) = $tnode->get_bridging_nodes();
+    if (@$antes) {
+        print {$t_fh} "<bridging>";
+        foreach my $i (0 .. $#$antes) {
+            my $ante_id = adjust_id_to_layer($antes->[$i]->id, "t");
+            my $type = $types->[$i];
+            print {$t_fh} "<LM><target-node.rf>$ante_id</target-node.rf><informal-type>$type</informal-type></LM>";
+        }
+        print {$t_fh} "</bridging>";
+    }
+
     # grammatemes
     my @gram_attrs = qw(sempos gender number degcmp verbmod deontmod tense aspect resultative dispmod iterativeness indeftype person number politeness negation); # definiteness diathesis
     my $def_count = 0;
