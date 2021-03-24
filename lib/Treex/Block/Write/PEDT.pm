@@ -110,10 +110,13 @@ sub process_atree {
 sub print_asubtree {
     my ($self, $anode) = @_;
     my ($a_id, $form, $lemma, $tag, $afun, $ord) = map{$self->escape_xml($_)} $anode->get_attrs(qw(id form lemma tag afun ord), {undefs=>'?'});
+    my $afun = $self->escape_xml($anode->afun);
     $a_id = adjust_id_to_layer($a_id, "a");
     my $nsa = $anode->no_space_after() ? '<no_space_after>1</no_space_after>' : '';
     print {$a_fh} "<LM id='$a_id'>";
-    print {$a_fh} "<m><form>$form</form><lemma>$lemma</lemma><tag>$tag</tag><w><token>$form</token>$nsa</w></m><afun>$afun</afun><ord>$ord</ord>";
+    print {$a_fh} "<m><form>$form</form><lemma>$lemma</lemma><tag>$tag</tag><w><token>$form</token>$nsa</w></m>";
+    print {$a_fh} "<afun>$afun</afun>" if defined $afun;
+    print {$a_fh} "<ord>$ord</ord>";
     print {$a_fh} '<is_member>1</is_member>' if $anode->is_member;
     print {$a_fh} '<is_parenthesis_root>1</is_parenthesis_root>' if $anode->is_parenthesis_root;
     if (my @children = $anode->get_children()){
