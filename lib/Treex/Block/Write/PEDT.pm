@@ -89,7 +89,7 @@ sub adjust_id_to_layer {
     if (defined $ref_layer) {
         if ($id =~ /^(english)?($layer)-/i) {
             $ref_layer = lc($2) eq $2 ? lc($ref_layer) : uc($ref_layer);
-            $id =~ s/^(english)?$layer-/$1$ref_layer-/i;
+            $id =~ s/^((english)?)$layer-/$1$ref_layer-/i;
         }
         if ($is_tree) {
             $id =~ s/$layer\_tree/$ref_layer\_tree/;
