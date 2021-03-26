@@ -69,11 +69,11 @@ END
 sub escape_xml {
     my ($self, $string) = @_;
     return if !defined $string;
-    $string =~ s/&/&amp;/;
-    $string =~ s/</&lt;/;
-    $string =~ s/>/&gt;/;
-    $string =~ s/'/&apos;/;
-    $string =~ s/"/&quot;/;
+    $string =~ s/&/&amp;/g;
+    $string =~ s/</&lt;/g;
+    $string =~ s/>/&gt;/g;
+    $string =~ s/'/&apos;/g;
+    $string =~ s/"/&quot;/g;
     return $string;
 }
 
