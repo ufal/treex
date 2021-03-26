@@ -132,9 +132,13 @@ sub process_ttree {
     my ($self, $ttree) = @_;
     my $s_id = adjust_id_to_layer($ttree->id, "t");
     my $a_s_id = adjust_id_to_layer($ttree->get_attr('atree.rf'), "a") // adjust_id_to_layer($s_id, "t", "a", 1);
-    print {$t_fh} "<LM id='$s_id'><atree.rf>a#$a_s_id</atree.rf><nodetype>root</nodetype><deepord>0</deepord>\n<children>\n";
-    foreach my $child ($ttree->get_children()) { $self->print_tsubtree($child); }
-    print {$t_fh} "</children>\n</LM>\n";
+    print {$t_fh} "<LM id='$s_id'><atree.rf>a#$a_s_id</atree.rf><nodetype>root</nodetype><deepord>0</deepord>\n";
+    if (my @children = $ttree->get_children()){
+        print {$t_fh} "<children>\n";
+        foreach my $child (@children) { $self->print_tsubtree($child); }
+        print {$t_fh} "</children>\n";
+    }
+    print {$t_fh} "</LM>\n";
     return;
 }
 
