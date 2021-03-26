@@ -197,7 +197,7 @@ sub print_tsubtree {
     }
 
     # grammatemes
-    my @gram_attrs = qw(sempos gender number degcmp verbmod deontmod tense aspect resultative dispmod iterativeness indeftype person number politeness negation); # definiteness diathesis
+    my @gram_attrs = qw(sempos gender number degcmp verbmod deontmod tense aspect resultative dispmod iterativeness indeftype person politeness negation); # definiteness diathesis
     my $def_count = 0;
     my %gram_hash = map {my $val = $tnode->get_attr("gram/$_"); $def_count++ if defined $val; $_ => $val} @gram_attrs;
     if ($def_count) {
