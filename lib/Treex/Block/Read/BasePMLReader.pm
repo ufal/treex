@@ -70,7 +70,7 @@ sub _convert_ttree
         my @scalar_attribs = (
             't_lemma', 'functor', 'id', 'nodetype', 'is_generated', 'subfunctor', 'is_member', 'is_name',
             'is_name_of_person', 'is_dsp_root', 'sentmod', 'tfa', 'is_parenthesis', 'is_state',
-            'coref_special', 'discourse_special', 'formeme', 'bbn_tag', 'nombank_data',
+            'coref_special', 'discourse_special', 'formeme', 'bbn_tag', 'nombank_data', 'is_name',
         );
         my @gram_attribs = (
             'sempos', 'gender', 'number', 'degcmp', 'verbmod', 'deontmod', 'factmod', 'tense', 'aspect', 'resultative',
