@@ -268,10 +268,10 @@ sub store_multi_word_token
     my $id = shift; # the id (ord) of the node
     my $fufrom = shift;
     my $futo = shift;
-    my $funodes = shift; # array reference; the MWT member nodes are collected here
     my $fuform = shift;
     my $funspaf = shift;
     my $fumisc = shift;
+    my $funodes = shift; # array reference; the MWT member nodes are collected here
     if (defined($futo))
     {
         if ($id <= $futo)
