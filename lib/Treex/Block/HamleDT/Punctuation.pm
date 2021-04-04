@@ -278,9 +278,12 @@ sub find_candidate_left
     while($candidate->is_punctuation() || !$relax && $candidate->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
     {
         my $parent = $candidate->parent();
+        # Attaching punctuation to the root would solve non-projectivity but it
+        # would also result in multiple children of the root, which is not allowed
+        # in UD.
         if($parent->is_root())
         {
-            return $parent;
+            return undef;
         }
         elsif($parent->ord() < $node->ord() &&
               !$self->would_be_nonprojective($parent, $node) &&
@@ -328,9 +331,12 @@ sub find_candidate_right
     while($candidate->is_punctuation() || !$relax && $candidate->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
     {
         my $parent = $candidate->parent();
+        # Attaching punctuation to the root would solve non-projectivity but it
+        # would also result in multiple children of the root, which is not allowed
+        # in UD.
         if($parent->is_root())
         {
-            return $parent;
+            return undef;
         }
         elsif($parent->ord() > $node->ord() &&
               !$self->would_be_nonprojective($parent, $node) &&
