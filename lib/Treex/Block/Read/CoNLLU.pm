@@ -285,7 +285,7 @@ sub store_multi_word_token
             {
                 $funodes->[0]->set_fused_form($fuform);
                 $funodes->[0]->set_fused_misc($fumisc);
-                for (my $i = 0; $i < $#funodes; $i++)
+                for (my $i = 0; $i < $#{$funodes}; $i++)
                 {
                     $funodes->[$i]->set_fused_with_next(1);
                 }
