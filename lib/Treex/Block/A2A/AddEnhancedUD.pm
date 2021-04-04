@@ -81,7 +81,7 @@ sub process_atree
         }
         ###!!! In the future we may want to directly generate this kind of empty nodes.
         ###!!! At present we keep the enhanced methods intact and convert the empty nodes when everything else has been done.
-        $self->expand_empty_nodes($root);
+        $root->expand_empty_nodes();
     }
 }
 
@@ -838,110 +838,6 @@ sub get_empty_node_position
     }
     my $emppos = "$posmajor.$posminor";
     return $emppos;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Converts the old hack for empty nodes to a new hack. The old hack does not
-# use a Node object for an empty node. Instead, the enhanced dependency encodes
-# the path between two real nodes via one or more empty nodes: 'conj>3.5>obj'.
-# In the new hack, there will be a Node object for the empty node. It will have
-# a fake basic dependency, directly on the artificial root node, with the
-# deprel 'dep:empty'. It will have an integer ord at the end of the sentence,
-# while its decimal ord for CoNLL-U will be saved in a wild attribute. All
-# blocks that deal with a UD tree must be aware of the possibility that there
-# are empty nodes, and these nodes must be excluded from operations with basic
-# dependencies.
-#------------------------------------------------------------------------------
-sub expand_empty_nodes
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants({'ordered' => 1});
-    # We already have a hash of empty nodes we have created in this block.
-    # However, I want to make this method as independent as possible, so we
-    # will populate the hash here again.
-    my %enords;
-    foreach my $node (@nodes)
-    {
-        my @iedges = $node->get_enhanced_deps();
-        foreach my $ie (@iedges)
-        {
-            # We are looking for deprels of the form 'conj>3.5>obj' (there may
-            # be multiple empty nodes in the chain).
-            if($ie->[1] =~ m/>/)
-            {
-                my @parts = split(/>/, $ie->[1]);
-                foreach my $part (@parts)
-                {
-                    if($part =~ m/^\d+\.\d+$/)
-                    {
-                        $enords{$part}++;
-                    }
-                }
-            }
-        }
-    }
-    # Create empty nodes at the end of the sentence.
-    my $lastnode = $nodes[-1];
-    my @enords = sort {$a <=> $b} (keys(%enords));
-    my %emptynodes; # Node objects indexed by enords
-    foreach my $enord (@enords)
-    {
-        my $node = $root->create_child();
-        $node->set_deprel('dep:empty');
-        $node->wild()->{enhanced} = [];
-        $node->wild()->{enord} = $enord;
-        $node->shift_after_node($lastnode);
-        $lastnode = $node;
-        $emptynodes{$enord} = $node;
-    }
-    # Redirect paths through empty nodes.
-    # @nodes still holds only the regular nodes.
-    foreach my $node (@nodes)
-    {
-        my @iedges = $node->get_enhanced_deps();
-        my $modified = 0;
-        foreach my $ie (@iedges)
-        {
-            # We are looking for deprels of the form 'conj>3.5>obj' (there may
-            # be multiple empty nodes in the chain).
-            if($ie->[1] =~ m/>/)
-            {
-                my @parts = split(/>/, $ie->[1]);
-                # The number of parts must be odd.
-                if(scalar(@parts) % 2 == 0)
-                {
-                    log_fatal("Cannot understand enhanced deprel '$ie->[1]': even number of parts.");
-                }
-                my $pord = $ie->[0];
-                my $parent = $root->get_node_by_ord($pord);
-                while(scalar(@parts) > 1)
-                {
-                    my $deprel = shift(@parts);
-                    my $cord = shift(@parts);
-                    if(!exists($emptynodes{$cord}))
-                    {
-                        log_fatal("Unknown empty node '$cord'.");
-                    }
-                    my $child = $emptynodes{$cord};
-                    $child->add_enhanced_dependency($parent, $deprel);
-                    $parent = $child;
-                }
-                # The remaining part is a deprel, and we know the current parent.
-                $ie->[0] = $parent->ord();
-                $ie->[1] = $parts[0];
-                $modified = 1;
-            }
-        }
-        # We may have modified our copy of the @iedges array. We have to copy
-        # it back to the wild attributes of the node.
-        if($modified)
-        {
-            @{$node->wild()->{enhanced}} = @iedges;
-        }
-    }
 }
 
 
