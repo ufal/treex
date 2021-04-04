@@ -234,6 +234,7 @@ sub process_multi_word_token
     my $fufrom = shift;
     my $futo = shift;
     my $fuform = shift;
+    my $misc = shift;
     my $funspaf;
     my $fumisc;
     # MISC may contain other information than SpaceAfter=No and we must preserve it.
