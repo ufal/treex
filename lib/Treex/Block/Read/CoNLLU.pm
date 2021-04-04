@@ -120,43 +120,21 @@ sub next_document
                 push(@empty_nodes, \%empty_node);
                 next LINE;
             }
-            # There may be fused tokens consisting of multiple syntactic words (= nodes). For example (German):
-            # 2-3   zum   _     _
-            # 2     zu    zu    ADP
-            # 3     dem   der   DET
+            # There may be fused tokens consisting of multiple syntactic words (= nodes).
             elsif ($id =~ m/(\d+)-(\d+)/)
             {
-                $fufrom = $1;
-                $futo = $2;
-                $fuform = $form;
-                $printed_up_to = $2;
-                $sentence .= $form if defined $form;
-                # MISC may contain other information than SpaceAfter=No and we must preserve it.
-                unless($misc eq '_')
-                {
-                    my @misc = split(/\|/, $misc);
-                    if(any {$_ eq 'SpaceAfter=No'} (@misc))
-                    {
-                        $funspaf = 1;
-                    }
-                    @misc = grep {$_ ne 'SpaceAfter=No'} (@misc);
-                    if (scalar(@misc) > 0)
-                    {
-                        $fumisc = join('|', @misc);
-                    }
-                }
-                unless($funspaf)
-                {
-                    $sentence .= ' ';
-                }
+                ($fufrom, $futo, $fuform, $funspaf, $fumisc) = $self->process_multi_word_token($1, $2, $form, $misc);
+                $printed_up_to = $futo;
+                $sentence .= $fuform if(defined($fuform));
+                $sentence .= ' ' unless($funspaf);
                 next LINE;
             }
+            # Add the current word to the sentence text unless it has been covered by a multi-word token.
             elsif ($id > $printed_up_to)
             {
-                $sentence .= $form if defined $form;
+                $sentence .= $form if(defined($form));
                 $sentence .= ' ' if(any {$_ eq 'SpaceAfter=No'} (split(/\|/, $misc)));
             }
-
             my $newnode = $aroot->create_child();
             $newnode->shift_after_subtree($aroot);
             # Some applications (e.g., PML-TQ) require that the node id be unique treebank-wide.
@@ -165,36 +143,8 @@ sub next_document
             # Nodes can become members of multiword tokens only after their ords are set.
             if (defined($futo))
             {
-                if ($id <= $futo)
-                {
-                    push(@funodes, $newnode);
-                }
-                if ($id >= $futo)
-                {
-                    if (scalar(@funodes) >= 2)
-                    {
-                        $funodes[0]->set_fused_form($fuform);
-                        $funodes[0]->set_fused_misc($fumisc);
-                        for (my $i = 0; $i < $#funodes; $i++)
-                        {
-                            $funodes[$i]->set_fused_with_next(1);
-                        }
-                        if ($funspaf)
-                        {
-                            $funodes[-1]->set_no_space_after(1);
-                        }
-                    }
-                    else
-                    {
-                        log_warn "Fused token $fufrom-$futo $fuform was announced but less than 2 nodes were found";
-                    }
-                    $fufrom = undef;
-                    $futo = undef;
-                    $fuform = undef;
-                    splice(@funodes);
-                    $funspaf = undef;
-                    $fumisc = undef;
-                }
+                # Add the current node to the current MWT. Store the MWT if this is its last node.
+                ($fufrom, $futo, $fuform, $funspaf, $fumisc) = $self->store_multi_word_token($newnode, $id, $fufrom, $futo, $fuform, $funspaf, $fumisc, \@funodes);
             }
             $newnode->set_form($form);
             $newnode->set_lemma($lemma);
@@ -205,7 +155,6 @@ sub next_document
             $newnode->set_conll_feat($feats);
             $newnode->set_deprel($deprel);
             $newnode->set_conll_deprel($deprel);
-
             $newnode->iset()->set_upos($upos);
             if ($feats ne '_')
             {
@@ -264,6 +213,99 @@ sub next_document
         $bundle->wild->{comment} = $comment;
     }
     return $document;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Reads an introductory line of a multi-word token. Returns a list of
+# variables. Their values will be used later. A multi-word token does not have
+# its own node, so nothing will now be stored in the tree. The multi-word token
+# (fused word in Treex terminology) corresponds to multiple syntactic words
+# (tree nodes).
+# Example (German):
+# 2-3   zum   _     _
+# 2     zu    zu    ADP
+# 3     dem   der   DET
+#------------------------------------------------------------------------------
+sub process_multi_word_token
+{
+    my $self = shift;
+    my $fufrom = shift;
+    my $futo = shift;
+    my $fuform = shift;
+    my $funspaf;
+    my $fumisc;
+    # MISC may contain other information than SpaceAfter=No and we must preserve it.
+    unless($misc eq '_')
+    {
+        my @misc = split(/\|/, $misc);
+        if(any {$_ eq 'SpaceAfter=No'} (@misc))
+        {
+            $funspaf = 1;
+        }
+        @misc = grep {$_ ne 'SpaceAfter=No'} (@misc);
+        if (scalar(@misc) > 0)
+        {
+            $fumisc = join('|', @misc);
+        }
+    }
+    return ($fufrom, $futo, $fuform, $funspaf, $fumisc);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Nodes can become members of multiword tokens only after their ords are set.
+# Call this for a node that is covered by the most recently declared multi-word
+# token.
+#------------------------------------------------------------------------------
+sub store_multi_word_token
+{
+    my $self = shift;
+    my $node = shift; # the new node to add to a fused token
+    my $id = shift; # the id (ord) of the node
+    my $fufrom = shift;
+    my $futo = shift;
+    my $funodes = shift; # array reference; the MWT member nodes are collected here
+    my $fuform = shift;
+    my $funspaf = shift;
+    my $fumisc = shift;
+    if (defined($futo))
+    {
+        if ($id <= $futo)
+        {
+            push(@{$funodes}, $node);
+        }
+        # Once we have added the last node of the MWT, store the MWT.
+        if ($id >= $futo)
+        {
+            if (scalar(@{$funodes}) >= 2)
+            {
+                $funodes->[0]->set_fused_form($fuform);
+                $funodes->[0]->set_fused_misc($fumisc);
+                for (my $i = 0; $i < $#funodes; $i++)
+                {
+                    $funodes->[$i]->set_fused_with_next(1);
+                }
+                if ($funspaf)
+                {
+                    $funodes->[-1]->set_no_space_after(1);
+                }
+            }
+            else
+            {
+                log_warn "Fused token $fufrom-$futo $fuform was announced but less than 2 nodes were found";
+            }
+            $fufrom = undef;
+            $futo = undef;
+            $fuform = undef;
+            splice(@{$funodes});
+            $funspaf = undef;
+            $fumisc = undef;
+        }
+    }
+    return ($fufrom, $futo, $fuform, $funspaf, $fumisc);
 }
 
 
