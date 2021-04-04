@@ -586,7 +586,7 @@ sub add_enhanced_relative_clause
         ###!!! Assume that the leftmost relativizer is the one that relates to the
         ###!!! current relative clause. This is an Indo-European bias.
         my $relativizer = $relativizers[0];
-        my @edeps = $self->get_enhanced_deps($relativizer);
+        my @edeps = $relativizer->get_enhanced_deps();
         # All relations other than 'ref' will be copied to the noun.
         # Besides 'ref', we should also exclude any collapsed paths over empty nodes
         # (unless we can give them the special treatment they need). This is because
@@ -611,7 +611,7 @@ sub add_enhanced_relative_clause
         foreach my $noun (@nouns)
         {
             # Add an enhanced relation 'ref' from the modified noun to the relativizer.
-            $self->add_enhanced_dependency($relativizer, $noun, 'ref');
+            $relativizer->add_enhanced_dependency($noun, 'ref');
             # If the relativizer is the root of the relative clause, there is no other
             # node in the relative clause from which a new relation should go to the
             # modified noun. However, the relative clause has a nominal predicate,
@@ -622,7 +622,7 @@ sub add_enhanced_relative_clause
                 my @subjects = grep {$_->deprel() =~ m/^[nc]subj(:|$)/} ($node->children());
                 foreach my $subject (@subjects)
                 {
-                    $self->add_enhanced_dependency($subject, $noun, $subject->deprel());
+                    $subject->add_enhanced_dependency($noun, $subject->deprel());
                 }
             }
             # If the relativizer is not the root of the relative clause, we remove its
@@ -658,7 +658,7 @@ sub add_enhanced_relative_clause
                     # for the substitute relation.
                     $reldeprel =~ s/^advmod(:.+)?$/obl/;
                     $reldeprel =~ s/^det(:.+)?$/nmod/;
-                    $self->add_enhanced_dependency($noun, $relparentnode, $reldeprel);
+                    $noun->add_enhanced_dependency($relparentnode, $reldeprel);
                 }
             }
         }
