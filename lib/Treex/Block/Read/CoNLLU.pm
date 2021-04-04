@@ -226,6 +226,8 @@ sub next_document
             # empty nodes into long relations.
             if ($deps && $deps ne '_')
             {
+                ###!!! Storing unparsed deps is older and perhaps obsolete because Write::CoNLLU will not use it.
+                $newnode->wild->{deps} = $deps;
                 my @deps = split(/\|/, $deps);
                 my @edeps = grep {defined($_)} (map {my $x = $_; $x =~ m/^(\d+(?:\.\d+)?):(.+)$/ ? [$1, $2] : undef} (split(/\|/, $deps)));
                 my $m = scalar(@deps);
@@ -238,70 +240,21 @@ sub next_document
             }
             if ($misc && $misc ne '_')
             {
-                my @misc = split(/\|/, $misc);
-                # Check whether MISC contains SpaceAfter=No.
-                my $n0 = scalar(@misc);
-                @misc = grep {$_ ne 'SpaceAfter=No'} (@misc);
-                my $n1 = scalar(@misc);
-                if ($n1 < $n0)
-                {
-                    $newnode->set_no_space_after(1);
-                }
-                # Check whether MISC contains transliteration of the word form.
-                my @translit = map {my $x = $_; $x =~ s/^Translit=//; $x} (grep {m/^Translit=(.+)$/} (@misc));
-                if (scalar(@translit) > 0)
-                {
-                    $newnode->set_translit($translit[0]);
-                    @misc = grep {!m/^Translit=/} (@misc);
-                }
-                # Check whether MISC contains transliteration of the lemma.
-                my @ltranslit = map {my $x = $_; $x =~ s/^LTranslit=//; $x} (grep {m/^LTranslit=(.+)$/} (@misc));
-                if (scalar(@ltranslit) > 0)
-                {
-                    $newnode->set_ltranslit($ltranslit[0]);
-                    @misc = grep {!m/^LTranslit=/} (@misc);
-                }
-                # Check whether MISC contains gloss of the word form.
-                my @gloss = map {my $x = $_; $x =~ s/^Gloss=//; $x} (grep {m/^Gloss=(.+)$/} (@misc));
-                if (scalar(@gloss) > 0)
-                {
-                    $newnode->set_gloss($gloss[0]);
-                    @misc = grep {!m/^Gloss=/} (@misc);
-                }
-                # Remaining MISC attributes (those that we don't have special fields for) will be stored as wild attributes.
-                $newnode->set_misc(@misc);
+                # Store specific (expected) MISC attributes to dedicated node attributes.
+                # Store all other MISC attributes as wild attributes.
+                $self->store_misc_attributes($newnode, $misc);
             }
-            if ($deps && $deps ne '_')
-            {
-                $newnode->wild->{deps} = $deps;
-            }
-
-            push @nodes,   $newnode;
-            push @parents, $head;
+            push(@nodes, $newnode);
+            push(@parents, $head);
         }
-        foreach my $i ( 1 .. $#nodes )
+        # All nodes have been read. Now we can connect them with their parents.
+        for(my $i = 1; $i <= $#nodes; $i++)
         {
-            $nodes[$i]->set_parent( $nodes[ $parents[$i] ] );
+            $nodes[$i]->set_parent($nodes[$parents[$i]]);
         }
-        # Process the enhanced graph. We do not have objects for empty nodes.
-        # Instead, we encode the path from the first non-empty ancestor as one
-        # relation.
-        my @cegraph = $self->collapse_enhanced_graph(%egraph);
-        foreach my $node (@nodes)
-        {
-            my $id = $node->ord();
-            my @edeps;
-            my @pids = sort {$a <=> $b} (keys(%{$cegraph[$id]}));
-            foreach my $pid (@pids)
-            {
-                my @deprels = sort {$a cmp $b} (keys(%{$cegraph[$id]{$pid}}));
-                foreach my $deprel (@deprels)
-                {
-                    push(@edeps, [$pid, $deprel]);
-                }
-            }
-            $node->wild()->{enhanced} = \@edeps;
-        }
+        # Process the information we have collected about the enhanced graph
+        # and store it at suitable places of the tree.
+        $self->store_enhanced_graph($bundle, \@nodes, \%egraph, \@empty_nodes);
         # Set the zone sentence text.
         $sentence =~ s/\s+$//;
         unless($sentence_read_from_input_text)
@@ -309,13 +262,95 @@ sub next_document
             $zone->set_sentence($sentence);
         }
         $bundle->wild->{comment} = $comment;
-        if(scalar(@empty_nodes) > 0)
-        {
-            $bundle->wild->{empty_nodes} = \@empty_nodes;
-        }
     }
-
     return $document;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Searches for specific MISC attributes for which we have dedicated attributes.
+# Moves them to the dedicated attributes if found. Stores the remaining MISC
+# attributes as wild attributes.
+#------------------------------------------------------------------------------
+sub store_misc_attributes
+{
+    my $self = shift;
+    my $node = shift; # the node whose MISC is being stored
+    my $misc = shift; # the tenth column of the CoNLL-U file
+    if ($misc && $misc ne '_')
+    {
+        my @misc = split(/\|/, $misc);
+        # Check whether MISC contains SpaceAfter=No.
+        my $n0 = scalar(@misc);
+        @misc = grep {$_ ne 'SpaceAfter=No'} (@misc);
+        my $n1 = scalar(@misc);
+        if ($n1 < $n0)
+        {
+            $node->set_no_space_after(1);
+        }
+        # Check whether MISC contains transliteration of the word form.
+        my @translit = map {my $x = $_; $x =~ s/^Translit=//; $x} (grep {m/^Translit=(.+)$/} (@misc));
+        if (scalar(@translit) > 0)
+        {
+            $node->set_translit($translit[0]);
+            @misc = grep {!m/^Translit=/} (@misc);
+        }
+        # Check whether MISC contains transliteration of the lemma.
+        my @ltranslit = map {my $x = $_; $x =~ s/^LTranslit=//; $x} (grep {m/^LTranslit=(.+)$/} (@misc));
+        if (scalar(@ltranslit) > 0)
+        {
+            $node->set_ltranslit($ltranslit[0]);
+            @misc = grep {!m/^LTranslit=/} (@misc);
+        }
+        # Check whether MISC contains gloss of the word form.
+        my @gloss = map {my $x = $_; $x =~ s/^Gloss=//; $x} (grep {m/^Gloss=(.+)$/} (@misc));
+        if (scalar(@gloss) > 0)
+        {
+            $node->set_gloss($gloss[0]);
+            @misc = grep {!m/^Gloss=/} (@misc);
+        }
+        # Remaining MISC attributes (those that we don't have special fields for) will be stored as wild attributes.
+        $node->set_misc(@misc);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes the information we have collected about the enhanced graph and stores
+# it as wild attributes.
+#------------------------------------------------------------------------------
+sub store_enhanced_graph
+{
+    my $self = shift;
+    my $bundle = shift; # reference to the current bundle
+    my $nodes = shift; # array reference; basic tree nodes (descendants of a-root, ordered)
+    my $egraph = shift; # hash reference; information about enhanced relations
+    my $empty_nodes = shift; # array reference; information about empty nodes (their word form and other attributes if available)
+    # Process the enhanced graph. We do not have objects for empty nodes.
+    # Instead, we encode the path from the first non-empty ancestor as one
+    # relation.
+    my @cegraph = $self->collapse_enhanced_graph(%{$egraph});
+    foreach my $node (@{$nodes})
+    {
+        my $id = $node->ord();
+        my @edeps;
+        my @pids = sort {$a <=> $b} (keys(%{$cegraph[$id]}));
+        foreach my $pid (@pids)
+        {
+            my @deprels = sort {$a cmp $b} (keys(%{$cegraph[$id]{$pid}}));
+            foreach my $deprel (@deprels)
+            {
+                push(@edeps, [$pid, $deprel]);
+            }
+        }
+        $node->wild()->{enhanced} = \@edeps;
+    }
+    if(scalar(@{$empty_nodes}) > 0)
+    {
+        $bundle->wild->{empty_nodes} = $empty_nodes;
+    }
 }
 
 
