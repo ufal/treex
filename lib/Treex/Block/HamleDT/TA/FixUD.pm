@@ -52,6 +52,9 @@ sub identify_acl_relcl
     return unless($node->is_verb() && $node->is_participle());
     my $parent = $node->parent();
     return unless($parent->is_noun() && $parent->ord() > $node->ord());
+    # While we have not banned right siblings of the participle, we will ban right children.
+    my @rchildren = $node->get_children({'following_only' => 1});
+    return if(scalar(@rchildren) > 0);
     $node->set_deprel('acl:relcl');
     # If the enhanced graph exists, we should replace 'acl' by 'acl:relcl' there as well.
     my $wild = $node->wild();

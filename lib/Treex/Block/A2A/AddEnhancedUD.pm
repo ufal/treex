@@ -546,112 +546,120 @@ sub add_enhanced_relative_clause
     # clause as the modified $noun, although it may be a pronoun.
     my @nouns = $node->get_enhanced_parents('^acl:relcl(:|$)');
     return if(scalar(@nouns)==0);
-    # If there are coordinate relative clauses, we may have already added a
-    # cycle, meaning that the modified noun is now also a descendant of the
-    # relative clause. However, we do not want to traverse it when looking for
-    # the relativizer! Hence we mark it as visited before collecting the
-    # descendants.
-    # Example:
-    # máme povědomí, jaké to bude těleso, se kterým by se Země mohla či měla srazit
-    # The noun is "těleso", the coordinate relative clauses are headed by
-    # "mohla" and "měla", and the unwanted relativizer is "jaké", attached to
-    # "těleso" (the correct relativizer is "kterým" and it is shared by both
-    # relative clauses).
-    my @visited; map {$visited[$_->ord()]++} (@nouns);
-    my @relativizers = sort {$a->ord() <=> $b->ord()}
-    (
-        grep {$_->ord() <= $node->ord() && $_->is_relative()}
-        (
-            $node,
-            $node->get_enhanced_descendants(\@visited)
-        )
-    );
-    return unless(scalar(@relativizers) > 0);
-    ###!!! Assume that the leftmost relativizer is the one that relates to the
-    ###!!! current relative clause. This is an Indo-European bias.
-    my $relativizer = $relativizers[0];
-    my @edeps = $relativizer->get_enhanced_deps();
-    # All relations other than 'ref' will be copied to the noun.
-    # Besides 'ref', we should also exclude any collapsed paths over empty nodes
-    # (unless we can give them the special treatment they need). This is because
-    # there may be a second relative clause as a gapped conjunct, and the collapsed
-    # edge may lead back to the noun. An instance of this occurs in the Latvian
-    # LVTB training data, sent_id = a-p13850-p28s2:
-    # "personas, kura nebūtu saistīta ar pārējām un arī ar putnu"
-    # "a person which is unrelated to the rest and also to the bird"
-    # The first relative clause:
-    #   acl:relcl(personas, saistīta)
-    #   nsubj(saistīta, kura)
-    #   iobj(saistīta, pārējām)
-    # The second relative clause uses an empty node with the id 37.1 for a copy of saistīta:
-    #   acl>37.1>nsubj(personas, kura)
-    #   acl>37.1>iobj(personas, putnu)
-    ###!!! We now avoid creating a cycle when processing this Latvian sentence.
-    ###!!! But we do not transform the second relative clause correctly.
-    ###!!! Either the self-loops should be allowed in such cases, or the entire
-    ###!!! mechanism for empty nodes in Treex must be rewritten and real Node
-    ###!!! objects must be used.
-    my @noundeps = grep {$_->[1] ne 'ref' && $_->[1] !~ m/>/} (@edeps);
-    foreach my $noun (@nouns)
+    # Tamil relative clauses do not contain overt relative pronouns, so we
+    # cannot use them to determine the relation and we cannot reattach them
+    # via the 'ref' relation. However, we still can add the cyclic relation
+    # from the head of the relative clause to the noun (the relation is always
+    # subject). For all other languages we will not do anything if we have not
+    # found a relativizer.
+    if($self->language() eq 'ta')
     {
-        # Add an enhanced relation 'ref' from the modified noun to the relativizer.
-        # Avoid attaching a node to itself, which is forbidden in the enhanced graph.
-        # It should not happen but it can happen if the source data is bad.
-        if($relativizer == $noun)
+        foreach my $noun (@nouns)
         {
-            log_warn('Relativizer is identical to the noun it represents.');
+            # Add a subject relation between the relative participle and the modified noun.
+            $self->add_enhanced_dependency($noun, $node, 'nsubj');
         }
-        else
+    }
+    else # not Tamil
+    {
+        # If there are coordinate relative clauses, we may have already added a
+        # cycle, meaning that the modified noun is now also a descendant of the
+        # relative clause. However, we do not want to traverse it when looking for
+        # the relativizer! Hence we mark it as visited before collecting the
+        # descendants.
+        # Example:
+        # máme povědomí, jaké to bude těleso, se kterým by se Země mohla či měla srazit
+        # The noun is "těleso", the coordinate relative clauses are headed by
+        # "mohla" and "měla", and the unwanted relativizer is "jaké", attached to
+        # "těleso" (the correct relativizer is "kterým" and it is shared by both
+        # relative clauses).
+        my @visited; map {$visited[$_->ord()]++} (@nouns);
+        my @relativizers = sort {$a->ord() <=> $b->ord()}
+        (
+            grep {$_->ord() <= $node->ord() && $_->is_relative()}
+            (
+                $node,
+                $self->get_enhanced_descendants($node, \@visited)
+            )
+        );
+        return unless(scalar(@relativizers) > 0);
+        ###!!! Assume that the leftmost relativizer is the one that relates to the
+        ###!!! current relative clause. This is an Indo-European bias.
+        my $relativizer = $relativizers[0];
+        my @edeps = $self->get_enhanced_deps($relativizer);
+        # All relations other than 'ref' will be copied to the noun.
+        # Besides 'ref', we should also exclude any collapsed paths over empty nodes
+        # (unless we can give them the special treatment they need). This is because
+        # there may be a second relative clause as a gapped conjunct, and the collapsed
+        # edge may lead back to the noun. An instance of this occurs in the Latvian
+        # LVTB training data, sent_id = a-p13850-p28s2:
+        # "personas, kura nebūtu saistīta ar pārējām un arī ar putnu"
+        # "a person which is unrelated to the rest and also to the bird"
+        # The first relative clause:
+        #   acl:relcl(personas, saistīta)
+        #   nsubj(saistīta, kura)
+        #   iobj(saistīta, pārējām)
+        # The second relative clause uses an empty node with the id 37.1 for a copy of saistīta:
+        #   acl>37.1>nsubj(personas, kura)
+        #   acl>37.1>iobj(personas, putnu)
+        ###!!! We now avoid creating a cycle when processing this Latvian sentence.
+        ###!!! But we do not transform the second relative clause correctly.
+        ###!!! Either the self-loops should be allowed in such cases, or the entire
+        ###!!! mechanism for empty nodes in Treex must be rewritten and real Node
+        ###!!! objects must be used.
+        my @noundeps = grep {$_->[1] ne 'ref' && $_->[1] !~ m/>/} (@edeps);
+        foreach my $noun (@nouns)
         {
-            $relativizer->add_enhanced_dependency($noun, 'ref');
-        }
-        # If the relativizer is the root of the relative clause, there is no other
-        # node in the relative clause from which a new relation should go to the
-        # modified noun. However, the relative clause has a nominal predicate,
-        # which corefers with the modified noun, and we can draw a new relation
-        # from the modified noun to the subject of the relative clause.
-        if($relativizer == $node)
-        {
-            my @subjects = grep {$_->deprel() =~ m/^[nc]subj(:|$)/} ($node->children());
-            foreach my $subject (@subjects)
+            # Add an enhanced relation 'ref' from the modified noun to the relativizer.
+            $self->add_enhanced_dependency($relativizer, $noun, 'ref');
+            # If the relativizer is the root of the relative clause, there is no other
+            # node in the relative clause from which a new relation should go to the
+            # modified noun. However, the relative clause has a nominal predicate,
+            # which corefers with the modified noun, and we can draw a new relation
+            # from the modified noun to the subject of the relative clause.
+            if($relativizer == $node)
             {
-                $subject->add_enhanced_dependency($noun, $subject->deprel());
+                my @subjects = grep {$_->deprel() =~ m/^[nc]subj(:|$)/} ($node->children());
+                foreach my $subject (@subjects)
+                {
+                    $self->add_enhanced_dependency($subject, $noun, $subject->deprel());
+                }
             }
-        }
-        # If the relativizer is not the root of the relative clause, we remove its
-        # current relation to its current parent and instead we add an analogous
-        # relation between the parent and the modified noun.
-        else
-        {
-            foreach my $nd (@noundeps)
+            # If the relativizer is not the root of the relative clause, we remove its
+            # current relation to its current parent and instead we add an analogous
+            # relation between the parent and the modified noun.
+            else
             {
-                my $relparent = $nd->[0];
-                my $reldeprel = $nd->[1];
-                # Although the the current node (root of the relative clause)
-                # is not the relativizer, the possibility of self-loops is not
-                # excluded. In the Finnish TDT training sentence f102.5, there
-                # is coordination of relative clauses, the first clause is
-                # headed by the relativizer, which at the same time acts as
-                # an oblique argument in the second and the third clause. When
-                # we process it from the perspective of the second clause (where it is not the root),
-                # we will also see the acl:relcl relation that connects it to
-                # the modified noun. We must ignore this relation, otherwise it
-                # will lead to a self-loop.
-                # Niitä, joilla on farmariautot sekä kultainennoutaja kopissaan, lapset huutavat ja kiirettä tuntuu olevan kokoajan arjen keskellä.
-                # Google Translate: Children with station wagons and a golden retriever in their booths are screaming and hurrying in the midst of everyday life.
-                # Niitä = those (partitive demonstrative) is the root of the sentence.
-                # First clause: joilla on farmariautot sekä kultainennoutaja kopissaan = with station wagons and a golden retriever in their booth (joilla = whose = the head and the relativizer)
-                # Second clause: lapset huutavat = the children cry (joilla is oblique argument of this)
-                # Third clause: ja kiirettä tuntuu olevan kokoajan arjen keskellä (joilla oblique here too) = and hurry seems to be in the middle of everyday life
-                # I.e.: those, whose are station wagons, whose children cry and who feel in a hurry
-                my $relparentnode = $node->get_node_by_ord($relparent);
-                next if($relparentnode == $noun);
-                # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
-                # Discard subtypes of the original relation, if present. Such subtypes may not be available
-                # for the substitute relation.
-                $reldeprel =~ s/^advmod(:.+)?$/obl/;
-                $reldeprel =~ s/^det(:.+)?$/nmod/;
-                $noun->add_enhanced_dependency($relparentnode, $reldeprel);
+                foreach my $nd (@noundeps)
+                {
+                    my $relparent = $nd->[0];
+                    my $reldeprel = $nd->[1];
+                    # Although the the current node (root of the relative clause)
+                    # is not the relativizer, the possibility of self-loops is not
+                    # excluded. In the Finnish TDT training sentence f102.5, there
+                    # is coordination of relative clauses, the first clause is
+                    # headed by the relativizer, which at the same time acts as
+                    # an oblique argument in the second and the third clause. When
+                    # we process it from the perspective of the second clause (where it is not the root),
+                    # we will also see the acl:relcl relation that connects it to
+                    # the modified noun. We must ignore this relation, otherwise it
+                    # will lead to a self-loop.
+                    # Niitä, joilla on farmariautot sekä kultainennoutaja kopissaan, lapset huutavat ja kiirettä tuntuu olevan kokoajan arjen keskellä.
+                    # Google Translate: Children with station wagons and a golden retriever in their booths are screaming and hurrying in the midst of everyday life.
+                    # Niitä = those (partitive demonstrative) is the root of the sentence.
+                    # First clause: joilla on farmariautot sekä kultainennoutaja kopissaan = with station wagons and a golden retriever in their booth (joilla = whose = the head and the relativizer)
+                    # Second clause: lapset huutavat = the children cry (joilla is oblique argument of this)
+                    # Third clause: ja kiirettä tuntuu olevan kokoajan arjen keskellä (joilla oblique here too) = and hurry seems to be in the middle of everyday life
+                    # I.e.: those, whose are station wagons, whose children cry and who feel in a hurry
+                    my $relparentnode = $self->get_node_by_ord($node, $relparent);
+                    next if($relparentnode == $noun);
+                    # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
+                    # Discard subtypes of the original relation, if present. Such subtypes may not be available
+                    # for the substitute relation.
+                    $reldeprel =~ s/^advmod(:.+)?$/obl/;
+                    $reldeprel =~ s/^det(:.+)?$/nmod/;
+                    $self->add_enhanced_dependency($noun, $relparentnode, $reldeprel);
+                }
             }
         }
     }
