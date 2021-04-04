@@ -579,7 +579,7 @@ sub add_enhanced_relative_clause
             grep {$_->ord() <= $node->ord() && $_->is_relative()}
             (
                 $node,
-                $self->get_enhanced_descendants($node, \@visited)
+                $node->get_enhanced_descendants(\@visited)
             )
         );
         return unless(scalar(@relativizers) > 0);
