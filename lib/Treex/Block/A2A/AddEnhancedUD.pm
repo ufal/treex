@@ -651,7 +651,7 @@ sub add_enhanced_relative_clause
                     # Second clause: lapset huutavat = the children cry (joilla is oblique argument of this)
                     # Third clause: ja kiirettä tuntuu olevan kokoajan arjen keskellä (joilla oblique here too) = and hurry seems to be in the middle of everyday life
                     # I.e.: those, whose are station wagons, whose children cry and who feel in a hurry
-                    my $relparentnode = $self->get_node_by_ord($node, $relparent);
+                    my $relparentnode = $node->get_node_by_ord($relparent);
                     next if($relparentnode == $noun);
                     # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
                     # Discard subtypes of the original relation, if present. Such subtypes may not be available
