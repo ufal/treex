@@ -87,7 +87,7 @@ sub next_document
                 next LINE;
             }
             # Since UD v2, the FORM and LEMMA columns may contain spaces, thus we can only use the TAB character as column separator.
-            my ( $id, $form, $lemma, $upos, $postag, $feats, $head, $deprel, $deps, $misc, $rest ) = split( /\t/, $line );
+            my ( $id, $form, $lemma, $upos, $xpos, $feats, $head, $deprel, $deps, $misc, $rest ) = split( /\t/, $line );
             log_warn "Extra columns: '$rest'" if $rest;
 
             # There may be empty nodes (they participate in the enhanced graph but not in the basic tree).
@@ -127,7 +127,7 @@ sub next_document
             # Tred and PML-TQ should preferably display upos as the main tag of the node.
             $newnode->set_tag($upos);
             $newnode->set_conll_cpos($upos);
-            $newnode->set_conll_pos($postag);
+            $newnode->set_conll_pos($xpos);
             $newnode->set_conll_feat($feats);
             $newnode->set_deprel($deprel);
             $newnode->set_conll_deprel($deprel);
@@ -227,7 +227,7 @@ sub process_empty_node
         'form'  => $form,
         'lemma' => $lemma,
         'upos'  => $upos,
-        'xpos'  => $postag,
+        'xpos'  => $xpos,
         'feats' => $feats,
         # We keep deps only for the case that this is a leaf node, which will disappear in the collapsed graph.
         # Unlike deps of normal, inner empty nodes, we do not expect these to be manipulated, only preserved and written again.
