@@ -93,31 +93,7 @@ sub next_document
             # There may be empty nodes (they participate in the enhanced graph but not in the basic tree).
             if ($id =~ m/^\d+\.\d+$/)
             {
-                if ($deps && $deps ne '_')
-                {
-                    my @edeps = grep {defined($_)} (map {my $x = $_; $x =~ m/^(\d+(?:\.\d+)?):(.+)$/ ? [$1, $2] : undef} (split(/\|/, $deps)));
-                    $egraph{$id} = \@edeps;
-                }
-                # Drawing long edges over empty nodes will help to remember that there was an empty inner node
-                # but nothing more. Some treebanks feature empty leaves (e.g. copulae in Ukrainian), although
-                # it is not licensed by the guidelines; such leaf nodes would be lost. Also, some treebanks
-                # assign word forms and morphological annotation to empty nodes, which would be lost. Treex
-                # currently cannot represent an empty node as a Node object. So we must store them as wild
-                # attributes of the bundle.
-                my %empty_node =
-                (
-                    'id'    => $id,
-                    'form'  => $form,
-                    'lemma' => $lemma,
-                    'upos'  => $upos,
-                    'xpos'  => $postag,
-                    'feats' => $feats,
-                    # We keep deps only for the case that this is a leaf node, which will disappear in the collapsed graph.
-                    # Unlike deps of normal, inner empty nodes, we do not expect these to be manipulated, only preserved and written again.
-                    'deps'  => $deps,
-                    'misc'  => $misc
-                );
-                push(@empty_nodes, \%empty_node);
+                $self->process_empty_node($id, $form, $lemma, $upos, $xpos, $feats, $deps, $misc, \%egraph, \@empty_nodes);
                 next LINE;
             }
             # There may be fused tokens consisting of multiple syntactic words (= nodes).
@@ -218,7 +194,53 @@ sub next_document
 
 
 #------------------------------------------------------------------------------
-# Reads an introductory line of a multi-word token. Returns a list of
+# Reads an empty node and saves the information in a temporary hash. We will
+# store it in the Treex structures after all normal nodes have been read.
+#------------------------------------------------------------------------------
+sub process_empty_node
+{
+    my $self = shift;
+    my $id = shift;
+    my $form = shift;
+    my $lemma = shift;
+    my $upos = shift;
+    my $xpos = shift;
+    my $feats = shift;
+    my $deps = shift;
+    my $misc = shift;
+    my $egraph = shift; # hash reference
+    my $empty_nodes = shift; # array reference
+    if ($deps && $deps ne '_')
+    {
+        my @edeps = grep {defined($_)} (map {my $x = $_; $x =~ m/^(\d+(?:\.\d+)?):(.+)$/ ? [$1, $2] : undef} (split(/\|/, $deps)));
+        $egraph->{$id} = \@edeps;
+    }
+    # Drawing long edges over empty nodes will help to remember that there was an empty inner node
+    # but nothing more. Some treebanks feature empty leaves (e.g. copulae in Ukrainian), although
+    # it is not licensed by the guidelines; such leaf nodes would be lost. Also, some treebanks
+    # assign word forms and morphological annotation to empty nodes, which would be lost. Treex
+    # currently cannot represent an empty node as a Node object. So we must store them as wild
+    # attributes of the bundle.
+    my %empty_node =
+    (
+        'id'    => $id,
+        'form'  => $form,
+        'lemma' => $lemma,
+        'upos'  => $upos,
+        'xpos'  => $postag,
+        'feats' => $feats,
+        # We keep deps only for the case that this is a leaf node, which will disappear in the collapsed graph.
+        # Unlike deps of normal, inner empty nodes, we do not expect these to be manipulated, only preserved and written again.
+        'deps'  => $deps,
+        'misc'  => $misc
+    );
+    push(@{$empty_nodes}, \%empty_node);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Reads the introductory line of a multi-word token. Returns a list of
 # variables. Their values will be used later. A multi-word token does not have
 # its own node, so nothing will now be stored in the tree. The multi-word token
 # (fused word in Treex terminology) corresponds to multiple syntactic words
