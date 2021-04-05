@@ -44,13 +44,30 @@ sub get_node_by_ord
     my @results = grep {$_->ord() == $ord} ($root->get_descendants());
     if(scalar(@results) == 0)
     {
+        log_warn($self->get_forms_with_ords_and_conllu_ids());
         log_fatal("No node with ord '$ord' found.");
     }
     if(scalar(@results) > 1)
     {
+        log_warn($self->get_forms_with_ords_and_conllu_ids());
         log_fatal("There are multiple nodes with ord '$ord'.");
     }
     return $results[0];
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns all words in the current sentence together with their ords and
+# CoNLL-U ids. Used for debugging.
+#------------------------------------------------------------------------------
+sub get_forms_with_ords_and_conllu_ids
+{
+    my $self = shift;
+    my $root = $self->get_root();
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    my @triples = map {my $f = $_->form() // '_'; my $o = $_->ord() // '_'; my $i = $_->get_conllu_id() // '_'; "$o:$i:$f"} (@nodes);
+    return join(' ', @triples);
 }
 
 
