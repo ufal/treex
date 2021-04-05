@@ -121,29 +121,7 @@ sub next_document
                 # Add the current node to the current MWT. Store the MWT if this is its last node.
                 ($fufrom, $futo, $fuform, $funspaf, $fumisc) = $self->store_multi_word_token($newnode, $id, $fufrom, $futo, $fuform, $funspaf, $fumisc, \@funodes);
             }
-            $newnode->set_form($form);
-            $newnode->set_lemma($lemma);
-            # Tred and PML-TQ should preferably display upos as the main tag of the node.
-            $newnode->set_tag($upos);
-            $newnode->set_conll_cpos($upos);
-            $newnode->set_conll_pos($xpos);
-            $newnode->set_conll_feat($feats);
-            $newnode->set_deprel($deprel);
-            $newnode->set_conll_deprel($deprel);
-            $newnode->iset()->set_upos($upos);
-            if ($feats ne '_')
-            {
-                $newnode->iset()->add_ufeatures(split(/\|/, $feats));
-                # UD features that are not defined in Interset are now stored
-                # as subfeatures of the 'other' feature of Interset. Unfortunately,
-                # the 'other' feature will not be saved with the Treex document.
-                # In order to save it, we must make it a wild attribute of the node.
-                my $other = $newnode->iset()->other();
-                if(defined($other) && ref($other) eq 'HASH')
-                {
-                    $newnode->wild()->{iset_other} = $other;
-                }
-            }
+            $self->store_node_attributes($newnode, $form, $lemma, $upos, $xpos, $feats, $deprel);
             # The enhanced relations can be stored as wild attributes.
             # However, we need to first collect and store them separately, and
             # once the entire graph has been read, we have to collapse the
@@ -333,6 +311,50 @@ sub store_multi_word_token
 
 
 #------------------------------------------------------------------------------
+# Stores UD node attributes in a Node object.
+#------------------------------------------------------------------------------
+sub store_node_attributes
+{
+    my $self = shift;
+    my $node = shift;
+    my $form = shift;
+    my $lemma = shift;
+    my $upos = shift;
+    my $xpos = shift;
+    my $feats = shift;
+    my $deprel = shift;
+    $node->set_form($form);
+    $node->set_lemma($lemma);
+    # Tred and PML-TQ should preferably display upos as the main tag of the node.
+    $node->set_tag($upos);
+    $node->set_conll_cpos($upos);
+    $node->set_conll_pos($xpos);
+    $node->set_conll_feat($feats);
+    $node->iset()->set_upos($upos);
+    if ($feats ne '_')
+    {
+        $node->iset()->add_ufeatures(split(/\|/, $feats));
+        # UD features that are not defined in Interset are now stored
+        # as subfeatures of the 'other' feature of Interset. Unfortunately,
+        # the 'other' feature will not be saved with the Treex document.
+        # In order to save it, we must make it a wild attribute of the node.
+        my $other = $node->iset()->other();
+        if(defined($other) && ref($other) eq 'HASH')
+        {
+            $node->wild()->{iset_other} = $other;
+        }
+    }
+    # Deprel is not defined if the node is empty (that is, enhanced only).
+    if (defined($deprel) && $deprel ne '_')
+    {
+        $node->set_deprel($deprel);
+        $node->set_conll_deprel($deprel);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Searches for specific MISC attributes for which we have dedicated attributes.
 # Moves them to the dedicated attributes if found. Stores the remaining MISC
 # attributes as wild attributes.
@@ -386,6 +408,51 @@ sub store_misc_attributes
 # it as wild attributes.
 #------------------------------------------------------------------------------
 sub store_enhanced_graph
+{
+    my $self = shift;
+    my $bundle = shift; # reference to the current bundle; needed only for the old implementation
+    my $nodes = shift; # array reference; basic tree nodes (descendants of a-root, ordered)
+    my $egraph = shift; # hash reference; information about enhanced relations
+    my $empty_nodes = shift; # array reference; information about empty nodes (their word form and other attributes if available)
+    log_fatal("Cannot store enhanced graph if there are no basic nodes.") if(scalar(@{$nodes})==0); ###!!! in fact, the new implementation needs the root but otherwise there could be only empty nodes
+    my $root = $nodes->[0]->get_root();
+    foreach my $enode (@{$empty_nodes})
+    {
+        my $node = $root->create_empty_node($enode->{id});
+        $self->store_node_attributes($node, $enode->{form}, $enode->{lemma}, $enode->{upos}, $enode->{xpos}, $enode->{feats}); ###!!! a co MISC?
+        if(defined($enode->{misc}) && $enode->{misc} ne '_')
+        {
+            # Store specific (expected) MISC attributes to dedicated node attributes.
+            # Store all other MISC attributes as wild attributes.
+            $self->store_misc_attributes($node, $enode->{misc});
+        }
+        push(@{$nodes}, $node);
+    }
+    foreach my $node (@{$nodes})
+    {
+        my $id = $node->get_conllu_id();
+        # %{$egraph} already knows the @edeps array for each child node id.
+        # We could have stored it with the nodes at the time we created them
+        # but we postponed it because of the old implementation, which needed
+        # to collapse empty-node paths after the whole graph became known.
+        if(defined($egraph->{$id}))
+        {
+            $node->wild()->{enhanced} = $egraph->{$id};
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes the information we have collected about the enhanced graph and stores
+# it as wild attributes.
+#
+# This is the old and deprecated implementation that does not create Node
+# objects for empty nodes and instead collapses paths that go through empty
+# nodes into edges with special relation labels.
+#------------------------------------------------------------------------------
+sub store_enhanced_graph_old
 {
     my $self = shift;
     my $bundle = shift; # reference to the current bundle
