@@ -834,6 +834,50 @@ sub get_major_minor_id
 
 
 #------------------------------------------------------------------------------
+# Finds a node with a given id in the same tree. This is useful if we are
+# looking at the list of incoming enhanced edges and need to actually access
+# one of the parents listed there by ord. We assume that if the method is
+# called, the caller is confident that the node should exist. The method will
+# throw an exception if there is no node or multiple nodes with the given ord.
+#------------------------------------------------------------------------------
+sub get_node_by_conllu_id
+{
+    my $self = shift;
+    my $id = shift;
+    my $root = $self->get_root();
+    return $root if($id == 0);
+    my @results = grep {$_->get_conllu_id() == $id} ($root->get_descendants());
+    if(scalar(@results) == 0)
+    {
+        log_warn($self->get_forms_with_ords_and_conllu_ids());
+        log_fatal("No node with CoNLL-U ID '$id' found.");
+    }
+    if(scalar(@results) > 1)
+    {
+        log_warn($self->get_forms_with_ords_and_conllu_ids());
+        log_fatal("There are multiple nodes with CoNLL-U ID '$id'.");
+    }
+    return $results[0];
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns all words in the current sentence together with their ords and
+# CoNLL-U ids. Used for debugging.
+#------------------------------------------------------------------------------
+sub get_forms_with_ords_and_conllu_ids
+{
+    my $self = shift;
+    my $root = $self->get_root();
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    my @triples = map {my $f = $_->form() // '_'; my $o = $_->ord() // '_'; my $i = $_->get_conllu_id() // '_'; "$o:$i:$f"} (@nodes);
+    return join(' ', @triples);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Converts the old hack for empty nodes to a new hack. The old hack does not
 # use a Node object for an empty node. Instead, the enhanced dependency encodes
 # the path between two real nodes via one or more empty nodes: 'conj>3.5>obj'.

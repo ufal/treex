@@ -29,9 +29,9 @@ sub follows {
 
 
 #------------------------------------------------------------------------------
-# Finds a node with a given ord in the same tree. This is useful if we are
-# looking at the list of incoming enhanced edges and need to actually access
-# one of the parents listed there by ord. We assume that if the method is
+# Finds a node with a given ord in the same tree. This was originally needed to
+# search for nodes in the enhanced UD graph but there it has been replaced by
+# Core::Node::A::get_node_by_conllu_id(). We assume that if the method is
 # called, the caller is confident that the node should exist. The method will
 # throw an exception if there is no node or multiple nodes with the given ord.
 #------------------------------------------------------------------------------
@@ -44,12 +44,12 @@ sub get_node_by_ord
     my @results = grep {$_->ord() == $ord} ($root->get_descendants());
     if(scalar(@results) == 0)
     {
-        log_warn($self->get_forms_with_ords_and_conllu_ids());
+        log_warn($self->get_forms_with_ords());
         log_fatal("No node with ord '$ord' found.");
     }
     if(scalar(@results) > 1)
     {
-        log_warn($self->get_forms_with_ords_and_conllu_ids());
+        log_warn($self->get_forms_with_ords());
         log_fatal("There are multiple nodes with ord '$ord'.");
     }
     return $results[0];
@@ -58,16 +58,16 @@ sub get_node_by_ord
 
 
 #------------------------------------------------------------------------------
-# Returns all words in the current sentence together with their ords and
-# CoNLL-U ids. Used for debugging.
+# Returns all words in the current sentence together with their ords. Used for
+# debugging.
 #------------------------------------------------------------------------------
-sub get_forms_with_ords_and_conllu_ids
+sub get_forms_with_ords
 {
     my $self = shift;
     my $root = $self->get_root();
     my @nodes = $root->get_descendants({'ordered' => 1});
-    my @triples = map {my $f = $_->form() // '_'; my $o = $_->ord() // '_'; my $i = $_->get_conllu_id() // '_'; "$o:$i:$f"} (@nodes);
-    return join(' ', @triples);
+    my @pairs = map {my $f = $_->form() // '_'; my $o = $_->ord() // '_'; "$o:$f"} (@nodes);
+    return join(' ', @pairs);
 }
 
 

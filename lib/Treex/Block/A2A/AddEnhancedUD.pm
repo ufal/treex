@@ -234,12 +234,12 @@ sub add_enhanced_parent_of_coordination
                     ###!!! We should now also check whether a preposition or a case label should be added!
                     $deprel = 'obl';
                 }
-                $node->add_enhanced_dependency($node->get_node_by_ord($edep->[0]), $deprel);
+                $node->add_enhanced_dependency($node->get_node_by_conllu_id($edep->[0]), $deprel);
                 # The coordination may function as a shared dependent of other coordination.
                 # In that case, make me depend on every conjunct in the parent coordination.
                 if($inode->is_shared_modifier())
                 {
-                    my @conjuncts = $self->recursively_collect_conjuncts($node->get_node_by_ord($edep->[0]));
+                    my @conjuncts = $self->recursively_collect_conjuncts($node->get_node_by_conllu_id($edep->[0]));
                     foreach my $conjunct (@conjuncts)
                     {
                         $node->add_enhanced_dependency($conjunct, $deprel);
@@ -276,7 +276,7 @@ sub add_enhanced_shared_dependent_of_coordination
         my @iedges = grep {$_->[1] !~ m/^(conj|cc|punct)(:|$)/} ($node->get_enhanced_deps());
         foreach my $iedge (@iedges)
         {
-            my $parent = $node->get_node_by_ord($iedge->[0]);
+            my $parent = $node->get_node_by_conllu_id($iedge->[0]);
             my $edeprel = $iedge->[1];
             my @conjuncts = $self->recursively_collect_conjuncts($parent);
             foreach my $conjunct (@conjuncts)
@@ -651,7 +651,7 @@ sub add_enhanced_relative_clause
                     # Second clause: lapset huutavat = the children cry (joilla is oblique argument of this)
                     # Third clause: ja kiirettä tuntuu olevan kokoajan arjen keskellä (joilla oblique here too) = and hurry seems to be in the middle of everyday life
                     # I.e.: those, whose are station wagons, whose children cry and who feel in a hurry
-                    my $relparentnode = $node->get_node_by_ord($relparent);
+                    my $relparentnode = $node->get_node_by_conllu_id($relparent);
                     next if($relparentnode == $noun);
                     # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
                     # Discard subtypes of the original relation, if present. Such subtypes may not be available
