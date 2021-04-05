@@ -678,7 +678,7 @@ sub get_enhanced_parents
     }
     # Remove duplicates.
     my %epmap; map {$epmap{$_->[0]}++} (@edeps);
-    my @parents = sort {$a->ord() <=> $b->ord()} (map {$self->get_node_by_ord($_)} (keys(%epmap)));
+    my @parents = sort {$a->ord() <=> $b->ord()} (map {$self->get_node_by_conllu_id($_)} (keys(%epmap)));
     return @parents;
 }
 
@@ -947,7 +947,7 @@ sub expand_empty_nodes
                     log_fatal("Cannot understand enhanced deprel '$ie->[1]': even number of parts.");
                 }
                 my $pord = $ie->[0];
-                my $parent = $self->get_node_by_ord($pord);
+                my $parent = $self->get_node_by_conllu_id($pord);
                 while(scalar(@parts) > 1)
                 {
                     my $deprel = shift(@parts);
