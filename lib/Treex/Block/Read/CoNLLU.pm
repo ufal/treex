@@ -87,9 +87,8 @@ sub next_document
                 next LINE;
             }
             # Since UD v2, the FORM and LEMMA columns may contain spaces, thus we can only use the TAB character as column separator.
-            my ( $id, $form, $lemma, $upos, $xpos, $feats, $head, $deprel, $deps, $misc, $rest ) = split( /\t/, $line );
-            log_warn "Extra columns: '$rest'" if $rest;
-
+            my ( $id, $form, $lemma, $upos, $xpos, $feats, $head, $deprel, $deps, $misc, $rest ) = split(/\t/, $line);
+            log_warn("Extra columns: '$rest'") if($rest);
             # There may be empty nodes (they participate in the enhanced graph but not in the basic tree).
             if ($id =~ m/^\d+\.\d+$/)
             {

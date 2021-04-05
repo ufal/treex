@@ -767,6 +767,28 @@ sub get_enhanced_descendants
 
 
 #------------------------------------------------------------------------------
+# Creates an empty node. In the sentence node sequence, it will be placed at
+# the end (while its decimal CoNLL-U ID/ord will be stored as a wild
+# attribute). In the basic tree, it will be connected to the artificial root
+# via a fake dependency 'dep:empty' (all UD-processing blocks should be aware
+# of the possibility that some nodes are empty).
+#------------------------------------------------------------------------------
+sub create_empty_node
+{
+    my $self = shift;
+    my $enord = shift;
+    my $root = $self->get_root();
+    my $node = $root->create_child();
+    $node->set_deprel('dep:empty');
+    $node->wild()->{enhanced} = [];
+    $node->wild()->{enord} = $enord;
+    $node->shift_after_subtree($root);
+    return $node;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Empty nodes in enhanced UD graphs are modeled using fake a-nodes at the end
 # of the sentence. In the a-tree they are attached directly to the artificial
 # root, with the deprel 'dep:empty'. Their ord is used internally in Treex,
@@ -855,17 +877,11 @@ sub expand_empty_nodes
         }
     }
     # Create empty nodes at the end of the sentence.
-    my $lastnode = $nodes[-1];
     my @enords = sort {$a <=> $b} (keys(%enords));
     my %emptynodes; # Node objects indexed by enords
     foreach my $enord (@enords)
     {
-        my $node = $self->create_child();
-        $node->set_deprel('dep:empty');
-        $node->wild()->{enhanced} = [];
-        $node->wild()->{enord} = $enord;
-        $node->shift_after_node($lastnode);
-        $lastnode = $node;
+        my $node = $self->create_empty_node($enord);
         $emptynodes{$enord} = $node;
     }
     # Redirect paths through empty nodes.
