@@ -79,8 +79,15 @@ sub process_atree
         {
             $self->add_enhanced_empty_node($node, \%emptynodes);
         }
-        ###!!! In the future we may want to directly generate this kind of empty nodes.
-        ###!!! At present we keep the enhanced methods intact and convert the empty nodes when everything else has been done.
+        ###!!! The implementation of empty nodes in Treex has changed but at
+        ###!!! present we keep the enhanced methods intact and convert the empty
+        ###!!! nodes when everything else has been done. In the future we may
+        ###!!! want to directly generate the new kind of empty nodes. Note
+        ###!!! however that the implementation of add_enhanced_empty_node()
+        ###!!! will have to change significantly, as we are now treating each
+        ###!!! orphan separately; in the future we will have to check whether
+        ###!!! THE SAME empty node has been already added to the tree or we
+        ###!!! must add it because we are processing its first orphan.
         $root->expand_empty_nodes();
     }
 }
@@ -722,7 +729,10 @@ sub add_enhanced_empty_node
     my @origiedges = $node->get_enhanced_deps();
     foreach my $ie (@origiedges)
     {
-        $ie->[1] =~ s/^orphan(:|$)/dep$1/;
+        if($ie->[1] =~ s/^orphan(:|$)/dep$1/)
+        {
+            log_warn("Changed 'orphan' to 'dep' but we should have processed the other orphan earlier instead.");
+        }
     }
     # Create the paths to $node via the empty node. We do not know what the
     # relation between the empty node and $node should be. We just use 'dep'
