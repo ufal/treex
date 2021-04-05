@@ -128,8 +128,6 @@ sub next_document
             # empty nodes into long relations.
             if ($deps && $deps ne '_')
             {
-                ###!!! Storing unparsed deps is older and perhaps obsolete because Write::CoNLLU will not use it.
-                $newnode->wild->{deps} = $deps;
                 my @deps = split(/\|/, $deps);
                 my @edeps = grep {defined($_)} (map {my $x = $_; $x =~ m/^(\d+(?:\.\d+)?):(.+)$/ ? [$1, $2] : undef} (split(/\|/, $deps)));
                 my $m = scalar(@deps);
@@ -208,6 +206,8 @@ sub process_empty_node
         'feats' => $feats,
         # We keep deps only for the case that this is a leaf node, which will disappear in the collapsed graph.
         # Unlike deps of normal, inner empty nodes, we do not expect these to be manipulated, only preserved and written again.
+        ###!!! This no longer holds with the new implementation of empty nodes.
+        ###!!! Once the new implementation has become stable, we can stop storing deps here.
         'deps'  => $deps,
         'misc'  => $misc
     );
