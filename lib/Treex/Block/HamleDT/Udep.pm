@@ -299,12 +299,12 @@ sub convert_deprels
             if($parent->iset()->is_passive())
             {
                 # If this is a verb (including infinitive) then it is a clausal subject.
-                $deprel = $node->is_clausal_head() ? 'csubj:pass' : 'nsubj:pass';
+                $deprel = $self->is_clausal_head($node) ? 'csubj:pass' : 'nsubj:pass';
             }
             else # Parent is not passive.
             {
                 # If this is a verb (including infinitive) then it is a clausal subject.
-                $deprel = $node->is_clausal_head() ? 'csubj' : 'nsubj';
+                $deprel = $self->is_clausal_head($node) ? 'csubj' : 'nsubj';
             }
         }
         # Object: obj, iobj, ccomp, xcomp
@@ -314,7 +314,7 @@ sub convert_deprels
             ###!!! We would probably have to consider all valency frames to do that properly.
             ###!!! TODO: An approximation that we probably could do in the meantime is that
             ###!!! if there is one accusative and one or more non-accusatives, then the accusative is the direct object.
-            if($node->is_clausal_head())
+            if($self->is_clausal_head($node))
             {
                 # If this is an infinitive then it is an xcomp (controlled clausal complement).
                 # If this is a verb form other than infinitive then it is a ccomp.
@@ -395,7 +395,7 @@ sub convert_deprels
             ###!!! Úroda byla v tomto roce o mnoho lepší než loni.
             ###!!! There should be obl(lepší, roce) but nmod(lepší, mnoho).
             # Adposition leads to 'obl' because of preposition stranding in languages like English (i.e., it is promoted in ellipsis).
-            $deprel = $node->is_clausal_head() ? 'advcl' : ($node->is_noun() || $node->is_adjective() || $node->is_numeral() || $node->is_adposition() || $node->iset()->pos() eq '') ? 'obl' : 'advmod';
+            $deprel = $self->is_clausal_head($node) ? 'advcl' : ($node->is_noun() || $node->is_adjective() || $node->is_numeral() || $node->is_adposition() || $node->iset()->pos() eq '') ? 'obl' : 'advmod';
         }
         # Attribute of a noun: amod, nummod, nmod, acl
         elsif($deprel eq 'Atr')
@@ -449,7 +449,7 @@ sub convert_deprels
             {
                 $deprel = 'advmod';
             }
-            elsif($node->is_clausal_head())
+            elsif($self->is_clausal_head($node))
             {
                 $deprel = 'acl';
             }
