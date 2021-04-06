@@ -299,12 +299,12 @@ sub convert_deprels
             if($parent->iset()->is_passive())
             {
                 # If this is a verb (including infinitive) then it is a clausal subject.
-                $deprel = $node->is_verb() ? 'csubj:pass' : 'nsubj:pass';
+                $deprel = $node->is_clausal_head() ? 'csubj:pass' : 'nsubj:pass';
             }
             else # Parent is not passive.
             {
                 # If this is a verb (including infinitive) then it is a clausal subject.
-                $deprel = $node->is_verb() ? 'csubj' : 'nsubj';
+                $deprel = $node->is_clausal_head() ? 'csubj' : 'nsubj';
             }
         }
         # Object: obj, iobj, ccomp, xcomp
@@ -314,7 +314,7 @@ sub convert_deprels
             ###!!! We would probably have to consider all valency frames to do that properly.
             ###!!! TODO: An approximation that we probably could do in the meantime is that
             ###!!! if there is one accusative and one or more non-accusatives, then the accusative is the direct object.
-            if($node->is_verb())
+            if($node->is_clausal_head())
             {
                 # If this is an infinitive then it is an xcomp (controlled clausal complement).
                 # If this is a verb form other than infinitive then it is a ccomp.
@@ -395,7 +395,7 @@ sub convert_deprels
             ###!!! Úroda byla v tomto roce o mnoho lepší než loni.
             ###!!! There should be obl(lepší, roce) but nmod(lepší, mnoho).
             # Adposition leads to 'obl' because of preposition stranding in languages like English (i.e., it is promoted in ellipsis).
-            $deprel = $node->is_verb() ? 'advcl' : ($node->is_noun() || $node->is_adjective() || $node->is_numeral() || $node->is_adposition() || $node->iset()->pos() eq '') ? 'obl' : 'advmod';
+            $deprel = $node->is_clausal_head() ? 'advcl' : ($node->is_noun() || $node->is_adjective() || $node->is_numeral() || $node->is_adposition() || $node->iset()->pos() eq '') ? 'obl' : 'advmod';
         }
         # Attribute of a noun: amod, nummod, nmod, acl
         elsif($deprel eq 'Atr')
@@ -449,7 +449,7 @@ sub convert_deprels
             {
                 $deprel = 'advmod';
             }
-            elsif($node->is_verb())
+            elsif($node->is_clausal_head())
             {
                 $deprel = 'acl';
             }
@@ -661,6 +661,38 @@ sub convert_deprels
     {
         delete($node->wild()->{prague_deprel});
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Tells for a node whether its subtree is likely a clause or not. This is
+# necessary to figure out the UD type of the incoming relation (e.g., a nominal
+# subject is attached as 'nsubj', a clausal subject as 'csubj'). Since this
+# method will be called during conversion of relation labels, we cannot rely on
+# them: neither that they are in the Prague style, nor the UD style. The tree
+# structure is still in the Prague style. Interset is available.
+#------------------------------------------------------------------------------
+sub is_clausal_head
+{
+    my $self = shift;
+    my $node = shift;
+    # If the current node is a verb, it heads a clause.
+    # Note that even nominal predicates are headed by the copula verb in the Prague style.
+    return 1 if($node->is_verb());
+    # Passive participles in Slavic languages have been retagged as adjectives.
+    # They have the auxiliary verb as a child (but the lemma of the verb is
+    # language-specific and the relation type is either AuxV or aux:pass,
+    # depending on whether that node has already been converted).
+    if($node->is_participle() && $node->iset()->is_passive())
+    {
+        my @children = $node->children();
+        if(any {$_->is_verb()} (@children))
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 
