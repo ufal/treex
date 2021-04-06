@@ -125,7 +125,7 @@ sub add_enhanced_case_deprel
         # but we look for input solely in the basic tree.
         ###!!! That means that we may not be able to find a preposition shared by conjuncts.
         ###!!! Finding it would need more work anyways, because we call this function before we propagate dependencies across coordination.
-        my @children = $node->children({'ordered' => 1});
+        my @children = $node->get_children({'ordered' => 1});
         my @casemark = grep {$_->deprel() =~ m/^(case|mark)(:|$)/} (@children);
         # If the current constituent is a clause, take mark dependents but not case dependents.
         # This may not work the same way in all languages, as e.g. in Swedish Joakim uses case even with clauses.
@@ -139,7 +139,7 @@ sub add_enhanced_case_deprel
         my @cmlemmas = grep {defined($_)} map
         {
             my $x = $_;
-            my @fixed = grep {$_->deprel() =~ m/^(fixed)(:|$)/} ($x->children({'ordered' => 1}));
+            my @fixed = grep {$_->deprel() =~ m/^(fixed)(:|$)/} ($x->get_children({'ordered' => 1}));
             my $l = lc($x->lemma());
             if(defined($l) && ($l eq '' || $l eq '_'))
             {
