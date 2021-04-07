@@ -315,9 +315,15 @@ sub fix_jako_kdyby
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::HamleDT::CS::SplitFusedWords
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::HamleDT::SK::SplitFusedWords
+
+=head1 DESCRIPTION
 
 Splits certain tokens to syntactic words according to the guidelines of the
 Universal Dependencies.
@@ -326,10 +332,12 @@ This block should be called after the tree has been converted to Universal
 Dependencies so that the tags and dependency relation labels are from the UD
 set.
 
-=back
+=head1 AUTHOR
 
-=cut
+Dan Zeman <zeman@ufal.mff.cuni.cz>
 
-# Copyright 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
+=head1 COPYRIGHT AND LICENSE
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Copyright © 2014, 2015 by Institute of Formal and Applied Linguistics, Charles University, Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
