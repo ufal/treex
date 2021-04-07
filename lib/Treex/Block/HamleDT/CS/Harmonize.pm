@@ -9,7 +9,9 @@ has iset_driver =>
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
-    default       => 'cs::pdtc',
+    # This default is now (2021) dangerous! PDT uses cs::pdtc (if we take the source from PDT-C, which we originally did only
+    # for the CorefUD experiments) while CAC, CLTT, FicTree and PUD still use cs::pdt. The two tagsets are not compatible!
+    default       => 'cs::pdt',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
