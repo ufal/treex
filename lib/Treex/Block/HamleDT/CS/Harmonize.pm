@@ -313,14 +313,17 @@ sub fix_morphology
                 if($form =~ m/^jehož$/i && $node->is_possessive())
                 {
                     $lemma = 'jehož';
+                    $node->set_lemma($lemma);
                 }
                 elsif($form =~ m/^(jejíž|jejíhož|jejímuž|jejímž|jejíchž|jejímiž)$/i)
                 {
                     $lemma = 'jejíž';
+                    $node->set_lemma($lemma);
                 }
                 elsif($form =~ m/^jejichž$/i)
                 {
                     $lemma = 'jejichž';
+                    $node->set_lemma($lemma);
                 }
             }
             # In the old cs::pdt tagset, third-person pronouns had a feature that distinguished their
