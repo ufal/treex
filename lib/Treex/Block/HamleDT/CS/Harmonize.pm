@@ -301,16 +301,38 @@ sub fix_morphology
                     $lemma = 'tvůj';
                 }
             }
+            # Some instances of possessive relative pronouns in CAC are wrongly lemmatized to the
+            # non-possessive "jenž". We have to fix it because some subsequent operations are
+            # designed for "jenž" but not for the possessives; in addition, some morphological
+            # features are not allowed for non-possessive pronouns.
+            # Note that "jehož" can be also the genitive form of "jenž" in non-possessive contexts,
+            # so we must look at morphological features. In contrast, "jejíž" and "jejichž" are
+            # unambiguous, the corresponding genitives would be "jíž/níž" and "jichž/nichž".
+            if($lemma eq 'jenž')
+            {
+                if($form =~ m/^jehož$/i && $node->is_possessive())
+                {
+                    $lemma = 'jehož';
+                }
+                elsif($form =~ m/^(jejíž|jejíhož|jejímuž|jejímž|jejíchž|jejímiž)$/i)
+                {
+                    $lemma = 'jejíž';
+                }
+                elsif($form =~ m/^jejichž$/i)
+                {
+                    $lemma = 'jejichž';
+                }
+            }
             # In the old cs::pdt tagset, third-person pronouns had a feature that distinguished their
             # bare form (without preposition: "je") and form with preposition ("ně"). In the new cs::pdtc
             # tagset, this distinction is lost but we can re-introduce it here.
             if($lemma =~ m/^(on|jenž)$/ && $node->iset()->case() =~ m/(gen|dat|acc|loc|ins)/)
             {
-                if($form =~ m/^(jeho|jej|jemu|jím|jí|ji|jich|jim|je|jimi)ž?$/)
+                if($form =~ m/^(jeho|jej|jemu|jím|jí|ji|jich|jim|je|jimi)ž?$/i)
                 {
                     $node->iset()->set('prepcase', 'npr');
                 }
-                elsif($form =~ m/^(něho|něj|němu|něm|ním|ní|ni|nich|nim|ně|nimi)ž?$/)
+                elsif($form =~ m/^(něho|něj|němu|něm|ním|ní|ni|nich|nim|ně|nimi)ž?$/i)
                 {
                     $node->iset()->set('prepcase', 'pre');
                 }
