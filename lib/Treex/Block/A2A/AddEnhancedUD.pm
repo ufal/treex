@@ -564,7 +564,7 @@ sub add_enhanced_relative_clause
         foreach my $noun (@nouns)
         {
             # Add a subject relation between the relative participle and the modified noun.
-            $self->add_enhanced_dependency($noun, $node, 'nsubj');
+            $noun->add_enhanced_dependency($node, 'nsubj');
         }
     }
     else # not Tamil
