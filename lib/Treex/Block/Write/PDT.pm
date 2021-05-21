@@ -127,7 +127,7 @@ sub process_atree {
     print {$m_fh} "<s id='m-$s_id'>\n";
     foreach my $anode ($atree->get_descendants({ordered=>1})){
         my ($id, $form, $lemma, $tag) = map{$self->escape_xml($_)} $anode->get_attrs(qw(id form lemma tag), {undefs=>'?'});
-	$id =~ s/^a-//;
+        $id =~ s/^a-//;
         my $nsa = $anode->no_space_after ? '<no_space_after>1</no_space_after>' : '';
         print {$w_fh} "<w id='w-$id'><token>$form</token>$nsa</w>\n";
         print {$m_fh} "<m id='m-$id'><w.rf>w#w-$id</w.rf><form>$form</form><lemma>$lemma</lemma><tag>$tag</tag></m>\n";
@@ -171,7 +171,7 @@ sub process_ttree {
     print {$t_fh} "<LM id='t-$s_id'><atree.rf>a#a-$a_s_id</atree.rf>\n<nodetype>root</nodetype>\n<deepord>0</deepord>";
 
     # multiword expressions in the PDT-like format:
-    
+
     my $ref_mwes = $ttree->get_attr('mwes');
     my @mwes = ();
     if ($ref_mwes) {
@@ -247,7 +247,7 @@ sub print_tsubtree {
 
     # coref_text.rf
     my @antes = $tnode->_get_node_list('coref_text.rf');
-    if (@antes) { 
+    if (@antes) {
 	if ($self->version eq "3.0" or $self->version eq '3.5' or $self->version eq 'C') { # transform the old-fashioned coref_text.rf to structured coref_text (with default SPEC type)
             print {$t_fh} "\n<coref_text>";
             foreach my $ante (@antes) {
