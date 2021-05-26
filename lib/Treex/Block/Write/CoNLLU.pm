@@ -11,6 +11,7 @@ has 'print_text'                       => ( is => 'ro', isa => 'Bool', default =
 has 'sort_misc'                        => ( is => 'ro', isa => 'Bool', default => 0, documentation => 'MISC attributes will be sorted alphabetically' );
 has 'randomly_select_sentences_ratio'  => ( is => 'rw', isa => 'Num',  default => 1 );
 has 'alignment'                        => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print alignment links in the 9th column' );
+has 'use_tree_id_as_sent_id'           => ( is => 'ro', isa => 'Bool', default => 0, documentation => 'use tree->id instead of bundle->id when printing sent_id' );
 
 # Where to find which CoNLL-U column?
 # All the following parameters can have a special value "0",
@@ -124,7 +125,11 @@ sub process_atree
             @comment = grep {!m/^new(doc|par)/i} (@comment);
         }
         my $sent_id = $tree->get_bundle->id;
-        if ($self->print_zone_id)
+        if ($self->use_tree_id_as_sent_id)
+        {
+            $sent_id = $tree->id;
+        }
+        elsif ($self->print_zone_id)
         {
             $sent_id .= '/' . $tree->get_zone->get_label;
         }

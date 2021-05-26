@@ -9,6 +9,8 @@ has 'version' => (isa => 'Str', is => 'ro', default => '2.0');
 
 has 'vallex_filename' => ( isa => 'Str', is => 'rw', default => 'vallex.xml' );
 
+has 'use_bundle_id' => ( is => 'ro', isa => 'Bool', default => 0, documentation => 'use bundle->id instead of tree->id when printing <s id=?>' );
+
 sub _build_to {return '.';} # BaseTextWriter defaults to STDOUT
 
 my ($w_fh, $m_fh, $a_fh, $t_fh);
@@ -55,7 +57,7 @@ sub process_document{
     my $lang   = $self->language;
     my $vallex_name = $self->vallex_filename;
     print {$w_fh} << "END";
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <wdata xmlns="http://ufal.mff.cuni.cz/pdt/pml/">
 <head><schema href="wdata$version_flag\_schema.xml"/></head>
 <meta><original_format>treex</original_format></meta>
@@ -64,7 +66,7 @@ sub process_document{
 <para>
 END
     print {$m_fh} << "END";
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <mdata xmlns="http://ufal.mff.cuni.cz/pdt/pml/">
 <head>
   <schema href="mdata$version_flag\_schema.xml" />
@@ -75,7 +77,7 @@ END
 <meta><lang>$lang</lang></meta>
 END
     print {$a_fh} << "END";
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <adata xmlns="http://ufal.mff.cuni.cz/pdt/pml/">
 <head>
   <schema href="adata$version_flag\_schema.xml" />
@@ -87,7 +89,7 @@ END
 <trees>
 END
     print {$t_fh} << "END";
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <tdata xmlns="http://ufal.mff.cuni.cz/pdt/pml/">
 <head>
   <schema href="tdata$version_flag\_schema.xml" />
@@ -123,11 +125,14 @@ sub escape_xml {
 sub process_atree {
     my ($self, $atree) = @_;
     my $s_id = $atree->id;
+    if ($self->use_bundle_id){
+        $s_id = $atree->get_bundle->id;
+    }
     $s_id =~ s/^a-//;
     print {$m_fh} "<s id='m-$s_id'>\n";
     foreach my $anode ($atree->get_descendants({ordered=>1})){
         my ($id, $form, $lemma, $tag) = map{$self->escape_xml($_)} $anode->get_attrs(qw(id form lemma tag), {undefs=>'?'});
-	$id =~ s/^a-//;
+        $id =~ s/^a-//;
         my $nsa = $anode->no_space_after ? '<no_space_after>1</no_space_after>' : '';
         print {$w_fh} "<w id='w-$id'><token>$form</token>$nsa</w>\n";
         print {$m_fh} "<m id='m-$id'><w.rf>w#w-$id</w.rf><form>$form</form><lemma>$lemma</lemma><tag>$tag</tag></m>\n";
@@ -161,6 +166,9 @@ sub print_asubtree {
 sub process_ttree {
     my ($self, $ttree) = @_;
     my $s_id = $ttree->id;
+    if ($self->use_bundle_id){
+        $s_id = $ttree->get_bundle->id;
+    }
     $s_id =~ s/^t-//;
     my $a_s_id = $ttree->get_attr('atree.rf');
     if (!$a_s_id){
@@ -171,7 +179,7 @@ sub process_ttree {
     print {$t_fh} "<LM id='t-$s_id'><atree.rf>a#a-$a_s_id</atree.rf>\n<nodetype>root</nodetype>\n<deepord>0</deepord>";
 
     # multiword expressions in the PDT-like format:
-    
+
     my $ref_mwes = $ttree->get_attr('mwes');
     my @mwes = ();
     if ($ref_mwes) {
@@ -247,7 +255,7 @@ sub print_tsubtree {
 
     # coref_text.rf
     my @antes = $tnode->_get_node_list('coref_text.rf');
-    if (@antes) { 
+    if (@antes) {
 	if ($self->version eq "3.0" or $self->version eq '3.5' or $self->version eq 'C') { # transform the old-fashioned coref_text.rf to structured coref_text (with default SPEC type)
             print {$t_fh} "\n<coref_text>";
             foreach my $ante (@antes) {

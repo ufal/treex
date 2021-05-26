@@ -8,6 +8,8 @@ use File::Slurp;
 use Try::Tiny;
 extends 'Treex::Block::Read::BaseCoNLLReader';
 
+has 'allow_slash_in_id' => ( is => 'rw', isa => 'Bool', default => 1 );
+
 sub next_document
 {
     my ($self) = @_;
@@ -34,7 +36,11 @@ sub next_document
         $self->set_sent_in_file($sentid);
         my $zone = $bundle->create_zone( $self->language, $self->selector );
         my $aroot = $zone->create_atree();
-        $aroot->set_id($sid.'/'.$self->language());
+        if ($self->allow_slash_in_id){
+            $aroot->set_id($sid.'/'.$self->language());
+        } else {
+            $aroot->set_id($sid);
+        }
         my @parents = (0);
         my @nodes   = ($aroot);
         my $sentence_read_from_input_text = 0; # if the (now mandatory) text attribute was present, do not reset zone->sentence to concatenation of nodes!
@@ -70,7 +76,9 @@ sub next_document
                     $sid =~ s-/.*$--;
                     $zid =~ s-/.*$--;
                     $bundle->set_id( $sid );
-                    $aroot->set_id( "$sid/$zid" );
+                    if ($self->allow_slash_in_id){
+                        $aroot->set_id("$sid/$zid");
+                    }
                 }
                 # text metadata sentence-level comment
                 elsif ($line =~ m/^text\s*=\s*(.*)/)
@@ -114,7 +122,11 @@ sub next_document
             $newnode->shift_after_subtree($aroot);
             # Some applications (e.g., PML-TQ) require that the node id be unique treebank-wide.
             # Thus we will make the sentence id part of node id, assuming that sentence id is unique.
-            $newnode->set_id($bundle->id().'/'.$id);
+            if ($self->allow_slash_in_id){
+                $newnode->set_id($bundle->id().'/'.$id);
+            } else {
+                $newnode->set_id($bundle->id().'w'.$id);
+            }
             # Nodes can become members of multiword tokens only after their ords are set.
             if (defined($futo))
             {
