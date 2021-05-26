@@ -42,6 +42,7 @@
       <!-- Germanic languages -->
       <value>en</value> <!-- English -->
       <value>de</value> <!-- German -->
+      <value>nds</value> <!-- Low Saxon -->
       <value>nl</value> <!-- Dutch -->
       <value>af</value> <!-- Afrikaans -->
       <value>fy</value> <!-- Frisian -->
@@ -93,6 +94,7 @@
       <value>el</value> <!-- Greek -->
       <value>grc</value> <!-- Ancient Greek -->
       <value>hy</value> <!-- Armenian -->
+      <value>hyw</value> <!-- Western Armenian -->
       <value>hit</value> <!-- Hittite -->
       <!-- Iranian languages -->
       <value>ku</value> <!-- Kurdish -->
@@ -116,6 +118,7 @@
       <value>hi</value> <!-- Hindi -->
       <value>bh</value> <!-- Bihari -->
       <value>bho</value> <!-- Bhojpuri -->
+      <value>xnr</value> <!-- Kangri -->
       <value>ne</value> <!-- Nepali -->
       <value>or</value> <!-- Oriya -->
       <value>bn</value> <!-- Bengali -->
@@ -140,6 +143,7 @@
       <value>aa</value> <!-- Afar -->
       <value>om</value> <!-- Oromo -->
       <value>so</value> <!-- Somali -->
+      <value>bej</value> <!-- Beja -->
       <!-- Nilo-Saharan languages -->
       <value>kr</value> <!-- Kanuri -->
       <!-- Niger-Congo languages -->
@@ -260,6 +264,7 @@
       <!-- Chukotko-Kamchatkan languages -->
       <value>ckt</value> <!-- Chukchi -->
       <!-- Eskimo-Aleutan languages -->
+      <value>ess</value> <!-- Yupik -->
       <value>ik</value> <!-- Inupiaq -->
       <value>iu</value> <!-- Inuit -->
       <value>kl</value> <!-- Greenlandic -->
@@ -267,6 +272,7 @@
       <value>cr</value> <!-- Cree -->
       <value>oj</value> <!-- Ojibwa -->
       <value>nv</value> <!-- Navajo -->
+      <value>quc</value> <!-- Kiche -->
       <value>apu</value> <!-- Apurinã -->
       <value>qu</value> <!-- Quechua -->
       <value>quz</value> <!-- Cusco Quechua -->
@@ -278,6 +284,9 @@
       <value>tpn</value> <!-- Tupinambá -->
       <value>gn</value> <!-- Guaraní -->
       <value>gun</value> <!-- Mbyá Guaraní -->
+      <value>gub</valua> <!-- Guajajara -->
+      <value>urb</value> <!-- Kaapor -->
+      <value>mpu</value> <!-- Makurap -->
       <!-- other languages -->
       <value>bi</value> <!-- Bislama -->
       <value>eo</value> <!-- Esperanto -->
@@ -287,8 +296,9 @@
       <value>vo</value> <!-- Volapük -->
       <value>pcm</value> <!-- Nigerian Pidgin (Naija) -->
       <value>swl</value> <!-- Swedish Sign Language -->
-      <value>qhe</value> <!-- Hindi-English (bilingual) -->
-      <value>qtd</value> <!-- Turkish-German (bilingual) -->
+      <value>qfn</value> <!-- Frisian-Dutch (code-switching) -->
+      <value>qhe</value> <!-- Hindi-English (code-switching) -->
+      <value>qtd</value> <!-- Turkish-German (code-switching) -->
       <value>und</value> <!-- ISO 639-2 code for undetermined/unknown language -->
     </choice>
   </type>
