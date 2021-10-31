@@ -642,9 +642,9 @@ sub add_enhanced_dependency
         my $form = $self->form() // '';
         log_fatal("Self-loops are not allowed in the enhanced graph but we are attempting to attach the node no. $ord ('$form') to itself.");
     }
-    my $pord = $parent->ord();
+    my $pord = $parent->get_conllu_id();
     my @edeps = $self->get_enhanced_deps();
-    unless(any {$_->[0] == $pord && $_->[1] eq $deprel} (@edeps))
+    unless(any {$_->[0] eq $pord && $_->[1] eq $deprel} (@edeps))
     {
         push(@{$self->wild()->{enhanced}}, [$pord, $deprel]);
     }
