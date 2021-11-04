@@ -61,6 +61,8 @@
       <!-- Romance and Italic languages -->
       <value>la</value> <!-- Latin -->
       <value>it</value> <!-- Italian -->
+      <value>lij</value> <!-- Ligurian -->
+      <value>nap</value> <!-- Neapolitan -->
       <value>es</value> <!-- Spanish -->
       <value>pt</value> <!-- Portuguese -->
       <value>gl</value> <!-- Galician -->
@@ -218,6 +220,7 @@
       <value>xal</value> <!-- Kalmyk -->
       <value>bxr</value> <!-- Buryat -->
       <value>mn</value> <!-- Mongol -->
+      <value>sjo</value> <!-- Xibe -->
       <value>ko</value> <!-- Korean -->
       <value>ja</value> <!-- Japanese -->
       <!-- Dravidian languages -->
@@ -286,6 +289,7 @@
       <value>gun</value> <!-- Mbyá Guaraní -->
       <value>gub</value> <!-- Guajajara -->
       <value>urb</value> <!-- Kaapor -->
+      <value>arr</value> <!-- Karo -->
       <value>mpu</value> <!-- Makurap -->
       <!-- other languages -->
       <value>bi</value> <!-- Bislama -->
