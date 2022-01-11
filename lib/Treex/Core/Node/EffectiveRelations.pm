@@ -220,9 +220,11 @@ sub _get_shared_echildren {
     #  (In case of "diving", it's not $self, but its governing Aux[CP].)
     #  However, it has is_member==1, so it won't get into @shared_echildren.
     #  Similarly for other iterations.
+    my $dive = $arg_ref->{dive} || sub { 0 };
     while ($coap_root) {
         push @shared_echildren,
             map  { $_->get_coap_members($arg_ref) }
+            map  { $dive->($_) ? $_->get_children : $_ }
             grep { !$_->get_attr('is_member') }
             $coap_root->get_children();
         $coap_root = $coap_root->_get_direct_coap_root($arg_ref);
