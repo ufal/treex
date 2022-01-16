@@ -146,10 +146,12 @@ sub _get_direct_coap_root {
 sub _get_transitive_coap_root {
     my ( $self, $arg_ref ) = @_;
     my $root = $self->_get_direct_coap_root($arg_ref) or return;
-    while ( $root->get_attr('is_member') ) {
-        $root = $root->_get_direct_coap_root($arg_ref) or return;
+    my $last_root = $root;
+    while ($root){
+        $last_root = $root;
+        $root = $root->_get_direct_coap_root($arg_ref);
     }
-    return $root;
+    return $last_root;
 }
 
 sub _can_apply_eff {
