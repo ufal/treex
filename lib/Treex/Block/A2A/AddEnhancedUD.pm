@@ -580,10 +580,19 @@ sub add_enhanced_relative_clause
         # "mohla" and "měla", and the unwanted relativizer is "jaké", attached to
         # "těleso" (the correct relativizer is "kterým" and it is shared by both
         # relative clauses).
+        # Also make sure that the modified noun is not returned as a relativizer.
+        # Mere listing the nouns as visited will not ensure this. It could happen
+        # in sentences like "kdokoli, kdo..."
         my @visited; map {$visited[$_->ord()]++} (@nouns);
         my @relativizers = sort {$a->ord() <=> $b->ord()}
         (
-            grep {$_->ord() <= $node->ord() && $_->is_relative()}
+            grep
+            {
+                my $x = $_;
+                $x->ord() <= $node->ord() &&
+                $x->is_relative() &&
+                !any {$_ == $x} (@nouns)
+            }
             (
                 $node,
                 $node->get_enhanced_descendants(\@visited)
@@ -595,26 +604,7 @@ sub add_enhanced_relative_clause
         my $relativizer = $relativizers[0];
         my @edeps = $relativizer->get_enhanced_deps();
         # All relations other than 'ref' will be copied to the noun.
-        # Besides 'ref', we should also exclude any collapsed paths over empty nodes
-        # (unless we can give them the special treatment they need). This is because
-        # there may be a second relative clause as a gapped conjunct, and the collapsed
-        # edge may lead back to the noun. An instance of this occurs in the Latvian
-        # LVTB training data, sent_id = a-p13850-p28s2:
-        # "personas, kura nebūtu saistīta ar pārējām un arī ar putnu"
-        # "a person which is unrelated to the rest and also to the bird"
-        # The first relative clause:
-        #   acl:relcl(personas, saistīta)
-        #   nsubj(saistīta, kura)
-        #   iobj(saistīta, pārējām)
-        # The second relative clause uses an empty node with the id 37.1 for a copy of saistīta:
-        #   acl>37.1>nsubj(personas, kura)
-        #   acl>37.1>iobj(personas, putnu)
-        ###!!! We now avoid creating a cycle when processing this Latvian sentence.
-        ###!!! But we do not transform the second relative clause correctly.
-        ###!!! Either the self-loops should be allowed in such cases, or the entire
-        ###!!! mechanism for empty nodes in Treex must be rewritten and real Node
-        ###!!! objects must be used.
-        my @noundeps = grep {$_->[1] ne 'ref' && $_->[1] !~ m/>/} (@edeps);
+        my @noundeps = grep {$_->[1] ne 'ref'} (@edeps);
         foreach my $noun (@nouns)
         {
             # Add an enhanced relation 'ref' from the modified noun to the relativizer.
