@@ -183,6 +183,8 @@ sub evaluate_weka {
     my @prediction = qx($java_cmd);
     log_debug("Result: @prediction");
 
+    unlink($evald_features_file_name) or print STDERR "Could not delete the temporary file '$evald_features_file_name'!\n";
+
     my ($class, $prob) = Treex::Tool::ML::Weka::Util::parse_output(@prediction);
 
     return ($class, $prob);
