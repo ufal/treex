@@ -144,20 +144,12 @@ sub _normalize_node_ordering {
     ###!!! UPDATE: There are more things that have to be taken care of. If there are enhanced universal dependencies, do not use this method.
     ###!!! Instead, use Node::A::_normalize_ords_and_conllu_ids()!
     my $enhanced = 0;
-    my %o2n;
     for(my $i = 0; $i <= $#nodes; $i++) {
-        $o2n{$nodes[$i]->ord()} = $i;
         $nodes[$i]->_set_ord($i);
         $enhanced = 1 if(exists($nodes[$i]->wild()->{enhanced}));
     }
-    if ( $enhanced ) {
-        foreach my $node (@nodes) {
-            if ( exists($node->wild()->{enhanced}) ) {
-                foreach my $edep (@{$node->wild()->{enhanced}}) {
-                    $edep->[0] = $o2n{$edep->[0]};
-                }
-            }
-        }
+    if($enhanced) {
+        log_fatal("If there are Enhanced Universal Dependencies, use Node::A::_normalize_ords_and_conllu_ids() instead of Node::Ordered::_normalize_node_ordering().");
     }
     return;
 }
