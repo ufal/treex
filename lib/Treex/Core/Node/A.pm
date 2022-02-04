@@ -664,6 +664,8 @@ sub get_enhanced_parents
     my $self = shift;
     my $relregex = shift;
     my $negate = shift; # return parents that do not match $relregex
+    ###!!! JUST DEBUGGING:
+    $self->_check_enhanced_deps();
     my @edeps = $self->get_enhanced_deps();
     if(defined($relregex))
     {
@@ -829,6 +831,36 @@ sub get_major_minor_id
         $minor = $2;
     }
     return ($major, $minor);
+}
+
+
+
+#------------------------------------------------------------------------------
+# For debugging and internal sanity check: Verifies that all incoming enhanced
+# dependency relations refer to an existing node by its CoNLL-U id.
+#------------------------------------------------------------------------------
+sub _check_enhanced_deps
+{
+    my $self = shift;
+    my @edeps = $self->get_enhanced_deps();
+    my $root = $self->get_root();
+    my @nodes = $root->get_descendants();
+    foreach my $edep (@edeps)
+    {
+        # ID=0 means root, it always exists.
+        next if($edep->[0] eq '0');
+        # We could call get_node_by_conllu_id(), which will throw an exception if the node does not exist.
+        # However, we want to provide more information as to where the bad link originates.
+        my @results = grep {$_->get_conllu_id() == $edep->[0]} (@nodes);
+        if(scalar(@results) == 0)
+        {
+            my $serialized_node = sprintf("%s:%s:%s", $self->form() // '_', $self->ord() // '_', $self->get_conllu_id() // '_');
+            my $serialized_edeps = join('|', map {"$_->[0]:$_->[1]"} (@edeps));
+            log_warn($self->get_forms_with_ords_and_conllu_ids());
+            log_warn("Enhanced DEPS of node '$serialized_node': $serialized_edeps");
+            log_fatal("No node with CoNLL-U ID '$edep->[0]' found.");
+        }
+    }
 }
 
 
