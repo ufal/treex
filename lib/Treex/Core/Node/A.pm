@@ -854,7 +854,7 @@ sub _check_enhanced_deps
         my @results = grep {$_->get_conllu_id() == $edep->[0]} (@nodes);
         if(scalar(@results) == 0)
         {
-            my $serialized_node = sprintf("%s:%s:%s", $self->form() // '_', $self->ord() // '_', $self->get_conllu_id() // '_');
+            my $serialized_node = sprintf("%s:%s:%s", $self->ord() // '_', $self->get_conllu_id() // '_', $self->form() // '_');
             my $serialized_edeps = join('|', map {"$_->[0]:$_->[1]"} (@edeps));
             log_warn($self->get_forms_with_ords_and_conllu_ids());
             log_warn("Enhanced DEPS of node '$serialized_node': $serialized_edeps");

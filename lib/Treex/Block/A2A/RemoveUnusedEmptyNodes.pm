@@ -15,6 +15,8 @@ sub process_atree
     for(my $i = 0; $i <= $#nodes; $i++)
     {
         my $node = $nodes[$i];
+        ###!!! DEBUGGING
+        $node->_check_enhanced_deps();
         if($node->is_empty() && exists($node->wild()->{'tnode.rf'}))
         {
             my $cid = $node->get_misc_attr('ClusterId');
