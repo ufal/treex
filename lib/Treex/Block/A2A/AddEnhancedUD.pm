@@ -754,7 +754,7 @@ sub add_enhanced_empty_node
         foreach my $pid (sort {$a <=> $b} (keys(%childiedges)))
         {
             my $parent = $child->get_node_by_conllu_id($pid);
-            foreach my $edeprel (sort {$a cmp $b} (keys(%{$childiedges{$pord}})))
+            foreach my $edeprel (sort {$a cmp $b} (keys(%{$childiedges{$pid}})))
             {
                 $child->add_enhanced_dependency($parent, $edeprel);
             }
