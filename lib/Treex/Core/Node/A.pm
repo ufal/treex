@@ -875,6 +875,14 @@ sub _check_enhanced_deps
             log_warn("Enhanced DEPS of node '$serialized_node': $serialized_edeps");
             log_fatal("No node with CoNLL-U ID '$edep->[0]' found.");
         }
+        if(scalar(@results) > 1)
+        {
+            my $serialized_node = sprintf("%s:%s:%s", $self->ord() // '_', $self->get_conllu_id() // '_', $self->form() // '_');
+            my $serialized_edeps = join('|', map {"$_->[0]:$_->[1]"} (@edeps));
+            log_warn($self->get_forms_with_ords_and_conllu_ids());
+            log_warn("Enhanced DEPS of node '$serialized_node': $serialized_edeps");
+            log_fatal("There are multiple nodes with CoNLL-U ID '$edep->[0]'.");
+        }
     }
 }
 
