@@ -625,6 +625,21 @@ sub get_enhanced_deps
 
 
 #------------------------------------------------------------------------------
+# Removes all incoming enhanced edges from a node.
+#------------------------------------------------------------------------------
+sub clear_enhanced_deps
+{
+    my $self = shift;
+    my $wild = $self->wild();
+    if(exists($wild->{enhanced}))
+    {
+        delete($wild->{enhanced});
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Adds a new enhanced edge incoming to the current node, unless the same
 # relation with the same parent already exists.
 #------------------------------------------------------------------------------

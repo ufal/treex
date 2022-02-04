@@ -79,16 +79,6 @@ sub process_atree
         {
             $self->add_enhanced_empty_node($node, \%emptynodes);
         }
-        ###!!! The implementation of empty nodes in Treex has changed but at
-        ###!!! present we keep the enhanced methods intact and convert the empty
-        ###!!! nodes when everything else has been done. In the future we may
-        ###!!! want to directly generate the new kind of empty nodes. Note
-        ###!!! however that the implementation of add_enhanced_empty_node()
-        ###!!! will have to change significantly, as we are now treating each
-        ###!!! orphan separately; in the future we will have to check whether
-        ###!!! THE SAME empty node has been already added to the tree or we
-        ###!!! must add it because we are processing its first orphan.
-        $root->expand_empty_nodes();
     }
 }
 
@@ -693,14 +683,7 @@ sub remove_enhanced_non_ref_relations
 
 
 #------------------------------------------------------------------------------
-# Transforms gapping constructions to structures with empty nodes. The a-layer
-# in Treex does not really support empty nodes so we will model them using
-# concatenations of incoming and outgoing edges. For example, suppose that
-# an empty node should have position 5.1, that it has one conj parent X, one
-# nsubj child Y and one obj child Z. Then we will draw an edge from X to Y and
-# label it "conj>5.1>nsubj", and an edge from X to Z labeled "conj>5.1>obj".
-# We will assume that the block Write::CoNLLU is able to use this information
-# to produce the desired CoNLL-U representation of the graph with empty nodes.
+# Transforms gapping constructions to structures with empty nodes.
 #------------------------------------------------------------------------------
 sub add_enhanced_empty_node
 {
@@ -712,6 +695,7 @@ sub add_enhanced_empty_node
     return if(scalar(@orphans) == 0);
     my $emppos = $self->get_empty_node_position($node, $emptynodes);
     $emptynodes->{$emppos}++;
+    my $empnode = $node->create_empty_node($emppos);
     # All current parents of $node will become parents of the empty node.
     ###!!! There should not be any 'orphan' among the relations to the parents.
     ###!!! If there is one, we should process the parent first. However, for now
@@ -719,58 +703,47 @@ sub add_enhanced_empty_node
     my @origiedges = $node->get_enhanced_deps();
     foreach my $ie (@origiedges)
     {
-        if($ie->[1] =~ s/^orphan(:|$)/dep$1/)
+        my $parent = $node->get_node_by_conllu_id($ie->[0]);
+        my $deprel = $ie->[1];
+        if($deprel =~ s/^orphan(:|$)/dep$1/)
         {
             log_warn("Changed 'orphan' to 'dep' but we should have processed the other orphan earlier instead.");
         }
+        $empnode->add_enhanced_dependency($parent, $deprel);
     }
-    # Create the paths to $node via the empty node. We do not know what the
+    # Re-attach the $node as a child of the empty node. We do not know what the
     # relation between the empty node and $node should be. We just use 'dep'
     # for now, unless the node is an adverb, when it is probably safe to say
     # that it is 'advmod'.
-    my %nodeiedges;
+    $node->clear_enhanced_deps();
     my $cdeprel = $node->is_adverb() ? 'advmod' : 'dep';
-    foreach my $ie (@origiedges)
-    {
-        $nodeiedges{$ie->[0]}{$ie->[1].">$emppos>".$cdeprel}++;
-    }
-    my @nodeiedges;
-    foreach my $pord (sort {$a <=> $b} (keys(%nodeiedges)))
-    {
-        foreach my $edeprel (sort {$a cmp $b} (keys(%{$nodeiedges{$pord}})))
-        {
-            push(@nodeiedges, [$pord, $edeprel]);
-        }
-    }
-    $node->wild()->{enhanced} = \@nodeiedges;
-    # Create the path to each child via the empty node. Also use just 'dep' for
+    $node->add_enhanced_dependency($empnode, $cdeprel);
+    # Re-attach the $node's children to the empty node. Also use just 'dep' for
     # now, unless the node is an adverb, when it is probably safe to say
     # that it is 'advmod'.
     my @children = $node->get_enhanced_children();
     foreach my $child (@children)
     {
         my @origchildiedges = $child->get_enhanced_deps();
+        $child->clear_enhanced_deps();
         my %childiedges;
         my $ccdeprel = $child->is_adverb() ? 'advmod' : 'dep';
         foreach my $cie (@origchildiedges)
         {
-            if($cie->[0] == $node->ord())
+            if($cie->[0] == $node->get_conllu_id())
             {
-                foreach my $pie (@origiedges)
+                my $cdeprel = $cie->[1];
+                # Only redirect selected relations via the empty node:
+                # orphan, cc, mark, punct. Keep the others (in particular
+                # nominal modifiers) attached directly to $node.
+                if($cdeprel =~ m/^(orphan|cc|mark|punct)(:|$)/)
                 {
-                    my $cdeprel = $cie->[1];
-                    # Only redirect selected relations via the empty node:
-                    # orphan, cc, mark, punct. Keep the others (in particular
-                    # nominal modifiers) attached directly to $node.
-                    if($cdeprel =~ m/^(orphan|cc|mark|punct)(:|$)/)
-                    {
-                        $cdeprel =~ s/^orphan(:.+)?$/$ccdeprel/;
-                        $childiedges{$pie->[0]}{$pie->[1].">$emppos>".$cdeprel}++;
-                    }
-                    else
-                    {
-                        $childiedges{$cie->[0]}{$cie->[1]}++;
-                    }
+                    $cdeprel =~ s/^orphan(:.+)?$/$ccdeprel/;
+                    $childiedges{$emppos}{$cdeprel}++;
+                }
+                else
+                {
+                    $childiedges{$cie->[0]}{$cie->[1]}++;
                 }
             }
             else
@@ -778,15 +751,14 @@ sub add_enhanced_empty_node
                 $childiedges{$cie->[0]}{$cie->[1]}++;
             }
         }
-        my @childiedges;
-        foreach my $pord (sort {$a <=> $b} (keys(%childiedges)))
+        foreach my $pid (sort {$a <=> $b} (keys(%childiedges)))
         {
+            my $parent = $child->get_node_by_conllu_id($pid);
             foreach my $edeprel (sort {$a cmp $b} (keys(%{$childiedges{$pord}})))
             {
-                push(@childiedges, [$pord, $edeprel]);
+                $child->add_enhanced_dependency($parent, $edeprel);
             }
         }
-        $child->wild()->{enhanced} = \@childiedges;
     }
 }
 
