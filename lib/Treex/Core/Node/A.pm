@@ -802,6 +802,7 @@ sub create_empty_node
     }
     if(any {$_->get_conllu_id() eq $enord} ($root->get_descendants()))
     {
+        log_warn($self->get_forms_with_ords_and_conllu_ids());
         log_fatal("CoNLL-U id '$enord' already exists.");
     }
     my $node = $root->create_child();
