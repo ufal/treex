@@ -15,8 +15,6 @@ sub process_atree
     for(my $i = 0; $i <= $#nodes; $i++)
     {
         my $node = $nodes[$i];
-        ###!!! DEBUGGING
-        $node->_check_enhanced_deps();
         if($node->is_empty() && exists($node->wild()->{'tnode.rf'}))
         {
             my $cid = $node->get_misc_attr('ClusterId');
@@ -38,25 +36,13 @@ sub process_atree
                         delete($tnode->wild()->{'anode.rf'});
                     }
                 }
-                # We must adjust the ids of empty nodes. All nodes that have
-                # the same major and larger minor must decrease the minor by 1.
-                my ($major, $minor) = $node->get_major_minor_id();
-                foreach my $node2 (@nodes)
-                {
-                    my ($major2, $minor2) = $node2->get_major_minor_id();
-                    if($major2 == $major && $minor2 > $minor)
-                    {
-                        my $id2 = $major2.'.'.($minor2-1);
-                        $node2->wild()->{enord} = $id2;
-                    }
-                }
                 $node->remove();
                 splice(@nodes, $i, 1);
                 $i--;
             }
         }
     }
-    $root->_normalize_node_ordering();
+    $root->_normalize_ords_and_conllu_ids();
 }
 
 

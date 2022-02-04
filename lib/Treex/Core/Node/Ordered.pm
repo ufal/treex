@@ -141,6 +141,8 @@ sub _normalize_node_ordering {
     # If there are enhanced dependencies, we will have to adjust them, too.
     # But first we must collect the mapping between old and new ords.
     ###!!! This is not a good solution because enhanced dependencies are in Node::A and Node::Ordered should not have to know about them.
+    ###!!! UPDATE: There are more things that have to be taken care of. If there are enhanced universal dependencies, do not use this method.
+    ###!!! Instead, use Node::A::_normalize_ords_and_conllu_ids()!
     my $enhanced = 0;
     my %o2n;
     for(my $i = 0; $i <= $#nodes; $i++) {

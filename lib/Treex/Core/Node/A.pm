@@ -925,6 +925,104 @@ sub get_forms_with_ords_and_conllu_ids
 
 
 #------------------------------------------------------------------------------
+# Alternative to Node::Ordered::_normalize_node_ordering(). This alternative
+# must be used if there are enhanced universal dependencies because the role
+# Ordered does/should not know about them. Call this method after operations
+# that may have removed nodes from the tree/graph.
+#------------------------------------------------------------------------------
+sub _normalize_ords_and_conllu_ids
+{
+    log_fatal("Incorrect number of arguments") if(scalar(@_) != 1);
+    my $self = shift;
+    log_fatal("Ordering normalization can be applied only on root nodes!") if(!$self->is_root());
+    # Do not use ordered => 1. We want to order by CoNLL-U ids rather than ords.
+    # Do not use add_self => 1. Unshift myself as the first element instead.
+    # Otherwise normalization will not work as expected if the current ord of the root is nonzero and/or a non-root node has zero.
+    my @nodes = $self->get_descendants();
+    @nodes = sort
+    {
+        my $aempty = $a->is_empty();
+        my $bempty = $b->is_empty();
+        my $r;
+        if($aempty && !$bempty)
+        {
+            $r = 1;
+        }
+        elsif(!$aempty && $bempty)
+        {
+            $r = -1;
+        }
+        elsif(!$aempty && !$bempty)
+        {
+            $r = $a->ord() <=> $b->ord();
+        }
+        else # both are empty
+        {
+            my ($amaj, $amin) = $a->get_major_minor_id();
+            my ($bmaj, $bmin) = $b->get_major_minor_id();
+            $r = $amaj <=> $bmaj;
+            unless($r)
+            {
+                $r = $amin <=> $bmin;
+            }
+        }
+        $r
+    }
+    (@nodes);
+    unshift(@nodes, $self);
+    # If there are enhanced dependencies, we will have to adjust them, too.
+    # But first we must collect the mapping between old and new CoNLL-U ids.
+    my $enhanced = 0;
+    my %o2n;
+    my $lastmaj;
+    my $lastmin;
+    for(my $i = 0; $i <= $#nodes; $i++)
+    {
+        $enhanced = 1 if(exists($nodes[$i]->wild()->{enhanced}));
+        my $oldord = $nodes[$i]->ord();
+        my $neword = $i;
+        if($nodes[$i]->is_empty())
+        {
+            my ($oldmaj, $oldmin) = $nodes[$i]->get_major_minor_id();
+            my $newmaj = $oldmaj;
+            my $newmin;
+            if(defined($lastmaj) && $lastmaj==$newmaj)
+            {
+                $newmin = ++$lastmin;
+            }
+            else
+            {
+                $lastmaj = $newmaj;
+                $lastmin = $newmin = 1;
+            }
+            $o2n{"$oldmaj.$oldmin"} = "$newmaj.$newmin";
+            $nodes[$i]->wild()->{enord} = "$newmaj.$newmin";
+        }
+        else
+        {
+            $o2n{$oldord} = $neword;
+        }
+        $nodes[$i]->_set_ord($neword);
+    }
+    if($enhanced)
+    {
+        foreach my $node (@nodes)
+        {
+            if(exists($node->wild()->{enhanced}))
+            {
+                foreach my $edep (@{$node->wild()->{enhanced}})
+                {
+                    log_fatal("Cannot redirect '$edep->[0]'") if(!defined($o2n{$edep->[0]}));
+                    $edep->[0] = $o2n{$edep->[0]};
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Converts the old hack for empty nodes to a new hack. The old hack does not
 # use a Node object for an empty node. Instead, the enhanced dependency encodes
 # the path between two real nodes via one or more empty nodes: 'conj>3.5>obj'.
