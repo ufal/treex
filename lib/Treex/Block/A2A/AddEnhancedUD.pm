@@ -703,8 +703,6 @@ sub add_enhanced_empty_node
     # We have to generate an empty node if a node has one or more orphan children.
     my @orphans = $node->get_enhanced_children('^orphan(:|$)');
     return if(scalar(@orphans) == 0);
-    ###!!! DEBUGGING
-    $node->_check_enhanced_deps();
     my $emppos = $self->get_empty_node_position($node, $emptynodes);
     $emptynodes->{$emppos}++;
     my $empnode = $node->create_empty_node($emppos);
@@ -736,8 +734,6 @@ sub add_enhanced_empty_node
     my @children = $node->get_enhanced_children();
     foreach my $child (@children)
     {
-        ###!!! DEBUGGING
-        $child->_check_enhanced_deps();
         my @origchildiedges = $child->get_enhanced_deps();
         $child->clear_enhanced_deps();
         my %childiedges;

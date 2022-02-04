@@ -679,8 +679,6 @@ sub get_enhanced_parents
     my $self = shift;
     my $relregex = shift;
     my $negate = shift; # return parents that do not match $relregex
-    ###!!! JUST DEBUGGING:
-    $self->_check_enhanced_deps();
     my @edeps = $self->get_enhanced_deps();
     if(defined($relregex))
     {
