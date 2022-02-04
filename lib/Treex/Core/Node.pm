@@ -310,7 +310,12 @@ sub remove {
 
     # TODO: order normalizing can be done in a more efficient way
     # (update just the following ords)
-    $root->_normalize_node_ordering();
+    ###!!! And make sure that enhanced dependencies are treated correctly but without referring to wild()->{enhanced} here.
+    if(any {exists($_->wild()->{enhanced})} ($root->get_descendants())) {
+        $root->_normalize_ords_and_conllu_ids();
+    } else {
+        $root->_normalize_node_ordering();
+    }
 
     # By reblessing we make sure that
     # all methods called on removed nodes will result in fatal errors.
