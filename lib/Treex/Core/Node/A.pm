@@ -714,7 +714,7 @@ sub get_enhanced_children
                 @edeps = grep {$_->[1] =~ m/$relregex/} (@edeps);
             }
         }
-        if(any {$_->[0] == $self->ord()} (@edeps))
+        if(any {$_->[0] == $self->get_conllu_id()} (@edeps))
         {
             push(@children, $n);
         }
