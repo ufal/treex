@@ -795,6 +795,15 @@ sub create_empty_node
     my $self = shift;
     my $enord = shift;
     my $root = $self->get_root();
+    # The CoNLL-U id of the empty node ($enord) must be $major.$minor and must be unique.
+    if($enord !~ m/^[1-9][0-9]*\.[1-9][0-9]*$/)
+    {
+        log_fatal("The CoNLL-U id of an empty node must be a decimal number, not '$enord'.");
+    }
+    if(any {$_->get_conllu_id() eq $enord} ($root->get_descendants()))
+    {
+        log_fatal("CoNLL-U id '$enord' already exists.");
+    }
     my $node = $root->create_child();
     $node->set_deprel('dep:empty');
     $node->wild()->{enhanced} = [];
