@@ -74,7 +74,17 @@ sub process_atree
     # Generate empty nodes instead of orphan relations.
     if($self->empty())
     {
+        # There may already be empty nodes created by other blocks, e.g., coreference.
+        # We need to know about them in order to pick unused empty node ids.
         my %emptynodes;
+        foreach my $node (@nodes)
+        {
+            if($node->is_empty())
+            {
+                my $id = $node->get_conllu_id();
+                $emptynodes{$id}++;
+            }
+        }
         foreach my $node (@nodes)
         {
             $self->add_enhanced_empty_node($node, \%emptynodes);
