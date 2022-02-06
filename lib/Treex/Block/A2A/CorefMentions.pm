@@ -119,15 +119,86 @@ sub get_mention_span
         log_warn("Trying to mark a mention headed by a node that is not linked to the t-layer: '$form'.\n");
     }
     my @result = $self->sort_node_ids(keys(%snodes));
+    # Find out if the span is discontinuous.
+    my @allnodes = $self->sort_nodes_by_ids($aroot->get_descendants());
+    if(scalar(@result) > 0)
+    {
+        my $continuous = 1;
+        my $minid = $result[0];
+        my $maxid = $result[-1];
+        my $minid_seen = 0;
+        foreach my $node (@allnodes)
+        {
+            my $id = $node->get_conllu_id();
+            if($id eq $minid)
+            {
+                $minid_seen = 1;
+            }
+            elsif($minid_seen && !exists($snodes{$id}))
+            {
+                $continuous = 0;
+                last;
+            }
+            if($id eq $maxid)
+            {
+                last;
+            }
+        }
+        # If the span is discontinuous, see if the gaps can be closed up because they contain nodes that probably could/should be in the mention span.
+        # We want to minimize unnecessary splits of spans. The current span does
+        # not include punctuation (unless it has a t-node as a head of coordination)
+        # but we will add punctuation nodes if it helps merge two subspans.
+        if(!$continuous)
+        {
+            $minid_seen = 0;
+            my $previous_in_span = 0;
+            foreach my $node (@allnodes)
+            {
+                my $id = $node->get_conllu_id();
+                if($id eq $minid)
+                {
+                    $minid_seen = 1;
+                    $previous_in_span = 1;
+                }
+                if($minid_seen)
+                {
+                    if(exists($snodes{$id}))
+                    {
+                        $previous_in_span = 1;
+                    }
+                    else
+                    {
+                        # This node is in a gap. Can it be added to the span?
+                        if($previous_in_span)
+                        {
+                            # Punctuation can be included regardless where it is attached (although ideally we want it attached to something in the span).
+                            if($node->is_punctuation() || $node->deprel() =~ m/^punct(:|$)/)
+                            {
+                                $snodes{$id} = $node;
+                                # $previous_in_span stays 1
+                            }
+                            else
+                            {
+                                $previous_in_span = 0;
+                            }
+                        }
+                        # else: $previous_in_span stays 0
+                    }
+                }
+                if($id eq $maxid)
+                {
+                    last;
+                }
+            }
+            # Recompute the result because we may have added nodes.
+            @result = $self->sort_node_ids(keys(%snodes));
+        }
+    }
     # If a contiguous sequence of two or more nodes is a part of the mention,
     # it should be represented using a hyphen (i.e., "8-9" instead of "8,9",
     # and "8-10" instead of "8,9,10"). We must be careful though. There may
     # be empty nodes that are not included, e.g., we may have to write "8,9"
     # because there is 8.1 and it is not a part of the mention.
-    # We want to minimize unnecessary splits of spans. The current span does
-    # not include punctuation (unless it has a t-node as a head of coordination)
-    # but we will add punctuation nodes if it helps merge two subspans.
-    my @allnodes = $self->sort_nodes_by_ids($aroot->get_descendants());
     my $i = 0; # index to @result
     my $n = scalar(@result);
     my @current_segment = ();
@@ -163,6 +234,8 @@ sub get_mention_span
             # see if it helps bridge the gap.
             if(scalar(@current_segment) > 0)
             {
+                ###!!! This should be no longer needed, as we now have a separate
+                ###!!! block of code above where we attempt to close the gaps up.
                 if($i < $n && defined($node) && $node->deprel() =~ m/^punct(:|$)/)
                 {
                     push(@current_gap, $node);
@@ -206,16 +279,11 @@ sub get_mention_span
             push(@sheads, $snode);
         }
     }
-#    if(scalar(@sheads) == 0)
-#    {
-#        log_warn("Mention span has no clear head (perhaps it forms a cycle in the enhanced graph).");
-#    }
-#    elsif(scalar(@sheads) > 1)
-#    {
-#        log_warn("Mention span has multiple heads in the enhanced graph.");
-#    }
     # For debugging purposes it is useful to also see the word forms of the span, so we will provide them, too.
-    return (join(',', @result2), join(' ', map {$_->form()} (@snodes)), join(',', map {$_->get_conllu_id()} (@sheads)));
+    my $mspan = join(',', @result2);
+    my $mtext = join(' ', map {$_->form()} (@snodes));
+    my $mhead = join(',', map {$_->get_conllu_id()} (@sheads));
+    return ($mspan, $mtext, $mhead);
 }
 
 
