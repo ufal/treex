@@ -178,7 +178,8 @@ sub get_mention_span
                                 # $previous_in_span stays 1
                             }
                             # Prepositions and conjunctions can be included if they depend on something that is already in the span.
-                            elsif($node->deprel() =~ m/^(case|mark|cc)(:|$)/ && exists($snodes{$node->parent()->get_conllu_id()}))
+                            # We proceed left-to-right, so if the function word has one or more fixed dependents, they will be included, too.
+                            elsif($node->deprel() =~ m/^(case|mark|cc|fixed)(:|$)/ && exists($snodes{$node->parent()->get_conllu_id()}))
                             {
                                 $snodes{$id} = $node;
                                 # $previous_in_span stays 1
