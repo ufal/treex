@@ -370,7 +370,7 @@ sub create_cluster
     $docid =~ s/-(p[0-9A-Z]+)?s[0-9A-Z]+$//;
     # Certain characters cannot be used in cluster ids because they are used
     # as delimiters in the coreference annotation.
-    $docid =~ s/[|=:,+\s]/-/g;
+    $docid =~ s/[|=-:,+\s]//g;
     my $last_document_id = $self->last_document_id();
     my $last_cluster_id = $self->last_cluster_id();
     if($docid ne $last_document_id)
@@ -381,7 +381,7 @@ sub create_cluster
     }
     $last_cluster_id++;
     $self->set_last_cluster_id($last_cluster_id);
-    my $id = $docid.'-c'.$last_cluster_id;
+    my $id = $docid.'c'.$last_cluster_id;
     # Remember references to all cluster members from all cluster members.
     # We may later need to revisit all cluster members and this will help
     # us find them.
