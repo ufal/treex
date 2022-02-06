@@ -240,11 +240,11 @@ sub mark_bridging
     if($btype eq 'WHOLE_PART')
     {
         # kraje <-- obce
-        $btype = 'Part';
+        $btype = 'part';
     }
     elsif($btype eq 'PART_WHOLE')
     {
-        $btype = 'Part';
+        $btype = 'part';
         my $x = $srcnode;
         $srcnode = $tgtnode;
         $tgtnode = $x;
@@ -253,11 +253,11 @@ sub mark_bridging
     {
         # veřejní činitelé <-- poslanci
         # poslanci <-- konkrétní poslanec
-        $btype = 'Subset';
+        $btype = 'subset';
     }
     elsif($btype eq 'SUB_SET')
     {
-        $btype = 'Subset';
+        $btype = 'subset';
         my $x = $srcnode;
         $srcnode = $tgtnode;
         $tgtnode = $x;
@@ -265,11 +265,11 @@ sub mark_bridging
     elsif($btype eq 'P_FUNCT')
     {
         # obě dvě ministerstva <-- ministři kultury a financí | Pavel Tigrid a Ivan Kočárník
-        $btype = 'Funct';
+        $btype = 'funct';
     }
     elsif($btype eq 'FUNCT_P')
     {
-        $btype = 'Funct';
+        $btype = 'funct';
         my $x = $srcnode;
         $srcnode = $tgtnode;
         $tgtnode = $x;
@@ -277,11 +277,11 @@ sub mark_bridging
     elsif($btype eq 'ANAF')
     {
         # "loterie mohou provozovat pouze organizace k tomu účelu zvláště zřízené" <-- uvedená pasáž
-        $btype = 'Anaf';
+        $btype = 'anaf';
     }
     elsif($btype eq 'REST')
     {
-        $btype = 'Other';
+        $btype = 'other';
     }
     elsif($btype =~ m/^(CONTRAST)$/)
     {
