@@ -209,7 +209,6 @@ sub get_mention_span
     my $i = 0; # index to @result
     my $n = scalar(@result);
     my @current_segment = ();
-    my @current_gap = ();
     my @result2 = ();
     my @snodes = ();
     # Add undef to enforce flushing of the current segment at the end.
@@ -218,51 +217,26 @@ sub get_mention_span
         my $id = defined($node) ? $node->get_conllu_id() : -1;
         if($i < $n && $result[$i] == $id)
         {
-            # The current segment is uninterrupted (but it may also be a new segment that starts with this node).
-            # If we have collected gap nodes (punctuation) since the last node in the current segment, add them now to the segment.
-            if(scalar(@current_gap) > 0)
-            {
-                push(@current_segment, @current_gap);
-                # Update also %snodes, we will need it later.
-                foreach my $gnode (@current_gap)
-                {
-                    $snodes{$gnode->get_conllu_id()} = $gnode;
-                }
-                @current_gap = ();
-            }
             push(@current_segment, $node);
             $i++;
         }
         else
         {
             # The current segment is interrupted (but it may be empty anyway).
-            # If there is a non-empty segment and we have not exhausted the
-            # span nodes, we can try to add one or more punctuation nodes and
-            # see if it helps bridge the gap.
             if(scalar(@current_segment) > 0)
             {
-                ###!!! This should be no longer needed, as we now have a separate
-                ###!!! block of code above where we attempt to close the gaps up.
-                if($i < $n && defined($node) && $node->deprel() =~ m/^punct(:|$)/)
+                # Flush the current segment, if any.
+                if(scalar(@current_segment) > 1)
                 {
-                    push(@current_gap, $node);
+                    push(@result2, $current_segment[0]->get_conllu_id().'-'.$current_segment[-1]->get_conllu_id());
+                    push(@snodes, @current_segment);
                 }
-                else
+                elsif(scalar(@current_segment) == 1)
                 {
-                    # Flush the current segment, if any, and forget the current gap, if any.
-                    if(scalar(@current_segment) > 1)
-                    {
-                        push(@result2, $current_segment[0]->get_conllu_id().'-'.$current_segment[-1]->get_conllu_id());
-                        push(@snodes, @current_segment);
-                    }
-                    elsif(scalar(@current_segment) == 1)
-                    {
-                        push(@result2, $current_segment[0]->get_conllu_id());
-                        push(@snodes, @current_segment);
-                    }
-                    @current_segment = ();
-                    @current_gap = ();
+                    push(@result2, $current_segment[0]->get_conllu_id());
+                    push(@snodes, @current_segment);
                 }
+                @current_segment = ();
                 last if($i >= $n);
             }
         }
