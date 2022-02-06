@@ -177,6 +177,12 @@ sub get_mention_span
                                 $snodes{$id} = $node;
                                 # $previous_in_span stays 1
                             }
+                            # Prepositions and conjunctions can be included if they depend on something that is already in the span.
+                            elsif($node->deprel() =~ m/^(case|mark|cc)(:|$)/ && exists($snodes{$node->parent()->get_conllu_id()}))
+                            {
+                                $snodes{$id} = $node;
+                                # $previous_in_span stays 1
+                            }
                             else
                             {
                                 $previous_in_span = 0;
