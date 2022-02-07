@@ -25,7 +25,7 @@ sub process_anode
         {
             # Do we already have a cluster id?
             my $current_cluster_id = $anode->get_misc_attr('ClusterId');
-            my $current_cluster_type = $anode->get_misc_attr('ClusterType');
+            my $current_cluster_type = $self->get_cluster_type($anode);
             # Get coreference edges.
             my ($cnodes, $ctypes) = $tnode->get_coref_nodes({'with_types' => 1});
             ###!!! Anja naznačovala, že pokud z jednoho uzlu vede více než jedna hrana gramatické koreference,
@@ -53,7 +53,7 @@ sub process_anode
                     }
                     # Does the target node already have a cluster id and type?
                     my $current_target_cluster_id = $canode->get_misc_attr('ClusterId');
-                    my $current_target_cluster_type = $canode->get_misc_attr('ClusterType');
+                    my $current_target_cluster_type = $self->get_cluster_type($canode);
                     $current_cluster_type = $self->process_cluster_type($ctype, $current_cluster_type, $anode, $current_target_cluster_type, $canode);
                     if(defined($current_cluster_id) && defined($current_target_cluster_id))
                     {
@@ -161,12 +161,12 @@ sub process_cluster_type
         if($ctype eq 'GEN')
         {
             # Generic entity, e.g., "úředníci".
-            $ctype = 'Gen';
+            $ctype = 'gen';
         }
         elsif($ctype eq 'SPEC')
         {
             # Specific entity or event, e.g., "Václav Klaus".
-            $ctype = 'Spec';
+            $ctype = 'spec';
         }
         else
         {
@@ -210,13 +210,13 @@ sub process_cluster_type
         log_warn("Cluster type mismatch.");
         $self->add_mention_misc($srcnode, "ClusterTypeMismatch:$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
         $self->add_mention_misc($tgtnode, "ClusterTypeMismatch:$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
-        # The conflict can be only between 'Gen' and 'Spec'. We will unify the type and give priority to 'Gen'
-        # (Anja says that the annotators looked specifically for 'Gen', then batch-annotated everything else as 'Spec').
+        # The conflict can be only between 'gen' and 'spec'. We will unify the type and give priority to 'gen'
+        # (Anja says that the annotators looked specifically for 'gen', then batch-annotated everything else as 'spec').
         # Mark the new type at all nodes that are already in the cluster. We were called before the new coreference link is added,
         # so we do this for both nodes and both partial clusters.
-        $self->mark_cluster_type($srcnode, 'Gen');
-        $self->mark_cluster_type($tgtnode, 'Gen');
-        $srctype = $tgttype = $ctype = 'Gen';
+        $self->mark_cluster_type($srcnode, 'gen');
+        $self->mark_cluster_type($tgtnode, 'gen');
+        $srctype = $tgttype = $ctype = 'gen';
     }
     # If the target subcluster did not have a type until now, and we have a type now, propagate it there.
     if(defined($srctype) && defined($tgtnode) && !defined($tgttype))
@@ -390,7 +390,7 @@ sub create_cluster
     {
         $self->anode_must_have_tnode($node);
         $node->set_misc_attr('ClusterId', $id);
-        $node->set_misc_attr('ClusterType', $type) if(defined($type));
+        $self->set_cluster_type($node, $type);
         @{$node->wild()->{cluster_members}} = @cluster_member_ids;
     }
     return $id;
@@ -418,7 +418,7 @@ sub add_nodes_to_cluster
     # Figure out the type of the cluster. If the cluster started with undefined type
     # and a new coreference link contributes the type, then the type must be distributed
     # to all old members of the cluster before this function (add_nodes_to_cluster()) is called.
-    my $type = $document->get_node_by_id($current_members->[0])->get_misc_attr('ClusterType');
+    my $type = $self->get_cluster_type($document->get_node_by_id($current_members->[0]));
     # Do not try to add nodes that are already in the cluster.
     @new_members = grep {my $id = $_->id(); !any {$_ eq $id} (@{$current_members})} (@new_members);
     return if(scalar(@new_members) == 0);
@@ -432,10 +432,7 @@ sub add_nodes_to_cluster
     {
         $self->anode_must_have_tnode($node);
         $node->set_misc_attr('ClusterId', $id);
-        # Clear the attribute if it is already there (it shouldn't...)
-        # set_misc_attr() will do nothing if $type is not defined.
-        $node->clear_misc_attr('ClusterType');
-        $node->set_misc_attr('ClusterType', $type);
+        $self->set_cluster_type($node, $type);
         if(exists($current_member_node->wild()->{bridging_sources}))
         {
             @{$node->wild()->{bridging_sources}} = @{$current_member_node->wild()->{bridging_sources}};
@@ -510,11 +507,36 @@ sub mark_cluster_type
     foreach my $id (@cluster_member_ids)
     {
         my $node = $document->get_node_by_id($id);
-        # Clear the attribute if it is already there (it shouldn't...)
-        # set_misc_attr() will do nothing if $type is not defined.
-        $node->clear_misc_attr('ClusterType');
-        $node->set_misc_attr('ClusterType', $type);
+        $self->set_cluster_type($node, $type);
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# For a node that bears annotation of a coreference mention, sets the type of
+# the coreference cluster.
+#------------------------------------------------------------------------------
+sub set_cluster_type
+{
+    my $self = shift;
+    my $node = shift;
+    my $type = shift;
+    $node->clear_misc_attr('ClusterType');
+    $node->set_misc_attr('ClusterType', $type) if(defined($type));
+}
+
+
+
+#------------------------------------------------------------------------------
+# For a node that bears annotation of a coreference mention, gets the type of
+# the coreference cluster.
+#------------------------------------------------------------------------------
+sub get_cluster_type
+{
+    my $self = shift;
+    my $node = shift;
+    return $node->get_misc_attr('ClusterType');
 }
 
 
@@ -582,10 +604,7 @@ sub merge_clusters
     {
         my $node = $document->get_node_by_id($id);
         $node->set_misc_attr('ClusterId', $merged_id);
-        # Clear the attribute if it is already there (it shouldn't...)
-        # set_misc_attr() will do nothing if $type is not defined.
-        $node->clear_misc_attr('ClusterType');
-        $node->set_misc_attr('ClusterType', $type);
+        $self->set_cluster_type($node, $type);
         @{$node->wild()->{cluster_members}} = @cluster_member_ids;
         if(scalar(@bridging_source_ids) > 0)
         {
@@ -613,7 +632,7 @@ sub add_mention_misc
         log_fatal("Cannot add an empty attribute to MentionMisc.");
     }
     # We do not want any whitespace characters in MentionMisc, although the plain space character (' ') would not violate the CoNLL-U format.
-    if($attr =~ m/^[=\|\s]$/)
+    if($attr =~ m/^[-=\|\s]$/)
     {
         log_fatal("The MentionMisc attribute '$attr' contains disallowed characters.");
     }
