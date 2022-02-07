@@ -138,10 +138,11 @@ sub get_mention_span
                 {
                     my $nodej = $allnodes[$j];
                     my $idj = $nodej->get_conllu_id();
-                    if($idj eq $minid || !($nodej->is_punctuation() || $nodej->deprel() =~ m/^punct(:|$)/))
+                    if($idj eq $minid || exists($snodes{$idj}) && !($nodej->is_punctuation() || $nodej->deprel() =~ m/^punct(:|$)/))
                     {
                         # The last segment is the only segment, or
                         # the last segment does not consist exclusively of nodes that could be discarded.
+                        $i = 0;
                         last;
                     }
                     if(!exists($snodes{$idj}))
