@@ -262,7 +262,18 @@ sub get_mention_span
     }
     # For debugging purposes it is useful to also see the word forms of the span, so we will provide them, too.
     my $mspan = join(',', @result2);
-    my $mtext = join(' ', map {$_->form()} (@snodes));
+    my $mtext = '';
+    for(my $i = 0; $i <= $#snodes; $i++)
+    {
+        $mtext .= $snodes[$i]->form();
+        if($i < $#snodes)
+        {
+            unless($snodes[$i+1]->ord() == $snodes[$i]->ord()+1 && $snodes[$i]->no_space_after())
+            {
+                $mtext .= ' ';
+            }
+        }
+    }
     my $mhead = join(',', map {$_->get_conllu_id()} (@sheads));
     return ($mspan, $mtext, $mhead);
 }
