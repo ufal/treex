@@ -126,7 +126,44 @@ sub get_mention_span
     {
         my $minid = $result[0];
         my $maxid = $result[-1];
-        # Sometimes a span is discontinuos because it includes the sentence-final
+        # Sometimes a span is discontinuous but its first segment consists
+        # solely of punctuation. If this is the case, remove the punctuation
+        # from the span.
+        for(my $i = 0; $i <= $#allnodes; $i++)
+        {
+            my $node = $allnodes[$i];
+            my $id = $node->get_conllu_id();
+            if($id eq $minid)
+            {
+                for(my $j = $i; $j <= $#allnodes; $j++)
+                {
+                    my $nodej = $allnodes[$j];
+                    my $idj = $nodej->get_conllu_id();
+                    if($idj eq $maxid || exists($snodes{$idj}) && !($nodej->is_punctuation() || $nodej->deprel() =~ m/^punct(:|$)/))
+                    {
+                        # The first segment is the only segment, or
+                        # the first segment does not consist exclusively of nodes that could be discarded.
+                        $i = 0;
+                        last;
+                    }
+                    if(!exists($snodes{$idj}))
+                    {
+                        # The mention is discontinuous and
+                        # the first segment consists exclusively of nodes that could be discarded.
+                        for(my $k = $i; $k <= $j-1; $k++)
+                        {
+                            delete($snodes{$allnodes[$k]->get_conllu_id()});
+                        }
+                        # Recompute the result because we have removed nodes.
+                        @result = $self->sort_node_ids(keys(%snodes));
+                        $minid = $result[0];
+                        # Another segment is now the first segment and we can repeat the procedure in the outer loop.
+                        last;
+                    }
+                }
+            }
+        }
+        # Sometimes a span is discontinuous because it includes the sentence-final
         # punctuation. If this is the case, remove the punctuation from the span.
         for(my $i = $#allnodes; $i >= 0; $i--)
         {
