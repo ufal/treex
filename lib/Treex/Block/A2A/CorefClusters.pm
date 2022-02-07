@@ -522,8 +522,9 @@ sub set_cluster_type
     my $self = shift;
     my $node = shift;
     my $type = shift;
-    $node->clear_misc_attr('ClusterType');
-    $node->set_misc_attr('ClusterType', $type) if(defined($type));
+    my @mmisc = grep {!m/^gstype:/} ($self->get_mention_misc($node));
+    $self->set_mention_misc($node, @mmisc);
+    $self->add_mention_misc($node, "gstype:$type") if(defined($type));
 }
 
 
@@ -536,7 +537,16 @@ sub get_cluster_type
 {
     my $self = shift;
     my $node = shift;
-    return $node->get_misc_attr('ClusterType');
+    my @gstypes = grep {m/^gstype:/} ($self->get_mention_misc($node));
+    if(scalar(@gstypes) > 0)
+    {
+        $gstypes[0] =~ m/^gstype:(.*)$/;
+        return $1;
+    }
+    else
+    {
+        return undef;
+    }
 }
 
 
@@ -638,7 +648,7 @@ sub add_mention_misc
     }
     my $mmisc = $node->get_misc_attr('MentionMisc');
     # Delimiters within the value of MentionMisc are not part of the CorefUD specification.
-    # We will use the comma ','.
+    # We use the comma ','.
     my @mmisc = ();
     if(defined($mmisc))
     {
@@ -650,6 +660,53 @@ sub add_mention_misc
     }
     $mmisc = join(',', @mmisc);
     $node->set_misc_attr('MentionMisc', $mmisc);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes the new contents of MentionMisc as a list of strings, serializes it and
+# sets the MentionMisc attribute. Can be used by the caller to filter the
+# values and set the result back to MentionMisc.
+#------------------------------------------------------------------------------
+sub set_mention_misc
+{
+    my $self = shift;
+    my $node = shift;
+    my @mmisc = @_;
+    if(scalar(@mmisc) > 0)
+    {
+        # Delimiters within the value of MentionMisc are not part of the CorefUD specification.
+        # We use the comma ','.
+        my $mmisc = join(',', @mmisc);
+        $node->set_misc_attr('MentionMisc', $mmisc);
+    }
+    else
+    {
+        $node->clear_misc_attr('MentionMisc');
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the current contents of MentionMisc as a list of strings. The caller
+# may than look for a specific value or attribute-value pair, as in
+# grep {m/^gstype:/} ($self->get_mention_misc($node));
+#------------------------------------------------------------------------------
+sub get_mention_misc
+{
+    my $self = shift;
+    my $node = shift;
+    my $mmisc = $node->get_misc_attr('MentionMisc');
+    # Delimiters within the value of MentionMisc are not part of the CorefUD specification.
+    # We use the comma ','.
+    my @mmisc = ();
+    if(defined($mmisc))
+    {
+        @mmisc = split(',', $mmisc);
+    }
+    return @mmisc;
 }
 
 
