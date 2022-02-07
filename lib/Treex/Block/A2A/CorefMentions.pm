@@ -119,87 +119,101 @@ sub get_mention_span
         log_warn("Trying to mark a mention headed by a node that is not linked to the t-layer: '$form'.\n");
     }
     my @result = $self->sort_node_ids(keys(%snodes));
-    # Find out if the span is discontinuous.
     my @allnodes = $self->sort_nodes_by_ids($aroot->get_descendants());
+    # Find out if the span is discontinuous. Sometimes the splits of spans seem
+    # unnecessary, which we want to minimize.
     if(scalar(@result) > 0)
     {
-        my $continuous = 1;
         my $minid = $result[0];
         my $maxid = $result[-1];
+        # Sometimes a span is discontinuos because it includes the sentence-final
+        # punctuation. If this is the case, remove the punctuation from the span.
+        for(my $i = $#allnodes; $i >= 0; $i--)
+        {
+            my $node = $allnodes[$i];
+            my $id = $node->get_conllu_id();
+            if($id eq $maxid)
+            {
+                for(my $j = $i; $j >= 0; $j--)
+                {
+                    my $nodej = $allnodes[$j];
+                    my $idj = $nodej->get_conllu_id();
+                    if($idj eq $minid || !($nodej->is_punctuation() || $nodej->deprel() =~ m/^punct(:|$)/))
+                    {
+                        # The last segment is the only segment, or
+                        # the last segment does not consist exclusively of nodes that could be discarded.
+                        last;
+                    }
+                    if(!exists($snodes{$idj}))
+                    {
+                        # The mention is discontinuous and
+                        # the last segment consists exclusively of nodes that could be discarded.
+                        for(my $k = $j+1; $k <= $i; $k++)
+                        {
+                            delete($snodes{$allnodes[$k]->get_conllu_id()});
+                        }
+                        # Recompute the result because we have removed nodes.
+                        @result = $self->sort_node_ids(keys(%snodes));
+                        $maxid = $result[-1];
+                        # Another segment is now the last segment and we could repeat the procedure.
+                        # However, we have not seen such examples in the data, so we will quit this part now.
+                        $i = 0;
+                        last;
+                    }
+                }
+            }
+        }
+        # Now see if the remaining gaps can be closed up because they contain
+        # nodes that probably could/should be included in the mention span.
         my $minid_seen = 0;
+        my $previous_in_span = 0;
         foreach my $node (@allnodes)
         {
             my $id = $node->get_conllu_id();
             if($id eq $minid)
             {
                 $minid_seen = 1;
+                $previous_in_span = 1;
             }
-            elsif($minid_seen && !exists($snodes{$id}))
+            if($minid_seen)
             {
-                $continuous = 0;
-                last;
+                if(exists($snodes{$id}))
+                {
+                    $previous_in_span = 1;
+                }
+                else
+                {
+                    # This node is in a gap. Can it be added to the span?
+                    if($previous_in_span)
+                    {
+                        # Punctuation can be included regardless where it is attached (although ideally we want it attached to something in the span).
+                        if($node->is_punctuation() || $node->deprel() =~ m/^punct(:|$)/)
+                        {
+                            $snodes{$id} = $node;
+                            # $previous_in_span stays 1
+                        }
+                        # Prepositions and conjunctions can be included if they depend on something that is already in the span.
+                        # We proceed left-to-right, so if the function word has one or more fixed dependents, they will be included, too.
+                        elsif($node->deprel() =~ m/^(case|mark|cc|fixed)(:|$)/ && exists($snodes{$node->parent()->get_conllu_id()}))
+                        {
+                            $snodes{$id} = $node;
+                            # $previous_in_span stays 1
+                        }
+                        else
+                        {
+                            $previous_in_span = 0;
+                        }
+                    }
+                    # else: $previous_in_span stays 0
+                }
             }
             if($id eq $maxid)
             {
                 last;
             }
         }
-        # If the span is discontinuous, see if the gaps can be closed up because they contain nodes that probably could/should be in the mention span.
-        # We want to minimize unnecessary splits of spans. The current span does
-        # not include punctuation (unless it has a t-node as a head of coordination)
-        # but we will add punctuation nodes if it helps merge two subspans.
-        if(!$continuous)
-        {
-            $minid_seen = 0;
-            my $previous_in_span = 0;
-            foreach my $node (@allnodes)
-            {
-                my $id = $node->get_conllu_id();
-                if($id eq $minid)
-                {
-                    $minid_seen = 1;
-                    $previous_in_span = 1;
-                }
-                if($minid_seen)
-                {
-                    if(exists($snodes{$id}))
-                    {
-                        $previous_in_span = 1;
-                    }
-                    else
-                    {
-                        # This node is in a gap. Can it be added to the span?
-                        if($previous_in_span)
-                        {
-                            # Punctuation can be included regardless where it is attached (although ideally we want it attached to something in the span).
-                            if($node->is_punctuation() || $node->deprel() =~ m/^punct(:|$)/)
-                            {
-                                $snodes{$id} = $node;
-                                # $previous_in_span stays 1
-                            }
-                            # Prepositions and conjunctions can be included if they depend on something that is already in the span.
-                            # We proceed left-to-right, so if the function word has one or more fixed dependents, they will be included, too.
-                            elsif($node->deprel() =~ m/^(case|mark|cc|fixed)(:|$)/ && exists($snodes{$node->parent()->get_conllu_id()}))
-                            {
-                                $snodes{$id} = $node;
-                                # $previous_in_span stays 1
-                            }
-                            else
-                            {
-                                $previous_in_span = 0;
-                            }
-                        }
-                        # else: $previous_in_span stays 0
-                    }
-                }
-                if($id eq $maxid)
-                {
-                    last;
-                }
-            }
-            # Recompute the result because we may have added nodes.
-            @result = $self->sort_node_ids(keys(%snodes));
-        }
+        # Recompute the result because we may have added nodes.
+        @result = $self->sort_node_ids(keys(%snodes));
     }
     # If a contiguous sequence of two or more nodes is a part of the mention,
     # it should be represented using a hyphen (i.e., "8-9" instead of "8,9",
