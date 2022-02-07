@@ -156,9 +156,7 @@ sub get_mention_span
                         # Recompute the result because we have removed nodes.
                         @result = $self->sort_node_ids(keys(%snodes));
                         $maxid = $result[-1];
-                        # Another segment is now the last segment and we could repeat the procedure.
-                        # However, we have not seen such examples in the data, so we will quit this part now.
-                        $i = 0;
+                        # Another segment is now the last segment and we can repeat the procedure in the outer loop.
                         last;
                     }
                 }
