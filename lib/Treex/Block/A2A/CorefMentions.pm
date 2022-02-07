@@ -143,7 +143,7 @@ sub get_mention_span
                     {
                         # The first segment is the only segment, or
                         # the first segment does not consist exclusively of nodes that could be discarded.
-                        $i = 0;
+                        $i = $#allnodes;
                         last;
                     }
                     if(!exists($snodes{$idj}))
