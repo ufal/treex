@@ -124,6 +124,8 @@ sub get_mention_span
     # unnecessary, which we want to minimize.
     if(scalar(@result) > 0)
     {
+        ###!!! DEBUGGING
+        my $debug_string_0 = join(' ', map {$_->form() // '_'} (grep {exists($snodes{$_->get_conllu_id()})} (@allnodes)));
         my $minid = $result[0];
         my $maxid = $result[-1];
         # Sometimes a span is discontinuos because it includes the sentence-final
@@ -163,6 +165,12 @@ sub get_mention_span
                     }
                 }
             }
+        }
+        ###!!! DEBUGGING
+        my $debug_string_1 = join(' ', map {$_->form() // '_'} (grep {exists($snodes{$_->get_conllu_id()})} (@allnodes)));
+        if($debug_string_1 ne $debug_string_0 && $debug_string_0 =~ m/Norwegian/)
+        {
+            log_fatal("\n$debug_string_0\n$debug_string_1");
         }
         # Now see if the remaining gaps can be closed up because they contain
         # nodes that probably could/should be included in the mention span.
