@@ -337,24 +337,27 @@ sub process_atree
             }
         }
 
-        # CoNLL-U columns: ID, FORM, LEMMA, UPOS, XPOS(treebank-specific), FEATS, HEAD, DEPREL, DEPS(additional), MISC
+        # CoNLL-U columns: ID, FORM, LEMMA, UPOS, XPOS, FEATS, HEAD, DEPREL, DEPS, MISC
         # Make sure that values are not empty and that they do not contain spaces.
-        # Exception: FORM and LEMMA can contain spaces in approved cases and in Vietnamese.
-        my @values = ($ord,
-        #$form, $lemma,
-        '_', '_', $upos, $xpos, $feats, $pord, $deprel, $deps, $misc);
-        @values = map
+        # Exception: FORM and LEMMA can contain internal spaces in approved cases and in Vietnamese. MISC can always contain internal spaces.
+        my @values = ($ord, $form, $lemma, $upos, $xpos, $feats, $pord, $deprel, $deps, $misc);
+        for(my $i = 0; $i < 10; $i++)
         {
-            my $x = $_ // '_';
-            $x =~ s/^\s+//;
-            $x =~ s/\s+$//;
-            $x =~ s/\s+/_/g;
-            $x = '_' if($x eq '');
-            $x
+            $values[$i] = '_' if(!defined($values[$i]));
+            $values[$i] =~ m/^\s+//;
+            $values[$i] =~ m/\s+$//;
+            # FORM, LEMMA, MISC: multiple internal spaces into one space.
+            # Other columns: internal spaces into underscore.
+            if($i == 1 || $i == 2 || $i == 9)
+            {
+                $values[$i] =~ m/\s+/ /g;
+            }
+            else
+            {
+                $values[$i] =~ m/\s+/_/g;
+            }
+            $values[$i] = '_' if($values[$i] eq '');
         }
-        (@values);
-        $values[1] = defined($form) && $form ne '' ? $form : '_';
-        $values[2] = defined($lemma) && $lemma ne '' ? $lemma : '_';
         $self->print_nfc(join("\t", @values)."\n");
 
         # If there are any empty nodes positioned after the current real node,
