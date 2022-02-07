@@ -344,17 +344,17 @@ sub process_atree
         for(my $i = 0; $i < 10; $i++)
         {
             $values[$i] = '_' if(!defined($values[$i]));
-            $values[$i] =~ m/^\s+//;
-            $values[$i] =~ m/\s+$//;
+            $values[$i] =~ s/^\s+//;
+            $values[$i] =~ s/\s+$//;
             # FORM, LEMMA, MISC: multiple internal spaces into one space.
             # Other columns: internal spaces into underscore.
             if($i == 1 || $i == 2 || $i == 9)
             {
-                $values[$i] =~ m/\s+/ /g;
+                $values[$i] =~ s/\s+/ /g;
             }
             else
             {
-                $values[$i] =~ m/\s+/_/g;
+                $values[$i] =~ s/\s+/_/g;
             }
             $values[$i] = '_' if($values[$i] eq '');
         }
