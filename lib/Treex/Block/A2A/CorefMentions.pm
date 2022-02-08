@@ -230,7 +230,9 @@ sub get_mention_span
                         }
                         # Prepositions and conjunctions can be included if they depend on something that is already in the span.
                         # We proceed left-to-right, so if the function word has one or more fixed dependents, they will be included, too.
-                        elsif($node->deprel() =~ m/^(case|mark|cc|fixed)(:|$)/ && exists($snodes{$node->parent()->get_conllu_id()}))
+                        # Expletive: there was one instance where reflexive 'se' was left out in Czech. With the 'expl' deprel it should
+                        # be non-referential, so we should not break coreference by adding it.
+                        elsif($node->deprel() =~ m/^(case|mark|cc|fixed|expl)(:|$)/ && exists($snodes{$node->parent()->get_conllu_id()}))
                         {
                             $snodes{$id} = $node;
                             # $previous_in_span stays 1
