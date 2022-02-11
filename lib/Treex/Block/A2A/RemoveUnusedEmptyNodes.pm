@@ -75,15 +75,16 @@ sub process_atree
                                 $technical_head->set_misc_attr($m);
                             }
                         }
-                    }
-                    # Remove reference to this node from the t-layer.
-                    if(defined($tnode))
-                    {
+                        # Remove reference to this node from the t-layer.
                         delete($tnode->wild()->{'anode.rf'});
+                        $node->remove();
+                        splice(@nodes, $i, 1);
+                        $i--;
                     }
-                    $node->remove();
-                    splice(@nodes, $i, 1);
-                    $i--;
+                    else
+                    {
+                        log_warn("No children of generated #Forn node found.");
+                    }
                 }
             }
         }
