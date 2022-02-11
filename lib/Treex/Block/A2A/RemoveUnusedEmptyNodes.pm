@@ -64,7 +64,7 @@ sub process_atree
                         @children = sort {$a->ord() <=> $b->ord()} (@children);
                         my $technical_head = $children[0];
                         my @misc = $node->get_misc();
-                        foreach $m (@misc)
+                        foreach my $m (@misc)
                         {
                             if($m =~ m/^(.+?)=(.+)$/)
                             {
