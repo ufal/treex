@@ -64,6 +64,12 @@ sub process_atree
                     {
                         @children = sort {$a->ord() <=> $b->ord()} (@children);
                         my $technical_head = $children[0];
+                        # Later in the CorefMentions block, we will determine the mention span
+                        # on the basis of the tectogrammatical subtree. Link the technical head
+                        # to the original #Forn t-node, whether or not the technical head had
+                        # its own counterpart in the t-tree. In any case, the technical head
+                        # should correspond to something in the tectogrammatical subtree.
+                        $technical_head->wild()->{'tnode.rf'} = $tnode->id();
                         my @misc = $node->get_misc();
                         foreach my $m (@misc)
                         {
