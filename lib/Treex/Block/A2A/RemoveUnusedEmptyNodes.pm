@@ -50,12 +50,13 @@ sub process_atree
                     my @children;
                     foreach my $tc (@tchildren)
                     {
-                        if(exists($tc->wild()->{'anode.rf'}))
+                        my @anodes = ($tc->get_lex_anode(), $tc->get_aux_anodes());
+                        foreach my $an (@anodes)
                         {
-                            my $ac = $document->get_node_by_id($tc->wild()->{'anode.rf'});
-                            if(defined($ac))
+                            # For non-generated nodes, the lexical a-node should be in the same sentence, but to be on the safe side, check it.
+                            if(defined($an) && $an->get_root() == $root)
                             {
-                                push(@children, $ac);
+                                push(@children, $an);
                             }
                         }
                     }
