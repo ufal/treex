@@ -42,7 +42,8 @@ sub process_atree
             # be a multi-word foreign name, such as 'Čchien čchi-čchen'. Find the
             # nodes in the foreign phrase, move the coreference annotation to one
             # of them, and remove the '#Forn' node.
-            elsif($node->lemma() eq '#Forn')
+            ###!!! DEBUGGING: TEMPORARILY TURNING THIS NEW BRANCH OFF, TRYING TO GET THE PREVIOUS OUTPUT.
+            elsif(0 && $node->lemma() eq '#Forn')
             {
                 if(defined($tnode))
                 {
