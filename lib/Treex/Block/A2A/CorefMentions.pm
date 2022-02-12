@@ -363,7 +363,7 @@ sub check_spans
             {
                 # Get the overlap of the two spans.
                 my (@inboth, @inionly, @injonly, @innone);
-                my ($firstid, $lastid);
+                my ($firstid, $lastid, $firsti, $lasti, $firstj, $lastj);
                 foreach my $node (@allnodes)
                 {
                     my $id = $node->get_conllu_id();
@@ -372,6 +372,8 @@ sub check_spans
                         if(exists($cidspans[$j]{$id}))
                         {
                             push(@inboth, $id);
+                            $firstj = $j if(!defined($firstj));
+                            $lastj = $j;
                         }
                         else
                         {
@@ -379,6 +381,8 @@ sub check_spans
                         }
                         $firstid = $id if(!defined($firstid));
                         $lastid = $id;
+                        $firsti = $i if(!defined($firsti));
+                        $lasti = $i;
                     }
                     else
                     {
@@ -387,6 +391,8 @@ sub check_spans
                             push(@injonly, $id);
                             $firstid = $id if(!defined($firstid));
                             $lastid = $id;
+                            $firstj = $j if(!defined($firstj));
+                            $lastj = $j;
                         }
                         else
                         {
@@ -400,28 +406,54 @@ sub check_spans
                     # empty intersection and none of them is a subset of the
                     # other. This is suspicious at best for two mentions of the
                     # same entity.
-                    my (@forms, @xi, @xj);
-                    my $collecting = 0;
-                    foreach my $node (@allnodes)
-                    {
-                        my $id = $node->get_conllu_id();
-                        $collecting = 1 if($id eq $firstid);
-                        if($collecting)
-                        {
-                            my $form = $node->form() // '_';
-                            my $l = length($form);
-                            push(@forms, $form);
-                            push(@xi, exists($cidspans[$i]{$id}) ? 'x' x $l : ' ' x $l);
-                            push(@xj, exists($cidspans[$j]{$id}) ? 'x' x $l : ' ' x $l);
-                        }
-                        $collecting = 0 if($id eq $lastid);
-                    }
-                    my $message = join(' ', @forms)."\n".join(' ', @xi)."\n".join(' ', @xj);
+                    my $message = $self->visualize_two_spans($firstid, $lastid, $cidspans[$i], $cidspans[$j], @allnodes);
                     log_warn("Crossing mentions of entity '$cid':\n$message");
+                }
+                elsif($firsti < $firstj && $lasti > $firstj && $lasti < $lastj || $firstj < $firsti && $lastj > $firsti && $lastj < $lasti)
+                {
+                    # The mentions are interleaved because one starts before
+                    # the other, continues past the start of the other but ends
+                    # before the other ends; but their intersection is empty,
+                    # otherwise we would have reported them as crossing.
+                    my $message = $self->visualize_two_spans($firstid, $lastid, $cidspans[$i], $cidspans[$j], @allnodes);
+                    log_warn("Interleaved mentions of entity '$cid':\n$message");
                 }
             }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# For two mentions, creates a text visualization of their spans in the
+# sentence. This can be used in error messages about strange pairs of spans.
+#------------------------------------------------------------------------------
+sub visualize_two_spans
+{
+    my $self = shift;
+    my $firstid = shift;
+    my $lastid = shift;
+    my $spanhashi = shift;
+    my $spanhashj = shift;
+    my @allnodes = @_;
+    my (@forms, @xi, @xj);
+    my $collecting = 0;
+    foreach my $node (@allnodes)
+    {
+        my $id = $node->get_conllu_id();
+        $collecting = 1 if($id eq $firstid);
+        if($collecting)
+        {
+            my $form = $node->form() // '_';
+            my $l = length($form);
+            push(@forms, $form);
+            push(@xi, exists($spanhashi->{$id}) ? 'x' x $l : ' ' x $l);
+            push(@xj, exists($spanhashj->{$id}) ? 'x' x $l : ' ' x $l);
+        }
+        $collecting = 0 if($id eq $lastid);
+    }
+    return join(' ', @forms)."\n".join(' ', @xi)."\n".join(' ', @xj);
 }
 
 
