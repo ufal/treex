@@ -405,7 +405,7 @@ sub check_spans
                     foreach my $node (@allnodes)
                     {
                         my $id = $node->get_conllu_id();
-                        $collecting = 1 (if($id eq $firstid));
+                        $collecting = 1 if($id eq $firstid);
                         if($collecting)
                         {
                             my $form = $node->form() // '_';
@@ -414,7 +414,7 @@ sub check_spans
                             push(@xi, exists($cidspans[$i]{$id}) ? 'x' x $l : ' ' x $l);
                             push(@xj, exists($cidspans[$j]{$id}) ? 'x' x $l : ' ' x $l);
                         }
-                        $collecting = 0 (if($id eq $lastid));
+                        $collecting = 0 if($id eq $lastid);
                     }
                     my $message = join(' ', @forms)."\n".join(' ', @xi)."\n".join(' ', @xj);
                     log_warn("Crossing mentions of entity '$cid':\n$message");
