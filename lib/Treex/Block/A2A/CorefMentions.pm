@@ -439,6 +439,7 @@ sub check_spans
                             {
                                 my $message = $self->visualize_two_spans($firstid, $lastid, $cidspans[$i], $cidspans[$j], @allnodes);
                                 log_warn("Discontinuous nested mentions of entity '$cid' where the inner mention is not covered by a continuous subspan of the outer mention:\n$message");
+                                last;
                             }
                         }
                     }
@@ -458,6 +459,7 @@ sub check_spans
                             {
                                 my $message = $self->visualize_two_spans($firstid, $lastid, $cidspans[$i], $cidspans[$j], @allnodes);
                                 log_warn("Discontinuous nested mentions of entity '$cid' where the inner mention is not covered by a continuous subspan of the outer mention:\n$message");
+                                last;
                             }
                         }
                     }
