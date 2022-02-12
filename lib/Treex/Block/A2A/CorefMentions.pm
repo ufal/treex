@@ -25,7 +25,7 @@ sub process_atree
     }
     # Now check that the various mentions in the tree fit together.
     # Crossing spans are suspicious. Nested discontinuous spans are, too.
-    $self->check_spans(@spans);
+    $self->check_spans($root, @spans);
 }
 
 
@@ -348,8 +348,9 @@ sub get_mention_span
 sub check_spans
 {
     my $self = shift;
+    my $root = shift;
     my @spans = @_;
-    my @allnodes = $self->sort_nodes_by_ids($aroot->get_descendants());
+    my @allnodes = $self->sort_nodes_by_ids($root->get_descendants());
     # The worst troubles arise with pairs of mentions of the same entity.
     my %cids; map {$cids{$_->{cid}}++} (@spans);
     my @cids = sort(keys(%cids));
