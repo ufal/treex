@@ -404,6 +404,8 @@ sub check_spans
                         $firstgapi = $k if(defined($firsti) && !defined($firstgapi));
                     }
                 }
+                my $disconti = defined($firstgapi) && $firstgapi < $lasti;
+                my $discontj = defined($firstgapj) && $firstgapj < $lastj;
                 if(scalar(@inboth) && scalar(@inionly) && scalar(@injonly))
                 {
                     # The mentions are crossing because their spans have a non-
@@ -413,7 +415,7 @@ sub check_spans
                     my $message = $self->visualize_two_spans($firstid, $lastid, $cidspans[$i], $cidspans[$j], @allnodes);
                     log_warn("Crossing mentions of entity '$cid':\n$message");
                 }
-                elsif(!scalar(@inboth) && ($firsti < $firstj && $lasti > $firstj || $firstj < $firsti && $lastj > $firsti))
+                elsif(!scalar(@inboth) && $disconti && $discontj && ($firsti < $firstj && $lasti > $firstj || $firstj < $firsti && $lastj > $firsti))
                 {
                     # The mentions are interleaved because one starts before
                     # the other, continues past the start of the other but ends
@@ -426,7 +428,7 @@ sub check_spans
                 {
                     # Span j is a subset of span i.
                     # If both of them are discontinuous, then the entire j should be covered by one continuous subspan of i.
-                    if(defined($firstgapi) && $firstgapi < $lasti && defined($firstgapj) && $firstgapj < $lastj)
+                    if($disconti && $discontj)
                     {
                         # Iterate over nodes of j and in the gaps inside j.
                         # Check that all these nodes are included in i.
@@ -436,7 +438,7 @@ sub check_spans
                 {
                     # Span i is a subset of span j.
                     # If both of them are discontinuous, then the entire i should be covered by one continuous subspan of j.
-                    if(defined($firstgapi) && $firstgapi < $lasti && defined($firstgapj) && $firstgapj < $lastj)
+                    if($disconti && $discontj)
                     {
                     }
                 }
