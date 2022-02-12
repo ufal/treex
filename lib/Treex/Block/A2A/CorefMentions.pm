@@ -363,26 +363,28 @@ sub check_spans
             {
                 # Get the overlap of the two spans.
                 my (@inboth, @inionly, @injonly, @innone);
-                my ($firstid, $lastid, $firsti, $lasti, $firstj, $lastj);
-                foreach my $node (@allnodes)
+                my ($firstid, $lastid, $firsti, $lasti, $firstj, $lastj, $firstgapi, $firstgapj);
+                for(my $k = 0; $k <= $#allnodes; $k++)
                 {
+                    my $node = $allnodes[$k];
                     my $id = $node->get_conllu_id();
                     if(exists($cidspans[$i]{$id}))
                     {
                         if(exists($cidspans[$j]{$id}))
                         {
                             push(@inboth, $id);
-                            $firstj = $j if(!defined($firstj));
-                            $lastj = $j;
+                            $firstj = $k if(!defined($firstj));
+                            $lastj = $k;
                         }
                         else
                         {
                             push(@inionly, $id);
+                            $firstgapj = $k if(defined($firstj) && !defined($firstgapj));
                         }
                         $firstid = $id if(!defined($firstid));
                         $lastid = $id;
-                        $firsti = $i if(!defined($firsti));
-                        $lasti = $i;
+                        $firsti = $k if(!defined($firsti));
+                        $lasti = $k;
                     }
                     else
                     {
@@ -391,13 +393,15 @@ sub check_spans
                             push(@injonly, $id);
                             $firstid = $id if(!defined($firstid));
                             $lastid = $id;
-                            $firstj = $j if(!defined($firstj));
-                            $lastj = $j;
+                            $firstj = $k if(!defined($firstj));
+                            $lastj = $k;
                         }
                         else
                         {
                             push(@innone, $id);
+                            $firstgapj = $k if(defined($firstj) && !defined($firstgapj));
                         }
+                        $firstgapi = $k if(defined($firsti) && !defined($firstgapi));
                     }
                 }
                 if(scalar(@inboth) && scalar(@inionly) && scalar(@injonly))
@@ -417,6 +421,24 @@ sub check_spans
                     # otherwise we would have reported them as crossing.
                     my $message = $self->visualize_two_spans($firstid, $lastid, $cidspans[$i], $cidspans[$j], @allnodes);
                     log_warn("Interleaved mentions of entity '$cid':\n$message");
+                }
+                elsif(scalar(@inboth) && !scalar(@injonly))
+                {
+                    # Span j is a subset of span i.
+                    # If both of them are discontinuous, then the entire j should be covered by one continuous subspan of i.
+                    if(defined($firstgapi) && $firstgapi < $lasti && defined($firstgapj) && $firstgapj < $lastj)
+                    {
+                        # Iterate over nodes of j and in the gaps inside j.
+                        # Check that all these nodes are included in i.
+                    }
+                }
+                elsif(scalar(@inboth) && !scalar(@inionly))
+                {
+                    # Span i is a subset of span j.
+                    # If both of them are discontinuous, then the entire i should be covered by one continuous subspan of j.
+                    if(defined($firstgapi) && $firstgapi < $lasti && defined($firstgapj) && $firstgapj < $lastj)
+                    {
+                    }
                 }
             }
         }
