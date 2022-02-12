@@ -413,7 +413,7 @@ sub check_spans
                     my $message = $self->visualize_two_spans($firstid, $lastid, $cidspans[$i], $cidspans[$j], @allnodes);
                     log_warn("Crossing mentions of entity '$cid':\n$message");
                 }
-                elsif($firsti < $firstj && $lasti > $firstj || $firstj < $firsti && $lastj > $firsti)
+                elsif(!scalar(@inboth) && ($firsti < $firstj && $lasti > $firstj || $firstj < $firsti && $lastj > $firsti))
                 {
                     # The mentions are interleaved because one starts before
                     # the other, continues past the start of the other but ends
