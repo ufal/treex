@@ -6,17 +6,26 @@ extends 'Treex::Core::Block';
 
 
 
-sub process_anode
+sub process_atree
 {
     my $self = shift;
-    my $anode = shift;
-    # If the node has a cluster id, we must delimit the mention that the node
-    # represents.
-    my $cid = $anode->get_misc_attr('ClusterId');
-    if(defined($cid))
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    my @spans;
+    foreach my $node (@nodes)
     {
-        $self->mark_mention($anode);
+        # If the node has a cluster id, we must delimit the mention that the
+        # node represents.
+        my $cid = $node->get_misc_attr('ClusterId');
+        if(defined($cid))
+        {
+            my $span = $self->mark_mention($node);
+            push(@spans, {'cid' => $cid, 'span' => $span});
+        }
     }
+    # Now check that the various mentions in the tree fit together.
+    # Crossing spans are suspicious. Nested discontinuous spans are, too.
+    $self->check_spans(@spans);
 }
 
 
@@ -31,7 +40,7 @@ sub mark_mention
 {
     my $self = shift;
     my $anode = shift;
-    my ($mspan, $mtext, $mhead) = $self->get_mention_span($anode);
+    my ($mspan, $mtext, $mhead, $snodes) = $self->get_mention_span($anode);
     # A span of an existing a-node always contains at least that node.
     if(!defined($mspan) || $mspan eq '')
     {
@@ -44,7 +53,7 @@ sub mark_mention
     $anode->set_misc_attr('MentionText', $mtext);
     # We will want to later run A2A::CorefMentionHeads to move the mention
     # annotation to the head node.
-    return $anode;
+    return $snodes;
 }
 
 
@@ -327,7 +336,91 @@ sub get_mention_span
         }
     }
     my $mhead = join(',', map {$_->get_conllu_id()} (@sheads));
-    return ($mspan, $mtext, $mhead);
+    return ($mspan, $mtext, $mhead, \%snodes);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes a list of mention spans in a sentence. Checks for unexpected relations
+# between two spans.
+#------------------------------------------------------------------------------
+sub check_spans
+{
+    my $self = shift;
+    my @spans = @_;
+    my @allnodes = $self->sort_nodes_by_ids($aroot->get_descendants());
+    # The worst troubles arise with pairs of mentions of the same entity.
+    my %cids; map {$cids{$_->{cid}}++} (@spans);
+    my @cids = sort(keys(%cids));
+    foreach my $cid (@cids)
+    {
+        my @cidspans = map {$_->{span}} (grep {$_->{cid} eq $cid} (@spans));
+        for(my $i = 0; $i <= $#cidspans; $i++)
+        {
+            for(my $j = $i+1; $j <= $#cidspans; $j++)
+            {
+                # Get the overlap of the two spans.
+                my (@inboth, @inionly, @injonly, @innone);
+                my ($firstid, $lastid);
+                foreach my $node (@allnodes)
+                {
+                    my $id = $node->get_conllu_id();
+                    if(exists($cidspans[$i]{$id}))
+                    {
+                        if(exists($cidspans[$j]{$id}))
+                        {
+                            push(@inboth, $id);
+                        }
+                        else
+                        {
+                            push(@inionly, $id);
+                        }
+                        $firstid = $id if(!defined($firstid));
+                        $lastid = $id;
+                    }
+                    else
+                    {
+                        if(exists($cidspans[$j]{$id}))
+                        {
+                            push(@injonly, $id);
+                            $firstid = $id if(!defined($firstid));
+                            $lastid = $id;
+                        }
+                        else
+                        {
+                            push(@innone, $id);
+                        }
+                    }
+                }
+                if(scalar(@inboth) && scalar(@inionly) && scalar(@injonly))
+                {
+                    # The mentions are crossing because their spans have a non-
+                    # empty intersection and none of them is a subset of the
+                    # other. This is suspicious at best for two mentions of the
+                    # same entity.
+                    my (@forms, @xi, @xj);
+                    my $collecting = 0;
+                    foreach my $node (@allnodes)
+                    {
+                        my $id = $node->get_conllu_id();
+                        $collecting = 1 (if($id eq $firstid));
+                        if($collecting)
+                        {
+                            my $form = $node->form() // '_';
+                            my $l = length($form);
+                            push(@forms, $form);
+                            push(@xi, exists($cidspans[$i]{$id}) ? 'x' x $l : ' ' x $l);
+                            push(@xj, exists($cidspans[$j]{$id}) ? 'x' x $l : ' ' x $l);
+                        }
+                        $collecting = 0 (if($id eq $lastid));
+                    }
+                    my $message = join(' ', @forms)."\n".join(' ', @xi)."\n".join(' ', @xj);
+                    log_warn("Crossing mentions of entity '$cid':\n$message");
+                }
+            }
+        }
+    }
 }
 
 
