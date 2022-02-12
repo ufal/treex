@@ -40,7 +40,7 @@ sub mark_mention
 {
     my $self = shift;
     my $anode = shift;
-    my ($mspan, $mtext, $mhead, $snodes) = $self->get_mention_span($anode);
+    my ($mspan, $mtext, $snodes) = $self->get_mention_span($anode);
     # A span of an existing a-node always contains at least that node.
     if(!defined($mspan) || $mspan eq '')
     {
@@ -49,7 +49,6 @@ sub mark_mention
         log_fatal("Failed to determine the span of node '$form' ($address).\n");
     }
     $anode->set_misc_attr('MentionSpan', $mspan);
-    $anode->set_misc_attr('MentionHead', $mhead) unless($mhead eq '');
     $anode->set_misc_attr('MentionText', $mtext);
     # We will want to later run A2A::CorefMentionHeads to move the mention
     # annotation to the head node.
@@ -302,25 +301,6 @@ sub get_mention_span
             }
         }
     }
-    # The span is normally a connected subtree but it is probably not guaranteed
-    # (after the conversion from t-trees to a-trees and to UD). In any case, we
-    # want to annotate the mention on the head (or one of the heads) of the span.
-    # Find the head(s).
-    my @sheads = ();
-    foreach my $snode (@snodes)
-    {
-        # We must use the enhanced graph because empty nodes do not have parents
-        # in the basic tree. Therefore there might be multiple top ancestors even
-        # for one node, and we cannot say which one is higher. The span could
-        # even form a cycle.
-        # Let's define a head as a node that is in the span and none of its
-        # enhanced parents are in the span. There may be any number of heads.
-        my @ineparents = grep {exists($snodes{$_->get_conllu_id()})} ($snode->get_enhanced_parents());
-        if(scalar(@ineparents) == 0)
-        {
-            push(@sheads, $snode);
-        }
-    }
     # For debugging purposes it is useful to also see the word forms of the span, so we will provide them, too.
     my $mspan = join(',', @result2);
     my $mtext = '';
@@ -335,8 +315,7 @@ sub get_mention_span
             }
         }
     }
-    my $mhead = join(',', map {$_->get_conllu_id()} (@sheads));
-    return ($mspan, $mtext, $mhead, \%snodes);
+    return ($mspan, $mtext, \%snodes);
 }
 
 
