@@ -432,6 +432,15 @@ sub check_spans
                     {
                         # Iterate over nodes of j and in the gaps inside j.
                         # Check that all these nodes are included in i.
+                        for(my $k = $firstj; $k <= $lastj; $k++)
+                        {
+                            my $id = $allnodes[$k]->get_conllu_id();
+                            if(!exists($cidspans[$i]{$id}))
+                            {
+                                my $message = $self->visualize_two_spans($firstid, $lastid, $cidspans[$i], $cidspans[$j], @allnodes);
+                                log_warn("Discontinuous nested mentions of entity '$cid' where the inner mention is not covered by a continuous subspan of the outer mention:\n$message");
+                            }
+                        }
                     }
                 }
                 elsif(scalar(@inboth) && !scalar(@inionly))
@@ -440,6 +449,17 @@ sub check_spans
                     # If both of them are discontinuous, then the entire i should be covered by one continuous subspan of j.
                     if($disconti && $discontj)
                     {
+                        # Iterate over nodes of i and in the gaps inside i.
+                        # Check that all these nodes are included in j.
+                        for(my $k = $firsti; $k <= $lasti; $k++)
+                        {
+                            my $id = $allnodes[$k]->get_conllu_id();
+                            if(!exists($cidspans[$j]{$id}))
+                            {
+                                my $message = $self->visualize_two_spans($firstid, $lastid, $cidspans[$i], $cidspans[$j], @allnodes);
+                                log_warn("Discontinuous nested mentions of entity '$cid' where the inner mention is not covered by a continuous subspan of the outer mention:\n$message");
+                            }
+                        }
                     }
                 }
             }
