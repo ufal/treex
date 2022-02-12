@@ -63,34 +63,53 @@ sub process_atree
                     if(scalar(@children) > 0)
                     {
                         @children = sort {$a->ord() <=> $b->ord()} (@children);
-                        my $technical_head = $children[0];
-                        # Later in the CorefMentions block, we will determine the mention span
-                        # on the basis of the tectogrammatical subtree. Link the technical head
-                        # to the original #Forn t-node, whether or not the technical head had
-                        # its own counterpart in the t-tree. In any case, the technical head
-                        # should correspond to something in the tectogrammatical subtree.
-                        $technical_head->wild()->{'tnode.rf'} = $tnode->id();
-                        my @misc = $node->get_misc();
-                        foreach my $m (@misc)
+                        my $technical_head;
+                        # By default, take the first child as the technical head.
+                        # But if it already heads a mention of a different entity,
+                        # look for another node because we cannot store multiple
+                        # mentions at one node.
+                        for(my $i = 0; $i <= $#children; $i++)
                         {
-                            if($m =~ m/^(.+?)=(.+)$/)
+                            if(!defined($children[$i]->get_misc_attr('ClusterId')))
                             {
-                                $technical_head->set_misc_attr($1, $2);
-                            }
-                            else
-                            {
-                                $technical_head->set_misc_attr($m);
+                                $technical_head = $children[$i];
+                                last;
                             }
                         }
-                        # Remove reference to this node from the t-layer.
-                        delete($tnode->wild()->{'anode.rf'});
-                        $node->remove();
-                        splice(@nodes, $i, 1);
-                        $i--;
+                        if(defined($technical_head))
+                        {
+                            # Later in the CorefMentions block, we will determine the mention span
+                            # on the basis of the tectogrammatical subtree. Link the technical head
+                            # to the original #Forn t-node, whether or not the technical head had
+                            # its own counterpart in the t-tree. In any case, the technical head
+                            # should correspond to something in the tectogrammatical subtree.
+                            $technical_head->wild()->{'tnode.rf'} = $tnode->id();
+                            my @misc = $node->get_misc();
+                            foreach my $m (@misc)
+                            {
+                                if($m =~ m/^(.+?)=(.+)$/)
+                                {
+                                    $technical_head->set_misc_attr($1, $2);
+                                }
+                                else
+                                {
+                                    $technical_head->set_misc_attr($m);
+                                }
+                            }
+                            # Remove reference to this node from the t-layer.
+                            delete($tnode->wild()->{'anode.rf'});
+                            $node->remove();
+                            splice(@nodes, $i, 1);
+                            $i--;
+                        }
+                        else
+                        {
+                            log_warn("Cannot find a technical head for replacement of a #Forn node. The #Forn node will not be removed.");
+                        }
                     }
                     else
                     {
-                        log_warn("No children of generated #Forn node found.");
+                        log_warn("No children of generated #Forn node found. The #Forn node will not be removed.");
                     }
                 }
             }
