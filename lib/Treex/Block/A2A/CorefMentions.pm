@@ -140,18 +140,22 @@ sub get_mention_span
         # wants the word, too (and if it is apposition rather than coordination,
         # the crossing mentions even belong to the same entity). Therefore,
         # certain words will be removed if they occur at the end of a mention.
-        if(scalar(@result) > 1)
+        while(scalar(@result) > 1)
         {
             my $form = $snodes{$maxid}->form() // '';
             my $upos = $snodes{$maxid}->tag() // 'X';
             # Naturally, the blacklist is language-specific (currently only for Czech).
             # Beware: 'jen' is a Czech particle ('only'), but it can also be a noun
             # (Japanese 'yen'), hence a mention head! Avoid removing $anode.
-            if($snodes{$maxid} != $anode && $form =~ m/^(alespoň|i|jen|nejen|především|tedy)$/i && $upos ne 'NOUN')
+            if($snodes{$maxid} != $anode && $form =~ m/^(alespoň|i|jen|nakonec|nejen|nikoliv?|především|tedy|třeba|tudíž)$/i && $upos ne 'NOUN')
             {
                 delete($snodes{$maxid});
                 pop(@result);
                 $maxid = $result[-1];
+            }
+            else
+            {
+                last;
             }
         }
         # Sometimes a span is discontinuous but its first segment consists
