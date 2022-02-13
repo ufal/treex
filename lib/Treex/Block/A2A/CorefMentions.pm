@@ -176,6 +176,11 @@ sub get_mention_span
                         if(exists($snodes{$idj}))
                         {
                             $node->shift_empty_node_before_node($nodej);
+                            my $newid = $node->get_conllu_id();
+                            $snodes{$newid} = $snodes{$id};
+                            delete($snodes{$id});
+                            $result[0] = $newid;
+                            $minid = $newid;
                         }
                     }
                 }
