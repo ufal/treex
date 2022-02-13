@@ -896,7 +896,7 @@ sub set_empty_node_conllu_id
             }
         }
     }
-    $self->wild()->{enord} = $id;
+    $self->wild()->{enord} = $newid;
 }
 
 
