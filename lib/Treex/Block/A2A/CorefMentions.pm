@@ -537,7 +537,7 @@ sub visualize_two_spans
 sub sort_node_ids
 {
     my $self = shift;
-    return sort {Node::A::cmp_conllu_ids($a, $b)} (@_);
+    return sort {Treex::Core::Node::A::cmp_conllu_ids($a, $b)} (@_);
 }
 
 
@@ -550,7 +550,7 @@ sub sort_nodes_by_ids
     my $self = shift;
     return sort
     {
-        Node::A::cmp_conllu_ids($a->get_conllu_id(), $b->get_conllu_id())
+        Treex::Core::Node::A::cmp_conllu_ids($a->get_conllu_id(), $b->get_conllu_id())
     }
     (@_);
 }
