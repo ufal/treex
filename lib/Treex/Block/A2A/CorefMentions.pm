@@ -143,8 +143,11 @@ sub get_mention_span
         if(scalar(@result) > 1)
         {
             my $form = $snodes{$maxid}->form() // '';
+            my $upos = $snodes{$maxid}->tag() // 'X';
             # Naturally, the blacklist is language-specific (currently only for Czech).
-            if($form =~ m/^(alespoň|i|jen|nejen|především|tedy)$/i)
+            # Beware: 'jen' is a Czech particle ('only'), but it can also be a noun
+            # (Japanese 'yen'), hence a mention head! Avoid removing $anode.
+            if($snodes{$maxid} != $anode && $form =~ m/^(alespoň|i|jen|nejen|především|tedy)$/i && $upos ne 'NOUN')
             {
                 delete($snodes{$maxid});
                 pop(@result);
