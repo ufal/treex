@@ -147,7 +147,7 @@ sub get_mention_span
             # Naturally, the blacklist is language-specific (currently only for Czech).
             # Beware: 'jen' is a Czech particle ('only'), but it can also be a noun
             # (Japanese 'yen'), hence a mention head! Avoid removing $anode.
-            if($snodes{$maxid} != $anode && $form =~ m/^(alespoň|i|jen|nakonec|nejen|nikoliv?|především|tedy|třeba|tudíž)$/i && $upos ne 'NOUN')
+            if($snodes{$maxid} != $anode && $form =~ m/^(alespoň|či|i|jen|nakonec|ne|nejen|nikoliv?|především|současně|tak|tedy|třeba|tudíž|zejména)$/i && $upos ne 'NOUN')
             {
                 delete($snodes{$maxid});
                 pop(@result);
