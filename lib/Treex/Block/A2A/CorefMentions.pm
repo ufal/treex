@@ -128,12 +128,29 @@ sub get_mention_span
     }
     my @result = $self->sort_node_ids(keys(%snodes));
     my @allnodes = $self->sort_nodes_by_ids($aroot->get_descendants());
-    # Find out if the span is discontinuous. Sometimes the splits of spans seem
-    # unnecessary, which we want to minimize.
     if(scalar(@result) > 0)
     {
         my $minid = $result[0];
         my $maxid = $result[-1];
+        # In coordination, the span sometimes picks secondary conjunctions and
+        # rhematizers because they look like a shared dependent of the
+        # coordination. This is especially strange if the mention covers the
+        # first conjunct and its span includes a function word after the conjunct.
+        # It also often results in crossing mentions because the second conjunct
+        # wants the word, too (and if it is apposition rather than coordination,
+        # the crossing mentions even belong to the same entity). Therefore,
+        # certain words will be removed if they occur at the end of a mention.
+        if(scalar(@result) > 1)
+        {
+            my $form = $snodes{$maxid}->form() // '';
+            # Naturally, the blacklist is language-specific (currently only for Czech).
+            if($form =~ m/^(alespoň|i|jen|nejen|především|tedy)$/i)
+            {
+                delete($snodes{$maxid});
+                pop(@result);
+                $maxid = $result[-1];
+            }
+        }
         # Sometimes a span is discontinuous but its first segment consists
         # solely of punctuation. If this is the case, remove the punctuation
         # from the span.
