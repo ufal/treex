@@ -147,7 +147,7 @@ sub get_mention_span
             # Naturally, the blacklist is language-specific (currently only for Czech).
             # Beware: 'jen' is a Czech particle ('only'), but it can also be a noun
             # (Japanese 'yen'), hence a mention head! Avoid removing $anode.
-            if($snodes{$maxid} != $anode && $form =~ m/^(alespoň|či|i|jen|nakonec|ne|nejen|nikoliv?|především|současně|tak|tedy|třeba|tudíž|zejména)$/i && $upos ne 'NOUN')
+            if($snodes{$maxid} != $anode && $form =~ m/^(alespoň|či|i|jen|nakonec|ne|nebo|nejen|nikoliv?|především|současně|tak|tedy|třeba|tudíž|zejména)$/i && $upos ne 'NOUN')
             {
                 delete($snodes{$maxid});
                 pop(@result);
@@ -155,6 +155,30 @@ sub get_mention_span
             }
             else
             {
+                last;
+            }
+        }
+        # The position of empty nodes is not strictly defined and they often
+        # end up far away from the surface words that belong to the same mention.
+        # See if we can move them closer.
+        for(my $i = 0; $i+2 <= $#allnodes; $i++)
+        {
+            my $node = $allnodes[$i];
+            my $id = $node->get_conllu_id();
+            if($id eq $minid)
+            {
+                if($node->is_empty() && !exists($snodes{$allnodes[$i+1]->get_conllu_id()}))
+                {
+                    for(my $j = $i+2; $j <= $#allnodes; $j++)
+                    {
+                        my $nodej = $allnodes[$j];
+                        my $idj = $nodej->get_conllu_id();
+                        if(exists($snodes{$idj}))
+                        {
+                            $node->shift_empty_node_before_node($nodej);
+                        }
+                    }
+                }
                 last;
             }
         }
@@ -513,7 +537,7 @@ sub visualize_two_spans
 sub sort_node_ids
 {
     my $self = shift;
-    return sort {cmp_node_ids($a, $b)} (@_);
+    return sort {Node::A::cmp_conllu_ids($a, $b)} (@_);
 }
 
 
@@ -526,38 +550,9 @@ sub sort_nodes_by_ids
     my $self = shift;
     return sort
     {
-        cmp_node_ids($a->get_conllu_id(), $b->get_conllu_id())
+        Node::A::cmp_conllu_ids($a->get_conllu_id(), $b->get_conllu_id())
     }
     (@_);
-}
-
-
-
-#------------------------------------------------------------------------------
-# Compares two CoNLL-U node ids (there can be empty nodes with decimal ids).
-#------------------------------------------------------------------------------
-sub cmp_node_ids
-{
-    my $a = shift;
-    my $b = shift;
-    my $amaj = $a;
-    my $amin = 0;
-    my $bmaj = $b;
-    my $bmin = 0;
-    if($amaj =~ s/^(\d+)\.(\d+)$/$1/)
-    {
-        $amin = $2;
-    }
-    if($bmaj =~ s/^(\d+)\.(\d+)$/$1/)
-    {
-        $bmin = $2;
-    }
-    my $r = $amaj <=> $bmaj;
-    unless($r)
-    {
-        $r = $amin <=> $bmin;
-    }
-    return $r;
 }
 
 

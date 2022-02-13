@@ -859,6 +859,153 @@ sub get_major_minor_id
 
 
 #------------------------------------------------------------------------------
+# Changes the current CoNLL-U ID of an empty node to a new value. Will throw
+# an exception if called on a non-empty node or if the new ID is already taken
+# by another node. On the other hand, it does not care whether this is the
+# first available ID after a given regular node, or there is a gap. This makes
+# the method more usable when reordering empty nodes.
+#------------------------------------------------------------------------------
+sub set_empty_node_conllu_id
+{
+    my $self = shift;
+    my $newid = shift;
+    if(!$self->is_empty())
+    {
+        log_fatal("This method cannot be called on a non-empty node.");
+    }
+    if($newid !~ m/^(0|[1-9][0-9]*)\.[1-9][0-9]*$/)
+    {
+        log_fatal("'$newid' is not a well-formed CoNLL-U ID of an empty node.");
+    }
+    my @nodes = $self->get_root()->get_descendants();
+    if(any {$_->get_conllu_id() eq $newid} (@nodes))
+    {
+        log_fatal("CoNLL-U ID '$newid' is already taken by another node.");
+    }
+    # If the old ID is used anywhere in the enhanced graph as a parent reference,
+    # change it to the new ID.
+    my $oldid = $self->get_conllu_id();
+    foreach my $node (@nodes)
+    {
+        my @edeps = $node->get_enhanced_deps();
+        foreach my $edep (@edeps)
+        {
+            if($edep->[0] eq $oldid)
+            {
+                $edep->[0] = $newid;
+            }
+        }
+    }
+    $self->wild()->{enord} = $id;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Changes CoNLL-U ID of an empty node so that its new position is immediately
+# after a given other node. Unlike the method shift_after_node() (defined in
+# Ordered), this method does not change the ord.
+#------------------------------------------------------------------------------
+sub shift_empty_node_after_node
+{
+    my $self = shift;
+    my $reference_node = shift;
+    if(!$self->is_empty())
+    {
+        log_fatal("This method cannot be called on a non-empty node.");
+    }
+    my ($rmajor, $rminor) = $reference_node->get_major_minor_id();
+    # Get all empty nodes that have the same major id and higher minor id.
+    # They will have to be shifted to the right.
+    my @nodes = sort {cmp_conllu_ids($a->get_conllu_id(), $b->get_conllu_id())} ($self->get_root()->get_descendants());
+    my @to_be_moved = grep {my ($major, $minor) = $_->get_major_minor_id(); $major == $rmajor && $minor > $rminor} (@nodes);
+    for(my $i = $#to_be_moved; $i >= 0; $i--)
+    {
+        my ($major, $minor) = $to_be_moved[$i]->get_major_minor_id();
+        my $newid = $major.'.'.($minor+1);
+        $to_be_moved[$i]->set_empty_node_conllu_id($newid);
+    }
+    $self->set_empty_node_conllu_id($rmajor.'.'.($rminor+1));
+}
+
+
+
+#------------------------------------------------------------------------------
+# Changes CoNLL-U ID of an empty node so that its new position is immediately
+# before a given other node. Unlike the method shift_before_node() (defined in
+# Ordered), this method does not change the ord.
+#------------------------------------------------------------------------------
+sub shift_empty_node_before_node
+{
+    my $self = shift;
+    my $reference_node = shift;
+    if(!$self->is_empty())
+    {
+        log_fatal("This method cannot be called on a non-empty node.");
+    }
+    if($reference_node->is_root())
+    {
+        log_fatal("Cannot shift a node before root.");
+    }
+    my ($rmajor, $rminor) = $reference_node->get_major_minor_id();
+    # If $rminor is 0, we will have the previous major id and the first available
+    # minor id. No nodes will have to be moved. If $rminor is non-zero, we will
+    # have to shift the reference node and all empty nodes with the same major
+    # and higher minor to the right.
+    my @nodes = sort {cmp_conllu_ids($a->get_conllu_id(), $b->get_conllu_id())} ($self->get_root()->get_descendants());
+    if($rminor == 0)
+    {
+        my @prev_major = grep {my ($major, $minor) = $_->get_major_minor_id(); $major == $rmajor-1} (@nodes);
+        my ($prev_major, $last_minor) = $prev_major[-1]->get_major_minor_id();
+        $self->set_empty_node_conllu_id($prev_major.'.'.($last_minor+1));
+    }
+    else
+    {
+        my @to_be_moved = grep {my ($major, $minor) = $_->get_major_minor_id(); $major == $rmajor && $minor >= $rminor} (@nodes);
+        for(my $i = $#to_be_moved; $i >= 0; $i--)
+        {
+            my ($major, $minor) = $to_be_moved[$i]->get_major_minor_id();
+            my $newid = $major.'.'.($minor+1);
+            $to_be_moved[$i]->set_empty_node_conllu_id($newid);
+        }
+        $self->set_empty_node_conllu_id($rmajor.'.'.$rminor);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Compares two CoNLL-U node ids (there can be empty nodes with decimal ids).
+# This is a static class function rather than method of a particular Node::A
+# object (it does not use the $self reference).
+#------------------------------------------------------------------------------
+sub cmp_conllu_ids
+{
+    my $a = shift;
+    my $b = shift;
+    my $amaj = $a;
+    my $amin = 0;
+    my $bmaj = $b;
+    my $bmin = 0;
+    if($amaj =~ s/^(\d+)\.(\d+)$/$1/)
+    {
+        $amin = $2;
+    }
+    if($bmaj =~ s/^(\d+)\.(\d+)$/$1/)
+    {
+        $bmin = $2;
+    }
+    my $r = $amaj <=> $bmaj;
+    unless($r)
+    {
+        $r = $amin <=> $bmin;
+    }
+    return $r;
+}
+
+
+
+#------------------------------------------------------------------------------
 # For debugging and internal sanity check: Verifies that all incoming enhanced
 # dependency relations refer to an existing node by its CoNLL-U id.
 #------------------------------------------------------------------------------
