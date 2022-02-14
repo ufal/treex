@@ -137,7 +137,7 @@ sub polish_mention_span
     my @mention_nodes = @{$mention->{nodes}};
     my %snodes = ();
     my @result = map {my $id = $_->get_conllu_id(); $snodes{$id} = $_; $id} (@mention_nodes);
-    my @allnodes = $self->sort_nodes_by_ids($aroot->get_descendants());
+    my @allnodes = $self->sort_nodes_by_ids($head->get_root()->get_descendants());
     if(scalar(@result) > 0)
     {
         my $minid = $result[0];
@@ -329,7 +329,6 @@ sub polish_mention_span
         # Recompute the result because we may have added nodes.
         @result = $self->sort_node_ids(keys(%snodes));
     }
-    return ($mspan, $mtext, \%snodes);
 }
 
 
@@ -395,8 +394,8 @@ sub mark_mention
             }
         }
     }
-    $anode->set_misc_attr('MentionSpan', $mspan);
-    $anode->set_misc_attr('MentionText', $mtext);
+    $head->set_misc_attr('MentionSpan', $mspan);
+    $head->set_misc_attr('MentionText', $mtext);
     # We will want to later run A2A::CorefMentionHeads to find out whether the
     # UD head should be different from the tectogrammatical head, and to move
     # the mention annotation to the UD head node.
