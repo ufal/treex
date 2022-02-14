@@ -917,7 +917,8 @@ sub shift_empty_node_after_node
     my ($rmajor, $rminor) = $reference_node->get_major_minor_id();
     # Get all empty nodes that have the same major id and higher minor id.
     # They will have to be shifted to the right.
-    my @nodes = sort {cmp_conllu_ids($a->get_conllu_id(), $b->get_conllu_id())} ($self->get_root()->get_descendants());
+    my $root = $self->get_root();
+    my @nodes = sort {cmp_conllu_ids($a->get_conllu_id(), $b->get_conllu_id())} ($root->get_descendants());
     my @to_be_moved = grep {my ($major, $minor) = $_->get_major_minor_id(); $major == $rmajor && $minor > $rminor} (@nodes);
     for(my $i = $#to_be_moved; $i >= 0; $i--)
     {
@@ -926,6 +927,8 @@ sub shift_empty_node_after_node
         $to_be_moved[$i]->set_empty_node_conllu_id($newid);
     }
     $self->set_empty_node_conllu_id($rmajor.'.'.($rminor+1));
+    # Normalization is needed because at the old position, other empty nodes may have to be moved to the left.
+    $root->_normalize_ords_and_conllu_ids();
 }
 
 
@@ -952,7 +955,8 @@ sub shift_empty_node_before_node
     # minor id. No nodes will have to be moved. If $rminor is non-zero, we will
     # have to shift the reference node and all empty nodes with the same major
     # and higher minor to the right.
-    my @nodes = sort {cmp_conllu_ids($a->get_conllu_id(), $b->get_conllu_id())} ($self->get_root()->get_descendants());
+    my $root = $self->get_root();
+    my @nodes = sort {cmp_conllu_ids($a->get_conllu_id(), $b->get_conllu_id())} ($root->get_descendants());
     if($rminor == 0)
     {
         my @prev_major = grep {my ($major, $minor) = $_->get_major_minor_id(); $major == $rmajor-1} (@nodes);
@@ -970,6 +974,8 @@ sub shift_empty_node_before_node
         }
         $self->set_empty_node_conllu_id($rmajor.'.'.$rminor);
     }
+    # Normalization is needed because at the old position, other empty nodes may have to be moved to the left.
+    $root->_normalize_ords_and_conllu_ids();
 }
 
 
