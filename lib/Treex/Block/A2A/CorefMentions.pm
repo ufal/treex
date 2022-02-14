@@ -28,9 +28,9 @@ sub process_atree
                 log_fatal("Failed to determine the span of node '$form' ($address).\n");
             }
             my %span_hash; map {my $id = $_->get_conllu_id(); $span_hash{$id}++} (@mention_nodes);
-            my %mention = {'head' => $node, 'cid' => $cid, 'nodes' => \@mention_nodes, 'span' => \%span_hash};
-            $self->polish_mention_span($node, \%mention);
-            push(@mentions, \%mention);
+            my $mention = {'head' => $node, 'cid' => $cid, 'nodes' => \@mention_nodes, 'span' => \%span_hash};
+            $self->polish_mention_span($node, $mention);
+            push(@mentions, $mention);
         }
     }
     # Now check that the various mentions in the tree fit together.
