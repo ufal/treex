@@ -176,7 +176,7 @@ sub remove_mention_final_conjunction
         }
     }
     # Recompute the span hash.
-    my %span_hash; map {my $id = $_->get_conllu_id(); $span_hash{$id}++} (@{$mention->{nodes}});
+    my %span_hash; map {my $id = $_->get_conllu_id(); $span_hash{$id} = $_} (@{$mention->{nodes}});
     $mention->{span} = \%span_hash;
 }
 
@@ -212,7 +212,7 @@ sub shift_empty_nodes_to_the_rest_of_the_mention
                         # The only thing we can trust is that the mutual order of the nodes in the span will not change.
                         $node->shift_empty_node_before_node($nodej);
                         # Recompute the span hash.
-                        my %span_hash; map {my $id = $_->get_conllu_id(); $span_hash{$id}++} (@{$mention->{nodes}});
+                        my %span_hash; map {my $id = $_->get_conllu_id(); $span_hash{$id} = $_} (@{$mention->{nodes}});
                         $mention->{span} = \%span_hash;
                     }
                 }
