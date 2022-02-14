@@ -103,6 +103,16 @@ sub get_raw_mention_span
                             $snodes{$asn->get_conllu_id()} = $asn;
                         }
                     }
+                    # Unlike the lexical a-node, auxiliary a-nodes may be shared across mentions because we do not have separate empty nodes for them.
+                    my @anodes = $tsn->get_aux_nodes();
+                    foreach my $asn (@anodes)
+                    {
+                        # Check that the a-node is in the same sentence.
+                        if(defined($asn) && $asn->get_root() == $aroot)
+                        {
+                            $snodes{$asn->ord()} = $asn;
+                        }
+                    }
                 }
                 else
                 {
