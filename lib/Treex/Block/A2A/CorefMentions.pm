@@ -137,159 +137,210 @@ sub polish_mention_span
     my $mention = shift; # hash ref with the attributes of the mention
     my @mention_nodes = @{$mention->{nodes}};
     return if(scalar(@mention_nodes) == 0);
-    my %snodes = ();
-    my @result = map {my $id = $_->get_conllu_id(); $snodes{$id} = $_; $id} (@mention_nodes);
-    my @allnodes = $self->sort_nodes_by_ids($head->get_root()->get_descendants());
-    my $minid = $result[0];
-    my $maxid = $result[-1];
-    # In coordination, the span sometimes picks secondary conjunctions and
-    # rhematizers because they look like a shared dependent of the
-    # coordination. This is especially strange if the mention covers the
-    # first conjunct and its span includes a function word after the conjunct.
-    # It also often results in crossing mentions because the second conjunct
-    # wants the word, too (and if it is apposition rather than coordination,
-    # the crossing mentions even belong to the same entity). Therefore,
-    # certain words will be removed if they occur at the end of a mention.
-    while(scalar(@result) > 1)
+    $self->remove_mention_final_conjunction($mention);
+    $self->shift_empty_nodes_to_the_rest_of_the_mention($mention);
+    $self->remove_mention_initial_punctuation($mention);
+    $self->remove_mention_final_punctuation($mention);
+    $self->close_up_gaps_in_mention($mention);
+}
+
+
+
+#------------------------------------------------------------------------------
+# In coordination, the span sometimes picks secondary conjunctions and
+# rhematizers because they look like a shared dependent of the
+# coordination. This is especially strange if the mention covers the
+# first conjunct and its span includes a function word after the conjunct.
+# It also often results in crossing mentions because the second conjunct
+# wants the word, too (and if it is apposition rather than coordination,
+# the crossing mentions even belong to the same entity). Therefore,
+# certain words will be removed if they occur at the end of a mention.
+#------------------------------------------------------------------------------
+sub remove_mention_final_conjunction
+{
+    my $self = shift;
+    my $mention = shift; # hash ref with the attributes of the mention
+    while(scalar(@{$mention->{nodes}}) > 1)
     {
-        my $form = $snodes{$maxid}->form() // '';
-        my $upos = $snodes{$maxid}->tag() // 'X';
+        my $last_node = $mention->{nodes}[-1];
+        my $form = $last_node->form() // '';
+        my $upos = $last_node->tag() // 'X';
         # Naturally, the blacklist is language-specific (currently only for Czech).
         # Beware: 'jen' is a Czech particle ('only'), but it can also be a noun
-        # (Japanese 'yen'), hence a mention head! Avoid removing $head.
-        if($snodes{$maxid} != $head && $form =~ m/^(alespoň|či|i|jen|nakonec|ne|nebo|nejen|nikoliv?|především|současně|tak|tedy|třeba|tudíž|zejména)$/i && $upos ne 'NOUN')
+        # (Japanese 'yen'), hence a mention head! Avoid removing the head.
+        if($last_node != $mention->{head} && $form =~ m/^(alespoň|či|i|jen|nakonec|ne|nebo|nejen|nikoliv?|především|současně|tak|tedy|třeba|tudíž|zejména)$/i && $upos ne 'NOUN')
         {
-            delete($snodes{$maxid});
-            pop(@result);
-            $maxid = $result[-1];
+            pop(@{$mention->{nodes}});
         }
         else
         {
             last;
         }
     }
-    # The position of empty nodes is not strictly defined and they often
-    # end up far away from the surface words that belong to the same mention.
-    # See if we can move them closer.
-    # Note that this is not necessarily a good move: While making one mention
-    # continuous, we may be making other mentions discontinuous by inserting
-    # the empty node in their middle.
+    # Recompute the span hash.
+    my %span_hash; map {my $id = $_->get_conllu_id(); $span_hash{$id}++} (@{$mention->{nodes}});
+    $mention->{span} = \%span_hash;
+}
+
+
+
+#------------------------------------------------------------------------------
+# The position of empty nodes is not strictly defined and they often
+# end up far away from the surface words that belong to the same mention.
+# See if we can move them closer.
+# Note that this is not necessarily a good move: While making one mention
+# continuous, we may be making other mentions discontinuous by inserting
+# the empty node in their middle.
+#------------------------------------------------------------------------------
+sub shift_empty_nodes_to_the_rest_of_the_mention
+{
+    my $self = shift;
+    my $mention = shift; # hash ref with the attributes of the mention
+    my @allnodes = $self->sort_nodes_by_ids($mention->{head}->get_root()->get_descendants());
     for(my $i = 0; $i+2 <= $#allnodes; $i++)
     {
         my $node = $allnodes[$i];
-        my $id = $node->get_conllu_id();
-        if($id eq $minid)
+        if($node == $mention->{nodes}[0])
         {
-            if($node->is_empty() && !exists($snodes{$allnodes[$i+1]->get_conllu_id()}))
+            if($node->is_empty() && !exists($mention->{span}{$allnodes[$i+1]->get_conllu_id()}))
             {
                 for(my $j = $i+2; $j <= $#allnodes; $j++)
                 {
                     my $nodej = $allnodes[$j];
                     my $idj = $nodej->get_conllu_id();
-                    if(0 && exists($snodes{$idj}))
+                    if(0 && exists($mention->{span}{$idj}))
                     {
                         # Shifting one empty node may affect ids of other empty nodes and our %snodes and @result may become invalid.
                         # The only thing we can trust is that the mutual order of the nodes in the span will not change.
-                        my @result_nodes = map {$snodes{$_}} (@result);
                         $node->shift_empty_node_before_node($nodej);
-                        %snodes = ();
-                        @result = map {my $id = $_->get_conllu_id(); $snodes{$id} = $_; $id} (@result_nodes);
-                        $minid = $result[0];
-                        $maxid = $result[-1];
+                        # Recompute the span hash.
+                        my %span_hash; map {my $id = $_->get_conllu_id(); $span_hash{$id}++} (@{$mention->{nodes}});
+                        $mention->{span} = \%span_hash;
                     }
                 }
             }
             last;
         }
     }
-    # Sometimes a span is discontinuous but its first segment consists
-    # solely of punctuation. If this is the case, remove the punctuation
-    # from the span.
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sometimes a span is discontinuous but its first segment consists
+# solely of punctuation. If this is the case, remove the punctuation
+# from the span.
+#------------------------------------------------------------------------------
+sub remove_mention_initial_punctuation
+{
+    my $self = shift;
+    my $mention = shift; # hash ref with the attributes of the mention
+    my @allnodes = $self->sort_nodes_by_ids($mention->{head}->get_root()->get_descendants());
     for(my $i = 0; $i <= $#allnodes; $i++)
     {
         my $node = $allnodes[$i];
-        my $id = $node->get_conllu_id();
-        if($id eq $minid)
+        if($node == $mention->{nodes}[0])
         {
             for(my $j = $i; $j <= $#allnodes; $j++)
             {
                 my $nodej = $allnodes[$j];
                 my $idj = $nodej->get_conllu_id();
-                if($idj eq $maxid || exists($snodes{$idj}) && !($nodej->is_punctuation() || $nodej->deprel() =~ m/^punct(:|$)/))
+                if($nodej == $mention->{nodes}[-1] || exists($mention->{span}{$idj}) && !($nodej->is_punctuation() || $nodej->deprel() =~ m/^punct(:|$)/))
                 {
                     # The first segment is the only segment, or
                     # the first segment does not consist exclusively of nodes that could be discarded.
                     $i = $#allnodes;
                     last;
                 }
-                if(!exists($snodes{$idj}))
+                if(!exists($mention->{span}{$idj}))
                 {
                     # The mention is discontinuous and
                     # the first segment consists exclusively of nodes that could be discarded.
                     for(my $k = $i; $k <= $j-1; $k++)
                     {
-                        delete($snodes{$allnodes[$k]->get_conllu_id()});
+                        delete($mention->{span}{$allnodes[$k]->get_conllu_id()});
                     }
-                    # Recompute the result because we have removed nodes.
-                    @result = $self->sort_node_ids(keys(%snodes));
-                    $minid = $result[0];
+                    # Recompute the mention nodes because we have removed nodes.
+                    @{$mention->{nodes}} = $self->sort_nodes_by_ids(values(%{$mention->{span}}));
                     # Another segment is now the first segment and we can repeat the procedure in the outer loop.
                     last;
                 }
             }
         }
     }
-    # Sometimes a span is discontinuous because it includes the sentence-final
-    # punctuation. If this is the case, remove the punctuation from the span.
-    for(my $i = $#allnodes; $i >= 0; $i--)
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sometimes a span is discontinuous but its last segment consists
+# solely of punctuation. If this is the case, remove the punctuation
+# from the span.
+#------------------------------------------------------------------------------
+sub remove_mention_final_punctuation
+{
+    my $self = shift;
+    my $mention = shift; # hash ref with the attributes of the mention
+    my @allnodes = $self->sort_nodes_by_ids($mention->{head}->get_root()->get_descendants());
+    for(my $i = 0; $i <= $#allnodes; $i++)
     {
         my $node = $allnodes[$i];
-        my $id = $node->get_conllu_id();
-        if($id eq $maxid)
+        if($node == $mention->{nodes}[-1])
         {
-            for(my $j = $i; $j >= 0; $j--)
+            for(my $j = $i; $j >=0; $j--)
             {
                 my $nodej = $allnodes[$j];
                 my $idj = $nodej->get_conllu_id();
-                if($idj eq $minid || exists($snodes{$idj}) && !($nodej->is_punctuation() || $nodej->deprel() =~ m/^punct(:|$)/))
+                if($nodej == $mention->{nodes}[0] || exists($mention->{span}{$idj}) && !($nodej->is_punctuation() || $nodej->deprel() =~ m/^punct(:|$)/))
                 {
                     # The last segment is the only segment, or
                     # the last segment does not consist exclusively of nodes that could be discarded.
                     $i = 0;
                     last;
                 }
-                if(!exists($snodes{$idj}))
+                if(!exists($mention->{span}{$idj}))
                 {
                     # The mention is discontinuous and
                     # the last segment consists exclusively of nodes that could be discarded.
                     for(my $k = $j+1; $k <= $i; $k++)
                     {
-                        delete($snodes{$allnodes[$k]->get_conllu_id()});
+                        delete($mention->{span}{$allnodes[$k]->get_conllu_id()});
                     }
-                    # Recompute the result because we have removed nodes.
-                    @result = $self->sort_node_ids(keys(%snodes));
-                    $maxid = $result[-1];
+                    # Recompute the mention nodes because we have removed nodes.
+                    @{$mention->{nodes}} = $self->sort_nodes_by_ids(values(%{$mention->{span}}));
                     # Another segment is now the last segment and we can repeat the procedure in the outer loop.
                     last;
                 }
             }
         }
     }
-    # Now see if the remaining gaps can be closed up because they contain
-    # nodes that probably could/should be included in the mention span.
+}
+
+
+
+#------------------------------------------------------------------------------
+# See if the gaps in a discontinuous mention can be closed up because they
+# contain nodes that probably could/should be included in the mention span.
+#------------------------------------------------------------------------------
+sub close_up_gaps_in_mention
+{
+    my $self = shift;
+    my $mention = shift; # hash ref with the attributes of the mention
+    my @allnodes = $self->sort_nodes_by_ids($mention->{head}->get_root()->get_descendants());
     my $minid_seen = 0;
     my $previous_in_span = 0;
+    my $added = 0;
     foreach my $node (@allnodes)
     {
         my $id = $node->get_conllu_id();
-        if($id eq $minid)
+        if($node == $mention->{nodes}[0])
         {
             $minid_seen = 1;
             $previous_in_span = 1;
         }
         if($minid_seen)
         {
-            if(exists($snodes{$id}))
+            if(exists($mention->{span}{$id}))
             {
                 $previous_in_span = 1;
             }
@@ -301,16 +352,18 @@ sub polish_mention_span
                     # Punctuation can be included regardless where it is attached (although ideally we want it attached to something in the span).
                     if($node->is_punctuation() || $node->deprel() =~ m/^punct(:|$)/)
                     {
-                        $snodes{$id} = $node;
+                        $mention->{span}{$id} = $node;
+                        $added++;
                         # $previous_in_span stays 1
                     }
                     # Prepositions and conjunctions can be included if they depend on something that is already in the span.
                     # We proceed left-to-right, so if the function word has one or more fixed dependents, they will be included, too.
                     # Expletive: there was one instance where reflexive 'se' was left out in Czech. With the 'expl' deprel it should
                     # be non-referential, so we should not break coreference by adding it.
-                    elsif($node->deprel() =~ m/^(case|mark|cc|fixed|expl)(:|$)/ && exists($snodes{$node->parent()->get_conllu_id()}))
+                    elsif($node->deprel() =~ m/^(case|mark|cc|fixed|expl)(:|$)/ && exists($mention->{span}{$node->parent()->get_conllu_id()}))
                     {
-                        $snodes{$id} = $node;
+                        $mention->{span}{$id} = $node;
+                        $added++;
                         # $previous_in_span stays 1
                     }
                     else
@@ -321,14 +374,13 @@ sub polish_mention_span
                 # else: $previous_in_span stays 0
             }
         }
-        if($id eq $maxid)
+        if($node == $mention->{nodes}[-1])
         {
             last;
         }
     }
-    # Recompute the list of mention nodes because we may have added or removed nodes.
-    @{$mention->{nodes}} = $self->sort_nodes_by_ids(values(%snodes));
-    $mention->{span} = \%snodes;
+    # Recompute the mention nodes if we have added nodes.
+    @{$mention->{nodes}} = $self->sort_nodes_by_ids(values(%{$mention->{span}})) if($added);
 }
 
 
