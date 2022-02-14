@@ -173,7 +173,7 @@ sub remove_mention_final_conjunction
         # Naturally, the blacklist is language-specific (currently only for Czech).
         # Beware: 'jen' is a Czech particle ('only'), but it can also be a noun
         # (Japanese 'yen'), hence a mention head! Avoid removing the head.
-        if($last_node != $mention->{head} && $form =~ m/^(alespoň|či|i|jen|nakonec|ne|nebo|nejen|nikoliv?|především|současně|tak|tedy|třeba|tudíž|zejména)$/i && $upos ne 'NOUN')
+        if($last_node != $mention->{head} && $form =~ m/^(alespoň|či|i|jen|nakonec|ne|nebo|nejen|nikoliv?|především|současně|tak|také|tedy|třeba|tudíž|zejména)$/i && $upos ne 'NOUN')
         {
             pop(@{$mention->{nodes}});
         }
@@ -216,6 +216,33 @@ sub shift_empty_nodes_to_the_rest_of_the_mention
                     if(exists($mention->{span}{$idj}))
                     {
                         $node->shift_empty_node_before_node($nodej);
+                        # Recompute the span hash.
+                        my %span_hash; map {my $id = $_->get_conllu_id(); $span_hash{$id} = $_} (@{$mention->{nodes}});
+                        $mention->{span} = \%span_hash;
+                        ###!!! WARNING: We normally rely on the mention nodes to be ordered by their CoNLL-U ids.
+                        # We have not broken the ordering for the current mention.
+                        # However, by moving the node we may have broken the ordering of another mention which also covers this node!
+                        last;
+                    }
+                }
+            }
+            last;
+        }
+    }
+    for(my $i = $#allnodes; $i-2 >= 0; $i--)
+    {
+        my $node = $allnodes[$i];
+        if($node == $mention->{nodes}[-1])
+        {
+            if($node->is_empty() && $node != $mention->{nodes}[0] && !exists($mention->{span}{$allnodes[$i-1]->get_conllu_id()}))
+            {
+                for(my $j = $i-2; $j >= 0; $j--)
+                {
+                    my $nodej = $allnodes[$j];
+                    my $idj = $nodej->get_conllu_id();
+                    if(exists($mention->{span}{$idj}))
+                    {
+                        $node->shift_empty_node_after_node($nodej);
                         # Recompute the span hash.
                         my %span_hash; map {my $id = $_->get_conllu_id(); $span_hash{$id} = $_} (@{$mention->{nodes}});
                         $mention->{span} = \%span_hash;
