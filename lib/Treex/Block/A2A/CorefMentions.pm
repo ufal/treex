@@ -104,13 +104,18 @@ sub get_raw_mention_span
                         }
                     }
                     # Unlike the lexical a-node, auxiliary a-nodes may be shared across mentions because we do not have separate empty nodes for them.
-                    my @anodes = $tsn->get_aux_anodes();
-                    foreach my $asn (@anodes)
+                    ###!!! I am temporarily turning this off. It generates additional issues with crossing mentions that we cannot fully resolve.
+                    ###!!! Perhaps we will have to generate empty nodes with copies of the shared auxiliary a-nodes in the future.
+                    if(0)
                     {
-                        # Check that the a-node is in the same sentence.
-                        if(defined($asn) && $asn->get_root() == $aroot)
+                        my @anodes = $tsn->get_aux_anodes();
+                        foreach my $asn (@anodes)
                         {
-                            $snodes{$asn->ord()} = $asn;
+                            # Check that the a-node is in the same sentence.
+                            if(defined($asn) && $asn->get_root() == $aroot)
+                            {
+                                $snodes{$asn->ord()} = $asn;
+                            }
                         }
                     }
                 }
