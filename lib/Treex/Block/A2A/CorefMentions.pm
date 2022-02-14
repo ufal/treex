@@ -188,7 +188,7 @@ sub remove_mention_final_conjunction
         # Naturally, the blacklist is language-specific (currently only for Czech).
         # Beware: 'jen' is a Czech particle ('only'), but it can also be a noun
         # (Japanese 'yen'), hence a mention head! Avoid removing the head.
-        if($last_node != $mention->{head} && $form =~ m/^(alespoň|či|i|jen|nakonec|ne|nebo|nejen|nikoliv?|především|současně|tak|také|tedy|třeba|tudíž|zejména)$/i && $upos ne 'NOUN')
+        if($last_node != $mention->{head} && $form =~ m/^(alespoň|či|i|jen|nakonec|ne|nebo|nejen|nikoliv?|především|současně|tak|také|tedy|též|třeba|tudíž|zejména)$/i && $upos ne 'NOUN')
         {
             pop(@{$mention->{nodes}});
         }
