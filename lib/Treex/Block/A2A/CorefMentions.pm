@@ -42,7 +42,7 @@ sub process_atree
     # mention spans.
     foreach my $mention (@mentions)
     {
-        $self->mark_mention($mention->{head}, $mention);
+        $self->mark_mention($mention);
     }
 }
 
@@ -206,7 +206,7 @@ sub shift_empty_nodes_to_the_rest_of_the_mention
                 {
                     my $nodej = $allnodes[$j];
                     my $idj = $nodej->get_conllu_id();
-                    if(0 && exists($mention->{span}{$idj}))
+                    if(exists($mention->{span}{$idj}))
                     {
                         # Shifting one empty node may affect ids of other empty nodes and our %snodes and @result may become invalid.
                         # The only thing we can trust is that the mutual order of the nodes in the span will not change.
@@ -389,24 +389,21 @@ sub close_up_gaps_in_mention
 sub mark_mention
 {
     my $self = shift;
-    my $head = shift; # the node at which the mention shall be annotated
     my $mention = shift; # hash ref with the attributes of the mention
-    my @allnodes = $self->sort_nodes_by_ids($head->get_root()->get_descendants());
+    my @allnodes = $self->sort_nodes_by_ids($mention->{head}->get_root()->get_descendants());
     # If a contiguous sequence of two or more nodes is a part of the mention,
     # it should be represented using a hyphen (i.e., "8-9" instead of "8,9",
     # and "8-10" instead of "8,9,10"). We must be careful though. There may
     # be empty nodes that are not included, e.g., we may have to write "8,9"
     # because there is 8.1 and it is not a part of the mention.
-    my @result = map {$_->get_conllu_id()} (@{$mention->{nodes}});
-    my $i = 0; # index to @result
-    my $n = scalar(@result);
+    my $i = 0; # index to mention nodes
+    my $n = scalar(@{$mention->{nodes}});
     my @current_segment = ();
     my @result2 = ();
     # Add undef to enforce flushing of the current segment at the end.
     foreach my $node (@allnodes, undef)
     {
-        my $id = defined($node) ? $node->get_conllu_id() : -1;
-        if($i < $n && $result[$i] == $id)
+        if($i < $n && defined($node) && $mention->{nodes}[$i] == $node)
         {
             push(@current_segment, $node);
             $i++;
@@ -444,8 +441,16 @@ sub mark_mention
             }
         }
     }
-    $head->set_misc_attr('MentionSpan', $mspan);
-    $head->set_misc_attr('MentionText', $mtext);
+    # Sanity check: The head of the mention must be included in the span.
+    if(!any {$_ == $mention->{head}} (@{$mention->{nodes}}))
+    {
+        my $address = $mention->{head}->get_address();
+        my $id = $mention->{head}->get_conllu_id();
+        my $form = $mention->{head}->form() // '';
+        log_fatal("Mention head $id:$form ($address) is not included in the span '$mspan'.");
+    }
+    $mention->{head}->set_misc_attr('MentionSpan', $mspan);
+    $mention->{head}->set_misc_attr('MentionText', $mtext);
     # We will want to later run A2A::CorefMentionHeads to find out whether the
     # UD head should be different from the tectogrammatical head, and to move
     # the mention annotation to the UD head node.
