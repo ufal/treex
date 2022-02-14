@@ -11,7 +11,7 @@ sub process_atree
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants({'ordered' => 1});
-    my @spans;
+    my @mentions;
     foreach my $node (@nodes)
     {
         # If the node has a cluster id, we must delimit the mention that the
@@ -19,40 +19,30 @@ sub process_atree
         my $cid = $node->get_misc_attr('ClusterId');
         if(defined($cid))
         {
-            my $span = $self->mark_mention($node);
-            push(@spans, {'cid' => $cid, 'span' => $span});
+            my @mention_nodes = $self->get_raw_mention_span($node);
+            # A span of an existing a-node always contains at least that node.
+            if(scalar(@mention_nodes) == 0)
+            {
+                my $address = $node->get_address();
+                my $form = $node->form() // '';
+                log_fatal("Failed to determine the span of node '$form' ($address).\n");
+            }
+            my %mention_hash; map {my $id = $_->get_conllu_id(); $mention_hash{$id}++} (@mention_nodes);
+            $self->polish_mention_span($node, \%mention_hash);
+            push(@mentions, {'head' => $node, 'cid' => $cid, 'nodes' => \@mention_nodes, 'span' => \%mention_hash});
         }
     }
     # Now check that the various mentions in the tree fit together.
     # Crossing spans are suspicious. Nested discontinuous spans are, too.
-    $self->check_spans($root, @spans);
-}
-
-
-
-#------------------------------------------------------------------------------
-# Saves mention attributes in misc of a node. It may occasionally decide to
-# select a different node as the mention head. In that case it will return
-# the node with the new head (because the caller will want to use that other
-# node as the representative of the mention in the cluster).
-#------------------------------------------------------------------------------
-sub mark_mention
-{
-    my $self = shift;
-    my $anode = shift;
-    my ($mspan, $mtext, $snodes) = $self->get_mention_span($anode);
-    # A span of an existing a-node always contains at least that node.
-    if(!defined($mspan) || $mspan eq '')
+    $self->check_spans($root, @mentions);
+    # We could not mark the mention spans at the nodes before all mentions had
+    # been collected and adjusted. The polishing of a mention could lead to
+    # shuffling empty nodes and invalidating node ids in previously marked
+    # mention spans.
+    foreach my $mention (@mentions)
     {
-        my $address = $anode->get_address();
-        my $form = $anode->form() // '';
-        log_fatal("Failed to determine the span of node '$form' ($address).\n");
+        $self->mark_mention($mention->{head}, $mention);
     }
-    $anode->set_misc_attr('MentionSpan', $mspan);
-    $anode->set_misc_attr('MentionText', $mtext);
-    # We will want to later run A2A::CorefMentionHeads to move the mention
-    # annotation to the head node.
-    return $snodes;
 }
 
 
@@ -60,22 +50,23 @@ sub mark_mention
 #------------------------------------------------------------------------------
 # For a given a-node, finds its corresponding t-node, gets the list of all
 # t-nodes in its subtree (including the head), gets their corresponding
-# a-nodes (only those that are in the same sentence), returns the ordered list
-# of ords of these a-nodes (surface span of a t-node). For generated t-nodes
-# (which either don't have a lexical a-node, or share it with another t-node,
-# possibly even in another sentence) the method tries to find their
-# corresponding empty a-nodes, added by T2A::GenerateEmptyNodes.
+# a-nodes (only those that are in the same sentence), returns them ordered by
+# their CoNLL-U ids. For generated t-nodes (which either don't have a lexical
+# a-node, or share it with another t-node, possibly even in another sentence)
+# the method tries to find their corresponding empty a-nodes, added by
+# T2A::GenerateEmptyNodes. This is a raw span that we will later want to
+# further improve, smooth out discontinuities etc.
 #------------------------------------------------------------------------------
-sub get_mention_span
+sub get_raw_mention_span
 {
     my $self = shift;
-    my $anode = shift;
+    my $head = shift; # the tectogrammatical head of the mention
     my %snodes; # indexed by CoNLL-U id; a hash to prevent auxiliary a-nodes occurring repeatedly (because they are shared by multiple nodes)
-    my $aroot = $anode->get_root();
-    my $document = $anode->get_document();
-    if(exists($anode->wild()->{'tnode.rf'}))
+    my $aroot = $head->get_root();
+    my $document = $head->get_document();
+    if(exists($head->wild()->{'tnode.rf'}))
     {
-        my $tnode = $document->get_node_by_id($anode->wild()->{'tnode.rf'});
+        my $tnode = $document->get_node_by_id($head->wild()->{'tnode.rf'});
         if(defined($tnode))
         {
             # We should look for effective descendants, i.e., including shared
@@ -123,10 +114,29 @@ sub get_mention_span
     }
     else
     {
-        my $form = $anode->form() // '';
+        my $form = $head->form() // '';
         log_warn("Trying to mark a mention headed by a node that is not linked to the t-layer: '$form'.\n");
     }
-    my @result = $self->sort_node_ids(keys(%snodes));
+    my @mention_nodes = $self->sort_nodes_by_ids(values(%snodes));
+    return @mention_nodes;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes the raw span as extracted from the tectogrammatical tree and its
+# corresponding analytical nodes. Tries to add or remove function words and
+# punctuation, and to shift position of empty nodes so that the span is more
+# natural and, if possible, continuous.
+#------------------------------------------------------------------------------
+sub polish_mention_span
+{
+    my $self = shift;
+    my $head = shift; # the node at which the mention shall be annotated
+    my $mention = shift; # hash ref with the attributes of the mention
+    my @mention_nodes = @{$mention->{nodes}};
+    my %snodes = ();
+    my @result = map {my $id = $_->get_conllu_id(); $snodes{$id} = $_; $id} (@mention_nodes);
     my @allnodes = $self->sort_nodes_by_ids($aroot->get_descendants());
     if(scalar(@result) > 0)
     {
@@ -146,8 +156,8 @@ sub get_mention_span
             my $upos = $snodes{$maxid}->tag() // 'X';
             # Naturally, the blacklist is language-specific (currently only for Czech).
             # Beware: 'jen' is a Czech particle ('only'), but it can also be a noun
-            # (Japanese 'yen'), hence a mention head! Avoid removing $anode.
-            if($snodes{$maxid} != $anode && $form =~ m/^(alespoň|či|i|jen|nakonec|ne|nebo|nejen|nikoliv?|především|současně|tak|tedy|třeba|tudíž|zejména)$/i && $upos ne 'NOUN')
+            # (Japanese 'yen'), hence a mention head! Avoid removing $head.
+            if($snodes{$maxid} != $head && $form =~ m/^(alespoň|či|i|jen|nakonec|ne|nebo|nejen|nikoliv?|především|současně|tak|tedy|třeba|tudíž|zejména)$/i && $upos ne 'NOUN')
             {
                 delete($snodes{$maxid});
                 pop(@result);
@@ -161,6 +171,9 @@ sub get_mention_span
         # The position of empty nodes is not strictly defined and they often
         # end up far away from the surface words that belong to the same mention.
         # See if we can move them closer.
+        # Note that this is not necessarily a good move: While making one mention
+        # continuous, we may be making other mentions discontinuous by inserting
+        # the empty node in their middle.
         for(my $i = 0; $i+2 <= $#allnodes; $i++)
         {
             my $node = $allnodes[$i];
@@ -316,16 +329,30 @@ sub get_mention_span
         # Recompute the result because we may have added nodes.
         @result = $self->sort_node_ids(keys(%snodes));
     }
+    return ($mspan, $mtext, \%snodes);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Saves mention attributes in misc of a node.
+#------------------------------------------------------------------------------
+sub mark_mention
+{
+    my $self = shift;
+    my $head = shift; # the node at which the mention shall be annotated
+    my $mention = shift; # hash ref with the attributes of the mention
+    my @allnodes = $self->sort_nodes_by_ids($head->get_root()->get_descendants());
     # If a contiguous sequence of two or more nodes is a part of the mention,
     # it should be represented using a hyphen (i.e., "8-9" instead of "8,9",
     # and "8-10" instead of "8,9,10"). We must be careful though. There may
     # be empty nodes that are not included, e.g., we may have to write "8,9"
     # because there is 8.1 and it is not a part of the mention.
+    my @result = map {$_->get_conllu_id()} (@{$mention->{nodes}});
     my $i = 0; # index to @result
     my $n = scalar(@result);
     my @current_segment = ();
     my @result2 = ();
-    my @snodes = ();
     # Add undef to enforce flushing of the current segment at the end.
     foreach my $node (@allnodes, undef)
     {
@@ -344,12 +371,10 @@ sub get_mention_span
                 if(scalar(@current_segment) > 1)
                 {
                     push(@result2, $current_segment[0]->get_conllu_id().'-'.$current_segment[-1]->get_conllu_id());
-                    push(@snodes, @current_segment);
                 }
                 elsif(scalar(@current_segment) == 1)
                 {
                     push(@result2, $current_segment[0]->get_conllu_id());
-                    push(@snodes, @current_segment);
                 }
                 @current_segment = ();
                 last if($i >= $n);
@@ -359,18 +384,22 @@ sub get_mention_span
     # For debugging purposes it is useful to also see the word forms of the span, so we will provide them, too.
     my $mspan = join(',', @result2);
     my $mtext = '';
-    for(my $i = 0; $i <= $#snodes; $i++)
+    for(my $i = 0; $i <= $#{$mention->{nodes}}; $i++)
     {
-        $mtext .= $snodes[$i]->form();
-        if($i < $#snodes)
+        $mtext .= $mention->{nodes}[$i]->form();
+        if($i < $#{$mention->{nodes}})
         {
-            unless($snodes[$i+1]->ord() == $snodes[$i]->ord()+1 && $snodes[$i]->no_space_after())
+            unless($mention->{nodes}[$i+1]->ord() == $mention->{nodes}[$i]->ord()+1 && $mention->{nodes}[$i]->no_space_after())
             {
                 $mtext .= ' ';
             }
         }
     }
-    return ($mspan, $mtext, \%snodes);
+    $anode->set_misc_attr('MentionSpan', $mspan);
+    $anode->set_misc_attr('MentionText', $mtext);
+    # We will want to later run A2A::CorefMentionHeads to find out whether the
+    # UD head should be different from the tectogrammatical head, and to move
+    # the mention annotation to the UD head node.
 }
 
 
