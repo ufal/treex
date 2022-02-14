@@ -280,7 +280,7 @@ sub remove_mention_final_punctuation
     my $self = shift;
     my $mention = shift; # hash ref with the attributes of the mention
     my @allnodes = $self->sort_nodes_by_ids($mention->{head}->get_root()->get_descendants());
-    for(my $i = 0; $i <= $#allnodes; $i++)
+    for(my $i = $#allnodes; $i >= 0; $i--)
     {
         my $node = $allnodes[$i];
         if($node == $mention->{nodes}[-1])
