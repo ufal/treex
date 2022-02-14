@@ -104,7 +104,7 @@ sub get_raw_mention_span
                         }
                     }
                     # Unlike the lexical a-node, auxiliary a-nodes may be shared across mentions because we do not have separate empty nodes for them.
-                    my @anodes = $tsn->get_aux_nodes();
+                    my @anodes = $tsn->get_aux_anodes();
                     foreach my $asn (@anodes)
                     {
                         # Check that the a-node is in the same sentence.
