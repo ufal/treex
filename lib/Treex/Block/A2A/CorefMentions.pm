@@ -33,6 +33,13 @@ sub process_atree
             push(@mentions, $mention);
         }
     }
+    # Polishing of the spans may have included shifting of empty nodes, hence
+    # it is no longer guaranteed that all mentions have their lists of nodes
+    # ordered by CoNLL-U ids. Restore the ordering.
+    foreach my $mention (@mentions)
+    {
+        @{$mention->{nodes}} = $self->sort_nodes_by_ids(@{$mention->{nodes}});
+    }
     # Now check that the various mentions in the tree fit together.
     # Crossing spans are suspicious. Nested discontinuous spans are, too.
     $self->check_spans($root, @mentions);
@@ -212,6 +219,9 @@ sub shift_empty_nodes_to_the_rest_of_the_mention
                         # Recompute the span hash.
                         my %span_hash; map {my $id = $_->get_conllu_id(); $span_hash{$id} = $_} (@{$mention->{nodes}});
                         $mention->{span} = \%span_hash;
+                        ###!!! WARNING: We normally rely on the mention nodes to be ordered by their CoNLL-U ids.
+                        # We have not broken the ordering for the current mention.
+                        # However, by moving the node we may have broken the ordering of another mention which also covers this node!
                         last;
                     }
                 }
