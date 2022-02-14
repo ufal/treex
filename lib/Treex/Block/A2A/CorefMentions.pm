@@ -186,7 +186,7 @@ sub polish_mention_span
                 {
                     my $nodej = $allnodes[$j];
                     my $idj = $nodej->get_conllu_id();
-                    if(exists($snodes{$idj}))
+                    if(0 && exists($snodes{$idj}))
                     {
                         # Shifting one empty node may affect ids of other empty nodes and our %snodes and @result may become invalid.
                         # The only thing we can trust is that the mutual order of the nodes in the span will not change.
