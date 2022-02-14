@@ -29,7 +29,7 @@ sub process_atree
             }
             my %span_hash; map {my $id = $_->get_conllu_id(); $span_hash{$id}++} (@mention_nodes);
             my $mention = {'head' => $node, 'cid' => $cid, 'nodes' => \@mention_nodes, 'span' => \%span_hash};
-            $self->polish_mention_span($node, $mention);
+            $self->polish_mention_span($mention);
             push(@mentions, $mention);
         }
     }
@@ -133,10 +133,8 @@ sub get_raw_mention_span
 sub polish_mention_span
 {
     my $self = shift;
-    my $head = shift; # the node at which the mention shall be annotated
     my $mention = shift; # hash ref with the attributes of the mention
-    my @mention_nodes = @{$mention->{nodes}};
-    return if(scalar(@mention_nodes) == 0);
+    return if(scalar(@{$mention->{nodes}}) == 0);
     $self->remove_mention_final_conjunction($mention);
     $self->shift_empty_nodes_to_the_rest_of_the_mention($mention);
     $self->remove_mention_initial_punctuation($mention);
