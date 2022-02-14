@@ -200,7 +200,7 @@ sub shift_empty_nodes_to_the_rest_of_the_mention
         my $node = $allnodes[$i];
         if($node == $mention->{nodes}[0])
         {
-            if($node->is_empty() && !exists($mention->{span}{$allnodes[$i+1]->get_conllu_id()}))
+            if($node->is_empty() && $node != $mention->{nodes}[-1] && !exists($mention->{span}{$allnodes[$i+1]->get_conllu_id()}))
             {
                 for(my $j = $i+2; $j <= $#allnodes; $j++)
                 {
@@ -208,12 +208,11 @@ sub shift_empty_nodes_to_the_rest_of_the_mention
                     my $idj = $nodej->get_conllu_id();
                     if(exists($mention->{span}{$idj}))
                     {
-                        # Shifting one empty node may affect ids of other empty nodes and our %snodes and @result may become invalid.
-                        # The only thing we can trust is that the mutual order of the nodes in the span will not change.
                         $node->shift_empty_node_before_node($nodej);
                         # Recompute the span hash.
                         my %span_hash; map {my $id = $_->get_conllu_id(); $span_hash{$id} = $_} (@{$mention->{nodes}});
                         $mention->{span} = \%span_hash;
+                        last;
                     }
                 }
             }
