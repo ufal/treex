@@ -77,17 +77,7 @@ sub get_raw_mention_span
         my $tnode = $document->get_node_by_id($head->wild()->{'tnode.rf'});
         if(defined($tnode))
         {
-            # We should look for effective descendants, i.e., including shared
-            # dependents of coordination if this node is a conjunct. The
-            # or_topological switch turns off the warning that would otherwise
-            # appear if $tnode is a coap root.
-            # We actually need to search topological descendants anyway because
-            # edescendants do not include coordinating conjunctions, which would
-            # fragment the span.
-            my @edescendants = $tnode->get_edescendants({'add_self' => 1, 'or_topological' => 1});
-            my @descendants = $tnode->get_descendants({'add_self' => 1});
-            my %subtree; map {$subtree{$_->ord()} = $_} (@descendants, @edescendants);
-            my @tsubtree = map {$subtree{$_}} (sort {$a <=> $b} (keys(%subtree)));
+            my @tsubtree = $self->get_t_subtree($tnode);
             foreach my $tsn (@tsubtree)
             {
                 if($tsn->is_generated())
@@ -142,6 +132,58 @@ sub get_raw_mention_span
     }
     my @mention_nodes = $self->sort_nodes_by_ids(values(%snodes));
     return @mention_nodes;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Collects descendants of a t-node in the t-tree. We have been using the
+# following code before writing this function:
+#
+# my @edescendants = $tnode->get_edescendants({'add_self' => 1, 'or_topological' => 1});
+# my @descendants = $tnode->get_descendants({'add_self' => 1});
+# my %subtree; map {$subtree{$_->ord()} = $_} (@descendants, @edescendants);
+# my @tsubtree = map {$subtree{$_}} (sort {$a <=> $b} (keys(%subtree)));
+#
+# However, $tnode->get_edescendants() is not optimal because it treats
+# secondary conjunctions and particles ('nejen', 'především', ...) as shared
+# dependents, while they typically go well only with one conjunct, and also
+# because we do not want to treat apposition as paratactic structure (it is
+# hypotactic in UD).
+#------------------------------------------------------------------------------
+sub get_t_subtree
+{
+    my $self = shift;
+    my $tnode = shift;
+    # First, get the $tnode and all its topological descendants, including
+    # coordinating conjunctions. Those should be there in any case.
+    my @descendants = $tnode->get_descendants({'add_self' => 1});
+    # Second, if $tnode is a conjunct (not an apposition member), collect the
+    # shared dependents. Note that we repeat this step, as the parent may be
+    # a member of larger coordination.
+    for(my $inode = $tnode; $self->tnode_takes_shared_dependents($inode); $inode = $inode->parent())
+    {
+        my $coornode = $inode->parent();
+        my @shared = grep {!$_->is_member()} ($coornode->get_children());
+        # CM: například i ... X, ale například i Y
+        # PREC: však, ovšem, jenže ... u začátku věty
+        # RHEM: ani
+        @shared = grep {$_->functor() !~ m/^(CM|PREC|RHEM)$/} (@shared);
+        push(@descendants, @shared);
+    }
+    return sort {$a->ord() <=> $b->ord()} (@descendants);
+}
+sub tnode_takes_shared_dependents
+{
+    my $self = shift;
+    my $tnode = shift;
+    return 0 if(!$tnode->is_member());
+    my $coapnode = $tnode->parent();
+    return 1 if($coapnode->functor() ne 'APPS');
+    # In apposition, the first member takes the shared dependents, the second
+    # member does not.
+    my @members = grep {$_->is_member()} ($coapnode->get_children({'ordered' => 1}));
+    return $members[0] == $tnode;
 }
 
 
