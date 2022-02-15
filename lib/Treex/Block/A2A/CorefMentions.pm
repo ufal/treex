@@ -93,6 +93,26 @@ sub get_raw_mention_span
                             $snodes{$asn->get_conllu_id()} = $asn;
                         }
                     }
+                    # If there is no empty node corresponding to the generated t-node,
+                    # look for lexical and auxiliary a-nodes after all. This could
+                    # happen when we have removed a #Forn node in A2A::RemoveUnusedEmptyNodes.
+                    # Example: "San Francisco's". The "'s" clitic is linked only to the
+                    # #Forn node that heads "San" and "Francisco". Not including the
+                    # clitic in the span would be an error, especially if it was taken
+                    # as the technical head of a higher #Forn node, spanning
+                    # "in San Francisco's fashionable Marina District".
+                    else
+                    {
+                        my @anodes = ($tsn->get_lex_anode(), $tsn->get_aux_anodes());
+                        foreach my $asn (@anodes)
+                        {
+                            # Check that the a-node is in the same sentence.
+                            if(defined($asn) && $asn->get_root() == $aroot)
+                            {
+                                $snodes{$asn->ord()} = $asn;
+                            }
+                        }
+                    }
                     # Unlike the lexical a-node, auxiliary a-nodes may be shared across mentions because we do not have separate empty nodes for them.
                     ###!!! I am temporarily turning this off. It generates additional issues with crossing mentions that we cannot fully resolve.
                     ###!!! Perhaps we will have to generate empty nodes with copies of the shared auxiliary a-nodes in the future.
