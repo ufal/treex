@@ -643,7 +643,7 @@ sub check_spans
                     # other. This is suspicious at best for two mentions of the
                     # same entity.
                     my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
-                    log_warn("Crossing mentions of entity '$cid':\n$message");
+                    log_warn("Crossing mentions of entity '$mentions[$i]{cid}':\n$message");
                 }
                 elsif(!scalar(@inboth) && $disconti && $discontj && ($firsti < $firstj && $lasti > $firstj || $firstj < $firsti && $lastj > $firsti))
                 {
@@ -652,7 +652,7 @@ sub check_spans
                     # before the other ends; but their intersection is empty,
                     # otherwise we would have reported them as crossing.
                     my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
-                    log_warn("Interleaved mentions of entity '$cid':\n$message");
+                    log_warn("Interleaved mentions of entity '$mentions[$i]{cid}':\n$message");
                 }
                 elsif(scalar(@inboth) && !scalar(@injonly))
                 {
@@ -668,7 +668,7 @@ sub check_spans
                             if(!exists($mentions[$i]{span}{$id}))
                             {
                                 my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
-                                log_warn("Discontinuous nested mentions of entity '$cid' where the inner mention is not covered by a continuous subspan of the outer mention:\n$message");
+                                log_warn("Discontinuous nested mentions of entity '$mentions[$i]{cid}' where the inner mention is not covered by a continuous subspan of the outer mention:\n$message");
                                 last;
                             }
                         }
@@ -688,7 +688,7 @@ sub check_spans
                             if(!exists($mentions[$j]{span}{$id}))
                             {
                                 my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
-                                log_warn("Discontinuous nested mentions of entity '$cid' where the inner mention is not covered by a continuous subspan of the outer mention:\n$message");
+                                log_warn("Discontinuous nested mentions of entity '$mentions[$i]{cid}' where the inner mention is not covered by a continuous subspan of the outer mention:\n$message");
                                 last;
                             }
                         }
@@ -702,7 +702,7 @@ sub check_spans
                     my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
                     my $headi = $mentions[$i]{head}->get_conllu_id().':'.$mentions[$i]{head}->form();
                     my $headj = $mentions[$j]{head}->get_conllu_id().':'.$mentions[$j]{head}->form();
-                    log_warn("Two different mentions of entity '$cid', headed at '$headi' and '$headj' respectively, have identical spans:\n$message");
+                    log_warn("Two different mentions of entity '$mentions[$i]{cid}', headed at '$headi' and '$headj' respectively, have identical spans:\n$message");
                 }
             }
             # Mentions of different entities.
