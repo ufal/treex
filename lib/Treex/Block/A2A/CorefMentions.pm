@@ -169,7 +169,10 @@ sub get_t_subtree
         # PREC: však, ovšem, jenže ... u začátku věty
         # RHEM: ani
         @shared = grep {$_->functor() !~ m/^(CM|PREC|RHEM)$/} (@shared);
-        push(@descendants, @shared);
+        foreach my $s (@shared)
+        {
+            push(@descendants, $s->get_descendants({'add_self' => 1}));
+        }
     }
     return sort {$a->ord() <=> $b->ord()} (@descendants);
 }
