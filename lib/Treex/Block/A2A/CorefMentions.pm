@@ -339,7 +339,7 @@ sub remove_mention_initial_punctuation
             {
                 my $nodej = $allnodes[$j];
                 my $idj = $nodej->get_conllu_id();
-                if($nodej == $mention->{nodes}[-1] || exists($mention->{span}{$idj}) && !($nodej->is_punctuation() || $nodej->deprel() =~ m/^punct(:|$)/))
+                if($nodej == $mention->{nodes}[-1] || $nodej == $mention->{head} || exists($mention->{span}{$idj}) && !($nodej->is_punctuation() || $nodej->deprel() =~ m/^punct(:|$)/))
                 {
                     # The first segment is the only segment, or
                     # the first segment does not consist exclusively of nodes that could be discarded.
@@ -385,7 +385,7 @@ sub remove_mention_final_punctuation
             {
                 my $nodej = $allnodes[$j];
                 my $idj = $nodej->get_conllu_id();
-                if($nodej == $mention->{nodes}[0] || exists($mention->{span}{$idj}) && !($nodej->is_punctuation() || $nodej->deprel() =~ m/^punct(:|$)/))
+                if($nodej == $mention->{nodes}[0] || $nodej == $mention->{head} || exists($mention->{span}{$idj}) && !($nodej->is_punctuation() || $nodej->deprel() =~ m/^punct(:|$)/))
                 {
                     # The last segment is the only segment, or
                     # the last segment does not consist exclusively of nodes that could be discarded.
