@@ -584,68 +584,65 @@ sub check_spans
     my $root = shift;
     my @mentions = @_;
     my @allnodes = $self->sort_nodes_by_ids($root->get_descendants());
-    # The worst troubles arise with pairs of mentions of the same entity.
-    my %cids; map {$cids{$_->{cid}}++} (@mentions);
-    my @cids = sort(keys(%cids));
-    foreach my $cid (@cids)
+    for(my $i = 0; $i <= $#mentions; $i++)
     {
-        my @cidmentions = grep {$_->{cid} eq $cid} (@mentions);
-        for(my $i = 0; $i <= $#cidmentions; $i++)
+        for(my $j = $i+1; $j <= $#mentions; $j++)
         {
-            for(my $j = $i+1; $j <= $#cidmentions; $j++)
+            # Get the overlap of the two spans.
+            my (@inboth, @inionly, @injonly, @innone);
+            my ($firstid, $lastid, $firsti, $lasti, $firstj, $lastj, $firstgapi, $firstgapj);
+            for(my $k = 0; $k <= $#allnodes; $k++)
             {
-                # Get the overlap of the two spans.
-                my (@inboth, @inionly, @injonly, @innone);
-                my ($firstid, $lastid, $firsti, $lasti, $firstj, $lastj, $firstgapi, $firstgapj);
-                for(my $k = 0; $k <= $#allnodes; $k++)
+                my $node = $allnodes[$k];
+                my $id = $node->get_conllu_id();
+                if(exists($mentions[$i]{span}{$id}))
                 {
-                    my $node = $allnodes[$k];
-                    my $id = $node->get_conllu_id();
-                    if(exists($cidmentions[$i]{span}{$id}))
+                    if(exists($mentions[$j]{span}{$id}))
                     {
-                        if(exists($cidmentions[$j]{span}{$id}))
-                        {
-                            push(@inboth, $id);
-                            $firstj = $k if(!defined($firstj));
-                            $lastj = $k;
-                        }
-                        else
-                        {
-                            push(@inionly, $id);
-                            $firstgapj = $k if(defined($firstj) && !defined($firstgapj));
-                        }
-                        $firstid = $id if(!defined($firstid));
-                        $lastid = $id;
-                        $firsti = $k if(!defined($firsti));
-                        $lasti = $k;
+                        push(@inboth, $id);
+                        $firstj = $k if(!defined($firstj));
+                        $lastj = $k;
                     }
                     else
                     {
-                        if(exists($cidmentions[$j]{span}{$id}))
-                        {
-                            push(@injonly, $id);
-                            $firstid = $id if(!defined($firstid));
-                            $lastid = $id;
-                            $firstj = $k if(!defined($firstj));
-                            $lastj = $k;
-                        }
-                        else
-                        {
-                            push(@innone, $id);
-                            $firstgapj = $k if(defined($firstj) && !defined($firstgapj));
-                        }
-                        $firstgapi = $k if(defined($firsti) && !defined($firstgapi));
+                        push(@inionly, $id);
+                        $firstgapj = $k if(defined($firstj) && !defined($firstgapj));
                     }
+                    $firstid = $id if(!defined($firstid));
+                    $lastid = $id;
+                    $firsti = $k if(!defined($firsti));
+                    $lasti = $k;
                 }
-                my $disconti = defined($firstgapi) && $firstgapi < $lasti;
-                my $discontj = defined($firstgapj) && $firstgapj < $lastj;
+                else
+                {
+                    if(exists($mentions[$j]{span}{$id}))
+                    {
+                        push(@injonly, $id);
+                        $firstid = $id if(!defined($firstid));
+                        $lastid = $id;
+                        $firstj = $k if(!defined($firstj));
+                        $lastj = $k;
+                    }
+                    else
+                    {
+                        push(@innone, $id);
+                        $firstgapj = $k if(defined($firstj) && !defined($firstgapj));
+                    }
+                    $firstgapi = $k if(defined($firsti) && !defined($firstgapi));
+                }
+            }
+            my $disconti = defined($firstgapi) && $firstgapi < $lasti;
+            my $discontj = defined($firstgapj) && $firstgapj < $lastj;
+            # The worst troubles arise with pairs of mentions of the same entity.
+            if($mentions[$i]{cid} eq $mentions[$j]{cid})
+            {
                 if(scalar(@inboth) && scalar(@inionly) && scalar(@injonly))
                 {
                     # The mentions are crossing because their spans have a non-
                     # empty intersection and none of them is a subset of the
                     # other. This is suspicious at best for two mentions of the
                     # same entity.
-                    my $message = $self->visualize_two_spans($firstid, $lastid, $cidmentions[$i]{span}, $cidmentions[$j]{span}, @allnodes);
+                    my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
                     log_warn("Crossing mentions of entity '$cid':\n$message");
                 }
                 elsif(!scalar(@inboth) && $disconti && $discontj && ($firsti < $firstj && $lasti > $firstj || $firstj < $firsti && $lastj > $firsti))
@@ -654,7 +651,7 @@ sub check_spans
                     # the other, continues past the start of the other but ends
                     # before the other ends; but their intersection is empty,
                     # otherwise we would have reported them as crossing.
-                    my $message = $self->visualize_two_spans($firstid, $lastid, $cidmentions[$i]{span}, $cidmentions[$j]{span}, @allnodes);
+                    my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
                     log_warn("Interleaved mentions of entity '$cid':\n$message");
                 }
                 elsif(scalar(@inboth) && !scalar(@injonly))
@@ -668,9 +665,9 @@ sub check_spans
                         for(my $k = $firstj; $k <= $lastj; $k++)
                         {
                             my $id = $allnodes[$k]->get_conllu_id();
-                            if(!exists($cidmentions[$i]{span}{$id}))
+                            if(!exists($mentions[$i]{span}{$id}))
                             {
-                                my $message = $self->visualize_two_spans($firstid, $lastid, $cidmentions[$i]{span}, $cidmentions[$j]{span}, @allnodes);
+                                my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
                                 log_warn("Discontinuous nested mentions of entity '$cid' where the inner mention is not covered by a continuous subspan of the outer mention:\n$message");
                                 last;
                             }
@@ -688,9 +685,9 @@ sub check_spans
                         for(my $k = $firsti; $k <= $lasti; $k++)
                         {
                             my $id = $allnodes[$k]->get_conllu_id();
-                            if(!exists($cidmentions[$j]{span}{$id}))
+                            if(!exists($mentions[$j]{span}{$id}))
                             {
-                                my $message = $self->visualize_two_spans($firstid, $lastid, $cidmentions[$i]{span}, $cidmentions[$j]{span}, @allnodes);
+                                my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
                                 log_warn("Discontinuous nested mentions of entity '$cid' where the inner mention is not covered by a continuous subspan of the outer mention:\n$message");
                                 last;
                             }
@@ -702,16 +699,30 @@ sub check_spans
                     # The mentions have identical spans. It should be only one
                     # mention. Note that here we are comparing mentions from
                     # the same cluster.
-                    ###!!! We should check this also for mentions of different
-                    ###!!! clusters! If they have identical spans, something is
-                    ###!!! definitely wrong! I have seen one such example in
-                    ###!!! train/ln95045_097.treex#5. It was caused by annotation
-                    ###!!! error: second conjunct lacked is_member and was
-                    ###!!! treated as a shared modifier of the first conjunct.
-                    my $message = $self->visualize_two_spans($firstid, $lastid, $cidmentions[$i]{span}, $cidmentions[$j]{span}, @allnodes);
-                    my $headi = $cidmentions[$i]{head}->get_conllu_id().':'.$cidmentions[$i]{head}->form();
-                    my $headj = $cidmentions[$j]{head}->get_conllu_id().':'.$cidmentions[$j]{head}->form();
+                    my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
+                    my $headi = $mentions[$i]{head}->get_conllu_id().':'.$mentions[$i]{head}->form();
+                    my $headj = $mentions[$j]{head}->get_conllu_id().':'.$mentions[$j]{head}->form();
                     log_warn("Two different mentions of entity '$cid', headed at '$headi' and '$headj' respectively, have identical spans:\n$message");
+                }
+            }
+            # Mentions of different entities.
+            else
+            {
+                if(scalar(@inboth) && !scalar(@inionly) && !scalar(@injonly))
+                {
+                    # The mentions have identical spans, although they belong
+                    # to different entities. This is a deeper issue than with
+                    # mentions of same entity because if we want to fix it,
+                    # we have to merge the whole clusters (i.e., re-annotate
+                    # all mentions of one of the clusters).
+                    # I have seen one such example in train/ln95045_097.treex#5.
+                    # It was caused by annotation error: a second conjunct
+                    # lacked is_member and was treated as a shared modifier of
+                    # the first conjunct.
+                    my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
+                    my $headi = $mentions[$i]{head}->get_conllu_id().':'.$mentions[$i]{head}->form();
+                    my $headj = $mentions[$j]{head}->get_conllu_id().':'.$mentions[$j]{head}->form();
+                    log_warn("Mentions of entities '$mentions[$i]{cid}' and '$mentions[$j]{cid}', headed at '$headi' and '$headj' respectively, have identical spans:\n$message");
                 }
             }
         }
