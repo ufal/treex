@@ -2,6 +2,7 @@ package Treex::Block::A2A::CorefClusters;
 use utf8;
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Coreference::Cluster;
 extends 'Treex::Core::Block';
 
 
@@ -25,7 +26,7 @@ sub process_anode
         {
             # Do we already have a cluster id?
             my $current_cluster_id = $anode->get_misc_attr('ClusterId');
-            my $current_cluster_type = $self->get_cluster_type($anode);
+            my $current_cluster_type = Treex::Tool::Coreference::Cluster::get_cluster_type($anode);
             # Get coreference edges.
             my ($cnodes, $ctypes) = $tnode->get_coref_nodes({'with_types' => 1});
             ###!!! Anja naznačovala, že pokud z jednoho uzlu vede více než jedna hrana gramatické koreference,
@@ -48,12 +49,12 @@ sub process_anode
                     if(!defined($ctype) && $ng >= 2)
                     {
                         ###!!! Debugging: Mark instances of grammatical coreference with multiple antecedents.
-                        $self->add_mention_misc($canode, 'GramCorefSplitTo');
-                        $self->add_mention_misc($anode, 'GramCorefSplitFrom');
+                        Treex::Tool::Coreference::Cluster::add_mention_misc($canode, 'GramCorefSplitTo');
+                        Treex::Tool::Coreference::Cluster::add_mention_misc($anode, 'GramCorefSplitFrom');
                     }
                     # Does the target node already have a cluster id and type?
                     my $current_target_cluster_id = $canode->get_misc_attr('ClusterId');
-                    my $current_target_cluster_type = $self->get_cluster_type($canode);
+                    my $current_target_cluster_type = Treex::Tool::Coreference::Cluster::get_cluster_type($canode);
                     $current_cluster_type = $self->process_cluster_type($ctype, $current_cluster_type, $anode, $current_target_cluster_type, $canode);
                     if(defined($current_cluster_id) && defined($current_target_cluster_id))
                     {
@@ -61,25 +62,25 @@ sub process_anode
                         if($current_cluster_id ne $current_target_cluster_id)
                         {
                             # Merge the two clusters. Use the lower id. The higher id will remain unused.
-                            $self->merge_clusters($current_cluster_id, $anode, $current_target_cluster_id, $canode, $current_cluster_type);
+                            Treex::Tool::Coreference::Cluster::merge_clusters($current_cluster_id, $anode, $current_target_cluster_id, $canode, $current_cluster_type);
                         }
                     }
                     elsif(defined($current_cluster_id))
                     {
                         # It is possible that the cluster does not have a type yet.
-                        $self->mark_cluster_type($anode, $current_cluster_type) if(defined($current_cluster_type));
-                        $self->add_nodes_to_cluster($current_cluster_id, $anode, $canode);
+                        Treex::Tool::Coreference::Cluster::mark_cluster_type($anode, $current_cluster_type) if(defined($current_cluster_type));
+                        Treex::Tool::Coreference::Cluster::add_nodes_to_cluster($current_cluster_id, $anode, $canode);
                     }
                     elsif(defined($current_target_cluster_id))
                     {
                         # It is possible that the cluster does not have a type yet.
-                        $self->mark_cluster_type($canode, $current_cluster_type) if(defined($current_cluster_type));
-                        $self->add_nodes_to_cluster($current_target_cluster_id, $canode, $anode);
+                        Treex::Tool::Coreference::Cluster::mark_cluster_type($canode, $current_cluster_type) if(defined($current_cluster_type));
+                        Treex::Tool::Coreference::Cluster::add_nodes_to_cluster($current_target_cluster_id, $canode, $anode);
                         $current_cluster_id = $current_target_cluster_id;
                     }
                     else
                     {
-                        $current_cluster_id = $self->create_cluster($current_cluster_type, $anode, $canode);
+                        $current_cluster_id = Treex::Tool::Coreference::Cluster::create_cluster($self->get_new_cluster_id($anode), $current_cluster_type, $anode, $canode);
                     }
                 }
                 else
@@ -192,7 +193,7 @@ sub process_cluster_type
     if(defined($srctype) && defined($ctype) && $srctype ne $ctype)
     {
         log_warn("Cluster type mismatch.");
-        $self->add_mention_misc($srcnode, "ClusterTypeMismatch:$srctype:$ctype:1"); # :1 identifies where the error occurred in the source code
+        Treex::Tool::Coreference::Cluster::add_mention_misc($srcnode, "ClusterTypeMismatch:$srctype:$ctype:1"); # :1 identifies where the error occurred in the source code
         # This mismatch is less likely than the other one below, as it would occur
         # between two coreference edges originating at the same source node. We
         # do not change $srctype, so the current edge will, too, use the previously
@@ -208,20 +209,20 @@ sub process_cluster_type
     if(defined($srctype) && defined($tgttype) && $srctype ne $tgttype)
     {
         log_warn("Cluster type mismatch.");
-        $self->add_mention_misc($srcnode, "ClusterTypeMismatch:$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
-        $self->add_mention_misc($tgtnode, "ClusterTypeMismatch:$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
+        Treex::Tool::Coreference::Cluster::add_mention_misc($srcnode, "ClusterTypeMismatch:$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
+        Treex::Tool::Coreference::Cluster::add_mention_misc($tgtnode, "ClusterTypeMismatch:$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
         # The conflict can be only between 'gen' and 'spec'. We will unify the type and give priority to 'gen'
         # (Anja says that the annotators looked specifically for 'gen', then batch-annotated everything else as 'spec').
         # Mark the new type at all nodes that are already in the cluster. We were called before the new coreference link is added,
         # so we do this for both nodes and both partial clusters.
-        $self->mark_cluster_type($srcnode, 'gen');
-        $self->mark_cluster_type($tgtnode, 'gen');
+        Treex::Tool::Coreference::Cluster::mark_cluster_type($srcnode, 'gen');
+        Treex::Tool::Coreference::Cluster::mark_cluster_type($tgtnode, 'gen');
         $srctype = $tgttype = $ctype = 'gen';
     }
     # If the target subcluster did not have a type until now, and we have a type now, propagate it there.
     if(defined($srctype) && defined($tgtnode) && !defined($tgttype))
     {
-        $self->mark_cluster_type($tgtnode, $srctype);
+        Treex::Tool::Coreference::Cluster::mark_cluster_type($tgtnode, $srctype);
     }
     return $srctype;
 }
@@ -298,65 +299,37 @@ sub mark_bridging
     my @bridging = ();
     @bridging = split(/,/, $bridging) if(defined($bridging));
     # Does the source node already have a cluster id?
-    # We don't need it (unlike for target node) and the specification currently
-    # does not require it but it is cleaner to create a singleton cluster anyway
-    # because bridging is defined as a relation between clusters.
+    # We need it even if the cluster will be a singleton because bridging is
+    # defined as a relation between clusters.
     my $current_source_cluster_id = $srcnode->get_misc_attr('ClusterId');
     if(!defined($current_source_cluster_id))
     {
-        $current_source_cluster_id = $self->create_cluster(undef, $srcnode);
+        $current_source_cluster_id = Treex::Tool::Coreference::Cluster::create_cluster($self->get_new_cluster_id($srcnode), undef, $srcnode);
     }
     # Does the target node already have a cluster id?
     my $current_target_cluster_id = $tgtnode->get_misc_attr('ClusterId');
     if(!defined($current_target_cluster_id))
     {
-        $current_target_cluster_id = $self->create_cluster(undef, $tgtnode);
+        $current_target_cluster_id = Treex::Tool::Coreference::Cluster::create_cluster($self->get_new_cluster_id($tgtnode), undef, $tgtnode);
     }
     push(@bridging, "$current_target_cluster_id:$btype");
     if(scalar(@bridging) > 0)
     {
-        @bridging = sort_bridging(@bridging);
+        @bridging = Treex::Tool::Coreference::Cluster::sort_bridging(@bridging);
         $srcnode->set_misc_attr('Bridging', join(',', @bridging));
-        $self->add_bridging_to_cluster($tgtnode, $srcnode);
+        Treex::Tool::Coreference::Cluster::add_bridging_to_cluster($tgtnode, $srcnode);
     }
 }
 
 
 
 #------------------------------------------------------------------------------
-# Sorts an array of bridging relations to be stored in MISC/Bridging.
+# Returns the next available cluster id for the current document.
 #------------------------------------------------------------------------------
-sub sort_bridging
-{
-    return sort
-    {
-        my $aid = 0;
-        my $bid = 0;
-        if($a =~ m/^c(\d+):$/)
-        {
-            $aid = $1;
-        }
-        if($b =~ m/^c(\d+):$/)
-        {
-            $bid = $1;
-        }
-        $aid <=> $bid
-    }
-    (@_);
-}
-
-
-
-#------------------------------------------------------------------------------
-# Takes a list of nodes and creates a new cluster around them. Returns the id
-# of the cluster.
-#------------------------------------------------------------------------------
-sub create_cluster
+sub get_new_cluster_id
 {
     my $self = shift;
-    my $type = shift; # may be undef
-    my @nodes = @_;
-    log_fatal("At least one node is needed to create a cluster.") if(scalar(@nodes)==0);
+    my $node = shift; # we need a node to be able to access the bundle
     # We need a new cluster id.
     # In released data, the ClusterId should be just 'c' + natural number.
     # However, larger unique strings are allowed during intermediate stages,
@@ -364,7 +337,7 @@ sub create_cluster
     # in one file. Clusters never span multiple documents, so we will insert
     # the document id. Since Treex documents do not have an id attribute, we
     # will assume that a prefix of the bundle id uniquely identifies the document.
-    my $docid = $nodes[0]->get_bundle()->id();
+    my $docid = $node->get_bundle()->id();
     # In PDT, remove trailing '-p1s1' (paragraph and sentence number).
     # In PCEDT, remove trailing '-s1' (there are no paragraph boundaries).
     $docid =~ s/-(p[0-9A-Z]+)?s[0-9A-Z]+$//;
@@ -382,349 +355,7 @@ sub create_cluster
     $last_cluster_id++;
     $self->set_last_cluster_id($last_cluster_id);
     my $id = $docid.'c'.$last_cluster_id;
-    # Remember references to all cluster members from all cluster members.
-    # We may later need to revisit all cluster members and this will help
-    # us find them.
-    my @cluster_member_ids = map {$_->id()} (@nodes);
-    foreach my $node (@nodes)
-    {
-        $self->anode_must_have_tnode($node);
-        $node->set_misc_attr('ClusterId', $id);
-        $self->set_cluster_type($node, $type);
-        @{$node->wild()->{cluster_members}} = @cluster_member_ids;
-    }
     return $id;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Adds a new node (meaning the entire mention headed by that node) to an
-# existing cluster.
-#------------------------------------------------------------------------------
-sub add_nodes_to_cluster
-{
-    my $self = shift;
-    my $id = shift;
-    my $current_member_node = shift; # a node that already bears a mention that is in the cluster
-    my @new_members = @_;
-    my $document = $current_member_node->get_document();
-    my $current_members = $current_member_node->wild()->{cluster_members};
-    # Sanity check: if $current_member_node already bears a mention, it must have a non-empty list of members.
-    if(!defined($current_members) || ref($current_members) ne 'ARRAY' || scalar(@{$current_members}) == 0)
-    {
-        log_fatal("An existing cluster must have at least one member.");
-    }
-    # Figure out the type of the cluster. If the cluster started with undefined type
-    # and a new coreference link contributes the type, then the type must be distributed
-    # to all old members of the cluster before this function (add_nodes_to_cluster()) is called.
-    my $type = $self->get_cluster_type($document->get_node_by_id($current_members->[0]));
-    # Do not try to add nodes that are already in the cluster.
-    @new_members = grep {my $id = $_->id(); !any {$_ eq $id} (@{$current_members})} (@new_members);
-    return if(scalar(@new_members) == 0);
-    my @cluster_member_ids = sort(@{$current_members}, (map {$_->id()} (@new_members)));
-    foreach my $id (@cluster_member_ids)
-    {
-        my $node = $document->get_node_by_id($id);
-        @{$node->wild()->{cluster_members}} = @cluster_member_ids;
-    }
-    foreach my $node (@new_members)
-    {
-        $self->anode_must_have_tnode($node);
-        $node->set_misc_attr('ClusterId', $id);
-        $self->set_cluster_type($node, $type);
-        if(exists($current_member_node->wild()->{bridging_sources}))
-        {
-            @{$node->wild()->{bridging_sources}} = @{$current_member_node->wild()->{bridging_sources}};
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Adds a bridging reference to a cluster. That is, adds the id of a source node
-# of a bridging relation that ends in this cluster. The source node is in a
-# different cluster. However, it remembers our cluster id and if we change it,
-# the source node must update it accordingly.
-#------------------------------------------------------------------------------
-sub add_bridging_to_cluster
-{
-    my $self = shift;
-    my $current_member_node = shift; # a node that already bears a mention that is in the cluster
-    my @referring_nodes = @_; # list of nodes (not node ids)
-    my $document = $current_member_node->get_document();
-    my $current_members = $current_member_node->wild()->{cluster_members};
-    # Sanity check: if $current_member_node already bears a mention, it must have a non-empty list of members.
-    if(!defined($current_members) || ref($current_members) ne 'ARRAY' || scalar(@{$current_members}) == 0)
-    {
-        log_fatal("An existing cluster must have at least one member.");
-    }
-    # Sanity check: the referring nodes must not be members of the target cluster.
-    foreach my $srcnode (@referring_nodes)
-    {
-        if(any {$_ eq $srcnode->id()} (@{$current_members}))
-        {
-            log_fatal("The source node of bridging must not be a member of the target cluster.");
-        }
-    }
-    # Get the current bridging references, if any.
-    my @bridging = ();
-    if(exists($current_member_node->wild()->{bridging_sources}))
-    {
-        @bridging = @{$current_member_node->wild()->{bridging_sources}};
-    }
-    # Do not add nodes that are already there.
-    @referring_nodes = grep {my $id = $_->id(); !any {$_ eq $id} (@bridging)} (@referring_nodes);
-    return if(scalar(@referring_nodes) == 0);
-    push(@bridging, (map {$_->id()} (@referring_nodes)));
-    foreach my $id (@{$current_members})
-    {
-        my $node = $document->get_node_by_id($id);
-        @{$node->wild()->{bridging_sources}} = @bridging;
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Marks a cluster type at all nodes in the cluster. This method can be used if
-# the cluster type was originally unknown (because the cluster was created
-# around grammatical coreference) but later we learned the type from a new
-# text coreference edge.
-#------------------------------------------------------------------------------
-sub mark_cluster_type
-{
-    my $self = shift;
-    my $node1 = shift; # a node in the cluster
-    my $type = shift; # cannot be undef this time, it wouldn't make sense
-    log_fatal("Missing parameter.") if(!defined($node1) || !defined($type));
-    # If we try to mark cluster type on a node that is not yet in the cluster,
-    # do nothing. It will be marked later.
-    return if(!exists($node1->wild()->{cluster_members}));
-    my @cluster_member_ids = sort(@{$node1->wild()->{cluster_members}});
-    my $document = $node1->get_document();
-    foreach my $id (@cluster_member_ids)
-    {
-        my $node = $document->get_node_by_id($id);
-        $self->set_cluster_type($node, $type);
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# For a node that bears annotation of a coreference mention, sets the type of
-# the coreference cluster.
-#------------------------------------------------------------------------------
-sub set_cluster_type
-{
-    my $self = shift;
-    my $node = shift;
-    my $type = shift;
-    my @mmisc = grep {!m/^gstype:/} ($self->get_mention_misc($node));
-    $self->set_mention_misc($node, @mmisc);
-    $self->add_mention_misc($node, "gstype:$type") if(defined($type));
-}
-
-
-
-#------------------------------------------------------------------------------
-# For a node that bears annotation of a coreference mention, gets the type of
-# the coreference cluster.
-#------------------------------------------------------------------------------
-sub get_cluster_type
-{
-    my $self = shift;
-    my $node = shift;
-    my @gstypes = grep {m/^gstype:/} ($self->get_mention_misc($node));
-    if(scalar(@gstypes) > 0)
-    {
-        $gstypes[0] =~ m/^gstype:(.*)$/;
-        return $1;
-    }
-    else
-    {
-        return undef;
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Merges two clusters.
-#------------------------------------------------------------------------------
-sub merge_clusters
-{
-    my $self = shift;
-    my $cid1 = shift;
-    my $node1 = shift; # a node from cluster 1
-    my $cid2 = shift;
-    my $node2 = shift; # a node from cluster 2
-    my $type = shift; # may be undef
-    # Merge the two clusters. Use the lower id. The higher id will remain unused.
-    my $id1 = $cid1;
-    my $id2 = $cid2;
-    $id1 =~ s/^(.*)c(\d+)$/$2/;
-    $id2 =~ s/^(.*)c(\d+)$/$2/;
-    my $merged_id = $1.'c'.($id1 < $id2 ? $id1 : $id2);
-    my @cluster_member_ids = sort(@{$node1->wild()->{cluster_members}}, @{$node2->wild()->{cluster_members}});
-    my @bridging_source_ids_1 = exists($node1->wild()->{bridging_sources}) ? @{$node1->wild()->{bridging_sources}} : ();
-    my @bridging_source_ids_2 = exists($node2->wild()->{bridging_sources}) ? @{$node2->wild()->{bridging_sources}} : ();
-    my @bridging_source_ids = ();
-    my $document = $node1->get_document();
-    # Update any bridging references to the first cluster.
-    foreach my $srcid (@bridging_source_ids_1)
-    {
-        my $srcnode = $document->get_node_by_id($srcid);
-        my $bridging = $srcnode->get_misc_attr('Bridging');
-        my @bridging = split(/,/, $bridging);
-        foreach my $b (@bridging)
-        {
-            my ($cid, $rel) = split(/:/, $b);
-            if($cid eq $cid1)
-            {
-                $b = "$merged_id:$rel";
-            }
-        }
-        $srcnode->set_misc_attr('Bridging', join(',', sort_bridging(@bridging)));
-        push(@bridging_source_ids, $srcid);
-    }
-    # Update any bridging references to the second cluster.
-    foreach my $srcid (@bridging_source_ids_2)
-    {
-        my $srcnode = $document->get_node_by_id($srcid);
-        my $bridging = $srcnode->get_misc_attr('Bridging');
-        my @bridging = split(/,/, $bridging);
-        foreach my $b (@bridging)
-        {
-            my ($cid, $rel) = split(/:/, $b);
-            if($cid eq $cid2)
-            {
-                $b = "$merged_id:$rel";
-            }
-        }
-        $srcnode->set_misc_attr('Bridging', join(',', sort_bridging(@bridging)));
-        if(!any {$_ eq $srcid} (@bridging_source_ids_1))
-        {
-            push(@bridging_source_ids, $srcid);
-        }
-    }
-    foreach my $id (@cluster_member_ids)
-    {
-        my $node = $document->get_node_by_id($id);
-        $node->set_misc_attr('ClusterId', $merged_id);
-        $self->set_cluster_type($node, $type);
-        @{$node->wild()->{cluster_members}} = @cluster_member_ids;
-        if(scalar(@bridging_source_ids) > 0)
-        {
-            @{$node->wild()->{bridging_sources}} = @bridging_source_ids;
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Adds a temporary attribute that pertains to a mention but is not recognized
-# in our CorefUD specification. We use a double-miscellaneous approach: within
-# the MISC column of CoNLL-U, all such attributes must be compressed within the
-# value of a MentionMisc attribute. This is needed so that Udapi can preserve
-# the attributes when manipulating mention annotation.
-#------------------------------------------------------------------------------
-sub add_mention_misc
-{
-    my $self = shift;
-    my $node = shift;
-    my $attr = shift; # a string to add; it should not contain the '=' character because it could confuse Udapi when it decodes MentionMisc=...
-    if(!defined($attr) || $attr eq '')
-    {
-        log_fatal("Cannot add an empty attribute to MentionMisc.");
-    }
-    # We do not want any whitespace characters in MentionMisc, although the plain space character (' ') would not violate the CoNLL-U format.
-    if($attr =~ m/^[-=\|\s]$/)
-    {
-        log_fatal("The MentionMisc attribute '$attr' contains disallowed characters.");
-    }
-    my $mmisc = $node->get_misc_attr('MentionMisc');
-    # Delimiters within the value of MentionMisc are not part of the CorefUD specification.
-    # We use the comma ','.
-    my @mmisc = ();
-    if(defined($mmisc))
-    {
-        @mmisc = split(',', $mmisc);
-    }
-    unless(any {$_ eq $attr} (@mmisc))
-    {
-        push(@mmisc, $attr);
-    }
-    $mmisc = join(',', @mmisc);
-    $node->set_misc_attr('MentionMisc', $mmisc);
-}
-
-
-
-#------------------------------------------------------------------------------
-# Takes the new contents of MentionMisc as a list of strings, serializes it and
-# sets the MentionMisc attribute. Can be used by the caller to filter the
-# values and set the result back to MentionMisc.
-#------------------------------------------------------------------------------
-sub set_mention_misc
-{
-    my $self = shift;
-    my $node = shift;
-    my @mmisc = @_;
-    if(scalar(@mmisc) > 0)
-    {
-        # Delimiters within the value of MentionMisc are not part of the CorefUD specification.
-        # We use the comma ','.
-        my $mmisc = join(',', @mmisc);
-        $node->set_misc_attr('MentionMisc', $mmisc);
-    }
-    else
-    {
-        $node->clear_misc_attr('MentionMisc');
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Returns the current contents of MentionMisc as a list of strings. The caller
-# may than look for a specific value or attribute-value pair, as in
-# grep {m/^gstype:/} ($self->get_mention_misc($node));
-#------------------------------------------------------------------------------
-sub get_mention_misc
-{
-    my $self = shift;
-    my $node = shift;
-    my $mmisc = $node->get_misc_attr('MentionMisc');
-    # Delimiters within the value of MentionMisc are not part of the CorefUD specification.
-    # We use the comma ','.
-    my @mmisc = ();
-    if(defined($mmisc))
-    {
-        @mmisc = split(',', $mmisc);
-    }
-    return @mmisc;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Checks whether a node can represent a mention in a cluster, and throws an
-# exception if not. A-nodes of function words and punctuation are not eligible
-# because they are not linked to the t-layer.
-#------------------------------------------------------------------------------
-sub anode_must_have_tnode
-{
-    my $self = shift;
-    my $anode = shift;
-    if(!exists($anode->wild()->{'tnode.rf'}))
-    {
-        my $form = $anode->form() // '';
-        log_fatal("Node '$form' cannot represent a mention because it is not linked to the t-layer.");
-    }
 }
 
 
