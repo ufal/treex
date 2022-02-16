@@ -260,15 +260,24 @@ sub sort_bridging
     {
         my $aid = 0;
         my $bid = 0;
-        if($a =~ m/^c(\d+):$/)
+        my $adoc = '';
+        my $bdoc = '';
+        if($a =~ m/^(.*c)(\d+):$/)
         {
-            $aid = $1;
+            $adoc = $1;
+            $aid = $2;
         }
-        if($b =~ m/^c(\d+):$/)
+        if($b =~ m/^(.*c)(\d+):$/)
         {
-            $bid = $1;
+            $bdoc = $1;
+            $bid = $2;
         }
-        $aid <=> $bid
+        my $r = $adoc cmp $bdoc;
+        unless($r)
+        {
+            $r = $aid <=> $bid;
+        }
+        $r
     }
     (@_);
 }
