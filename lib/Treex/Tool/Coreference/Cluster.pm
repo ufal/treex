@@ -36,7 +36,7 @@ sub create_cluster
 #------------------------------------------------------------------------------
 sub add_nodes_to_cluster
 {
-    my $id = shift;
+    my $cid = shift; # cluster id
     my $current_member_node = shift; # a node that already bears a mention that is in the cluster
     my @new_members = @_;
     my $document = $current_member_node->get_document();
@@ -62,11 +62,86 @@ sub add_nodes_to_cluster
     foreach my $node (@new_members)
     {
         anode_must_have_tnode($node);
-        $node->set_misc_attr('ClusterId', $id);
+        $node->set_misc_attr('ClusterId', $cid);
         set_cluster_type($node, $type);
         if(exists($current_member_node->wild()->{bridging_sources}))
         {
             @{$node->wild()->{bridging_sources}} = @{$current_member_node->wild()->{bridging_sources}};
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Removes a node (meaning the entire mention headed by that node) from a
+# cluster.
+#------------------------------------------------------------------------------
+sub remove_nodes_from_cluster
+{
+    my @nodes = @_;
+    return if(scalar(@nodes) == 0);
+    my $document = $nodes[0]->get_document();
+    my $current_member_ids = $nodes[0]->wild()->{cluster_members};
+    my @bridging_source_ids = exists($nodes[0]->wild()->{bridging_sources}) ? @{$nodes[0]->wild()->{bridging_sources}} : ();
+    my $cid;
+    my %removed_node_ids;
+    foreach my $node (@nodes)
+    {
+        my $ncid = $node->get_misc_attr('ClusterId');
+        if($ncid eq '')
+        {
+            log_fatal("Cannot remove node from cluster. This node is not in any cluster.");
+        }
+        if(!defined($cid))
+        {
+            $cid = $ncid;
+        }
+        elsif($ncid ne $cid)
+        {
+            log_fatal("Previous nodes were in cluster '$cid' but this node is in cluster '$ncid'.");
+        }
+        $removed_node_ids{$node->id()}++;
+        $node->clear_misc_attr('ClusterId');
+        $node->clear_misc_attr('MentionMisc');
+        $node->clear_misc_attr('Bridging');
+        ###!!! The target nodes of the bridging relation have back references
+        ###!!! to me! We must remove them, too! Unfortunately, we cannot find
+        ###!!! the target nodes. We only know their cluster id, but not the id
+        ###!!! of any member node.
+        delete($node->wild()->{cluster_members});
+        delete($node->wild()->{bridging_sources});
+    }
+    my @cluster_member_ids = grep {!exists($removed_node_ids{$_})} (@{$current_member_ids});
+    foreach my $id (@cluster_member_ids)
+    {
+        my $node = $document->get_node_by_id($id);
+        @{$node->wild()->{cluster_members}} = @cluster_member_ids;
+    }
+    # If no nodes remain in the cluster, the cluster is dead.
+    # If any other cluster refers to it via a bridging relation, we must remove
+    # the bridging, too.
+    if(scalar(@cluster_member_ids) == 0)
+    {
+        foreach my $srcid (@bridging_source_ids)
+        {
+            my $srcnode = $document->get_node_by_id($srcid);
+            my $bridging = $srcnode->get_misc_attr('Bridging');
+            my @bridging = split(/,/, $bridging);
+            @bridging = grep
+            {
+                my ($bcid, $rel) = split(/:/, $_);
+                $bcid ne $cid
+            }
+            (@bridging);
+            if(scalar(@bridging) > 0)
+            {
+                $srcnode->set_misc_attr('Bridging', join(',', sort_bridging(@bridging)));
+            }
+            else
+            {
+                $srcnode->clear_misc_attr('Bridging');
+            }
         }
     }
 }
