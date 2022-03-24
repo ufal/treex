@@ -699,6 +699,22 @@ sub remove_features_from_lemmas
                             log_warn("Lemma '$lemma', derivation comment '$comment', no change.");
                             $lderiv = '';
                         }
+                        # Identify passive deverbative adjectives (participles).
+                        # They could have the VerbForm feature in UD but the PDT
+                        # tags do not identify them as a distinct subclass.
+                        # (In contrast, the PDT tags do distinguish active participles
+                        # such as "dělající", "udělavší".)
+                        elsif($lderiv =~ m/(t|ci)$/ && $lprop =~ m/[nt]ý$/ && $iset->is_adjective())
+                        {
+                            $iset->set('verbform', 'vnoun');
+                            $iset->set('voice', 'pass');
+                        }
+                        # Identify deverbative nouns. They could have the VerbForm feature
+                        # in UD but the PDT tags do not identify them as a distinct subclass.
+                        elsif($lderiv =~ m/(t|ci)$/ && $lprop =~ m/[nt]í$/ && $iset->is_noun())
+                        {
+                            $iset->set('verbform', 'vnoun');
+                        }
                     }
                 }
                 # Since PDT-C (January 2021), there is also a special class of comments that encode the standard
