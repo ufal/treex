@@ -709,7 +709,8 @@ sub remove_features_from_lemmas
                         # tags do not identify them as a distinct subclass.
                         # (In contrast, the PDT tags do distinguish active participles
                         # such as "dělající", "udělavší".)
-                        elsif($lderiv =~ m/(t|ci)$/ && $lprop =~ m/[nt]ý$/ && $iset->is_adjective())
+                        # Exclude derivations of the type "-elný", those are not passives.
+                        elsif($lderiv =~ m/(t|ci)$/ && $lprop =~ m/[^l][nt]ý$/ && $iset->is_adjective())
                         {
                             $iset->set('verbform', 'part');
                             $iset->set('voice', 'pass');
