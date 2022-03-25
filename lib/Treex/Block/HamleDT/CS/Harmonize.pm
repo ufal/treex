@@ -711,7 +711,7 @@ sub remove_features_from_lemmas
                         # such as "dělající", "udělavší".)
                         elsif($lderiv =~ m/(t|ci)$/ && $lprop =~ m/[nt]ý$/ && $iset->is_adjective())
                         {
-                            $iset->set('verbform', 'vnoun');
+                            $iset->set('verbform', 'part');
                             $iset->set('voice', 'pass');
                         }
                         # Identify deverbative nouns. They could have the VerbForm feature
