@@ -9,8 +9,13 @@ has iset_driver =>
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
-    # This default is now (2021) dangerous! PDT uses cs::pdtc (if we take the source from PDT-C, which we originally did only
-    # for the CorefUD experiments) while CAC, CLTT, FicTree and PUD still use cs::pdt. The two tagsets are not compatible!
+    # This default is now (2021) dangerous, as different Prague treebanks use different, incompatible tagsets!
+    # PDT (now taken from the newest version, PDT-C) uses cs::pdtc.
+    # CAC, CLTT, FicTree and PUD still use cs::pdt.
+    # The safe solution: In the HamleDT Makefile of each treebank, specify the harmonize block together with the iset_driver parameter.
+    # PDT:     HARMONIZE=Harmonize iset_driver=cs::pdtc
+    # CAC:     HARMONIZE=Harmonize iset_driver=cs::pdt
+    # FicTree: HARMONIZE=HarmonizeFicTree
     default       => 'cs::pdt',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
