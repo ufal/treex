@@ -120,22 +120,25 @@ sub fix_morphology
     }
     # Identify passive deverbative adjectives and deverbative nouns.
     my $lderiv = $node->get_misc_attr('LDeriv');
-    # Identify passive deverbative adjectives (participles).
-    # They could have the VerbForm feature in UD but the PDT
-    # tags do not identify them as a distinct subclass.
-    # (In contrast, the PDT tags do distinguish active participles
-    # such as "dělající", "udělavší".)
-    # Exclude derivations of the type "-elný", those are not passives.
-    if($lderiv =~ m/(t|ci)$/ && $lemma =~ m/[^l][nt]ý$/ && $iset->is_adjective())
+    if(defined($lderiv))
     {
-        $iset->set('verbform', 'part');
-        $iset->set('voice', 'pass');
-    }
-    # Identify deverbative nouns. They could have the VerbForm feature
-    # in UD but the PDT tags do not identify them as a distinct subclass.
-    elsif($lderiv =~ m/(t|ci)$/ && $lemma =~ m/[nt]í$/ && $iset->is_noun())
-    {
-        $iset->set('verbform', 'vnoun');
+        # Identify passive deverbative adjectives (participles).
+        # They could have the VerbForm feature in UD but the PDT
+        # tags do not identify them as a distinct subclass.
+        # (In contrast, the PDT tags do distinguish active participles
+        # such as "dělající", "udělavší".)
+        # Exclude derivations of the type "-elný", those are not passives.
+        if($lderiv =~ m/(t|ci)$/ && $lemma =~ m/[^l][nt]ý$/ && $iset->is_adjective())
+        {
+            $iset->set('verbform', 'part');
+            $iset->set('voice', 'pass');
+        }
+        # Identify deverbative nouns. They could have the VerbForm feature
+        # in UD but the PDT tags do not identify them as a distinct subclass.
+        elsif($lderiv =~ m/(t|ci)$/ && $lemma =~ m/[nt]í$/ && $iset->is_noun())
+        {
+            $iset->set('verbform', 'vnoun');
+        }
     }
     # Make sure that the UPOS tag still matches Interset features.
     $node->set_tag($node->iset()->get_upos());
