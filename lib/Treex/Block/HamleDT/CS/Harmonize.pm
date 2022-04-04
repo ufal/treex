@@ -499,6 +499,8 @@ sub fix_morphology
                 $node->iset()->set('number', 'sing');
                 $node->iset()->set('gender', 'fem');
             }
+            $self->set_pdt_tag($node);
+            $node->set_conll_pos($node->tag());
         }
     }
 }
