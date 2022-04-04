@@ -482,8 +482,8 @@ sub fix_morphology
                 }
                 else
                 {
-                    my @siblings = $node->get_siblings();
-                    if(any {$_->deprel() =~ m/^Sb/ && $_->is_neuter()} (@siblings))
+                    my @siblings = $parent->get_echildren();
+                    if(any {my $d = $_->deprel() // $_->afun(); defined($d) && $d =~ m/^Sb/ && $_->is_neuter() && $_ != $node} (@siblings))
                     {
                         $neuter = 1;
                     }
