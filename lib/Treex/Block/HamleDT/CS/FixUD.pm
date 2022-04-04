@@ -182,7 +182,10 @@ sub fix_morphology
     # Make sure that the UPOS tag still matches Interset features.
     $node->set_tag($node->iset()->get_upos());
     # Make sure that the XPOS tag still matches Interset features.
-    $node->set_conll_pos(encode('cs::pdt', $node->iset()));
+    ###!!! We probably have to improve the cs::pdt driver before we do this.
+    ###!!! It fails on things such as pronominal adverbs (switching them to pronouns).
+    ###!!! And it is questionable whether we want the XPOS tags of passive participles to be adjectives instead of verbs (although we do this in UPOS).
+    #$node->set_conll_pos(encode('cs::pdt', $node->iset()));
 }
 
 
