@@ -476,14 +476,14 @@ sub fix_morphology
             else
             {
                 my $parent = $node->parent();
-                if($parent->is_neuter())
+                if($parent->is_neuter() && !$parent->is_feminine())
                 {
                     $neuter = 1;
                 }
                 else
                 {
                     my @siblings = $parent->get_echildren();
-                    if(any {my $d = $_->deprel() // $_->afun(); defined($d) && $d =~ m/^Sb/ && $_->is_neuter() && $_ != $node} (@siblings))
+                    if(any {my $d = $_->deprel() // $_->afun(); defined($d) && $d =~ m/^Sb/ && $_->is_neuter() && !$_->is_feminine() && $_ != $node} (@siblings))
                     {
                         $neuter = 1;
                     }
