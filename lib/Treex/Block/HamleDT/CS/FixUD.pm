@@ -3,6 +3,7 @@ use utf8;
 use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
+use Lingua::Interset qw(decode encode);
 extends 'Treex::Block::HamleDT::Base'; # provides get_node_spanstring()
 
 
@@ -140,8 +141,48 @@ sub fix_morphology
             $iset->set('verbform', 'vnoun');
         }
     }
+    # Present converbs have one common form (-c/-i) for singular feminines and neuters.
+    # Try to disambiguate them based on the tree structure. There are very few
+    # such converbs and only a fraction of them are neuters.
+    if($node->is_verb() && $node->is_converb() && $node->form() =~ m/[ci]$/i)
+    {
+        my $neuter = 0;
+        # The fixed expression 'tak říkajíc' has no actor; set it to neuter by default.
+        if($node->form() =~ m/^říkajíc$/i && any {$_->form() =~ m/^tak$/i} ($node->children()))
+        {
+            $neuter = 1;
+        }
+        else
+        {
+            my $parent = $node->parent();
+            if($parent->is_neuter())
+            {
+                $neuter = 1;
+            }
+            else
+            {
+                my @siblings = $parent->get_children();
+                if(any {my $d = $_->deprel() // ''; defined($d) && $d =~ m/subj/ && $_->is_neuter() && $_ != $node} (@siblings))
+                {
+                    $neuter = 1;
+                }
+            }
+        }
+        if($neuter)
+        {
+            $iset->set('number', 'sing');
+            $iset->set('gender', 'neut');
+        }
+        else
+        {
+            $iset->set('number', 'sing');
+            $iset->set('gender', 'fem');
+        }
+    }
     # Make sure that the UPOS tag still matches Interset features.
     $node->set_tag($node->iset()->get_upos());
+    # Make sure that the XPOS tag still matches Interset features.
+    $node->set_conll_pos(encode('cs::pdt', $node->iset()));
 }
 
 
