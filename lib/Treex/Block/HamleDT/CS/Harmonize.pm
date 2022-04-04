@@ -462,6 +462,44 @@ sub fix_morphology
             $form .= 'ý';
             $node->set_lemma($form);
         }
+        # Present converbs have one common form (-c/-i) for singular feminines and neuters.
+        # Try to disambiguate them based on the tree structure. There are very few
+        # such converbs and only a fraction of them are neuters.
+        if($node->is_verb() && $node->is_converb() && $node->form() =~ m/[ci]$/i)
+        {
+            my $neuter = 0;
+            # The fixed expression 'tak říkajíc' has no actor; set it to neuter by default.
+            if($node->form() =~ m/^říkajíc$/i && any {$_->form() =~ m/^tak$/i} ($node->children()))
+            {
+                $neuter = 1;
+            }
+            else
+            {
+                my $parent = $node->parent();
+                if($parent->is_neuter())
+                {
+                    $neuter = 1;
+                }
+                else
+                {
+                    my @siblings = $node->get_siblings();
+                    if(any {$_->deprel() =~ m/^Sb/ && $_->is_neuter()} (@siblings))
+                    {
+                        $neuter = 1;
+                    }
+                }
+            }
+            if($neuter)
+            {
+                $node->iset()->set('number', 'sing');
+                $node->iset()->set('gender', 'neut');
+            }
+            else
+            {
+                $node->iset()->set('number', 'sing');
+                $node->iset()->set('gender', 'fem');
+            }
+        }
     }
 }
 
