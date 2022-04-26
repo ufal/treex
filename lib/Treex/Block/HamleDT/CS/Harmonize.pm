@@ -2122,6 +2122,18 @@ sub fix_annotation_errors
             # "stran" has the wrong deprel 'AuxP' here.
             $subtree[2]->set_deprel('Atr');
         }
+        elsif($spanstring =~ m/^je povinna udržovat dům a společná zařízení v dobrém stavu/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # CAC: "je" has the wrong deprel 'AuxP' here.
+            $subtree[0]->set_deprel('Pred');
+        }
+        elsif($spanstring =~ m/^model z roku \# byl znovu překonstruován/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # CAC: "byl" has the wrong deprel 'AuxP' here.
+            $subtree[4]->set_deprel('AuxV');
+        }
         elsif($spanstring =~ m/^, " dokud všechny řady pozorování/i) #"
         {
             my @subtree = $self->get_node_subtree($node);
