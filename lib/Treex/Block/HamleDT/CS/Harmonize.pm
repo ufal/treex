@@ -404,6 +404,7 @@ sub fix_morphology
         {
             $node->iset()->set('pos', 'adj');
             $node->iset()->set('prontype', 'tot');
+            ###!!! This does not change the PDT tag (which may become XPOS in UD), which stays adjectival, e.g. AAMS1----1A----. Do we want to change it too?
         }
         # The relative pronoun "kterážto" (lemma "kterýžto") has the tag PJFS1----------, which leads to (wrongly) setting PrepCase=Npr,
         # because otherwise the PJ* tags are used for the various non-prepositional forms of "jenž".
@@ -434,6 +435,15 @@ sub fix_morphology
             {
                 $node->iset()->set('prontype', 'neg');
             }
+        }
+        # Mark the verb 'být' as auxiliary regardless of context. In most contexts,
+        # it is at least a copula (AUX in UD). Only in purely existential sentences
+        # (without location) it will be the root of the sentence. But it is not
+        # necessary to change the tag to VERB in these contexts. The tree structure
+        # will contain the necessary information.
+        if($lemma =~ m/^(být|bývat|bývávat)$/)
+        {
+            $node->iset()->set('verbtype', 'aux');
         }
         # Passive participles should be adjectives both in their short (predicative)
         # and long (attributive) form. Now the long forms are adjectives and short
