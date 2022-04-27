@@ -61,6 +61,13 @@ sub fix_morphology
         {
             $node->set_deprel('det');
         }
+        foreach my $edep ($node->get_enhanced_deps())
+        {
+            if($edep->[1] =~ m/^amod(:|$)/)
+            {
+                $edep->[1] = 'det';
+            }
+        }
     }
     # Mark the verb 'být' as auxiliary regardless of context. In most contexts,
     # it is at least a copula (AUX in UD). Only in purely existential sentences
