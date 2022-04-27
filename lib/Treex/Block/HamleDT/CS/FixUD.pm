@@ -57,6 +57,10 @@ sub fix_morphology
         $node->iset()->set('pos', 'adj');
         $node->iset()->set('prontype', 'tot');
         ###!!! This does not change the PDT tag (which may become XPOS in UD), which stays adjectival, e.g. AAMS1----1A----. Do we want to change it too?
+        if($node->deprel() =~ m/^amod(:|$)/)
+        {
+            $node->set_deprel('det');
+        }
     }
     # Mark the verb 'být' as auxiliary regardless of context. In most contexts,
     # it is at least a copula (AUX in UD). Only in purely existential sentences
