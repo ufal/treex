@@ -482,6 +482,39 @@ sub convert_deprels
 
 
 
+#------------------------------------------------------------------------------
+# Catches possible annotation inconsistencies. This method is called from
+# SUPER->process_zone() after convert_tags(), fix_morphology(), and
+# convert_deprels().
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    for(my $i = 0; $i<=$#nodes; $i++)
+    {
+        my $node = $nodes[$i];
+        my $form = $node->form() // '';
+        my $lemma = $node->lemma() // '';
+        my $deprel = $node->deprel() // '';
+        my $spanstring = $self->get_node_spanstring($node);
+        # Past participle "ztraceno" is attached as "AuxV" and has the subject as a child.
+        if($spanstring =~ m/^jako by bylo tělo ztraceno$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_parent($subtree[0]);
+            $subtree[4]->set_deprel('ExD');
+            $subtree[1]->set_parent($subtree[4]);
+            $subtree[1]->set_deprel('AuxV');
+            $subtree[2]->set_parent($subtree[4]);
+            $subtree[2]->set_deprel('AuxV');
+        }
+    }
+}
+
+
+
 1;
 
 =over
@@ -499,6 +532,6 @@ Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2017 by Institute of Formal and Applied Linguistics, Charles University, Prague
+Copyright © 2017, 2022 by Institute of Formal and Applied Linguistics, Charles University, Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
