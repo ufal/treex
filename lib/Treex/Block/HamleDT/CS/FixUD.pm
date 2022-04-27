@@ -56,6 +56,8 @@ sub fix_morphology
     {
         $node->iset()->set('pos', 'adj');
         $node->iset()->set('prontype', 'tot');
+        $node->iset()->clear('degree');
+        $node->iset()->clear('polarity');
         ###!!! This does not change the PDT tag (which may become XPOS in UD), which stays adjectival, e.g. AAMS1----1A----. Do we want to change it too?
         if($node->deprel() =~ m/^amod(:|$)/)
         {
