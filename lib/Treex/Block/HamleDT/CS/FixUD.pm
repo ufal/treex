@@ -50,6 +50,23 @@ sub fix_morphology
     my $lemma = $node->lemma();
     my $iset = $node->iset();
     my $deprel = $node->deprel();
+    # Jan Hajič's morphological analyzer tags "každý" simply as adjective,
+    # but it is an attributive pronoun, according to the Czech grammar.
+    if($lemma eq 'každý')
+    {
+        $node->iset()->set('pos', 'adj');
+        $node->iset()->set('prontype', 'tot');
+        ###!!! This does not change the PDT tag (which may become XPOS in UD), which stays adjectival, e.g. AAMS1----1A----. Do we want to change it too?
+    }
+    # Mark the verb 'být' as auxiliary regardless of context. In most contexts,
+    # it is at least a copula (AUX in UD). Only in purely existential sentences
+    # (without location) it will be the root of the sentence. But it is not
+    # necessary to change the tag to VERB in these contexts. The tree structure
+    # will contain the necessary information.
+    if($lemma =~ m/^(být|bývat|bývávat)$/)
+    {
+        $node->iset()->set('verbtype', 'aux');
+    }
     # The word "proto" (lit. "for that") is etymologically a demonstrative
     # adverb but it is often used as a discourse connective: a coordinating
     # conjunction with a consecutive meaning. In either case it does not seem
