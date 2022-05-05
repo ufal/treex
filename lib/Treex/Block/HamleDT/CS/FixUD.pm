@@ -78,7 +78,7 @@ sub fix_morphology
         # Long forms: samý|samá|samé|samí|samého|samou|samému|samém|samým|samých|samými
         # Short forms: sám|sama|samo|sami|samy|samu
         # Mark the short forms with the variant feature and then unify the lemma.
-        if($form =~ m/^(sám|sama|samo|sami|samy|samu)$/i)
+        if($lform =~ m/^(sám|sama|samo|sami|samy|samu)$/i)
         {
             $node->iset()->set('variant', 'short');
         }
