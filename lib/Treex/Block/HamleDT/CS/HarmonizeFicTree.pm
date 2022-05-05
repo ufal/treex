@@ -61,6 +61,7 @@ sub fix_morphology
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        my $form = $node->form();
         my $lemma = $node->lemma();
         # Fix Interset features of pronominal words.
         if($node->is_pronominal())
