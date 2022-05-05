@@ -368,7 +368,7 @@ sub fix_morphology
                     $node->iset()->set('animacy', 'inan');
                 }
             }
-            elsif($lemma =~ m/(^(jaký|který)|(jaký|který)$|^(každý|všechen|sám|žádný|some|takýs)$)/)
+            elsif($lemma =~ m/(^(jaký|který)|(jaký|který)$|^(každý|všechen|sám|samý|žádný|some|takýs)$)/)
             {
                 $node->iset()->set('pos', 'adj');
             }
@@ -378,9 +378,19 @@ sub fix_morphology
                 $node->iset()->set('pos', 'adj');
                 $node->iset()->set('poss', 'poss');
             }
-            # Pronoun (determiner) "sám" is difficult to classify in the traditional Czech system but in UD v2 we now have the prontype=emph, which is quite suitable.
-            if($lemma eq 'sám')
+            # Pronoun (determiner) "sám" is difficult to classify in the traditional Czech system but in UD v2 we now have the prontype=emp, which is quite suitable.
+            # Note that PDT assigns the long forms to a different lemma, "samý", but there is an overlap in meanings and we should probably merge the two lexemes.
+            if($lemma =~ m/^(sám|samý)$/)
             {
+                # Long forms: samý|samá|samé|samí|samého|samou|samému|samém|samým|samých|samými
+                # Short forms: sám|sama|samo|sami|samy|samu
+                # Mark the short forms with the variant feature and then unify the lemma.
+                if($form =~ m/^(sám|sama|samo|sami|samy|samu)$/i)
+                {
+                    $node->iset()->set('variant', 'short');
+                }
+                $lemma = 'samý';
+                $node->set_lemma($lemma);
                 $node->iset()->set('prontype', 'emp');
             }
             # Pronominal numerals are all treated as combined demonstrative and indefinite, because the PDT tag is only one.
