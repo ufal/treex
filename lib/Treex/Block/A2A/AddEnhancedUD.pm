@@ -221,7 +221,7 @@ sub add_enhanced_parent_of_coordination
                 @edeps_to_propagate = grep {$_->[1] !~ m/^conj(:|$)/} ($inode->get_enhanced_deps());
                 last;
             }
-            $inode = $eparents[0];
+            $inode = $econjparents[0];
         }
         # Sanity check only. We should always have a defined $inode here.
         # We should also have a non-empty list of @edeps_to_propagate (there
