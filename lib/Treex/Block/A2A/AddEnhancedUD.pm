@@ -203,30 +203,38 @@ sub add_enhanced_parent_of_coordination
 {
     my $self = shift;
     my $node = shift;
-    my @edeps = $node->get_enhanced_deps();
-    if(any {$_->[1] =~ m/^conj(:|$)/} (@edeps))
+    my @econjparents = $node->get_enhanced_parents('^conj(:|$)');
+    if(scalar(@econjparents) > 0)
     {
-        my @edeps_to_propagate;
         # Find the nearest non-conj ancestor, i.e., the first conjunct.
-        my @eparents = $node->get_enhanced_parents('^conj(:|$)');
+        # (Beware: Coordination can be nested and the ancestor is not necessarily our direct parent.)
         # There should be normally at most one conj parent for any node. So we take the first one and assume it is the only one.
-        log_fatal("Did not find the 'conj' enhanced parent.") if(scalar(@eparents) == 0);
-        my $inode = $eparents[0];
+        my $inode = $econjparents[0];
+        my @edeps_to_propagate;
         while(defined($inode))
         {
-            @eparents = $inode->get_enhanced_parents('^conj(:|$)');
-            if(scalar(@eparents) == 0)
+            @econjparents = $inode->get_enhanced_parents('^conj(:|$)');
+            if(scalar(@econjparents) == 0)
             {
-                # There are no higher conj parents. So we will now look for the non-conj parents. Those are the relations we want to propagate.
+                # There are no higher conj parents. So we will now look for the
+                # non-conj parents. Those are the relations we want to propagate.
                 @edeps_to_propagate = grep {$_->[1] !~ m/^conj(:|$)/} ($inode->get_enhanced_deps());
                 last;
             }
             $inode = $eparents[0];
         }
+        # Sanity check only. We should always have a defined $inode here.
+        # We should also have a non-empty list of @edeps_to_propagate (there
+        # should be at least the root relation).
         if(defined($inode))
         {
             foreach my $edep (@edeps_to_propagate)
             {
+                # The enhanced graph may contain cycles, so it is not excluded
+                # that one of the propagated parents is identical to the child.
+                # Such relations should be skipped because self-loops are not
+                # allowed even in enhanced graphs.
+                next if($edep->[0] eq $node->get_conllu_id());
                 # Occasionally conjuncts differ in part of speech, meaning that their relation to the shared parent must differ, too.
                 # Example [ru]: выполняться в произвольном порядке, параллельно или одновременно ("executed in arbitrary order, in parallel, or at the same time")
                 # The first conjunct is a prepositional phrase and its relation is obl:в:loc(выполняться, порядке).
@@ -249,6 +257,9 @@ sub add_enhanced_parent_of_coordination
                     my @conjuncts = $self->recursively_collect_conjuncts($node->get_node_by_conllu_id($edep->[0]));
                     foreach my $conjunct (@conjuncts)
                     {
+                        # Again, because of possible cycles in the graph, check
+                        # that the new parent is not identical to the child.
+                        next if($conjunct == $node);
                         $node->add_enhanced_dependency($conjunct, $deprel);
                     }
                 }
