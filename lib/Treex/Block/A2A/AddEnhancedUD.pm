@@ -407,7 +407,7 @@ sub add_enhanced_external_subject
             my @subjects = $gv->get_enhanced_children('^[nc]subj(:|$)');
             foreach my $subject (@subjects)
             {
-                my @edeps = grep {$_->[0] == $gv->ord() && $_->[1] =~ m/^[nc]subj(:|$)/} ($subject->get_enhanced_deps());
+                my @edeps = grep {$_->[0] == $gv->get_conllu_id() && $_->[1] =~ m/^[nc]subj(:|$)/} ($subject->get_enhanced_deps());
                 if(scalar(@edeps) == 0)
                 {
                     # This should not happen, as we explicitly asked for nodes that are in the subject relation.
