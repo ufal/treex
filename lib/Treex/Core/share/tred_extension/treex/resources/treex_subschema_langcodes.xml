@@ -38,6 +38,7 @@
       <value>sh</value> <!-- Serbo-Croatian (common code for hr, sr, bs) -->
       <value>mk</value> <!-- Macedonian -->
       <value>bg</value> <!-- Bulgarian -->
+      <value>qpm</value> <!-- Pomak -->
       <value>cu</value> <!-- Old Church Slavonic -->
       <!-- Germanic languages -->
       <value>en</value> <!-- English -->
@@ -59,6 +60,7 @@
       <value>is</value> <!-- Icelandic -->
       <value>got</value> <!-- Gothic -->
       <!-- Romance and Italic languages -->
+      <value>xum</value> <!-- Umbrian -->
       <value>la</value> <!-- Latin -->
       <value>it</value> <!-- Italian -->
       <value>lij</value> <!-- Ligurian -->
@@ -136,6 +138,7 @@
       <value>ar</value> <!-- Arabic -->
       <value>ajp</value> <!-- South Levantine Arabic -->
       <value>mt</value> <!-- Maltese -->
+      <value>hbo</value> <!-- Ancient Hebrew -->
       <value>he</value> <!-- Hebrew -->
       <value>am</value> <!-- Amharic -->
       <value>ti</value> <!-- Tigrinya -->
@@ -252,6 +255,7 @@
       <value>su</value> <!-- Sundanese -->
       <value>ch</value> <!-- Chamorro -->
       <value>tl</value> <!-- Tagalog -->
+      <value>ceb</value> <!-- Cebuano -->
       <value>na</value> <!-- Nauruan -->
       <value>mh</value> <!-- Marshallese -->
       <value>ho</value> <!-- Hiri Motu -->
@@ -281,6 +285,7 @@
       <value>quz</value> <!-- Cusco Quechua -->
       <value>ay</value> <!-- Aymara -->
       <value>shp</value> <!-- Shipibo -->
+      <value>jaa</value> <!-- Madi -->
       <!-- Tupian languages -->
       <value>aqz</value> <!-- Akuntsu -->
       <value>myu</value> <!-- Mundurukú -->
@@ -291,6 +296,7 @@
       <value>urb</value> <!-- Kaapor -->
       <value>arr</value> <!-- Karo -->
       <value>mpu</value> <!-- Makurap -->
+      <value>eme</value> <!-- Teko -->
       <!-- other languages -->
       <value>bi</value> <!-- Bislama -->
       <value>eo</value> <!-- Esperanto -->
