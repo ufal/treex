@@ -95,6 +95,7 @@
       <value>lv</value> <!-- Latvian -->
       <!-- other Indo-European languages in Europe and Caucasus -->
       <value>sq</value> <!-- Albanian -->
+      <value>aln</value> <!-- Gheg (Albanian) -->
       <value>el</value> <!-- Greek -->
       <value>grc</value> <!-- Ancient Greek -->
       <value>hy</value> <!-- Armenian -->
@@ -144,6 +145,7 @@
       <value>ti</value> <!-- Tigrinya -->
       <!-- other Afroasiatic languages -->
       <value>ha</value> <!-- Hausa -->
+      <value>say</value> <!-- Zaar -->
       <value>cop</value> <!-- Coptic -->
       <value>aa</value> <!-- Afar -->
       <value>om</value> <!-- Oromo -->
@@ -279,6 +281,7 @@
       <value>cr</value> <!-- Cree -->
       <value>oj</value> <!-- Ojibwa -->
       <value>nv</value> <!-- Navajo -->
+      <value>nhi</value> <!-- Western Sierra Puebla Nahuatl -->
       <value>quc</value> <!-- Kiche -->
       <value>apu</value> <!-- Apurinã -->
       <value>qu</value> <!-- Quechua -->
@@ -286,10 +289,12 @@
       <value>ay</value> <!-- Aymara -->
       <value>shp</value> <!-- Shipibo -->
       <value>jaa</value> <!-- Madi -->
+      <value>xav</value> <!-- Xavante -->
       <!-- Tupian languages -->
       <value>aqz</value> <!-- Akuntsu -->
       <value>myu</value> <!-- Mundurukú -->
       <value>tpn</value> <!-- Tupinambá -->
+      <value>yrl</value> <!-- Nheengatu -->
       <value>gn</value> <!-- Guaraní -->
       <value>gun</value> <!-- Mbyá Guaraní -->
       <value>gub</value> <!-- Guajajara -->
