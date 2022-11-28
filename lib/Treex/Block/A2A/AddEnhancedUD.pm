@@ -74,7 +74,17 @@ sub process_atree
     # Generate empty nodes instead of orphan relations.
     if($self->empty())
     {
+        # There may already be empty nodes created by other blocks, e.g., coreference.
+        # We need to know about them in order to pick unused empty node ids.
         my %emptynodes;
+        foreach my $node (@nodes)
+        {
+            if($node->is_empty())
+            {
+                my $id = $node->get_conllu_id();
+                $emptynodes{$id}++;
+            }
+        }
         foreach my $node (@nodes)
         {
             $self->add_enhanced_empty_node($node, \%emptynodes);
@@ -115,7 +125,7 @@ sub add_enhanced_case_deprel
         # but we look for input solely in the basic tree.
         ###!!! That means that we may not be able to find a preposition shared by conjuncts.
         ###!!! Finding it would need more work anyways, because we call this function before we propagate dependencies across coordination.
-        my @children = $node->children({'ordered' => 1});
+        my @children = $node->get_children({'ordered' => 1});
         my @casemark = grep {$_->deprel() =~ m/^(case|mark)(:|$)/} (@children);
         # If the current constituent is a clause, take mark dependents but not case dependents.
         # This may not work the same way in all languages, as e.g. in Swedish Joakim uses case even with clauses.
@@ -129,7 +139,7 @@ sub add_enhanced_case_deprel
         my @cmlemmas = grep {defined($_)} map
         {
             my $x = $_;
-            my @fixed = grep {$_->deprel() =~ m/^(fixed)(:|$)/} ($x->children({'ordered' => 1}));
+            my @fixed = grep {$_->deprel() =~ m/^(fixed)(:|$)/} ($x->get_children({'ordered' => 1}));
             my $l = lc($x->lemma());
             if(defined($l) && ($l eq '' || $l eq '_'))
             {
@@ -193,30 +203,38 @@ sub add_enhanced_parent_of_coordination
 {
     my $self = shift;
     my $node = shift;
-    my @edeps = $self->get_enhanced_deps($node);
-    if(any {$_->[1] =~ m/^conj(:|$)/} (@edeps))
+    my @econjparents = $node->get_enhanced_parents('^conj(:|$)');
+    if(scalar(@econjparents) > 0)
     {
-        my @edeps_to_propagate;
         # Find the nearest non-conj ancestor, i.e., the first conjunct.
-        my @eparents = $self->get_enhanced_parents($node, '^conj(:|$)');
+        # (Beware: Coordination can be nested and the ancestor is not necessarily our direct parent.)
         # There should be normally at most one conj parent for any node. So we take the first one and assume it is the only one.
-        log_fatal("Did not find the 'conj' enhanced parent.") if(scalar(@eparents) == 0);
-        my $inode = $eparents[0];
+        my $inode = $econjparents[0];
+        my @edeps_to_propagate;
         while(defined($inode))
         {
-            @eparents = $self->get_enhanced_parents($inode, '^conj(:|$)');
-            if(scalar(@eparents) == 0)
+            @econjparents = $inode->get_enhanced_parents('^conj(:|$)');
+            if(scalar(@econjparents) == 0)
             {
-                # There are no higher conj parents. So we will now look for the non-conj parents. Those are the relations we want to propagate.
-                @edeps_to_propagate = grep {$_->[1] !~ m/^conj(:|$)/} ($self->get_enhanced_deps($inode));
+                # There are no higher conj parents. So we will now look for the
+                # non-conj parents. Those are the relations we want to propagate.
+                @edeps_to_propagate = grep {$_->[1] !~ m/^conj(:|$)/} ($inode->get_enhanced_deps());
                 last;
             }
-            $inode = $eparents[0];
+            $inode = $econjparents[0];
         }
+        # Sanity check only. We should always have a defined $inode here.
+        # We should also have a non-empty list of @edeps_to_propagate (there
+        # should be at least the root relation).
         if(defined($inode))
         {
             foreach my $edep (@edeps_to_propagate)
             {
+                # The enhanced graph may contain cycles, so it is not excluded
+                # that one of the propagated parents is identical to the child.
+                # Such relations should be skipped because self-loops are not
+                # allowed even in enhanced graphs.
+                next if($edep->[0] eq $node->get_conllu_id());
                 # Occasionally conjuncts differ in part of speech, meaning that their relation to the shared parent must differ, too.
                 # Example [ru]: выполняться в произвольном порядке, параллельно или одновременно ("executed in arbitrary order, in parallel, or at the same time")
                 # The first conjunct is a prepositional phrase and its relation is obl:в:loc(выполняться, порядке).
@@ -231,15 +249,18 @@ sub add_enhanced_parent_of_coordination
                     ###!!! We should now also check whether a preposition or a case label should be added!
                     $deprel = 'obl';
                 }
-                $self->add_enhanced_dependency($node, $self->get_node_by_ord($node, $edep->[0]), $deprel);
+                $node->add_enhanced_dependency($node->get_node_by_conllu_id($edep->[0]), $deprel);
                 # The coordination may function as a shared dependent of other coordination.
                 # In that case, make me depend on every conjunct in the parent coordination.
                 if($inode->is_shared_modifier())
                 {
-                    my @conjuncts = $self->recursively_collect_conjuncts($self->get_node_by_ord($node, $edep->[0]));
+                    my @conjuncts = $self->recursively_collect_conjuncts($node->get_node_by_conllu_id($edep->[0]));
                     foreach my $conjunct (@conjuncts)
                     {
-                        $self->add_enhanced_dependency($node, $conjunct, $deprel);
+                        # Again, because of possible cycles in the graph, check
+                        # that the new parent is not identical to the child.
+                        next if($conjunct == $node);
+                        $node->add_enhanced_dependency($conjunct, $deprel);
                     }
                 }
             }
@@ -270,15 +291,15 @@ sub add_enhanced_shared_dependent_of_coordination
     if($node->is_shared_modifier())
     {
         # Get all suitable incoming enhanced relations.
-        my @iedges = grep {$_->[1] !~ m/^(conj|cc|punct)(:|$)/} ($self->get_enhanced_deps($node));
+        my @iedges = grep {$_->[1] !~ m/^(conj|cc|punct)(:|$)/} ($node->get_enhanced_deps());
         foreach my $iedge (@iedges)
         {
-            my $parent = $self->get_node_by_ord($node, $iedge->[0]);
+            my $parent = $node->get_node_by_conllu_id($iedge->[0]);
             my $edeprel = $iedge->[1];
             my @conjuncts = $self->recursively_collect_conjuncts($parent);
             foreach my $conjunct (@conjuncts)
             {
-                $self->add_enhanced_dependency($node, $conjunct, $edeprel);
+                $node->add_enhanced_dependency($conjunct, $edeprel);
             }
         }
     }
@@ -303,8 +324,8 @@ sub recursively_collect_conjuncts
     }
     return () if($visited->[$node->ord()]);
     $visited->[$node->ord()]++;
-    my @echildren = $self->get_enhanced_children($node);
-    my @conjuncts = grep {my $x = $_; any {$_->[0] == $node->ord() && $_->[1] =~ m/^conj(:|$)/} ($self->get_enhanced_deps($x))} (@echildren);
+    my @echildren = $node->get_enhanced_children();
+    my @conjuncts = grep {my $x = $_; any {$_->[0] == $node->ord() && $_->[1] =~ m/^conj(:|$)/} ($x->get_enhanced_deps())} (@echildren);
     my @conjuncts2;
     foreach my $c (@conjuncts)
     {
@@ -362,7 +383,7 @@ sub add_enhanced_external_subject
     return if($visited->[$node->ord()]);
     $visited->[$node->ord()]++;
     # Are there any incoming xcomp edges?
-    my @gverbs = $self->get_enhanced_parents($node, '^xcomp(:|$)');
+    my @gverbs = $node->get_enhanced_parents('^xcomp(:|$)');
     return if(scalar(@gverbs) == 0);
     # The governing verb may itself be an infinitive controlled by another verb.
     # Make sure it is processed before myself, otherwise we may not be able to
@@ -394,10 +415,10 @@ sub add_enhanced_external_subject
         if($is_nomcontrol || $gv->iset()->is_passive() && $is_acccontrol)
         {
             # Does the control verb have an overt subject?
-            my @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
+            my @subjects = $gv->get_enhanced_children('^[nc]subj(:|$)');
             foreach my $subject (@subjects)
             {
-                my @edeps = grep {$_->[0] == $gv->ord() && $_->[1] =~ m/^[nc]subj(:|$)/} ($self->get_enhanced_deps($subject));
+                my @edeps = grep {$_->[0] == $gv->get_conllu_id() && $_->[1] =~ m/^[nc]subj(:|$)/} ($subject->get_enhanced_deps());
                 if(scalar(@edeps) == 0)
                 {
                     # This should not happen, as we explicitly asked for nodes that are in the subject relation.
@@ -422,32 +443,32 @@ sub add_enhanced_external_subject
                 }
                 # We could now add the ':xsubj' subtype to the relation label.
                 # But we would first have to remove the previous subtype, if any.
-                $self->add_enhanced_dependency($subject, $node, $edeprel);
+                $subject->add_enhanced_dependency($node, $edeprel);
             }
         }
         # Is this a dative-control verb?
         elsif($is_datcontrol)
         {
             # Does the control verb have an overt dative argument?
-            my @objects = $self->get_enhanced_children($gv, '^(i?obj|obl:arg)(:|$)');
+            my @objects = $gv->get_enhanced_children('^(i?obj|obl:arg)(:|$)');
             # Select those arguments that are dative nominals without adpositions.
             @objects = grep
             {
                 my $x = $_;
-                my @casechildren = $self->get_enhanced_children($x, '^case(:|$)');
+                my @casechildren = $x->get_enhanced_children('^case(:|$)');
                 $x->is_dative() && scalar(@casechildren) == 0
             }
             (@objects);
             # If there are no dative objects, maybe there are reflexive dative expletives ("si").
             if(scalar(@objects) == 0)
             {
-                my @expletives = grep {$_->is_dative() && $_->is_reflexive()} ($self->get_enhanced_children($gv, '^expl(:|$)'));
+                my @expletives = grep {$_->is_dative() && $_->is_reflexive()} ($gv->get_enhanced_children('^expl(:|$)'));
                 if(scalar(@expletives) > 0)
                 {
                     # We will not mark coreference with the expletive. It is
                     # reflexive, so we have also a coreference with the subject;
                     # let's look for the subject then.
-                    my @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
+                    my @subjects = $gv->get_enhanced_children('^[nc]subj(:|$)');
                     @objects = @subjects;
                 }
             }
@@ -456,27 +477,27 @@ sub add_enhanced_external_subject
                 # Switch to 'nsubj:pass' if the controlled infinitive is passive.
                 # Example: Zákon mu umožňuje být zvolen.
                 my $edeprel = 'nsubj';
-                if($node->iset()->is_passive() || scalar($self->get_enhanced_children($node, '^(aux|expl):pass(:|$)')) > 0)
+                if($node->iset()->is_passive() || scalar($node->get_enhanced_children('^(aux|expl):pass(:|$)')) > 0)
                 {
                     $edeprel = 'nsubj:pass';
                 }
-                $self->add_enhanced_dependency($object, $node, $edeprel);
+                $object->add_enhanced_dependency($node, $edeprel);
             }
         }
         # Is this an accusative-control verb?
         elsif($is_acccontrol)
         {
             # Does the control verb have an overt accusative argument?
-            my @objects = $self->get_enhanced_children($gv, '^(i?obj|obl:arg)(:|$)');
+            my @objects = $gv->get_enhanced_children('^(i?obj|obl:arg)(:|$)');
             # Select those arguments that are accusative nominals without adpositions.
             @objects = grep
             {
                 my $x = $_;
-                my @casechildren = $self->get_enhanced_children($x, '^case(:|$)');
+                my @casechildren = $x->get_enhanced_children('^case(:|$)');
                 # In Slavic and some other languages, the case of a quantified phrase may
                 # be determined by the quantifier rather than by the quantified head noun.
                 # We can recognize such quantifiers by the relation nummod:gov or det:numgov.
-                my @qgov = $self->get_enhanced_children($x, '^(nummod:gov|det:numgov)$');
+                my @qgov = $x->get_enhanced_children('^(nummod:gov|det:numgov)$');
                 my $qgov = scalar(@qgov);
                 # There is probably just one quantifier. We do not have any special rule
                 # for the possibility that there are more than one.
@@ -487,13 +508,13 @@ sub add_enhanced_external_subject
             # If there are no accusative objects, maybe there are reflexive accusative expletives ("se").
             if(scalar(@objects) == 0)
             {
-                my @expletives = grep {$_->is_accusative() && $_->is_reflexive()} ($self->get_enhanced_children($gv, '^expl(:|$)'));
+                my @expletives = grep {$_->is_accusative() && $_->is_reflexive()} ($gv->get_enhanced_children('^expl(:|$)'));
                 if(scalar(@expletives) > 0)
                 {
                     # We will not mark coreference with the expletive. It is
                     # reflexive, so we have also a coreference with the subject;
                     # let's look for the subject then.
-                    my @subjects = $self->get_enhanced_children($gv, '^[nc]subj(:|$)');
+                    my @subjects = $gv->get_enhanced_children('^[nc]subj(:|$)');
                     @objects = @subjects;
                 }
             }
@@ -502,11 +523,11 @@ sub add_enhanced_external_subject
                 # Switch to 'nsubj:pass' if the controlled infinitive is passive.
                 # Example: Zákon ho opravňuje být zvolen.
                 my $edeprel = 'nsubj';
-                if($node->iset()->is_passive() || scalar($self->get_enhanced_children($node, '^(aux|expl):pass(:|$)')) > 0)
+                if($node->iset()->is_passive() || scalar($node->get_enhanced_children('^(aux|expl):pass(:|$)')) > 0)
                 {
                     $edeprel = 'nsubj:pass';
                 }
-                $self->add_enhanced_dependency($object, $node, $edeprel);
+                $object->add_enhanced_dependency($node, $edeprel);
             }
         }
     }
@@ -541,105 +562,112 @@ sub add_enhanced_relative_clause
     # This node is the root of a relative clause if at least one of its parents
     # is connected via the acl:relcl relation. We refer to the parent of the
     # clause as the modified $noun, although it may be a pronoun.
-    my @nouns = $self->get_enhanced_parents($node, '^acl:relcl(:|$)');
+    my @nouns = $node->get_enhanced_parents('^acl:relcl(:|$)');
     return if(scalar(@nouns)==0);
-    # If there are coordinate relative clauses, we may have already added a
-    # cycle, meaning that the modified noun is now also a descendant of the
-    # relative clause. However, we do not want to traverse it when looking for
-    # the relativizer! Hence we mark it as visited before collecting the
-    # descendants.
-    # Example:
-    # máme povědomí, jaké to bude těleso, se kterým by se Země mohla či měla srazit
-    # The noun is "těleso", the coordinate relative clauses are headed by
-    # "mohla" and "měla", and the unwanted relativizer is "jaké", attached to
-    # "těleso" (the correct relativizer is "kterým" and it is shared by both
-    # relative clauses).
-    my @visited; map {$visited[$_->ord()]++} (@nouns);
-    my @relativizers = sort {$a->ord() <=> $b->ord()}
-    (
-        grep {$_->ord() <= $node->ord() && $_->is_relative()}
-        (
-            $node,
-            $self->get_enhanced_descendants($node, \@visited)
-        )
-    );
-    return unless(scalar(@relativizers) > 0);
-    ###!!! Assume that the leftmost relativizer is the one that relates to the
-    ###!!! current relative clause. This is an Indo-European bias.
-    my $relativizer = $relativizers[0];
-    my @edeps = $self->get_enhanced_deps($relativizer);
-    # All relations other than 'ref' will be copied to the noun.
-    # Besides 'ref', we should also exclude any collapsed paths over empty nodes
-    # (unless we can give them the special treatment they need). This is because
-    # there may be a second relative clause as a gapped conjunct, and the collapsed
-    # edge may lead back to the noun. An instance of this occurs in the Latvian
-    # LVTB training data, sent_id = a-p13850-p28s2:
-    # "personas, kura nebūtu saistīta ar pārējām un arī ar putnu"
-    # "a person which is unrelated to the rest and also to the bird"
-    # The first relative clause:
-    #   acl:relcl(personas, saistīta)
-    #   nsubj(saistīta, kura)
-    #   iobj(saistīta, pārējām)
-    # The second relative clause uses an empty node with the id 37.1 for a copy of saistīta:
-    #   acl>37.1>nsubj(personas, kura)
-    #   acl>37.1>iobj(personas, putnu)
-    ###!!! We now avoid creating a cycle when processing this Latvian sentence.
-    ###!!! But we do not transform the second relative clause correctly.
-    ###!!! Either the self-loops should be allowed in such cases, or the entire
-    ###!!! mechanism for empty nodes in Treex must be rewritten and real Node
-    ###!!! objects must be used.
-    my @noundeps = grep {$_->[1] ne 'ref' && $_->[1] !~ m/>/} (@edeps);
-    foreach my $noun (@nouns)
+    # Tamil relative clauses do not contain overt relative pronouns, so we
+    # cannot use them to determine the relation and we cannot reattach them
+    # via the 'ref' relation. However, we still can add the cyclic relation
+    # from the head of the relative clause to the noun (the relation is always
+    # subject). For all other languages we will not do anything if we have not
+    # found a relativizer.
+    if($self->language() eq 'ta')
     {
-        # Add an enhanced relation 'ref' from the modified noun to the relativizer.
-        $self->add_enhanced_dependency($relativizer, $noun, 'ref');
-        # If the relativizer is the root of the relative clause, there is no other
-        # node in the relative clause from which a new relation should go to the
-        # modified noun. However, the relative clause has a nominal predicate,
-        # which corefers with the modified noun, and we can draw a new relation
-        # from the modified noun to the subject of the relative clause.
-        if($relativizer == $node)
+        foreach my $noun (@nouns)
         {
-            my @subjects = grep {$_->deprel() =~ m/^[nc]subj(:|$)/} ($node->children());
-            foreach my $subject (@subjects)
-            {
-                $self->add_enhanced_dependency($subject, $noun, $subject->deprel());
-            }
+            # Add a subject relation between the relative participle and the modified noun.
+            $noun->add_enhanced_dependency($node, 'nsubj');
         }
-        # If the relativizer is not the root of the relative clause, we remove its
-        # current relation to its current parent and instead we add an analogous
-        # relation between the parent and the modified noun.
-        else
-        {
-            foreach my $nd (@noundeps)
+    }
+    else # not Tamil
+    {
+        # If there are coordinate relative clauses, we may have already added a
+        # cycle, meaning that the modified noun is now also a descendant of the
+        # relative clause. However, we do not want to traverse it when looking for
+        # the relativizer! Hence we mark it as visited before collecting the
+        # descendants.
+        # Example:
+        # máme povědomí, jaké to bude těleso, se kterým by se Země mohla či měla srazit
+        # The noun is "těleso", the coordinate relative clauses are headed by
+        # "mohla" and "měla", and the unwanted relativizer is "jaké", attached to
+        # "těleso" (the correct relativizer is "kterým" and it is shared by both
+        # relative clauses).
+        # Also make sure that the modified noun is not returned as a relativizer.
+        # Mere listing the nouns as visited will not ensure this. It could happen
+        # in sentences like "kdokoli, kdo..."
+        my @visited; map {$visited[$_->ord()]++} (@nouns);
+        my @relativizers = sort {$a->ord() <=> $b->ord()}
+        (
+            grep
             {
-                my $relparent = $nd->[0];
-                my $reldeprel = $nd->[1];
-                # Although the the current node (root of the relative clause)
-                # is not the relativizer, the possibility of self-loops is not
-                # excluded. In the Finnish TDT training sentence f102.5, there
-                # is coordination of relative clauses, the first clause is
-                # headed by the relativizer, which at the same time acts as
-                # an oblique argument in the second and the third clause. When
-                # we process it from the perspective of the second clause (where it is not the root),
-                # we will also see the acl:relcl relation that connects it to
-                # the modified noun. We must ignore this relation, otherwise it
-                # will lead to a self-loop.
-                # Niitä, joilla on farmariautot sekä kultainennoutaja kopissaan, lapset huutavat ja kiirettä tuntuu olevan kokoajan arjen keskellä.
-                # Google Translate: Children with station wagons and a golden retriever in their booths are screaming and hurrying in the midst of everyday life.
-                # Niitä = those (partitive demonstrative) is the root of the sentence.
-                # First clause: joilla on farmariautot sekä kultainennoutaja kopissaan = with station wagons and a golden retriever in their booth (joilla = whose = the head and the relativizer)
-                # Second clause: lapset huutavat = the children cry (joilla is oblique argument of this)
-                # Third clause: ja kiirettä tuntuu olevan kokoajan arjen keskellä (joilla oblique here too) = and hurry seems to be in the middle of everyday life
-                # I.e.: those, whose are station wagons, whose children cry and who feel in a hurry
-                my $relparentnode = $self->get_node_by_ord($node, $relparent);
-                next if($relparentnode == $noun);
-                # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
-                # Discard subtypes of the original relation, if present. Such subtypes may not be available
-                # for the substitute relation.
-                $reldeprel =~ s/^advmod(:.+)?$/obl/;
-                $reldeprel =~ s/^det(:.+)?$/nmod/;
-                $self->add_enhanced_dependency($noun, $relparentnode, $reldeprel);
+                my $x = $_;
+                $x->ord() <= $node->ord() &&
+                $x->is_relative() &&
+                !any {$_ == $x} (@nouns)
+            }
+            (
+                $node,
+                $node->get_enhanced_descendants(\@visited)
+            )
+        );
+        return unless(scalar(@relativizers) > 0);
+        ###!!! Assume that the leftmost relativizer is the one that relates to the
+        ###!!! current relative clause. This is an Indo-European bias.
+        my $relativizer = $relativizers[0];
+        my @edeps = $relativizer->get_enhanced_deps();
+        # All relations other than 'ref' will be copied to the noun.
+        my @noundeps = grep {$_->[1] ne 'ref'} (@edeps);
+        foreach my $noun (@nouns)
+        {
+            # Add an enhanced relation 'ref' from the modified noun to the relativizer.
+            $relativizer->add_enhanced_dependency($noun, 'ref');
+            # If the relativizer is the root of the relative clause, there is no other
+            # node in the relative clause from which a new relation should go to the
+            # modified noun. However, the relative clause has a nominal predicate,
+            # which corefers with the modified noun, and we can draw a new relation
+            # from the modified noun to the subject of the relative clause.
+            if($relativizer == $node)
+            {
+                my @subjects = grep {$_->deprel() =~ m/^[nc]subj(:|$)/} ($node->children());
+                foreach my $subject (@subjects)
+                {
+                    $subject->add_enhanced_dependency($noun, $subject->deprel());
+                }
+            }
+            # If the relativizer is not the root of the relative clause, we remove its
+            # current relation to its current parent and instead we add an analogous
+            # relation between the parent and the modified noun.
+            else
+            {
+                foreach my $nd (@noundeps)
+                {
+                    my $relparent = $nd->[0];
+                    my $reldeprel = $nd->[1];
+                    # Although the the current node (root of the relative clause)
+                    # is not the relativizer, the possibility of self-loops is not
+                    # excluded. In the Finnish TDT training sentence f102.5, there
+                    # is coordination of relative clauses, the first clause is
+                    # headed by the relativizer, which at the same time acts as
+                    # an oblique argument in the second and the third clause. When
+                    # we process it from the perspective of the second clause (where it is not the root),
+                    # we will also see the acl:relcl relation that connects it to
+                    # the modified noun. We must ignore this relation, otherwise it
+                    # will lead to a self-loop.
+                    # Niitä, joilla on farmariautot sekä kultainennoutaja kopissaan, lapset huutavat ja kiirettä tuntuu olevan kokoajan arjen keskellä.
+                    # Google Translate: Children with station wagons and a golden retriever in their booths are screaming and hurrying in the midst of everyday life.
+                    # Niitä = those (partitive demonstrative) is the root of the sentence.
+                    # First clause: joilla on farmariautot sekä kultainennoutaja kopissaan = with station wagons and a golden retriever in their booth (joilla = whose = the head and the relativizer)
+                    # Second clause: lapset huutavat = the children cry (joilla is oblique argument of this)
+                    # Third clause: ja kiirettä tuntuu olevan kokoajan arjen keskellä (joilla oblique here too) = and hurry seems to be in the middle of everyday life
+                    # I.e.: those, whose are station wagons, whose children cry and who feel in a hurry
+                    my $relparentnode = $node->get_node_by_conllu_id($relparent);
+                    next if($relparentnode == $noun);
+                    # Even if the relativizer is adverb or determiner, the new dependent will be noun or pronoun.
+                    # Discard subtypes of the original relation, if present. Such subtypes may not be available
+                    # for the substitute relation.
+                    $reldeprel =~ s/^advmod(:.+)?$/obl/;
+                    $reldeprel =~ s/^det(:.+)?$/nmod/;
+                    $noun->add_enhanced_dependency($relparentnode, $reldeprel);
+                }
             }
         }
     }
@@ -664,7 +692,7 @@ sub remove_enhanced_non_ref_relations
     my $node = shift;
     # Only do this to relativizers. Every relativizer has at least one incoming
     # ref edge by now.
-    my @edeps = $self->get_enhanced_deps($node);
+    my @edeps = $node->get_enhanced_deps();
     return if(!any {$_->[1] =~ m/^ref(:|$)/} (@edeps));
     # Do not do this to relativizers that are heads of their relative clauses,
     # i.e., they also have an acl:relcl incoming edge.
@@ -676,14 +704,7 @@ sub remove_enhanced_non_ref_relations
 
 
 #------------------------------------------------------------------------------
-# Transforms gapping constructions to structures with empty nodes. The a-layer
-# in Treex does not really support empty nodes so we will model them using
-# concatenations of incoming and outgoing edges. For example, suppose that
-# an empty node should have position 5.1, that it has one conj parent X, one
-# nsubj child Y and one obj child Z. Then we will draw an edge from X to Y and
-# label it "conj>5.1>nsubj", and an edge from X to Z labeled "conj>5.1>obj".
-# We will assume that the block Write::CoNLLU is able to use this information
-# to produce the desired CoNLL-U representation of the graph with empty nodes.
+# Transforms gapping constructions to structures with empty nodes.
 #------------------------------------------------------------------------------
 sub add_enhanced_empty_node
 {
@@ -691,66 +712,59 @@ sub add_enhanced_empty_node
     my $node = shift;
     my $emptynodes = shift; # hash ref, keys are ids of empty nodes
     # We have to generate an empty node if a node has one or more orphan children.
-    my @orphans = $self->get_enhanced_children($node, '^orphan(:|$)');
+    my @orphans = $node->get_enhanced_children('^orphan(:|$)');
     return if(scalar(@orphans) == 0);
     my $emppos = $self->get_empty_node_position($node, $emptynodes);
     $emptynodes->{$emppos}++;
+    my $empnode = $node->create_empty_node($emppos);
     # All current parents of $node will become parents of the empty node.
     ###!!! There should not be any 'orphan' among the relations to the parents.
     ###!!! If there is one, we should process the parent first. However, for now
     ###!!! we simply ignore the 'orphan' and change it to 'dep'.
-    my @origiedges = $self->get_enhanced_deps($node);
+    my @origiedges = $node->get_enhanced_deps();
     foreach my $ie (@origiedges)
     {
-        $ie->[1] =~ s/^orphan(:|$)/dep$1/;
+        my $parent = $node->get_node_by_conllu_id($ie->[0]);
+        my $deprel = $ie->[1];
+        if($deprel =~ s/^orphan(:|$)/dep$1/)
+        {
+            log_warn("Changed 'orphan' to 'dep' but we should have processed the other orphan earlier instead.");
+        }
+        $empnode->add_enhanced_dependency($parent, $deprel);
     }
-    # Create the paths to $node via the empty node. We do not know what the
+    # Re-attach the $node as a child of the empty node. We do not know what the
     # relation between the empty node and $node should be. We just use 'dep'
     # for now, unless the node is an adverb, when it is probably safe to say
     # that it is 'advmod'.
-    my %nodeiedges;
+    $node->clear_enhanced_deps();
     my $cdeprel = $node->is_adverb() ? 'advmod' : 'dep';
-    foreach my $ie (@origiedges)
-    {
-        $nodeiedges{$ie->[0]}{$ie->[1].">$emppos>".$cdeprel}++;
-    }
-    my @nodeiedges;
-    foreach my $pord (sort {$a <=> $b} (keys(%nodeiedges)))
-    {
-        foreach my $edeprel (sort {$a cmp $b} (keys(%{$nodeiedges{$pord}})))
-        {
-            push(@nodeiedges, [$pord, $edeprel]);
-        }
-    }
-    $node->wild()->{enhanced} = \@nodeiedges;
-    # Create the path to each child via the empty node. Also use just 'dep' for
+    $node->add_enhanced_dependency($empnode, $cdeprel);
+    # Re-attach the $node's children to the empty node. Also use just 'dep' for
     # now, unless the node is an adverb, when it is probably safe to say
     # that it is 'advmod'.
-    my @children = $self->get_enhanced_children($node);
+    my @children = $node->get_enhanced_children();
     foreach my $child (@children)
     {
-        my @origchildiedges = $self->get_enhanced_deps($child);
+        my @origchildiedges = $child->get_enhanced_deps();
+        $child->clear_enhanced_deps();
         my %childiedges;
         my $ccdeprel = $child->is_adverb() ? 'advmod' : 'dep';
         foreach my $cie (@origchildiedges)
         {
-            if($cie->[0] == $node->ord())
+            if($cie->[0] == $node->get_conllu_id())
             {
-                foreach my $pie (@origiedges)
+                my $cdeprel = $cie->[1];
+                # Only redirect selected relations via the empty node:
+                # orphan, cc, mark, punct. Keep the others (in particular
+                # nominal modifiers) attached directly to $node.
+                if($cdeprel =~ m/^(orphan|cc|mark|punct)(:|$)/)
                 {
-                    my $cdeprel = $cie->[1];
-                    # Only redirect selected relations via the empty node:
-                    # orphan, cc, mark, punct. Keep the others (in particular
-                    # nominal modifiers) attached directly to $node.
-                    if($cdeprel =~ m/^(orphan|cc|mark|punct)(:|$)/)
-                    {
-                        $cdeprel =~ s/^orphan(:.+)?$/$ccdeprel/;
-                        $childiedges{$pie->[0]}{$pie->[1].">$emppos>".$cdeprel}++;
-                    }
-                    else
-                    {
-                        $childiedges{$cie->[0]}{$cie->[1]}++;
-                    }
+                    $cdeprel =~ s/^orphan(:.+)?$/$ccdeprel/;
+                    $childiedges{$emppos}{$cdeprel}++;
+                }
+                else
+                {
+                    $childiedges{$cie->[0]}{$cie->[1]}++;
                 }
             }
             else
@@ -758,15 +772,14 @@ sub add_enhanced_empty_node
                 $childiedges{$cie->[0]}{$cie->[1]}++;
             }
         }
-        my @childiedges;
-        foreach my $pord (sort {$a <=> $b} (keys(%childiedges)))
+        foreach my $pid (sort {$a <=> $b} (keys(%childiedges)))
         {
-            foreach my $edeprel (sort {$a cmp $b} (keys(%{$childiedges{$pord}})))
+            my $parent = $child->get_node_by_conllu_id($pid);
+            foreach my $edeprel (sort {$a cmp $b} (keys(%{$childiedges{$pid}})))
             {
-                push(@childiedges, [$pord, $edeprel]);
+                $child->add_enhanced_dependency($parent, $edeprel);
             }
         }
-        $child->wild()->{enhanced} = \@childiedges;
     }
 }
 
@@ -790,13 +803,13 @@ sub get_empty_node_position
     my $emptynodes = shift; # hash ref, keys are ids of existing empty nodes
     # The current node and all its current children will become children of the
     # empty node.
-    my @children = $self->get_enhanced_children($node);
+    my @children = $node->get_enhanced_children();
     my @empchildren = sort {$a->ord() <=> $b->ord()} ($node, @children);
     my $posmajor = $empchildren[0]->ord() - 1;
     my $posminor = 1;
     # If the current node is a conj child of another node, discard children that
     # occur before that other node.
-    my @conjparents = sort {$a->ord() <=> $b->ord()} ($self->get_enhanced_parents($node, '^conj(:|$)'));
+    my @conjparents = sort {$a->ord() <=> $b->ord()} ($node->get_enhanced_parents('^conj(:|$)'));
     if(scalar(@conjparents) > 0)
     {
         @empchildren = grep {$_->ord() > $conjparents[-1]->ord()} (@empchildren);
@@ -829,197 +842,6 @@ sub get_empty_node_position
 
 
 #------------------------------------------------------------------------------
-# Returns the list of incoming enhanced edges for a node. Each element of the
-# list is a pair: 1. ord of the parent node; 2. relation label.
-#------------------------------------------------------------------------------
-sub get_enhanced_deps
-{
-    my $self = shift;
-    my $node = shift;
-    my $wild = $node->wild();
-    if(!exists($wild->{enhanced}) || !defined($wild->{enhanced}) || ref($wild->{enhanced}) ne 'ARRAY')
-    {
-        log_fatal("Wild attribute 'enhanced' does not exist or is not an array reference.");
-    }
-    return @{$wild->{enhanced}};
-}
-
-
-
-#------------------------------------------------------------------------------
-# Adds a new enhanced edge incoming to a node, unless the same relation with
-# the same parent already exists.
-#------------------------------------------------------------------------------
-sub add_enhanced_dependency
-{
-    my $self = shift;
-    my $child = shift;
-    my $parent = shift;
-    my $deprel = shift;
-    # Self-loops are not allowed in enhanced dependencies.
-    # We could silently ignore the call but there is probably something wrong
-    # at the caller's side, so we will throw an exception.
-    if($parent == $child)
-    {
-        my $ord = $child->ord();
-        my $form = $child->form() // '';
-        log_fatal("Self-loops are not allowed in the enhanced graph but we are attempting to attach the node no. $ord ('$form') to itself.");
-    }
-    my $pord = $parent->ord();
-    my @edeps = $self->get_enhanced_deps($child);
-    unless(any {$_->[0] == $pord && $_->[1] eq $deprel} (@edeps))
-    {
-        push(@{$child->wild()->{enhanced}}, [$pord, $deprel]);
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Finds a node with a given ord in the same tree. This is useful if we are
-# looking at the list of incoming enhanced edges and need to actually access
-# one of the parents listed there by ord. We assume that if the method is
-# called, the caller is confident that the node should exist. The method will
-# throw an exception if there is no node or multiple nodes with the given ord.
-#------------------------------------------------------------------------------
-sub get_node_by_ord
-{
-    my $self = shift;
-    my $node = shift; # some node in the same tree
-    my $ord = shift;
-    return $node->get_root() if($ord == 0);
-    my @results = grep {$_->ord() == $ord} ($node->get_root()->get_descendants());
-    if(scalar(@results) == 0)
-    {
-        log_fatal("No node with ord '$ord' found.");
-    }
-    if(scalar(@results) > 1)
-    {
-        log_fatal("There are multiple nodes with ord '$ord'.");
-    }
-    return $results[0];
-}
-
-
-
-#------------------------------------------------------------------------------
-# Returns the list of parents of a node in the enhanced graph, i.e., the list
-# of nodes from which there is at least one edge incoming to the given node.
-# The list is ordered by their ord value.
-#
-# Optionally the parents will be filtered by regex on relation type.
-#------------------------------------------------------------------------------
-sub get_enhanced_parents
-{
-    my $self = shift;
-    my $node = shift;
-    my $relregex = shift;
-    my $negate = shift; # return parents that do not match $relregex
-    my @edeps = $self->get_enhanced_deps($node);
-    if(defined($relregex))
-    {
-        if($negate)
-        {
-            @edeps = grep {$_->[1] !~ m/$relregex/} (@edeps);
-        }
-        else
-        {
-            @edeps = grep {$_->[1] =~ m/$relregex/} (@edeps);
-        }
-    }
-    # Remove duplicates.
-    my %epmap; map {$epmap{$_->[0]}++} (@edeps);
-    my @parents = sort {$a->ord() <=> $b->ord()} (map {$self->get_node_by_ord($node, $_)} (keys(%epmap)));
-    return @parents;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Returns the list of children of a node in the enhanced graph, i.e., the list
-# of nodes that have at least one incoming edge from the given start node.
-# The list is ordered by their ord value.
-#
-# Optionally the children will be filtered by regex on relation type.
-#------------------------------------------------------------------------------
-sub get_enhanced_children
-{
-    my $self = shift;
-    my $node = shift;
-    my $relregex = shift;
-    my $negate = shift; # return children that do not match $relregex
-    # We do not maintain an up-to-date list of outgoing enhanced edges, only
-    # the incoming ones. Therefore we must search all nodes of the sentence.
-    my @nodes = $node->get_root()->get_descendants({'ordered' => 1});
-    my @children;
-    foreach my $n (@nodes)
-    {
-        my @edeps = $self->get_enhanced_deps($n);
-        if(defined($relregex))
-        {
-            if($negate)
-            {
-                @edeps = grep {$_->[1] !~ m/$relregex/} (@edeps);
-            }
-            else
-            {
-                @edeps = grep {$_->[1] =~ m/$relregex/} (@edeps);
-            }
-        }
-        if(any {$_->[0] == $node->ord()} (@edeps))
-        {
-            push(@children, $n);
-        }
-    }
-    # Remove duplicates.
-    my %ecmap; map {$ecmap{$_->ord()} = $_ unless(exists($ecmap{$_->ord()}))} (@children);
-    @children = map {$ecmap{$_}} (sort {$a <=> $b} (keys(%ecmap)));
-    return @children;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Returns the list of nodes to which there is a path from the current node in
-# the enhanced graph.
-#------------------------------------------------------------------------------
-sub get_enhanced_descendants
-{
-    my $self = shift;
-    my $node = shift;
-    my $visited = shift;
-    # Keep track of visited nodes. Avoid endless loops.
-    my @_dummy;
-    if(!defined($visited))
-    {
-        $visited = \@_dummy;
-    }
-    return () if($visited->[$node->ord()]);
-    $visited->[$node->ord()]++;
-    my @echildren = $self->get_enhanced_children($node);
-    my @echildren2;
-    foreach my $ec (@echildren)
-    {
-        my @ec2 = $self->get_enhanced_descendants($ec, $visited);
-        if(scalar(@ec2) > 0)
-        {
-            push(@echildren2, @ec2);
-        }
-    }
-    # Unlike the method Node::get_descendants(), we currently do not support
-    # the parameters add_self, ordered, preceding_only etc. The caller has
-    # to take care of sort and grep themselves. (We could do sorting but it
-    # would be inefficient to do it in each step of the recursion. And in any
-    # case we would not know whether to add self or not; if yes, then the
-    # sorting would have to be repeated again.)
-    #my @result = sort {$a->ord() <=> $b->ord()} (@echildren, @echildren2);
-    my @result = (@echildren, @echildren2);
-    return @result;
-}
-
-
-
-#------------------------------------------------------------------------------
 # Returns the relation from a node to parent with ord N. Returns the first
 # relation if there are multiple relations to the same parent (this method is
 # intended only for situations where we are confident that there is exactly one
@@ -1031,7 +853,7 @@ sub get_first_edeprel_to_parent_n
     my $self = shift;
     my $node = shift;
     my $parentord = shift;
-    my @edeps = $self->get_enhanced_deps($node);
+    my @edeps = $node->get_enhanced_deps();
     my @edges_from_n = grep {$_->[0] == $parentord} (@edeps);
     if(scalar(@edges_from_n) == 0)
     {

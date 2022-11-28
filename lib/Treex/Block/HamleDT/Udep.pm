@@ -14,30 +14,37 @@ has 'sent_in_file'     => ( is => 'rw', isa => 'Int', default => 0 );
 #------------------------------------------------------------------------------
 # Reads a Prague-style tree and transforms it to Universal Dependencies.
 #------------------------------------------------------------------------------
-sub process_atree {
+sub process_atree
+{
     my ($self, $root) = @_;
 
     # Add the name of the input file and the number of the sentence inside
     # the file as a comment that will be written in the CoNLL-U format.
     # (In any case, Write::CoNLLU will print the sentence id. But this additional
     # information is also very useful for debugging, as it ensures a user can find the sentence in Tred.)
-    if ($self->store_orig_filename){
+    if($self->store_orig_filename)
+    {
         my $bundle = $root->get_bundle();
         my $loaded_from = $bundle->get_document()->loaded_from(); # the full path to the input file
         my $file_stem = $bundle->get_document()->file_stem(); # this will be used in the comment
-        if($loaded_from eq $self->last_loaded_from()) {
+        if($loaded_from eq $self->last_loaded_from())
+        {
             $self->set_sent_in_file($self->sent_in_file() + 1);
-        } else {
+        }
+        else
+        {
             $self->set_last_loaded_from($loaded_from);
             $self->set_sent_in_file(1);
         }
         my $sent_in_file = $self->sent_in_file();
         my $comment = "orig_file_sentence $file_stem\#$sent_in_file";
         my @comments;
-        if(defined($bundle->wild()->{comment})) {
+        if(defined($bundle->wild()->{comment}))
+        {
             @comments = split(/\n/, $bundle->wild()->{comment});
         }
-        if (! any {$_ eq $comment} (@comments)) {
+        if(!any {$_ eq $comment} (@comments))
+        {
             push(@comments, $comment);
             $bundle->wild()->{comment} = join("\n", @comments);
         }
@@ -58,7 +65,8 @@ sub process_atree {
     # below say how should the resulting dependency tree look like. The code
     # of the builder knows how the INPUT tree looks like (including the deprels
     # already converted from Prague to the UD set).
-    my $builder = Treex::Tool::PhraseBuilder::PragueToUD->new(
+    my $builder = Treex::Tool::PhraseBuilder::PragueToUD->new
+    (
         'prep_is_head'           => 0,
         'cop_is_head'            => 0,
         'coordination_head_rule' => 'first_conjunct',
@@ -157,12 +165,12 @@ sub fix_symbols
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        # '%' (percent) and '$' (dollar) will be tagged SYM regardless their
+        # '%' (percent), '$' (dollar), and '§' (paragraph) will be tagged SYM regardless their
         # original part of speech (probably PUNCT or NOUN). Note that we do not
         # require that the token consists solely of the symbol character.
         # Especially with '$' there are tokens like 'US$', 'CR$' etc. that
         # should be included.
-        if($node->form() =~ m/[\$%]$/)
+        if($node->form() =~ m/[\$%§]$/)
         {
             $node->iset()->set('pos', 'sym');
             # If the original dependency relation was AuxG, it should be changed but there is no way of knowing the correct relation.
@@ -291,12 +299,12 @@ sub convert_deprels
             if($parent->iset()->is_passive())
             {
                 # If this is a verb (including infinitive) then it is a clausal subject.
-                $deprel = $node->is_verb() ? 'csubj:pass' : 'nsubj:pass';
+                $deprel = $self->is_clausal_head($node) ? 'csubj:pass' : 'nsubj:pass';
             }
             else # Parent is not passive.
             {
                 # If this is a verb (including infinitive) then it is a clausal subject.
-                $deprel = $node->is_verb() ? 'csubj' : 'nsubj';
+                $deprel = $self->is_clausal_head($node) ? 'csubj' : 'nsubj';
             }
         }
         # Object: obj, iobj, ccomp, xcomp
@@ -306,7 +314,7 @@ sub convert_deprels
             ###!!! We would probably have to consider all valency frames to do that properly.
             ###!!! TODO: An approximation that we probably could do in the meantime is that
             ###!!! if there is one accusative and one or more non-accusatives, then the accusative is the direct object.
-            if($node->is_verb())
+            if($self->is_clausal_head($node))
             {
                 # If this is an infinitive then it is an xcomp (controlled clausal complement).
                 # If this is a verb form other than infinitive then it is a ccomp.
@@ -387,7 +395,7 @@ sub convert_deprels
             ###!!! Úroda byla v tomto roce o mnoho lepší než loni.
             ###!!! There should be obl(lepší, roce) but nmod(lepší, mnoho).
             # Adposition leads to 'obl' because of preposition stranding in languages like English (i.e., it is promoted in ellipsis).
-            $deprel = $node->is_verb() ? 'advcl' : ($node->is_noun() || $node->is_adjective() || $node->is_numeral() || $node->is_adposition() || $node->iset()->pos() eq '') ? 'obl' : 'advmod';
+            $deprel = $self->is_clausal_head($node) ? 'advcl' : ($node->is_noun() || $node->is_adjective() || $node->is_numeral() || $node->is_adposition() || $node->iset()->pos() eq '') ? 'obl' : 'advmod';
         }
         # Attribute of a noun: amod, nummod, nmod, acl
         elsif($deprel eq 'Atr')
@@ -441,7 +449,7 @@ sub convert_deprels
             {
                 $deprel = 'advmod';
             }
-            elsif($node->is_verb())
+            elsif($self->is_clausal_head($node))
             {
                 $deprel = 'acl';
             }
@@ -653,6 +661,38 @@ sub convert_deprels
     {
         delete($node->wild()->{prague_deprel});
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Tells for a node whether its subtree is likely a clause or not. This is
+# necessary to figure out the UD type of the incoming relation (e.g., a nominal
+# subject is attached as 'nsubj', a clausal subject as 'csubj'). Since this
+# method will be called during conversion of relation labels, we cannot rely on
+# them: neither that they are in the Prague style, nor the UD style. The tree
+# structure is still in the Prague style. Interset is available.
+#------------------------------------------------------------------------------
+sub is_clausal_head
+{
+    my $self = shift;
+    my $node = shift;
+    # If the current node is a verb, it heads a clause.
+    # Note that even nominal predicates are headed by the copula verb in the Prague style.
+    return 1 if($node->is_verb());
+    # Passive participles in Slavic languages have been retagged as adjectives.
+    # They have the auxiliary verb as a child (but the lemma of the verb is
+    # language-specific and the relation type is either AuxV or aux:pass,
+    # depending on whether that node has already been converted).
+    if($node->is_participle() && $node->iset()->is_passive())
+    {
+        my @children = $node->children();
+        if(any {$_->is_verb()} (@children))
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 

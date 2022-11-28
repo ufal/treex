@@ -269,6 +269,55 @@ sub fix_auxiliary_verb
             $node->set_tag('VERB');
         }
     }
+    # March 2021: Remove dependency relation subtypes that are specific to some
+    # Polish treebanks but not used in the others. This will facilitate cross-
+    # treebank parsing evaluation while preserving those subtypes that are used
+    # language-wide.
+    my $deprel = $node->deprel();
+    if($deprel =~ s/^advcl:(?:cmpr|relcl)(:|$)/advcl$1/ ||
+       $deprel =~ s/^advmod:(?:arg|emph|neg)(:|$)/advmod$1/ ||
+       $deprel =~ s/^amod:flat(:|$)/amod$1/ ||
+       $deprel =~ s/^aux:(?:aglt|mood|clitic|cnd|imp)(:|$)/aux$1/ ||
+       $deprel =~ s/^ccomp:cleft(:|$)/ccomp$1/ ||
+       $deprel =~ s/^cop:locat(:|$)/cop$1/ ||
+       $deprel =~ s/^det:poss(:|$)/det$1/ ||
+       $deprel =~ s/^discourse:(?:emo|intj)(:|$)/discourse$1/ ||
+       $deprel =~ s/^flat:foreign(:|$)/flat$1/ ||
+       $deprel =~ s/^nmod:(?:arg|flat|pred)(:|$)/nmod$1/ ||
+       $deprel =~ s/^nummod:flat(:|$)/nummod$1/ ||
+       $deprel =~ s/^obl:(?:arg|cmpr|orphan)(:|$)/obl$1/ ||
+       $deprel =~ s/^parataxis:(?:insert|obj)(:|$)/parataxis$1/ ||
+       $deprel =~ s/^xcomp:(?:cleft|obj|pred|subj)(:|$)/xcomp$1/)
+    {
+        $node->set_deprel($deprel);
+    }
+    # If there are already enhanced dependencies, we must do the same with them.
+    my $wild = $node->wild();
+    if(exists($wild->{enhanced}))
+    {
+        my @edeps = @{$wild->{enhanced}};
+        foreach my $edep (@edeps)
+        {
+            my $deprel = $edep->[1];
+            if($deprel =~ s/^advcl:(?:cmpr|relcl)(:|$)/advcl$1/ ||
+               $deprel =~ s/^advmod:(?:arg|emph|neg)(:|$)/advmod$1/ ||
+               $deprel =~ s/^amod:flat(:|$)/amod$1/ ||
+               $deprel =~ s/^aux:(?:aglt|mood|clitic|cnd|imp)(:|$)/aux$1/ ||
+               $deprel =~ s/^ccomp:cleft(:|$)/ccomp$1/ ||
+               $deprel =~ s/^cop:locat(:|$)/cop$1/ ||
+               $deprel =~ s/^det:poss(:|$)/det$1/ ||
+               $deprel =~ s/^discourse:(?:emo|intj)(:|$)/discourse$1/ ||
+               $deprel =~ s/^flat:foreign(:|$)/flat$1/ ||
+               $deprel =~ s/^nmod:(?:arg|flat|pred)(:|$)/nmod$1/ ||
+               $deprel =~ s/^nummod:flat(:|$)/nummod$1/ ||
+               $deprel =~ s/^obl:(?:arg|cmpr|orphan)(:|$)/obl$1/ ||
+               $deprel =~ s/^parataxis:(?:insert|obj)(:|$)/parataxis$1/ ||
+               $deprel =~ s/^xcomp:(?:cleft|obj|pred|subj)(:|$)/xcomp$1/)
+            {
+                $edep->[1] = $deprel;
+            }
+        }
+    }
 }
 
 

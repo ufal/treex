@@ -9,6 +9,13 @@ has iset_driver =>
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
+    # This default is now (2021) dangerous, as different Prague treebanks use different, incompatible tagsets!
+    # PDT (now taken from the newest version, PDT-C) uses cs::pdtc.
+    # CAC, CLTT, FicTree and PUD still use cs::pdt.
+    # The safe solution: In the HamleDT Makefile of each treebank, specify the harmonize block together with the iset_driver parameter.
+    # PDT:     HARMONIZE=Harmonize iset_driver=cs::pdtc
+    # CAC:     HARMONIZE=Harmonize iset_driver=cs::pdt
+    # FicTree: HARMONIZE=HarmonizeFicTree
     default       => 'cs::pdt',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
@@ -268,16 +275,100 @@ sub fix_morphology
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        my $form = $node->form() // '';
         my $lemma = $node->lemma() // '';
         # Fix Interset features of pronominal words.
         if($node->is_pronominal())
         {
+            # In the Prague treebanks until PDT 3.5, plural personal pronouns had a singular lemma,
+            # not only in the third person but also in the first and second ('my' --> 'já'). In PDT-C
+            # this was changed but it would create an inconsistency with other Czech treebanks, so
+            # let's change it back here.
+            if($node->is_personal_pronoun())
+            {
+                if($lemma eq 'my')
+                {
+                    $lemma = 'já';
+                }
+                elsif($lemma eq 'vy')
+                {
+                    $lemma = 'ty';
+                }
+                # DZ: To me, the possessive pronouns are more controversial because their lemmatization
+                # should be analogous to adjectives, and that would not include 'náš' --> 'můj'.
+                # However, the older data did this, too.
+                elsif($lemma eq 'náš')
+                {
+                    $lemma = 'můj';
+                }
+                elsif($lemma eq 'váš')
+                {
+                    $lemma = 'tvůj';
+                }
+            }
+            # Some instances of possessive relative pronouns in CAC are wrongly lemmatized to the
+            # non-possessive "jenž". We have to fix it because some subsequent operations are
+            # designed for "jenž" but not for the possessives; in addition, some morphological
+            # features are not allowed for non-possessive pronouns.
+            # Note that "jehož" can be also the genitive form of "jenž" in non-possessive contexts,
+            # so we must look at morphological features. In contrast, "jejíž" and "jejichž" are
+            # unambiguous, the corresponding genitives would be "jíž/níž" and "jichž/nichž".
+            if($lemma eq 'jenž')
+            {
+                if($form =~ m/^jehož$/i && $node->is_possessive())
+                {
+                    $lemma = 'jehož';
+                    $node->set_lemma($lemma);
+                }
+                elsif($form =~ m/^(jejíž|jejíhož|jejímuž|jejímž|jejíchž|jejímiž)$/i)
+                {
+                    $lemma = 'jejíž';
+                    $node->set_lemma($lemma);
+                }
+                elsif($form =~ m/^jejichž$/i)
+                {
+                    $lemma = 'jejichž';
+                    $node->set_lemma($lemma);
+                }
+            }
+            # In the old cs::pdt tagset, third-person pronouns had a feature that distinguished their
+            # bare form (without preposition: "je") and form with preposition ("ně"). In the new cs::pdtc
+            # tagset, this distinction is lost but we can re-introduce it here.
+            if($lemma =~ m/^(on|jenž)$/ && $node->iset()->case() =~ m/(gen|dat|acc|loc|ins)/)
+            {
+                if($form =~ m/^(jeho|jej|jemu|jím|jí|ji|jich|jim|je|jimi)ž?$/i)
+                {
+                    $node->iset()->set('prepcase', 'npr');
+                }
+                elsif($form =~ m/^(něho|něj|němu|něm|ním|ní|ni|nich|nim|ně|nimi)ž?$/i)
+                {
+                    $node->iset()->set('prepcase', 'pre');
+                }
+            }
+            # In the old cs::pdt tagset, the relative pronoun 'jenž' had its own tag.
+            # In the new cs::pdtc tagset, it is conflated with relative determiners 'jaký', 'který', 'čí'.
+            # Distinguish them here.
+            if($lemma eq 'jenž')
+            {
+                $node->iset()->set('pos', 'noun');
+                $node->iset()->set('prontype', 'rel');
+            }
             # Indefinite pronouns and determiners cannot be distinguished by their PDT tag (PZ*).
             if($lemma =~ m/^((ně|lec|ledas?|kde|bůhví|kdoví|nevím|málo|sotva)?(kdo|cos?)(si|koliv?)?|nikdo|nic|nihil|nothing)$/)
             {
                 $node->iset()->set('pos', 'noun');
+                # In the old cs::pdt tagset, derivates of 'kdo' and 'co' were marked for animacy.
+                # In the new cs::pdtc tagset, this distinction is lost but we can re-introduce it here.
+                if($lemma =~ m/^kdo/ || $lemma =~ m/kdo$/)
+                {
+                    $node->iset()->set('animacy', 'anim');
+                }
+                elsif($lemma =~ m/^co/ || $lemma =~ m/co$/)
+                {
+                    $node->iset()->set('animacy', 'inan');
+                }
             }
-            elsif($lemma =~ m/(^(jaký|který)|(jaký|který)$|^(každý|všechen|sám|žádný|some|takýs)$)/)
+            elsif($lemma =~ m/(^(jaký|který)|(jaký|který)$|^(každý|všechen|sám|samý|žádný|some|takýs)$)/)
             {
                 $node->iset()->set('pos', 'adj');
             }
@@ -287,9 +378,19 @@ sub fix_morphology
                 $node->iset()->set('pos', 'adj');
                 $node->iset()->set('poss', 'poss');
             }
-            # Pronoun (determiner) "sám" is difficult to classify in the traditional Czech system but in UD v2 we now have the prontype=emph, which is quite suitable.
-            if($lemma eq 'sám')
+            # Pronoun (determiner) "sám" is difficult to classify in the traditional Czech system but in UD v2 we now have the prontype=emp, which is quite suitable.
+            # Note that PDT assigns the long forms to a different lemma, "samý", but there is an overlap in meanings and we should probably merge the two lexemes.
+            if($lemma =~ m/^(sám|samý)$/)
             {
+                # Long forms: samý|samá|samé|samí|samého|samou|samému|samém|samým|samých|samými
+                # Short forms: sám|sama|samo|sami|samy|samu
+                # Mark the short forms with the variant feature and then unify the lemma.
+                if($form =~ m/^(sám|sama|samo|sami|samy|samu)$/i)
+                {
+                    $node->iset()->set('variant', 'short');
+                }
+                $lemma = 'samý';
+                $node->set_lemma($lemma);
                 $node->iset()->set('prontype', 'emp');
             }
             # Pronominal numerals are all treated as combined demonstrative and indefinite, because the PDT tag is only one.
@@ -313,6 +414,7 @@ sub fix_morphology
         {
             $node->iset()->set('pos', 'adj');
             $node->iset()->set('prontype', 'tot');
+            ###!!! This does not change the PDT tag (which may become XPOS in UD), which stays adjectival, e.g. AAMS1----1A----. Do we want to change it too?
         }
         # The relative pronoun "kterážto" (lemma "kterýžto") has the tag PJFS1----------, which leads to (wrongly) setting PrepCase=Npr,
         # because otherwise the PJ* tags are used for the various non-prepositional forms of "jenž".
@@ -344,6 +446,15 @@ sub fix_morphology
                 $node->iset()->set('prontype', 'neg');
             }
         }
+        # Mark the verb 'být' as auxiliary regardless of context. In most contexts,
+        # it is at least a copula (AUX in UD). Only in purely existential sentences
+        # (without location) it will be the root of the sentence. But it is not
+        # necessary to change the tag to VERB in these contexts. The tree structure
+        # will contain the necessary information.
+        if($lemma =~ m/^(být|bývat|bývávat)$/)
+        {
+            $node->iset()->set('verbtype', 'aux');
+        }
         # Passive participles should be adjectives both in their short (predicative)
         # and long (attributive) form. Now the long forms are adjectives and short
         # forms are verbs (while the same dichotomy of non-verbal adjectives, such as
@@ -370,6 +481,46 @@ sub fix_morphology
             # Add the ending of masculine singular nominative long adjectives.
             $form .= 'ý';
             $node->set_lemma($form);
+        }
+        # Present converbs have one common form (-c/-i) for singular feminines and neuters.
+        # Try to disambiguate them based on the tree structure. There are very few
+        # such converbs and only a fraction of them are neuters.
+        if($node->is_verb() && $node->is_converb() && $node->form() =~ m/[ci]$/i)
+        {
+            my $neuter = 0;
+            # The fixed expression 'tak říkajíc' has no actor; set it to neuter by default.
+            if($node->form() =~ m/^říkajíc$/i && any {$_->form() =~ m/^tak$/i} ($node->children()))
+            {
+                $neuter = 1;
+            }
+            else
+            {
+                my $parent = $node->parent();
+                if($parent->is_neuter() && !$parent->is_feminine())
+                {
+                    $neuter = 1;
+                }
+                else
+                {
+                    my @siblings = $parent->get_echildren();
+                    if(any {my $d = $_->deprel() // $_->afun(); defined($d) && $d =~ m/^Sb/ && $_->is_neuter() && !$_->is_feminine() && $_ != $node} (@siblings))
+                    {
+                        $neuter = 1;
+                    }
+                }
+            }
+            if($neuter)
+            {
+                $node->iset()->set('number', 'sing');
+                $node->iset()->set('gender', 'neut');
+            }
+            else
+            {
+                $node->iset()->set('number', 'sing');
+                $node->iset()->set('gender', 'fem');
+            }
+            $self->set_pdt_tag($node);
+            $node->set_conll_pos($node->tag());
         }
     }
 }
@@ -528,6 +679,13 @@ sub remove_features_from_lemmas
                 $iset->set('variant', '2');
                 $iset->set('style', 'rare');
             }
+            # The style flag _,i is new in PDT-C (January 2021) and means "distortion, typo".
+            # http://ufal.mff.cuni.cz/pdt-c/publications/TR_PDT_C_morph_manual.pdf, Section 4.2.3, page 14
+            # It is typically accompanied by a comment that shows the standard form: rozpočed_,i_^(^DS**rozpočet)
+            if($ltags =~ s/_,i//)
+            {
+                $iset->set('typo', 'yes');
+            }
             # Term categories encode (among others) types of named entities.
             # There may be two categories at one lemma.
             # JVC_;K_;R (buď továrna, nebo výrobek)
@@ -562,6 +720,7 @@ sub remove_features_from_lemmas
             # They are especially useful for homonyms, foreign words and abbreviations; but they may appear everywhere.
             my $lgloss = '';
             my $lderiv = '';
+            my $lcorrect = '';
             # A typical comment is a synonym or other explaining text in Czech.
             # Example: jen-1_^(pouze)
             # Unfortunately there are instances where the '^' character is missing. Let's capture them as well.
@@ -605,7 +764,31 @@ sub remove_features_from_lemmas
                             log_warn("Lemma '$lemma', derivation comment '$comment', no change.");
                             $lderiv = '';
                         }
+                        # Identify passive deverbative adjectives (participles).
+                        # They could have the VerbForm feature in UD but the PDT
+                        # tags do not identify them as a distinct subclass.
+                        # (In contrast, the PDT tags do distinguish active participles
+                        # such as "dělající", "udělavší".)
+                        # Exclude derivations of the type "-elný", those are not passives.
+                        elsif($lderiv =~ m/(t|ci)$/ && $lprop =~ m/[^l][nt]ý$/ && $iset->is_adjective())
+                        {
+                            $iset->set('verbform', 'part');
+                            $iset->set('voice', 'pass');
+                        }
+                        # Identify deverbative nouns. They could have the VerbForm feature
+                        # in UD but the PDT tags do not identify them as a distinct subclass.
+                        elsif($lderiv =~ m/(t|ci)$/ && $lprop =~ m/[nt]í$/ && $iset->is_noun())
+                        {
+                            $iset->set('verbform', 'vnoun');
+                        }
                     }
+                }
+                # Since PDT-C (January 2021), there is also a special class of comments that encode the standard
+                # lemma when the actual lemma reflects a typo: rozpočed_,i_^(^DS**rozpočet)
+                # http://ufal.mff.cuni.cz/pdt-c/publications/TR_PDT_C_morph_manual.pdf, Section 4.2.3, page 14
+                elsif($comment =~ m/^\(\^DS\*\*(.*)\)$/)
+                {
+                    $lcorrect = $1;
                 }
                 else # normal comment in plain Czech
                 {
@@ -707,6 +890,7 @@ sub remove_features_from_lemmas
             $node->set_misc_attr('LNumValue', $lreference) if($lreference ne '');
             $node->set_misc_attr('LGloss', $lgloss) if($lgloss ne '');
             $node->set_misc_attr('LDeriv', $lderiv) if($lderiv ne '');
+            $node->set_misc_attr('CorrectLemma', $lcorrect) if($lcorrect ne '');
             # And there is one clear bug: lemma "serioznóst" instead of "serióznost".
             $lprop =~ s/^serioznóst$/serióznost/;
             $lemma = $lprop;
@@ -1947,6 +2131,18 @@ sub fix_annotation_errors
             my @subtree = $self->get_node_subtree($node);
             # "stran" has the wrong deprel 'AuxP' here.
             $subtree[2]->set_deprel('Atr');
+        }
+        elsif($spanstring =~ m/^je povinna udržovat dům a společná zařízení v dobrém stavu/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # CAC: "je" has the wrong deprel 'AuxP' here.
+            $subtree[0]->set_deprel('Pred');
+        }
+        elsif($spanstring =~ m/^model z roku \# byl znovu překonstruován/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # CAC: "byl" has the wrong deprel 'AuxP' here.
+            $subtree[4]->set_deprel('AuxV');
         }
         elsif($spanstring =~ m/^, " dokud všechny řady pozorování/i) #"
         {

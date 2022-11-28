@@ -61,6 +61,7 @@ sub fix_morphology
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        my $form = $node->form();
         my $lemma = $node->lemma();
         # Fix Interset features of pronominal words.
         if($node->is_pronominal())
@@ -70,7 +71,7 @@ sub fix_morphology
             {
                 $node->iset()->set('pos', 'noun');
             }
-            elsif($lemma =~ m/(^(jaký|který)|(jaký|který)$|^(každý|všechen|sám|žádný)$)/)
+            elsif($lemma =~ m/(^(jaký|který)|(jaký|který)$|^(každý|všechen|sám|samý|žádný)$)/)
             {
                 $node->iset()->set('pos', 'adj');
             }
@@ -80,9 +81,19 @@ sub fix_morphology
                 $node->iset()->set('pos', 'adj');
                 $node->iset()->set('poss', 'poss');
             }
-            # Pronoun (determiner) "sám" is difficult to classify in the traditional Czech system but in UD v2 we now have the prontype=emph, which is quite suitable.
-            if($lemma eq 'sám')
+            # Pronoun (determiner) "sám" is difficult to classify in the traditional Czech system but in UD v2 we now have the prontype=emp, which is quite suitable.
+            # Note that PDT assigns the long forms to a different lemma, "samý", but there is an overlap in meanings and we should probably merge the two lexemes.
+            if($lemma =~ m/^(sám|samý)$/)
             {
+                # Long forms: samý|samá|samé|samí|samého|samou|samému|samém|samým|samých|samými
+                # Short forms: sám|sama|samo|sami|samy|samu
+                # Mark the short forms with the variant feature and then unify the lemma.
+                if($form =~ m/^(sám|sama|samo|sami|samy|samu)$/i)
+                {
+                    $node->iset()->set('variant', 'short');
+                }
+                $lemma = 'samý';
+                $node->set_lemma($lemma);
                 $node->iset()->set('prontype', 'emp');
             }
             # Pronominal numerals are all treated as combined demonstrative and indefinite, because the PDT tag is only one.
@@ -106,6 +117,7 @@ sub fix_morphology
         {
             $node->iset()->set('pos', 'adj');
             $node->iset()->set('prontype', 'tot');
+            ###!!! This does not change the PDT tag (which may become XPOS in UD), which stays adjectival, e.g. AAMS1----1A----. Do we want to change it too?
         }
         # The relative pronoun "kterážto" (lemma "kterýžto") has the tag PJFS1----------, which leads to (wrongly) setting PrepCase=Npr,
         # because otherwise the PJ* tags are used for the various non-prepositional forms of "jenž".
@@ -137,6 +149,15 @@ sub fix_morphology
                 $node->iset()->set('prontype', 'neg');
             }
         }
+        # Mark the verb 'být' as auxiliary regardless of context. In most contexts,
+        # it is at least a copula (AUX in UD). Only in purely existential sentences
+        # (without location) it will be the root of the sentence. But it is not
+        # necessary to change the tag to VERB in these contexts. The tree structure
+        # will contain the necessary information.
+        if($lemma =~ m/^(být|bývat|bývávat)$/)
+        {
+            $node->iset()->set('verbtype', 'aux');
+        }
         # Passive participles should be adjectives both in their short (predicative)
         # and long (attributive) form. Now the long forms are adjectives and short
         # forms are verbs (while the same dichotomy of non-verbal adjectives, such as
@@ -157,6 +178,8 @@ sub fix_morphology
             $form .= 'ý';
             $node->set_lemma($form);
         }
+        # Unlike in PDT, CAC and CLTT, we do not have to disambiguate the gender
+        # of singular converbs because it is already disambiguated in FicTree.
     }
 }
 
@@ -470,6 +493,39 @@ sub convert_deprels
 
 
 
+#------------------------------------------------------------------------------
+# Catches possible annotation inconsistencies. This method is called from
+# SUPER->process_zone() after convert_tags(), fix_morphology(), and
+# convert_deprels().
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    for(my $i = 0; $i<=$#nodes; $i++)
+    {
+        my $node = $nodes[$i];
+        my $form = $node->form() // '';
+        my $lemma = $node->lemma() // '';
+        my $deprel = $node->deprel() // '';
+        my $spanstring = $self->get_node_spanstring($node);
+        # Past participle "ztraceno" is attached as "AuxV" and has the subject as a child.
+        if($spanstring =~ m/^jako by bylo tělo ztraceno$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_parent($subtree[0]);
+            $subtree[4]->set_deprel('ExD');
+            $subtree[1]->set_parent($subtree[4]);
+            $subtree[1]->set_deprel('AuxV');
+            $subtree[2]->set_parent($subtree[4]);
+            $subtree[2]->set_deprel('AuxV');
+        }
+    }
+}
+
+
+
 1;
 
 =over
@@ -487,6 +543,6 @@ Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2017 by Institute of Formal and Applied Linguistics, Charles University, Prague
+Copyright © 2017, 2022 by Institute of Formal and Applied Linguistics, Charles University, Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

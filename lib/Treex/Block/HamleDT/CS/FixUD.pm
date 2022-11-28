@@ -3,6 +3,7 @@ use utf8;
 use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
+use Lingua::Interset qw(decode encode);
 extends 'Treex::Block::HamleDT::Base'; # provides get_node_spanstring()
 
 
@@ -49,6 +50,52 @@ sub fix_morphology
     my $lemma = $node->lemma();
     my $iset = $node->iset();
     my $deprel = $node->deprel();
+    # Jan Hajič's morphological analyzer tags "každý" simply as adjective,
+    # but it is an attributive pronoun, according to the Czech grammar.
+    if($lemma eq 'každý')
+    {
+        $node->iset()->set('pos', 'adj');
+        $node->iset()->set('prontype', 'tot');
+        $node->iset()->clear('degree');
+        $node->iset()->clear('polarity');
+        ###!!! This does not change the PDT tag (which may become XPOS in UD), which stays adjectival, e.g. AAMS1----1A----. Do we want to change it too?
+        if($node->deprel() =~ m/^amod(:|$)/)
+        {
+            $node->set_deprel('det');
+        }
+        foreach my $edep ($node->get_enhanced_deps())
+        {
+            if($edep->[1] =~ m/^amod(:|$)/)
+            {
+                $edep->[1] = 'det';
+            }
+        }
+    }
+    # Pronoun (determiner) "sám" is difficult to classify in the traditional Czech system but in UD v2 we now have the prontype=emp, which is quite suitable.
+    # Note that PDT assigns the long forms to a different lemma, "samý", but there is an overlap in meanings and we should probably merge the two lexemes.
+    if($lemma =~ m/^(sám|samý)$/)
+    {
+        # Long forms: samý|samá|samé|samí|samého|samou|samému|samém|samým|samých|samými
+        # Short forms: sám|sama|samo|sami|samy|samu
+        # Mark the short forms with the variant feature and then unify the lemma.
+        if($lform =~ m/^(sám|sama|samo|sami|samy|samu)$/i)
+        {
+            $node->iset()->set('variant', 'short');
+        }
+        $lemma = 'samý';
+        $node->set_lemma($lemma);
+        $node->iset()->set('pos', 'adj');
+        $node->iset()->set('prontype', 'emp');
+    }
+    # Mark the verb 'být' as auxiliary regardless of context. In most contexts,
+    # it is at least a copula (AUX in UD). Only in purely existential sentences
+    # (without location) it will be the root of the sentence. But it is not
+    # necessary to change the tag to VERB in these contexts. The tree structure
+    # will contain the necessary information.
+    if($lemma =~ m/^(být|bývat|bývávat)$/)
+    {
+        $node->iset()->set('verbtype', 'aux');
+    }
     # The word "proto" (lit. "for that") is etymologically a demonstrative
     # adverb but it is often used as a discourse connective: a coordinating
     # conjunction with a consecutive meaning. In either case it does not seem
@@ -118,8 +165,73 @@ sub fix_morphology
             $node->set_deprel($deprel);
         }
     }
+    # Identify passive deverbative adjectives and deverbative nouns.
+    my $lderiv = $node->get_misc_attr('LDeriv');
+    if(defined($lderiv))
+    {
+        # Identify passive deverbative adjectives (participles).
+        # They could have the VerbForm feature in UD but the PDT
+        # tags do not identify them as a distinct subclass.
+        # (In contrast, the PDT tags do distinguish active participles
+        # such as "dělající", "udělavší".)
+        # Exclude derivations of the type "-elný", those are not passives.
+        if($lderiv =~ m/(t|ci)$/ && $lemma =~ m/[^l][nt]ý$/ && $iset->is_adjective())
+        {
+            $iset->set('verbform', 'part');
+            $iset->set('voice', 'pass');
+        }
+        # Identify deverbative nouns. They could have the VerbForm feature
+        # in UD but the PDT tags do not identify them as a distinct subclass.
+        elsif($lderiv =~ m/(t|ci)$/ && $lemma =~ m/[nt]í$/ && $iset->is_noun())
+        {
+            $iset->set('verbform', 'vnoun');
+        }
+    }
+    # Present converbs have one common form (-c/-i) for singular feminines and neuters.
+    # Try to disambiguate them based on the tree structure. There are very few
+    # such converbs and only a fraction of them are neuters.
+    if($node->is_verb() && $node->is_converb() && $node->form() =~ m/[ci]$/i)
+    {
+        my $neuter = 0;
+        # The fixed expression 'tak říkajíc' has no actor; set it to neuter by default.
+        if($node->form() =~ m/^říkajíc$/i && any {$_->form() =~ m/^tak$/i} ($node->children()))
+        {
+            $neuter = 1;
+        }
+        else
+        {
+            my $parent = $node->parent();
+            if($parent->is_neuter() && !$parent->is_feminine())
+            {
+                $neuter = 1;
+            }
+            else
+            {
+                my @siblings = $parent->get_children();
+                if(any {my $d = $_->deprel() // ''; defined($d) && $d =~ m/subj/ && $_->is_neuter() && !$_->is_feminine() && $_ != $node} (@siblings))
+                {
+                    $neuter = 1;
+                }
+            }
+        }
+        if($neuter)
+        {
+            $iset->set('number', 'sing');
+            $iset->set('gender', 'neut');
+        }
+        else
+        {
+            $iset->set('number', 'sing');
+            $iset->set('gender', 'fem');
+        }
+    }
     # Make sure that the UPOS tag still matches Interset features.
     $node->set_tag($node->iset()->get_upos());
+    # Make sure that the XPOS tag still matches Interset features.
+    ###!!! We probably have to improve the cs::pdt driver before we do this.
+    ###!!! It fails on things such as pronominal adverbs (switching them to pronouns).
+    ###!!! And it is questionable whether we want the XPOS tags of passive participles to be adjectives instead of verbs (although we do this in UPOS).
+    #$node->set_conll_pos(encode('cs::pdt', $node->iset()));
 }
 
 
@@ -748,7 +860,8 @@ sub fix_constructions
         $kdyz->set_deprel('fixed');
     }
     # "jak" can be ADV or SCONJ. If it is attached as advmod, we will assume that it is ADV.
-    elsif($node->lemma() eq 'jak' && $node->is_conjunction() && $deprel =~ m/^advmod(:|$)/)
+    # same for 'jakkoli' and 'jakkoliv'
+    elsif($node->lemma() =~ m/^jak(koliv?)?$/ && $node->is_conjunction() && $deprel =~ m/^advmod(:|$)/)
     {
         $node->iset()->set('pos' => 'adv');
         $node->iset()->clear('conjtype');
@@ -1002,6 +1115,17 @@ sub fix_constructions
         {
             $child->set_parent($parent);
         }
+    }
+    # In PDT, isolated letters are sometimes attached as punctuation:
+    # - either 'a', 'b', 'c' etc. used as labels of list items,
+    # - or 'o', probably used as a surrogate for a bullet of a list item.
+    # In PDT-C, these tokens are tagged Q3-------------, converted to NOUN in UD,
+    # but they are still attached as punctuation, leading to a violation of the
+    # UD guidelines. Make them nmod instead.
+    # There is also one occurrence where 'O' is tagged F%-------------, converted to X in UD, yet attached as punctuation.
+    if($node->deprel() =~ m/^punct(:|$)/ && ($node->is_noun() || $node->is_foreign()))
+    {
+        $node->set_deprel('nmod');
     }
 }
 

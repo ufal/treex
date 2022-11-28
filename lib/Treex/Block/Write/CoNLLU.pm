@@ -11,6 +11,7 @@ has 'print_text'                       => ( is => 'ro', isa => 'Bool', default =
 has 'sort_misc'                        => ( is => 'ro', isa => 'Bool', default => 0, documentation => 'MISC attributes will be sorted alphabetically' );
 has 'randomly_select_sentences_ratio'  => ( is => 'rw', isa => 'Num',  default => 1 );
 has 'alignment'                        => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print alignment links in the 9th column' );
+has 'use_tree_id_as_sent_id'           => ( is => 'ro', isa => 'Bool', default => 0, documentation => 'use tree->id instead of bundle->id when printing sent_id' );
 
 # Where to find which CoNLL-U column?
 # All the following parameters can have a special value "0",
@@ -124,7 +125,11 @@ sub process_atree
             @comment = grep {!m/^new(doc|par)/i} (@comment);
         }
         my $sent_id = $tree->get_bundle->id;
-        if ($self->print_zone_id)
+        if ($self->use_tree_id_as_sent_id)
+        {
+            $sent_id = $tree->id;
+        }
+        elsif ($self->print_zone_id)
         {
             $sent_id .= '/' . $tree->get_zone->get_label;
         }
@@ -150,13 +155,22 @@ sub process_atree
             }
         }
     }
-    # Before writing any nodes, search the wild attributes for enhanced dependencies.
-    # If the enhanced graph involves empty nodes, they will be encoded in the deps:
-    # '0:root>34.1>cc' means that there should be a root edge from 0 to 34.1,
-    # and a cc edge from 34.1 to the actual node.
-    my %edeps_to_write;
+    # If there are any empty nodes, they are stored after the last real node of the tree
+    # (but we will want to write them at different positions).
+    my @enode_ords;
     foreach my $node (@nodes)
     {
+        if($node->is_empty())
+        {
+            $enode_ords[$node->ord()] = $node->wild()->{enord};
+        }
+    }
+    # Before writing any nodes, search the wild attributes for enhanced dependencies.
+    my %edeps_to_write;
+    my %enodes_to_write;
+    foreach my $node (@nodes)
+    {
+        my $is_empty = $node->is_empty();
         if(exists($node->wild()->{enhanced}))
         {
             my @edeps = @{$node->wild()->{enhanced}};
@@ -164,35 +178,28 @@ sub process_atree
             {
                 my $epord = $edep->[0];
                 my $edeprel = $edep->[1];
-                if($edeprel =~ m/>\d+\.\d+>/)
+                # If the parent is an empty node, translate its ID (ord).
+                if(defined($enode_ords[$epord]))
                 {
-                    # There is at least one empty node embedded in the edge/path.
-                    # Decompose the path to parent-type-child triplets.
-                    my @path = split(/>/, $edeprel);
-                    unshift(@path, $epord);
-                    push(@path, $node->ord());
-                    for(my $i = 0; $i <= $#path-2; $i += 2)
+                    $epord = $enode_ords[$epord];
+                }
+                if($is_empty)
+                {
+                    my $enord = $node->wild()->{enord};
+                    if(!defined($enord))
                     {
-                        my $p = $path[$i];
-                        my $t = $path[$i+1];
-                        my $c = $path[$i+2];
-                        log_fatal("Ord is not numeric in '$edeprel'.") if($p !~ m/^\d+(\.\d+)?$/ || $c !~ m/^\d+(\.\d+)?$/);
-                        # Store edeps of empty nodes in a temporary hash.
-                        if($c =~ m/^(\d+)\.(\d+)$/)
-                        {
-                            my $major = $1;
-                            my $minor = $2;
-                            $edeps_to_write{$major}{$minor}{$p}{$t}++;
-                        }
-                        # Store my modified edeps in a temporary hash.
-                        elsif($c == $node->ord())
-                        {
-                            $edeps_to_write{$c}{0}{$p}{$t}++;
-                        }
-                        else
-                        {
-                            log_fatal("Unexpected child ord 'c' in '$edeprel'.");
-                        }
+                        log_fatal("Unknown ID of an empty node.");
+                    }
+                    if($enord =~ m/^(\d+)\.(\d+)$/)
+                    {
+                        my $major = $1;
+                        my $minor = $2;
+                        $edeps_to_write{$major}{$minor}{$epord}{$edeprel}++;
+                        $enodes_to_write{$major}{$minor} = $node;
+                    }
+                    else
+                    {
+                        log_fatal("Unrecognized empty node ID '$enord'.");
                     }
                 }
                 else
@@ -202,9 +209,11 @@ sub process_atree
             }
         }
     }
+    ###!!! This is the old way of passing through attributes of empty nodes from
+    ###!!! third-party UD data (e.g., Ukrainian). We should modify Read::CoNLLU
+    ###!!! to also create fake anodes.
     # In addition, attributes of empty nodes, including leaf empty nodes, may
     # be stored in a wild attribute of the bundle.
-    my %enodes_to_write;
     if(exists($bwild->{empty_nodes}))
     {
         my @empty_nodes = @{$bwild->{empty_nodes}};
@@ -228,6 +237,9 @@ sub process_atree
     for(my $i = 0; $i<=$#nodes; $i++)
     {
         my $node = $nodes[$i];
+        # We store UD empty nodes at the end of the sentence and in the basic tree,
+        # we attach them to the artificial root via a fake dependency 'dep:empty'.
+        last if($node->is_empty());
         if($node->fused_with_next() && ($i==0 || !$nodes[$i-1]->fused_with_next()))
         {
             my $last_fused_node = $node->get_fusion_end();
@@ -325,24 +337,27 @@ sub process_atree
             }
         }
 
-        # CoNLL-U columns: ID, FORM, LEMMA, UPOS, XPOS(treebank-specific), FEATS, HEAD, DEPREL, DEPS(additional), MISC
+        # CoNLL-U columns: ID, FORM, LEMMA, UPOS, XPOS, FEATS, HEAD, DEPREL, DEPS, MISC
         # Make sure that values are not empty and that they do not contain spaces.
-        # Exception: FORM and LEMMA can contain spaces in approved cases and in Vietnamese.
-        my @values = ($ord,
-        #$form, $lemma,
-        '_', '_', $upos, $xpos, $feats, $pord, $deprel, $deps, $misc);
-        @values = map
+        # Exception: FORM and LEMMA can contain internal spaces in approved cases and in Vietnamese. MISC can always contain internal spaces.
+        my @values = ($ord, $form, $lemma, $upos, $xpos, $feats, $pord, $deprel, $deps, $misc);
+        for(my $i = 0; $i < 10; $i++)
         {
-            my $x = $_ // '_';
-            $x =~ s/^\s+//;
-            $x =~ s/\s+$//;
-            $x =~ s/\s+/_/g;
-            $x = '_' if($x eq '');
-            $x
+            $values[$i] = '_' if(!defined($values[$i]));
+            $values[$i] =~ s/^\s+//;
+            $values[$i] =~ s/\s+$//;
+            # FORM, LEMMA, MISC: multiple internal spaces into one space.
+            # Other columns: internal spaces into underscore.
+            if($i == 1 || $i == 2 || $i == 9)
+            {
+                $values[$i] =~ s/\s+/ /g;
+            }
+            else
+            {
+                $values[$i] =~ s/\s+/_/g;
+            }
+            $values[$i] = '_' if($values[$i] eq '');
         }
-        (@values);
-        $values[1] = defined($form) && $form ne '' ? $form : '_';
-        $values[2] = defined($lemma) && $lemma ne '' ? $lemma : '_';
         $self->print_nfc(join("\t", @values)."\n");
 
         # If there are any empty nodes positioned after the current real node,
@@ -394,7 +409,37 @@ sub print_empty_nodes
         if(exists($enodes_to_write{$major}{$minor}))
         {
             my $en = $enodes_to_write{$major}{$minor};
-            ($form, $lemma, $upos, $xpos, $feats, $deps, $misc) = ($en->{form}, $en->{lemma}, $en->{upos}, $en->{xpos}, $en->{feats}, $en->{deps}, $en->{misc});
+            ###!!! The old way: $en is just a hash reference, not a Node object.
+            if(ref($en) eq 'HASH')
+            {
+                ($form, $lemma, $upos, $xpos, $feats, $deps, $misc) = ($en->{form}, $en->{lemma}, $en->{upos}, $en->{xpos}, $en->{feats}, $en->{deps}, $en->{misc});
+            }
+            ###!!! The new way: $en is a fake a-node, i.e., a Node object.
+            else
+            {
+                $form = $en->form() if(defined($en->form()) && $en->form() ne '');
+                $lemma = $en->lemma() if(defined($en->lemma()) && $en->lemma() ne '');
+                $upos = $en->tag() if(defined($en->tag()) && $en->tag() ne '');
+                $xpos = $en->conll_pos() if(defined($en->conll_pos()) && $en->conll_pos() ne '');
+                $feats = $self->_get_feats($en);
+                my @misc = $en->get_misc();
+                if($self->sort_misc())
+                {
+                    @misc = sort {lc($a) cmp lc($b)} (@misc);
+                }
+                # No MISC element should contain a vertical bar because we are going to
+                # join them using the vertical bar as a separator. We will issue a
+                # a warning if there is a vertical bar but we will not try to fix it
+                # because the CoNLL-U format does not define any escaping method.
+                foreach my $m (@misc)
+                {
+                    if($m =~ m/\|/)
+                    {
+                        log_warn("MISC element '$m' should not contain the vertical bar '|'");
+                    }
+                }
+                $misc = scalar(@misc)>0 ? join('|', @misc) : '_';
+            }
         }
         if(exists($edeps_to_write{$major}{$minor}))
         {

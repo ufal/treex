@@ -341,6 +341,129 @@ sub get_subtree_dependency_string
 
 
 #------------------------------------------------------------------------------
+# The MISC attributes from CoNLL-U files are stored as wild attributes. These
+# methods should be in a Universal Dependencies related role but we don't have one.
+# Returns a list of MISC attributes (possibly an empty list).
+#------------------------------------------------------------------------------
+sub get_misc
+{
+    my $self = shift;
+    my @misc;
+    my $wild = $self->wild();
+    if (exists($wild->{misc}) && defined($wild->{misc}))
+    {
+        @misc = split(/\|/, $wild->{misc});
+    }
+    return @misc;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the first value of the given MISC attribute, or undef.
+#------------------------------------------------------------------------------
+sub get_misc_attr
+{
+    my $self = shift;
+    my $attr = shift;
+    my @misc = grep {m/^$attr=/} ($self->get_misc());
+    if(scalar(@misc) > 1)
+    {
+        log_warn("Multiple values of MISC attribute '$attr'.");
+    }
+    if(scalar(@misc) > 0)
+    {
+        if($misc[0] =~ m/^$attr=(.*)$/)
+        {
+            my $value = $1 // '';
+            return $value;
+        }
+    }
+    return undef;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes a list of MISC attributes (possibly an empty list) and stores it as
+# a wild attribute of the node. Any previous list will be forgotten.
+#------------------------------------------------------------------------------
+sub set_misc
+{
+    my $self = shift;
+    my @misc = @_;
+    my $wild = $self->wild();
+    if (scalar(@misc) > 0)
+    {
+        $wild->{misc} = join('|', @misc);
+    }
+    else
+    {
+        delete($wild->{misc});
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes an attribute name and value. Assumes that MISC elements are attr=value
+# pairs. Replaces the first occurrence of that attribute; if it does not yet
+# occur in MISC, pushes it at the end. Does not do anything if the value is
+# undef! For clearing the attribute in MISC, use clear_misc_attr().
+#------------------------------------------------------------------------------
+sub set_misc_attr
+{
+    my $self = shift;
+    my $attr = shift;
+    my $value = shift;
+    if (defined($attr) && defined($value))
+    {
+        my @misc = $self->get_misc();
+        my $found = 0;
+        for(my $i = 0; $i <= $#misc; $i++)
+        {
+            if ($misc[$i] =~ m/^(.+?)=(.+)$/ && $1 eq $attr)
+            {
+                if ($found)
+                {
+                    splice(@misc, $i--, 1);
+                }
+                else
+                {
+                    $misc[$i] = "$attr=$value";
+                    $found = 1;
+                }
+            }
+        }
+        if (!$found)
+        {
+            push(@misc, "$attr=$value");
+        }
+        $self->set_misc(@misc);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes an attribute name. Assumes that MISC elements are attr=value pairs.
+# Removes all occurrences of that attribute.
+#------------------------------------------------------------------------------
+sub clear_misc_attr
+{
+    my $self = shift;
+    my $attr = shift;
+    if (defined($attr))
+    {
+        my @misc = $self->get_misc();
+        @misc = grep {!(m/^(.+?)=/ && $1 eq $attr)} (@misc);
+        $self->set_misc(@misc);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Says whether this node is member of a fused ("multiword") token.
 #------------------------------------------------------------------------------
 sub is_fused
@@ -473,6 +596,697 @@ sub collect_sentence_text
     $text =~ s/^\s+//;
     $text =~ s/\s+$//;
     return $text;
+}
+
+
+
+#==============================================================================
+# Enhanced Universal Dependencies and empty nodes
+#==============================================================================
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of incoming enhanced edges for a node. Each element of the
+# list is a pair: 1. ord of the parent node; 2. relation label.
+#------------------------------------------------------------------------------
+sub get_enhanced_deps
+{
+    my $self = shift;
+    my $wild = $self->wild();
+    if(!exists($wild->{enhanced}) || !defined($wild->{enhanced}) || ref($wild->{enhanced}) ne 'ARRAY')
+    {
+        # Silently create the wild attribute: an empty array.
+        $wild->{enhanced} = [];
+    }
+    return @{$wild->{enhanced}};
+}
+
+
+
+#------------------------------------------------------------------------------
+# Removes all incoming enhanced edges from a node.
+#------------------------------------------------------------------------------
+sub clear_enhanced_deps
+{
+    my $self = shift;
+    my $wild = $self->wild();
+    if(exists($wild->{enhanced}))
+    {
+        delete($wild->{enhanced});
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds a new enhanced edge incoming to the current node, unless the same
+# relation with the same parent already exists.
+#------------------------------------------------------------------------------
+sub add_enhanced_dependency
+{
+    my $self = shift; # child
+    my $parent = shift;
+    my $deprel = shift;
+    # Self-loops are not allowed in enhanced dependencies.
+    # We could silently ignore the call but there is probably something wrong
+    # at the caller's side, so we will throw an exception.
+    if($parent == $self)
+    {
+        my $ord = $self->ord();
+        my $form = $self->form() // '';
+        log_fatal("Self-loops are not allowed in the enhanced graph but we are attempting to attach the node no. $ord ('$form') to itself.");
+    }
+    my $pord = $parent->get_conllu_id();
+    my @edeps = $self->get_enhanced_deps();
+    unless(any {$_->[0] eq $pord && $_->[1] eq $deprel} (@edeps))
+    {
+        push(@{$self->wild()->{enhanced}}, [$pord, $deprel]);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of parents of a node in the enhanced graph, i.e., the list
+# of nodes from which there is at least one edge incoming to the given node.
+# The list is ordered by their ord value.
+#
+# Optionally the parents will be filtered by regex on relation type.
+#------------------------------------------------------------------------------
+sub get_enhanced_parents
+{
+    my $self = shift;
+    my $relregex = shift;
+    my $negate = shift; # return parents that do not match $relregex
+    my @edeps = $self->get_enhanced_deps();
+    if(defined($relregex))
+    {
+        if($negate)
+        {
+            @edeps = grep {$_->[1] !~ m/$relregex/} (@edeps);
+        }
+        else
+        {
+            @edeps = grep {$_->[1] =~ m/$relregex/} (@edeps);
+        }
+    }
+    # Remove duplicates.
+    my %epmap; map {$epmap{$_->[0]}++} (@edeps);
+    my @parents = sort {$a->ord() <=> $b->ord()} (map {$self->get_node_by_conllu_id($_)} (keys(%epmap)));
+    return @parents;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of children of a node in the enhanced graph, i.e., the list
+# of nodes that have at least one incoming edge from the given start node.
+# The list is ordered by their ord value.
+#
+# Optionally the children will be filtered by regex on relation type.
+#------------------------------------------------------------------------------
+sub get_enhanced_children
+{
+    my $self = shift;
+    my $relregex = shift;
+    my $negate = shift; # return children that do not match $relregex
+    # We do not maintain an up-to-date list of outgoing enhanced edges, only
+    # the incoming ones. Therefore we must search all nodes of the sentence.
+    my @nodes = $self->get_root()->get_descendants({'ordered' => 1});
+    my @children;
+    foreach my $n (@nodes)
+    {
+        my @edeps = $n->get_enhanced_deps();
+        if(defined($relregex))
+        {
+            if($negate)
+            {
+                @edeps = grep {$_->[1] !~ m/$relregex/} (@edeps);
+            }
+            else
+            {
+                @edeps = grep {$_->[1] =~ m/$relregex/} (@edeps);
+            }
+        }
+        if(any {$_->[0] == $self->get_conllu_id()} (@edeps))
+        {
+            push(@children, $n);
+        }
+    }
+    # Remove duplicates.
+    my %ecmap; map {$ecmap{$_->ord()} = $_ unless(exists($ecmap{$_->ord()}))} (@children);
+    @children = map {$ecmap{$_}} (sort {$a <=> $b} (keys(%ecmap)));
+    return @children;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of nodes to which there is a path from the current node in
+# the enhanced graph. The list is not ordered and does not include $self.
+#------------------------------------------------------------------------------
+sub get_enhanced_descendants
+{
+    my $self = shift;
+    my $visited = shift;
+    # Keep track of visited nodes. Avoid endless loops.
+    my @_dummy;
+    if(!defined($visited))
+    {
+        $visited = \@_dummy;
+    }
+    return () if($visited->[$self->ord()]);
+    $visited->[$self->ord()]++;
+    my @echildren = $self->get_enhanced_children();
+    my @echildren2;
+    foreach my $ec (@echildren)
+    {
+        my @ec2 = $ec->get_enhanced_descendants($visited);
+        if(scalar(@ec2) > 0)
+        {
+            push(@echildren2, @ec2);
+        }
+    }
+    # Unlike the method Node::get_descendants(), we currently do not support
+    # the parameters add_self, ordered, preceding_only etc. The caller has
+    # to take care of sort and grep themselves. (We could do sorting but it
+    # would be inefficient to do it in each step of the recursion. And in any
+    # case we would not know whether to add self or not; if yes, then the
+    # sorting would have to be repeated again.)
+    #my @result = sort {$a->ord() <=> $b->ord()} (@echildren, @echildren2);
+    my @result = (@echildren, @echildren2);
+    return @result;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Creates an empty node. In the sentence node sequence, it will be placed at
+# the end (while its decimal CoNLL-U ID/ord will be stored as a wild
+# attribute). In the basic tree, it will be connected to the artificial root
+# via a fake dependency 'dep:empty' (all UD-processing blocks should be aware
+# of the possibility that some nodes are empty).
+#------------------------------------------------------------------------------
+sub create_empty_node
+{
+    my $self = shift;
+    my $enord = shift;
+    my $root = $self->get_root();
+    # The CoNLL-U id of the empty node ($enord) must be $major.$minor and must be unique.
+    if($enord !~ m/^(0|[1-9][0-9]*)\.[1-9][0-9]*$/)
+    {
+        log_fatal("The CoNLL-U id of an empty node must be a decimal number, not '$enord'.");
+    }
+    if(any {$_->get_conllu_id() eq $enord} ($root->get_descendants()))
+    {
+        log_warn($self->get_forms_with_ords_and_conllu_ids());
+        log_fatal("CoNLL-U id '$enord' already exists.");
+    }
+    my $node = $root->create_child();
+    $node->set_deprel('dep:empty');
+    $node->wild()->{enhanced} = [];
+    $node->wild()->{enord} = $enord;
+    $node->shift_after_subtree($root);
+    return $node;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Empty nodes in enhanced UD graphs are modeled using fake a-nodes at the end
+# of the sentence. In the a-tree they are attached directly to the artificial
+# root, with the deprel 'dep:empty'. Their ord is used internally in Treex,
+# e.g., in the wild attributes that model the enhanced dependencies. Their
+# CoNLL-U id ("decimal ord") is stored in a wild attribute.
+#------------------------------------------------------------------------------
+sub is_empty
+{
+    my $self = shift;
+    return defined($self->deprel()) && $self->deprel() eq 'dep:empty';
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the CoNLL-U node ID. For regular nodes it is their ord; for empty
+# nodes the decimal id is stored in a wild attribute.
+#------------------------------------------------------------------------------
+sub get_conllu_id
+{
+    my $self = shift;
+    return $self->is_empty() ? $self->wild()->{enord} : $self->ord();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the CoNLL-U node ID split to major and minor number (useful for
+# sorting).
+#------------------------------------------------------------------------------
+sub get_major_minor_id
+{
+    my $self = shift;
+    my $major = $self->get_conllu_id();
+    my $minor = 0;
+    if($major =~ s/^(\d+)\.(\d+)$/$1/)
+    {
+        $minor = $2;
+    }
+    return ($major, $minor);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Changes the current CoNLL-U ID of an empty node to a new value. Will throw
+# an exception if called on a non-empty node or if the new ID is already taken
+# by another node. On the other hand, it does not care whether this is the
+# first available ID after a given regular node, or there is a gap. This makes
+# the method more usable when reordering empty nodes.
+#------------------------------------------------------------------------------
+sub set_empty_node_conllu_id
+{
+    my $self = shift;
+    my $newid = shift;
+    if(!$self->is_empty())
+    {
+        log_fatal("This method cannot be called on a non-empty node.");
+    }
+    if($newid !~ m/^(0|[1-9][0-9]*)\.[1-9][0-9]*$/)
+    {
+        log_fatal("'$newid' is not a well-formed CoNLL-U ID of an empty node.");
+    }
+    my @nodes = $self->get_root()->get_descendants();
+    if(any {$_->get_conllu_id() eq $newid} (@nodes))
+    {
+        log_fatal("CoNLL-U ID '$newid' is already taken by another node.");
+    }
+    # If the old ID is used anywhere in the enhanced graph as a parent reference,
+    # change it to the new ID.
+    my $oldid = $self->get_conllu_id();
+    foreach my $node (@nodes)
+    {
+        my @edeps = $node->get_enhanced_deps();
+        foreach my $edep (@edeps)
+        {
+            if($edep->[0] eq $oldid)
+            {
+                $edep->[0] = $newid;
+            }
+        }
+    }
+    $self->wild()->{enord} = $newid;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Changes CoNLL-U ID of an empty node so that its new position is immediately
+# after a given other node. Unlike the method shift_after_node() (defined in
+# Ordered), this method does not change the ord.
+#------------------------------------------------------------------------------
+sub shift_empty_node_after_node
+{
+    my $self = shift;
+    my $reference_node = shift;
+    if(!$self->is_empty())
+    {
+        log_fatal("This method cannot be called on a non-empty node.");
+    }
+    my ($rmajor, $rminor) = $reference_node->get_major_minor_id();
+    # Get all empty nodes that have the same major id and higher minor id.
+    # They will have to be shifted to the right.
+    my $root = $self->get_root();
+    my @nodes = sort {cmp_conllu_ids($a->get_conllu_id(), $b->get_conllu_id())} ($root->get_descendants());
+    my @to_be_moved = grep {my ($major, $minor) = $_->get_major_minor_id(); $major == $rmajor && $minor > $rminor} (@nodes);
+    for(my $i = $#to_be_moved; $i >= 0; $i--)
+    {
+        my ($major, $minor) = $to_be_moved[$i]->get_major_minor_id();
+        my $newid = $major.'.'.($minor+1);
+        $to_be_moved[$i]->set_empty_node_conllu_id($newid);
+    }
+    $self->set_empty_node_conllu_id($rmajor.'.'.($rminor+1));
+    # Normalization is needed because at the old position, other empty nodes may have to be moved to the left.
+    $root->_normalize_ords_and_conllu_ids();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Changes CoNLL-U ID of an empty node so that its new position is immediately
+# before a given other node. Unlike the method shift_before_node() (defined in
+# Ordered), this method does not change the ord.
+#------------------------------------------------------------------------------
+sub shift_empty_node_before_node
+{
+    my $self = shift;
+    my $reference_node = shift;
+    if(!$self->is_empty())
+    {
+        log_fatal("This method cannot be called on a non-empty node.");
+    }
+    if($reference_node->is_root())
+    {
+        log_fatal("Cannot shift a node before root.");
+    }
+    my ($rmajor, $rminor) = $reference_node->get_major_minor_id();
+    # If $rminor is 0, we will have the previous major id and the first available
+    # minor id. No nodes will have to be moved. If $rminor is non-zero, we will
+    # have to shift the reference node and all empty nodes with the same major
+    # and higher minor to the right.
+    my $root = $self->get_root();
+    my @nodes = sort {cmp_conllu_ids($a->get_conllu_id(), $b->get_conllu_id())} ($root->get_descendants());
+    if($rminor == 0)
+    {
+        my @prev_major = grep {my ($major, $minor) = $_->get_major_minor_id(); $major == $rmajor-1} (@nodes);
+        my ($prev_major, $last_minor) = $prev_major[-1]->get_major_minor_id();
+        $self->set_empty_node_conllu_id($prev_major.'.'.($last_minor+1));
+    }
+    else
+    {
+        my @to_be_moved = grep {my ($major, $minor) = $_->get_major_minor_id(); $major == $rmajor && $minor >= $rminor} (@nodes);
+        for(my $i = $#to_be_moved; $i >= 0; $i--)
+        {
+            my ($major, $minor) = $to_be_moved[$i]->get_major_minor_id();
+            my $newid = $major.'.'.($minor+1);
+            $to_be_moved[$i]->set_empty_node_conllu_id($newid);
+        }
+        $self->set_empty_node_conllu_id($rmajor.'.'.$rminor);
+    }
+    # Normalization is needed because at the old position, other empty nodes may have to be moved to the left.
+    $root->_normalize_ords_and_conllu_ids();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Compares two CoNLL-U node ids (there can be empty nodes with decimal ids).
+# This is a static class function rather than method of a particular Node::A
+# object (it does not use the $self reference).
+#------------------------------------------------------------------------------
+sub cmp_conllu_ids
+{
+    my $a = shift;
+    my $b = shift;
+    my $amaj = $a;
+    my $amin = 0;
+    my $bmaj = $b;
+    my $bmin = 0;
+    if($amaj =~ s/^(\d+)\.(\d+)$/$1/)
+    {
+        $amin = $2;
+    }
+    if($bmaj =~ s/^(\d+)\.(\d+)$/$1/)
+    {
+        $bmin = $2;
+    }
+    my $r = $amaj <=> $bmaj;
+    unless($r)
+    {
+        $r = $amin <=> $bmin;
+    }
+    return $r;
+}
+
+
+
+#------------------------------------------------------------------------------
+# For debugging and internal sanity check: Verifies that all incoming enhanced
+# dependency relations refer to an existing node by its CoNLL-U id.
+#------------------------------------------------------------------------------
+sub _check_enhanced_deps
+{
+    my $self = shift;
+    my @edeps = $self->get_enhanced_deps();
+    my $root = $self->get_root();
+    my @nodes = $root->get_descendants();
+    foreach my $edep (@edeps)
+    {
+        # ID=0 means root, it always exists.
+        next if($edep->[0] eq '0');
+        # We could call get_node_by_conllu_id(), which will throw an exception if the node does not exist.
+        # However, we want to provide more information as to where the bad link originates.
+        my @results = grep {$_->get_conllu_id() == $edep->[0]} (@nodes);
+        if(scalar(@results) == 0)
+        {
+            my $serialized_node = sprintf("%s:%s:%s", $self->ord() // '_', $self->get_conllu_id() // '_', $self->form() // '_');
+            my $serialized_edeps = join('|', map {"$_->[0]:$_->[1]"} (@edeps));
+            log_warn($self->get_forms_with_ords_and_conllu_ids());
+            log_warn("Enhanced DEPS of node '$serialized_node': $serialized_edeps");
+            log_fatal("No node with CoNLL-U ID '$edep->[0]' found.");
+        }
+        if(scalar(@results) > 1)
+        {
+            my $serialized_node = sprintf("%s:%s:%s", $self->ord() // '_', $self->get_conllu_id() // '_', $self->form() // '_');
+            my $serialized_edeps = join('|', map {"$_->[0]:$_->[1]"} (@edeps));
+            log_warn($self->get_forms_with_ords_and_conllu_ids());
+            log_warn("Enhanced DEPS of node '$serialized_node': $serialized_edeps");
+            log_fatal("There are multiple nodes with CoNLL-U ID '$edep->[0]'.");
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds a node with a given id in the same tree. This is useful if we are
+# looking at the list of incoming enhanced edges and need to actually access
+# one of the parents listed there by ord. We assume that if the method is
+# called, the caller is confident that the node should exist. The method will
+# throw an exception if there is no node or multiple nodes with the given ord.
+#------------------------------------------------------------------------------
+sub get_node_by_conllu_id
+{
+    my $self = shift;
+    my $id = shift;
+    my $root = $self->get_root();
+    return $root if($id == 0);
+    my @results = grep {$_->get_conllu_id() == $id} ($root->get_descendants());
+    if(scalar(@results) == 0)
+    {
+        log_warn($self->get_forms_with_ords_and_conllu_ids());
+        log_fatal("No node with CoNLL-U ID '$id' found.");
+    }
+    if(scalar(@results) > 1)
+    {
+        log_warn($self->get_forms_with_ords_and_conllu_ids());
+        log_fatal("There are multiple nodes with CoNLL-U ID '$id'.");
+    }
+    return $results[0];
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns all words in the current sentence together with their ords and
+# CoNLL-U ids. Used for debugging.
+#------------------------------------------------------------------------------
+sub get_forms_with_ords_and_conllu_ids
+{
+    my $self = shift;
+    my $root = $self->get_root();
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    my @triples = map {my $f = $_->form() // '_'; my $o = $_->ord() // '_'; my $i = $_->get_conllu_id() // '_'; "$o:$i:$f"} (@nodes);
+    return join(' ', @triples);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Alternative to Node::Ordered::_normalize_node_ordering(). This alternative
+# must be used if there are enhanced universal dependencies because the role
+# Ordered does/should not know about them. Call this method after operations
+# that may have removed nodes from the tree/graph.
+#------------------------------------------------------------------------------
+sub _normalize_ords_and_conllu_ids
+{
+    log_fatal("Incorrect number of arguments") if(scalar(@_) != 1);
+    my $self = shift;
+    log_fatal("Ordering normalization can be applied only on root nodes!") if(!$self->is_root());
+    # Do not use ordered => 1. We want to order by CoNLL-U ids rather than ords.
+    # Do not use add_self => 1. Unshift myself as the first element instead.
+    # Otherwise normalization will not work as expected if the current ord of the root is nonzero and/or a non-root node has zero.
+    my @nodes = $self->get_descendants();
+    @nodes = sort
+    {
+        my $aempty = $a->is_empty();
+        my $bempty = $b->is_empty();
+        my $r;
+        if($aempty && !$bempty)
+        {
+            $r = 1;
+        }
+        elsif(!$aempty && $bempty)
+        {
+            $r = -1;
+        }
+        elsif(!$aempty && !$bempty)
+        {
+            $r = $a->ord() <=> $b->ord();
+        }
+        else # both are empty
+        {
+            my ($amaj, $amin) = $a->get_major_minor_id();
+            my ($bmaj, $bmin) = $b->get_major_minor_id();
+            $r = $amaj <=> $bmaj;
+            unless($r)
+            {
+                $r = $amin <=> $bmin;
+            }
+        }
+        $r
+    }
+    (@nodes);
+    unshift(@nodes, $self);
+    # If there are enhanced dependencies, we will have to adjust them, too.
+    # But first we must collect the mapping between old and new CoNLL-U ids.
+    my $enhanced = 0;
+    my %o2n;
+    my $lastmaj;
+    my $lastmin;
+    for(my $i = 0; $i <= $#nodes; $i++)
+    {
+        $enhanced = 1 if(exists($nodes[$i]->wild()->{enhanced}));
+        my $oldord = $nodes[$i]->ord();
+        my $neword = $i;
+        if($nodes[$i]->is_empty())
+        {
+            my ($oldmaj, $oldmin) = $nodes[$i]->get_major_minor_id();
+            my $newmaj = $oldmaj;
+            my $newmin;
+            if(defined($lastmaj) && $lastmaj==$newmaj)
+            {
+                $newmin = ++$lastmin;
+            }
+            else
+            {
+                $lastmaj = $newmaj;
+                $lastmin = $newmin = 1;
+            }
+            $o2n{"$oldmaj.$oldmin"} = "$newmaj.$newmin";
+            $nodes[$i]->wild()->{enord} = "$newmaj.$newmin";
+        }
+        else
+        {
+            $o2n{$oldord} = $neword;
+        }
+        $nodes[$i]->_set_ord($neword);
+    }
+    if($enhanced)
+    {
+        foreach my $node (@nodes)
+        {
+            if(exists($node->wild()->{enhanced}))
+            {
+                foreach my $edep (@{$node->wild()->{enhanced}})
+                {
+                    log_fatal("Cannot redirect '$edep->[0]'") if(!defined($o2n{$edep->[0]}));
+                    $edep->[0] = $o2n{$edep->[0]};
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Converts the old hack for empty nodes to a new hack. The old hack does not
+# use a Node object for an empty node. Instead, the enhanced dependency encodes
+# the path between two real nodes via one or more empty nodes: 'conj>3.5>obj'.
+# In the new hack, there will be a Node object for the empty node. It will have
+# a fake basic dependency, directly on the artificial root node, with the
+# deprel 'dep:empty'. It will have an integer ord at the end of the sentence,
+# while its decimal ord for CoNLL-U will be saved in a wild attribute. All
+# blocks that deal with a UD tree must be aware of the possibility that there
+# are empty nodes, and these nodes must be excluded from operations with basic
+# dependencies.
+#
+# Even after all UD-related blocks are updated to work with the new hack, we
+# may need to call this method on data that has been saved in the Treex format
+# while the old hack was used.
+#------------------------------------------------------------------------------
+sub expand_empty_nodes
+{
+    my $self = shift;
+    log_fatal('expand_empty_nodes() must be called on a root node') if(!$self->is_root());
+    my @nodes = $self->get_descendants({'ordered' => 1});
+    # Populate the hash of empty nodes in the current sentence.
+    my %enords;
+    foreach my $node (@nodes)
+    {
+        my @iedges = $node->get_enhanced_deps();
+        foreach my $ie (@iedges)
+        {
+            # We are looking for deprels of the form 'conj>3.5>obj' (there may
+            # be multiple empty nodes in the chain).
+            if($ie->[1] =~ m/>/)
+            {
+                my @parts = split(/>/, $ie->[1]);
+                foreach my $part (@parts)
+                {
+                    if($part =~ m/^\d+\.\d+$/)
+                    {
+                        $enords{$part}++;
+                    }
+                }
+            }
+        }
+    }
+    # Create empty nodes at the end of the sentence.
+    my @enords = sort {$a <=> $b} (keys(%enords));
+    my %emptynodes; # Node objects indexed by enords
+    foreach my $enord (@enords)
+    {
+        my $node = $self->create_empty_node($enord);
+        $emptynodes{$enord} = $node;
+    }
+    # Redirect paths through empty nodes.
+    # @nodes still holds only the regular nodes.
+    foreach my $node (@nodes)
+    {
+        my @iedges = $node->get_enhanced_deps();
+        my $modified = 0;
+        foreach my $ie (@iedges)
+        {
+            # We are looking for deprels of the form 'conj>3.5>obj' (there may
+            # be multiple empty nodes in the chain).
+            if($ie->[1] =~ m/>/)
+            {
+                my @parts = split(/>/, $ie->[1]);
+                # The number of parts must be odd.
+                if(scalar(@parts) % 2 == 0)
+                {
+                    log_fatal("Cannot understand enhanced deprel '$ie->[1]': even number of parts.");
+                }
+                my $pord = $ie->[0];
+                my $parent = $self->get_node_by_conllu_id($pord);
+                while(scalar(@parts) > 1)
+                {
+                    my $deprel = shift(@parts);
+                    my $cord = shift(@parts);
+                    if(!exists($emptynodes{$cord}))
+                    {
+                        log_fatal("Unknown empty node '$cord'.");
+                    }
+                    my $child = $emptynodes{$cord};
+                    $child->add_enhanced_dependency($parent, $deprel);
+                    $parent = $child;
+                }
+                # The remaining part is a deprel, and we know the current parent.
+                $ie->[0] = $parent->ord();
+                $ie->[1] = $parts[0];
+                $modified = 1;
+            }
+        }
+        # We may have modified our copy of the @iedges array. We have to copy
+        # it back to the wild attributes of the node.
+        if($modified)
+        {
+            @{$node->wild()->{enhanced}} = @iedges;
+        }
+    }
 }
 
 

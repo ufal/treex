@@ -310,7 +310,12 @@ sub remove {
 
     # TODO: order normalizing can be done in a more efficient way
     # (update just the following ords)
-    $root->_normalize_node_ordering();
+    ###!!! And make sure that enhanced dependencies are treated correctly but without referring to wild()->{enhanced} here.
+    if(any {exists($_->wild()->{enhanced})} ($root->get_descendants())) {
+        $root->_normalize_ords_and_conllu_ids();
+    } else {
+        $root->_normalize_node_ordering();
+    }
 
     # By reblessing we make sure that
     # all methods called on removed nodes will result in fatal errors.
@@ -718,70 +723,6 @@ sub get_address {
 
     #my $filename = Cwd::abs_path($file);
     return "$file##$position.$id";
-}
-
-# The MISC attributes from CoNLL-U files are stored as wild attributes.
-# These methods should be in a Universal Dependencies related role but we don't have one.
-# get_misc() returns a list of MISC attributes (possibly empty list)
-sub get_misc
-{
-    my $self = shift;
-    my @misc;
-    my $wild = $self->wild();
-    if (exists($wild->{misc}) && defined($wild->{misc}))
-    {
-        @misc = split(/\|/, $wild->{misc});
-    }
-    return @misc;
-}
-
-# set_misc() takes a list of MISC attributes (possibly empty list)
-sub set_misc
-{
-    my $self = shift;
-    my @misc = @_;
-    my $wild = $self->wild();
-    if (scalar(@misc) > 0)
-    {
-        $wild->{misc} = join('|', @misc);
-    }
-    else
-    {
-        delete($wild->{misc});
-    }
-}
-
-# set_misc_attr() takes an attribute name and value; assumes that MISC elements are attr=value pairs; replaces first or pushes at the end
-sub set_misc_attr
-{
-    my $self = shift;
-    my $attr = shift;
-    my $value = shift;
-    if (defined($attr) && defined($value))
-    {
-        my @misc = $self->get_misc();
-        my $found = 0;
-        for(my $i = 0; $i <= $#misc; $i++)
-        {
-            if ($misc[$i] =~ m/^(.+?)=(.+)$/ && $1 eq $attr)
-            {
-                if ($found)
-                {
-                    splice(@misc, $i--, 1);
-                }
-                else
-                {
-                    $misc[$i] = "$attr=$value";
-                    $found = 1;
-                }
-            }
-        }
-        if (!$found)
-        {
-            push(@misc, "$attr=$value");
-        }
-        $self->set_misc(@misc);
-    }
 }
 
 # Empty DESTROY method is a hack to get rid of the "Deep recursion warning"

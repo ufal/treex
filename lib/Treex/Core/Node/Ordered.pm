@@ -26,6 +26,52 @@ sub follows {
     return $self->ord() > $another_node->ord();
 }
 
+
+
+#------------------------------------------------------------------------------
+# Finds a node with a given ord in the same tree. This was originally needed to
+# search for nodes in the enhanced UD graph but there it has been replaced by
+# Core::Node::A::get_node_by_conllu_id(). We assume that if the method is
+# called, the caller is confident that the node should exist. The method will
+# throw an exception if there is no node or multiple nodes with the given ord.
+#------------------------------------------------------------------------------
+sub get_node_by_ord
+{
+    my $self = shift;
+    my $ord = shift;
+    my $root = $self->get_root();
+    return $root if($ord == 0);
+    my @results = grep {$_->ord() == $ord} ($root->get_descendants());
+    if(scalar(@results) == 0)
+    {
+        log_warn($self->get_forms_with_ords());
+        log_fatal("No node with ord '$ord' found.");
+    }
+    if(scalar(@results) > 1)
+    {
+        log_warn($self->get_forms_with_ords());
+        log_fatal("There are multiple nodes with ord '$ord'.");
+    }
+    return $results[0];
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns all words in the current sentence together with their ords. Used for
+# debugging.
+#------------------------------------------------------------------------------
+sub get_forms_with_ords
+{
+    my $self = shift;
+    my $root = $self->get_root();
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    my @pairs = map {my $f = $_->form() // '_'; my $o = $_->ord() // '_'; "$o:$f"} (@nodes);
+    return join(' ', @pairs);
+}
+
+
+
 # Methods get_next_node and get_prev_node are implemented
 # so they can handle deprecated fractional ords.
 # When no "fract-ords" will be used in the whole TectoMT nor Treex
@@ -92,10 +138,18 @@ sub _normalize_node_ordering {
     # Otherwise normalization will not work as expected if the current ord of the root is nonzero and/or a non-root node has zero.
     my @nodes = $self->get_descendants( { ordered => 1 } );
     unshift(@nodes, $self);
-    my $new_ord = 0;
-    foreach my $node (@nodes) {
-        $node->_set_ord($new_ord);
-        $new_ord++
+    # If there are enhanced dependencies, we will have to adjust them, too.
+    # But first we must collect the mapping between old and new ords.
+    ###!!! This is not a good solution because enhanced dependencies are in Node::A and Node::Ordered should not have to know about them.
+    ###!!! UPDATE: There are more things that have to be taken care of. If there are enhanced universal dependencies, do not use this method.
+    ###!!! Instead, use Node::A::_normalize_ords_and_conllu_ids()!
+    my $enhanced = 0;
+    for(my $i = 0; $i <= $#nodes; $i++) {
+        $nodes[$i]->_set_ord($i);
+        $enhanced = 1 if(exists($nodes[$i]->wild()->{enhanced}));
+    }
+    if($enhanced) {
+        log_fatal("If there are Enhanced Universal Dependencies, use Node::A::_normalize_ords_and_conllu_ids() instead of Node::Ordered::_normalize_node_ordering().");
     }
     return;
 }

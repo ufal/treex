@@ -146,10 +146,12 @@ sub _get_direct_coap_root {
 sub _get_transitive_coap_root {
     my ( $self, $arg_ref ) = @_;
     my $root = $self->_get_direct_coap_root($arg_ref) or return;
-    while ( $root->get_attr('is_member') ) {
-        $root = $root->_get_direct_coap_root($arg_ref) or return;
+    my $last_root = $root;
+    while ($root){
+        $last_root = $root;
+        $root = $root->_get_direct_coap_root($arg_ref);
     }
-    return $root;
+    return $last_root;
 }
 
 sub _can_apply_eff {
@@ -218,9 +220,11 @@ sub _get_shared_echildren {
     #  (In case of "diving", it's not $self, but its governing Aux[CP].)
     #  However, it has is_member==1, so it won't get into @shared_echildren.
     #  Similarly for other iterations.
+    my $dive = $arg_ref->{dive} || sub { 0 };
     while ($coap_root) {
         push @shared_echildren,
             map  { $_->get_coap_members($arg_ref) }
+            map  { $dive->($_) ? $_->get_children : $_ }
             grep { !$_->get_attr('is_member') }
             $coap_root->get_children();
         $coap_root = $coap_root->_get_direct_coap_root($arg_ref);
@@ -287,7 +291,7 @@ sub get_esiblings {
     my $eff_arg_ref = $self->_extract_eff_args($arg_ref);
 
     my @eparents = $self->get_eparents($eff_arg_ref);
-    
+
     my %esiblings_hash;
     foreach my $eparent (@eparents) {
         my @esiblings = grep { $_ ne $self } $eparent->get_echildren($eff_arg_ref);
@@ -298,6 +302,46 @@ sub get_esiblings {
     my @esiblings = values %esiblings_hash;
 
     return $self->_process_switches($arg_ref, @esiblings);
+}
+
+sub get_edescendants {
+    my ( $self, $arg_ref ) = @_;
+    log_fatal('Incorrect number of arguments') if @_ > 2;
+    if ( !defined $arg_ref ) {
+        $arg_ref = {};
+    }
+    my $eff_arg_ref = $self->_extract_eff_args($arg_ref);
+    my @edescendants;
+    if ( $arg_ref && $arg_ref->{except} ) {
+        my $except_node = delete $arg_ref->{except};
+        return () if $self == $except_node;
+        if ( $self->is_coap_root() && $eff_arg_ref->{or_topological} ) {
+            my @children = $self->get_children();
+            @edescendants = map {
+                $_->get_descendants( { add_self => 1 } )
+            } @children;
+        } else {
+            my @echildren = $self->get_echildren($eff_arg_ref);
+            @edescendants = map {
+                $_->get_edescendants( { except => $except_node, add_self => 1 } )
+            } @echildren;
+        }
+    }
+    else {
+        if ( $self->is_coap_root() && $eff_arg_ref->{or_topological} ) {
+            my @children = $self->get_children();
+            @edescendants = map {
+                $_->get_descendants( { add_self => 1 } )
+            } @children;
+        } else {
+            my @echildren = $self->get_echildren($eff_arg_ref);
+            @edescendants = map {
+                $_->get_edescendants( { add_self => 1 } )
+            } @echildren;
+        }
+    }
+    return @edescendants if !$arg_ref;
+    return $self->_process_switches( $arg_ref, @edescendants );
 }
 
 1;
