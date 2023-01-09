@@ -365,7 +365,7 @@ sub _run_job_script {
             # Optionally adjust scheduling priority of the job. The higher positive number,
             # the lower the priority. Default is 100, maximum is 2147483645, negative numbers
             # are only for privileged users.
-            $sbatch_opts .= ' --nice=' . $self->priority if ( $self->priority );
+            $sbatch_opts .= ' --nice=' . $self->priority if ( defined $self->priority && $self->priority >= 0 );
             # Make sure that the job sees the entire current environment, plus TREEX_PARALLEL=1.
             $sbatch_opts .= ' --export=ALL,TREEX_PARALLEL=1';
             # Specify where to save the job's standard error output.
