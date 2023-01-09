@@ -1144,7 +1144,7 @@ sub _delete_jobs {
     }
     else { # slurm
         $qdel = 'scancel';
-        $qstat = 'squeue -u ' . $ENV{USER} . "perl -pe 's/^\s+//; s/ .*//;'";
+        $qstat = 'squeue -u ' . $ENV{USER} . " | perl -pe 's/^\s+//; s/ .*//;'";
     }
     my %jobs = ();
     foreach my $job ( @{ $self->sge_job_numbers } ) {
