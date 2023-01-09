@@ -317,36 +317,81 @@ sub _run_job_script {
         push @{ $self->sge_job_numbers }, $pid;
     }
     else {
-        my $mem       = $self->mem;
-        #my $qsub_opts = ''; # UPV/EHU
-        my $qsub_opts = '-cwd -e error/ -S /bin/bash';
-        if ($mem){
-            my ($h_vmem, $unit) = ($mem =~ /(\d+)(.*)/);
-            $h_vmem = (2*$h_vmem) . $unit;
-            #$qsub_opts .= " -l mem_free=$mem -l h_vmem=$h_vmem -l act_mem_free=$mem"; # UPV/EHU
-            $qsub_opts .= " -hard -l mem_free=$mem -l h_vmem=$h_vmem -l act_mem_free=$mem";
+        ###!!! ÚFAL uses the SLURM cluster since October 2022 (instead of SGE). This code needs to be adapted.
+        my $sge = 0;
+        if ( $sge ) {
+            my $mem       = $self->mem;
+            # -cwd ... the script is executed in the current folder (the default is the current user's home folder)
+            # -e error/ ... the file with the standard error output will be created in the folder 'error' (with the default file name, i.e, $JOBNAME.$JOBID)
+            # -S /bin/bash ... make sure the script is executed by bash (it may be the default now, it used to be csh; in any case, the shebang line in the script is ignored)
+            my $qsub_opts = '-cwd -e error/ -S /bin/bash';
+            if ($mem){
+                my ($h_vmem, $unit) = ($mem =~ /(\d+)(.*)/);
+                $h_vmem = (2*$h_vmem) . $unit;
+                $qsub_opts .= " -hard -l mem_free=$mem -l h_vmem=$h_vmem -l act_mem_free=$mem";
+            }
+            if ($self->queue){
+                $qsub_opts .= ' -q ' . $self->queue;
+            }
+            if ($self->qsub){
+                $qsub_opts .= ' ' . $self->qsub;
+            }
+            $qsub_opts .= ' -p ' . $self->priority;
+            $qsub_opts .= ' -N ' . $self->name . '-job' . sprintf( "%03d", $jobnumber ) . '.sh ' if $self->name;
+            # Submit the job and read qsub's standard output.
+            open my $QSUB, "cd $workdir && qsub -v TREEX_PARALLEL=1 $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
+            my $firstline = <$QSUB>;
+            close $QSUB;
+            chomp $firstline if ( defined $firstline );
+            if ( defined $firstline && $firstline =~ /job (\d+)/ ) {
+                push @{ $self->sge_job_numbers }, $1;
+            }
+            else {
+                log_fatal 'Job number not detected after the attempt at submitting the job. ' .
+                    "Perhaps it was not possible to submit the job. See files in $workdir/output";
+            }
         }
-        if ($self->queue){
-            $qsub_opts .= ' -q ' . $self->queue;
-        }
-        if ($self->qsub){
-            $qsub_opts .= ' ' . $self->qsub;
-        }
-        $qsub_opts .= ' -p ' . $self->priority; # not UPV/EHU
-        $qsub_opts .= ' -N ' . $self->name . '-job' . sprintf( "%03d", $jobnumber ) . '.sh ' if $self->name;
-
-        open my $QSUB, "cd $workdir && qsub -v TREEX_PARALLEL=1 $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
-        #open my $QSUB, "cd $workdir && TREEX_PARALLEL=1 qsub $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen) # UPV/EHU
-
-        my $firstline = <$QSUB>;
-        close $QSUB;
-        chomp $firstline if ( defined $firstline );
-        if ( defined $firstline && $firstline =~ /job (\d+)/ ) {
-            push @{ $self->sge_job_numbers }, $1;
-        }
-        else {
-            log_fatal 'Job number not detected after the attempt at submitting the job. ' .
-                "Perhaps it was not possible to submit the job. See files in $workdir/output";
+        else { # slurm
+            my $sbatch_opts = '';
+            # Construct the job/script name.
+            my $jobname = $self->name ? $self->name . '-job' . sprintf( "%03d", $jobnumber ) . '.sh' : 'treex-job' . sprintf( "%03d", $jobnumber ) . '.sh';
+            $sbatch_opts .= ' --job-name=' . $jobname;
+            # Specify which partition/queue to submit the job to. Example: 'cpu-troja'.
+            $sbatch_opts .= ' -p ' . $self->queue if ( $self->queue );
+            # Set memory requirement.
+            # Note: --mem is recommended when whole nodes are allocated to jobs.
+            # Alternatively, we could use --mem-per-cpu (or --mem-per-gpu).
+            $sbatch_opts .= ' --mem=' . $self->mem if ( $self->mem );
+            # Optionally adjust scheduling priority of the job. The higher positive number,
+            # the lower the priority. Default is 100, maximum is 2147483645, negative numbers
+            # are only for privileged users.
+            $sbatch_opts .= ' --nice=' . $self->priority if ( $self->priority );
+            # Make sure that the job sees the entire current environment, plus TREEX_PARALLEL=1.
+            $sbatch_opts .= ' --export=ALL,TREEX_PARALLEL=1';
+            # Specify where to save the job's standard error output.
+            $sbatch_opts .= ' --error=error/' . $jobname . '.%j';
+            ###!!! For SGE, Treex also supports the command-line option --qsub ($self->qsub),
+            ###!!! which allows the user to provide additional options for the qsub program.
+            ###!!! We ignore it here for the time being, as it may be misleading (sbatch takes
+            ###!!! different options than qsub).
+            # Submit the job and read sbatch's standard output.
+            open my $QSUB, "cd $workdir && sbatch$sbatch_opts $script_filename |" or log_fatal $!;
+            my $firstline = <$QSUB>;
+            close $QSUB;
+            my $ok = 0;
+            if ( defined $firstline ) {
+                chomp $firstline;
+                # Sample output:
+                # Submitted batch job 1236974
+                if ( $firstline =~ /job (\d+)/ ) {
+                    push @{ $self->sge_job_numbers }, $1;
+                    $ok = 1;
+                }
+            }
+            if ( !$ok ) {
+                log_fatal 'Job number not detected after an attempt at submitting the job. '.
+                    "Perhaps it was not possible to submit the job. See files in $workdir/output";
+            }
         }
     }
 
