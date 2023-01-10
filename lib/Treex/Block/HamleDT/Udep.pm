@@ -655,6 +655,33 @@ sub convert_deprels
         # Save the universal dependency relation label with the node.
         $node->set_deprel($deprel);
     }
+    # Make sure that no node has more than one subject. This is to prevent
+    # validation errors in UD. However, instead of randomly picking a subject
+    # and re-labeling it as dep, we should investigate and fix the error
+    # upstream.
+    foreach my $node (@nodes)
+    {
+        my @children = $node->get_children({'ordered' => 1});
+        if(scalar(@children) >= 2)
+        {
+            my $ns = 0;
+            foreach my $child (@children)
+            {
+                if($child->deprel() =~ m/^[nc]subj(:|$)/)
+                {
+                    $ns++;
+                    if($ns > 1)
+                    {
+                        $child->set_deprel('dep');
+                    }
+                }
+            }
+            if($ns > 1)
+            {
+                log_warn("Node '".$node->form()."' has $ns subjects.");
+            }
+        }
+    }
     # Now that all deprels have been converted we do not need the copies of the original deprels any more. Delete them.
     delete($root->wild()->{prague_deprel});
     foreach my $node (@nodes)
