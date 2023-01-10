@@ -1127,30 +1127,6 @@ sub fix_constructions
     {
         $node->set_deprel('nmod');
     }
-    # Make sure that no node has more than one subject. This is to prevent
-    # validation errors in UD. However, instead of randomly picking a subject
-    # and re-labeling it as dep, we should investigate and fix the error
-    # upstream.
-    my @children = $node->get_children({'ordered' => 1});
-    if(scalar(@children) >= 2)
-    {
-        my $ns = 0;
-        foreach my $child (@children)
-        {
-            if($child->deprel() =~ m/^[nc]subj(:|$)/)
-            {
-                $ns++;
-                if($ns > 1)
-                {
-                    $child->set_deprel('dep');
-                }
-            }
-        }
-        if($ns > 1)
-        {
-            log_warn("Node '".$node->form()."' has $ns subjects.");
-        }
-    }
 }
 
 
@@ -2107,6 +2083,30 @@ sub fix_annotation_errors
         # Missing noun after the preposition "na". The preposition should be
         # promoted as the head of an "obl" phrase. It should not be "case" or "mark".
         $subtree[4]->set_deprel('obl');
+    }
+    # Make sure that no node has more than one subject. This is to prevent
+    # validation errors in UD. However, instead of randomly picking a subject
+    # and re-labeling it as dep, we should investigate and fix the error
+    # upstream.
+    my @children = $node->get_children({'ordered' => 1});
+    if(scalar(@children) >= 2)
+    {
+        my $ns = 0;
+        foreach my $child (@children)
+        {
+            if($child->deprel() =~ m/^[nc]subj(:|$)/)
+            {
+                $ns++;
+                if($ns > 1)
+                {
+                    $child->set_deprel('dep');
+                }
+            }
+        }
+        if($ns > 1)
+        {
+            log_warn("Node '".$node->form()."' has $ns subjects.");
+        }
     }
 }
 
