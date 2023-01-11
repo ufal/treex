@@ -441,8 +441,12 @@ sub add_enhanced_external_subject
                 {
                     $edeprel =~ s/:pass//;
                 }
-                # We could now add the ':xsubj' subtype to the relation label.
-                # But we would first have to remove the previous subtype, if any.
+                # Add the ':xsubj' subtype to the relation label. It is possible
+                # that it will be the second subtype ('nsubj:pass:xsubj'). This
+                # is allowed by the EUD guidelines as of 2022. There will be still
+                # at most two colons (the permitted maximum is three) because
+                # subjects do not take case enhancements.
+                $edeprel .= ':xsubj';
                 $subject->add_enhanced_dependency($node, $edeprel);
             }
         }

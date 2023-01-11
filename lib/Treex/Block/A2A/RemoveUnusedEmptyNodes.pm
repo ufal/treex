@@ -15,53 +15,90 @@ sub process_atree
     for(my $i = 0; $i <= $#nodes; $i++)
     {
         my $node = $nodes[$i];
+        # Only check empty nodes that are linked to the t-layer. That way we
+        # preserve any empty nodes that may have been added by the block
+        # A2A::AddEnhancedUD.
         if($node->is_empty() && exists($node->wild()->{'tnode.rf'}))
         {
             my $tnode = $document->get_node_by_id($node->wild()->{'tnode.rf'});
             my $cid = $node->get_misc_attr('ClusterId');
+            # If the node is not member of any coreference cluster, we do not
+            # need it and can discard it.
             if(!defined($cid))
             {
-                # Check that the node does not have any enhanced children.
-                # It shouldn't because in GenerateEmptyNodes, we add the nodes as leaves.
-                my @echildren = $node->get_enhanced_children();
-                if(scalar(@echildren) > 0)
-                {
-                    log_fatal("Cannot remove empty node that is not leaf.");
-                }
-                # Remove reference to this node from the t-layer.
-                if(defined($tnode))
-                {
-                    delete($tnode->wild()->{'anode.rf'});
-                }
-                $node->remove();
+                $self->remove_empty_leaf($node, $tnode);
                 splice(@nodes, $i, 1);
                 $i--;
+            }
+            # An empty node with the lemma '#Cor' occurs in control/raising
+            # constructions. It is a child of a controlled infinitive and it is
+            # grammatically coreferential with an argument of the matrix verb.
+            # In UD it should be merged with its antecedent and there should be
+            # an enhanced dependency nsubj:xsubj that will link the antecedent
+            # to the controlled infinitive.
+            elsif($node->lemma() eq '#Cor')
+            {
+                my @eparents = $node->get_enhanced_parents();
+                if(scalar(@eparents) == 1)
+                {
+                    my $infinitive = $eparents[0];
+                    if(!$infinitive->is_infinitive())
+                    {
+                        log_warn("The parent of a #Cor node is not an infinitive.");
+                    }
+                    # The basic UD parent of the infinitive is the matrix verb.
+                    my $mverb = $infinitive->parent();
+                    if(!$mverb->is_verb())
+                    {
+                        log_warn("The grandparent of a #Cor node is not a verb.");
+                    }
+                    if($infinitive->deprel() !~ m/^xcomp(:|$)/)
+                    {
+                        log_warn("The parent of a #Cor node is not xcomp of its parent.");
+                    }
+                    # The #Cor node should be coreferential with one of the
+                    # children of the matrix verb. We must search enhanced
+                    # children because it could be a generated node, too (e.g.
+                    # in case of pro-drop).
+                    my @candidates = grep {$_ != $node && $_->get_misc_attr('ClusterId') eq $cid} ($mverb->get_enhanced_children());
+                    if(scalar(@candidates) == 1)
+                    {
+                        # Attach the candidate as nsubj:xsubj enhanced child of the infinitive.
+                        # It is possible that this relation already exists (block A2A::AddEnhancedUD)
+                        # but then add_enhanced_dependency() will do nothing.
+                        ###!!! Like in A2A::AddEnhancedUD, we should decide whether it is a nominal or clausal subject (nsubj vs. csubj) and whether it is active or passive (nsubj:pass).
+                        log_warn("TO DO: Decide whether nsubj:xsubj is clausal or passive.");
+                        $candidates[0]->add_enhanced_dependency($infinitive, 'nsubj:xsubj');
+                        # Now we can finally remove the #Cor node.
+                        $self->remove_empty_leaf($node, $tnode);
+                        splice(@nodes, $i, 1);
+                        $i--;
+                    }
+                    else
+                    {
+                        my $n = scalar(@candidates);
+                        log_warn("The matrix verb has $n enhanced children coreferential with the #Cor node. The #Cor node will not be removed.");
+                    }
+                }
+                else
+                {
+                    my $n = scalar(@eparents);
+                    log_warn("#Cor node has $n enhanced parents. It will not be removed.");
+                }
             }
             # An empty node with the lemma '#Rcp' is grammatically coreferential
             # with a plural actant, probably actor (ACT) in a reciprocal event.
             # The only purpose of the '#Rcp' node is to show that the same
-            # actant(s) at the same time participate with another functor (ADDR).
-            # We do not preserve functors in UD yet, so we do not need the node.
-            # Even when we start porting functors to UD, we will probably merge
-            # the '#Rcp' node with its antecedent and store both functors there.
-            # It is possible that the coreferential nominal will become a
-            # singleton cluster when the '#Rcp' node is removed. That probably
-            # does not hurt anything, so we do not attempt to solve it.
+            # actant(s) at the same time participate with another functor
+            # (probably PAT or ADDR). We do not preserve functors in UD yet, so
+            # we do not need the node. Even when we start porting functors to
+            # UD, we will probably merge the '#Rcp' node with its antecedent and
+            # store both functors there. It is possible that the coreferential
+            # nominal will become a singleton when the '#Rcp' node is removed.
+            # That probably does not hurt, so we do not attempt to solve it.
             elsif($node->lemma() eq '#Rcp')
             {
-                # Check that the node does not have any enhanced children.
-                # It shouldn't because in GenerateEmptyNodes, we add the nodes as leaves.
-                my @echildren = $node->get_enhanced_children();
-                if(scalar(@echildren) > 0)
-                {
-                    log_fatal("Cannot remove empty node that is not leaf.");
-                }
-                # Remove reference to this node from the t-layer.
-                if(defined($tnode))
-                {
-                    delete($tnode->wild()->{'anode.rf'});
-                }
-                $node->remove();
+                $self->remove_empty_leaf($node, $tnode);
                 splice(@nodes, $i, 1);
                 $i--;
             }
@@ -124,9 +161,7 @@ sub process_atree
                                     $technical_head->set_misc_attr($m);
                                 }
                             }
-                            # Remove reference to this node from the t-layer.
-                            delete($tnode->wild()->{'anode.rf'});
-                            $node->remove();
+                            $self->remove_empty_leaf($node, $tnode);
                             splice(@nodes, $i, 1);
                             $i--;
                         }
@@ -144,6 +179,31 @@ sub process_atree
         }
     }
     $root->_normalize_ords_and_conllu_ids();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Removes an empty leaf from the tree/graph.
+#------------------------------------------------------------------------------
+sub remove_empty_leaf
+{
+    my $self = shift;
+    my $node = shift;
+    my $tnode = shift;
+    # Check that the node does not have any enhanced children.
+    # It shouldn't because in GenerateEmptyNodes, we add the nodes as leaves.
+    my @echildren = $node->get_enhanced_children();
+    if(scalar(@echildren) > 0)
+    {
+        log_fatal("Cannot remove empty node that is not leaf.");
+    }
+    # Remove reference to this node from the t-layer.
+    if(defined($tnode))
+    {
+        delete($tnode->wild()->{'anode.rf'});
+    }
+    $node->remove();
 }
 
 
