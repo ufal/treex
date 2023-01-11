@@ -37,6 +37,34 @@ sub process_atree
                 splice(@nodes, $i, 1);
                 $i--;
             }
+            # An empty node with the lemma '#Rcp' is grammatically coreferential
+            # with a plural actant, probably actor (ACT) in a reciprocal event.
+            # The only purpose of the '#Rcp' node is to show that the same
+            # actant(s) at the same time participate with another functor (ADDR).
+            # We do not preserve functors in UD yet, so we do not need the node.
+            # Even when we start porting functors to UD, we will probably merge
+            # the '#Rcp' node with its antecedent and store both functors there.
+            # It is possible that the coreferential nominal will become a
+            # singleton cluster when the '#Rcp' node is removed. That probably
+            # does not hurt anything, so we do not attempt to solve it.
+            elsif($node->lemma() eq '#Rcp')
+            {
+                # Check that the node does not have any enhanced children.
+                # It shouldn't because in GenerateEmptyNodes, we add the nodes as leaves.
+                my @echildren = $node->get_enhanced_children();
+                if(scalar(@echildren) > 0)
+                {
+                    log_fatal("Cannot remove empty node that is not leaf.");
+                }
+                # Remove reference to this node from the t-layer.
+                if(defined($tnode))
+                {
+                    delete($tnode->wild()->{'anode.rf'});
+                }
+                $node->remove();
+                splice(@nodes, $i, 1);
+                $i--;
+            }
             # An empty node with the lemma '#Forn' corresponds to the tectogrammatical
             # head of a foreign phrase. If it participates in coreference, it may
             # be a multi-word foreign name, such as 'Čchien čchi-čchen'. Find the

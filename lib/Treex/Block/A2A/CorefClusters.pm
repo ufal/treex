@@ -35,7 +35,7 @@ sub process_anode
             my $ng = scalar(grep {!defined($_)} (@{$ctypes}));
             if($ng >= 2)
             {
-                log_warn("Grammatical coreference has $ng antecedents.");
+                log_warn("Grammatical coreference has $ng antecedents. Perhaps it should be one split antecedent.");
             }
             for(my $i = 0; $i <= $#{$cnodes}; $i++)
             {
