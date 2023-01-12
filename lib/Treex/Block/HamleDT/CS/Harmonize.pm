@@ -2196,6 +2196,8 @@ sub fix_cltt_order
 {
     my $self = shift;
     my $root = shift;
+    ###!!! Apparently this sentence has been fixed upstream in CLTT 2.0, so this function can (and should!) be removed.
+    return;
     # First number: correct ord
     # Second number: current ord (wrong)
     my $reorder = <<EOF
