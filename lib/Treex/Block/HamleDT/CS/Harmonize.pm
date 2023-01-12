@@ -2179,6 +2179,11 @@ sub fix_annotation_errors
         {
             $node->set_deprel('Adv');
         }
+        # CLTT: "z titulu" wrongly lemmatized as "titulus".
+        elsif(defined($node->lemma()) && $node->lemma() eq 'titulus')
+        {
+            $node->set_lemma('titul');
+        }
     }
 }
 
