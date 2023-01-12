@@ -54,6 +54,7 @@ sub process_atree
     $self->exchange_tags($root);
     $self->fix_symbols($root);
     $self->fix_annotation_errors($root);
+    $self->fix_list_item_labels($root); # must be called before convert_deprels()
     $self->convert_deprels($root);
     $self->remove_null_pronouns($root);
     $self->relabel_appos_name($root);
@@ -213,6 +214,40 @@ sub fix_symbols
             if($node->deprel() eq 'AuxG')
             {
                 $node->set_deprel('AuxY');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fix list item labels attached to AuxP or AuxC. For example, in Czech CLTT,
+# "d) pokud tak stanoví zvláštní právní předpis"
+# "d) if so provided by a special legal regulation"
+# "d)" is one token, tagged "X@", attached as "AuxG" directly to "pokud", which
+# is AuxC_Co and has "stanoví" as the second child. This is not a problem when
+# "d)" is treated as punctuation, but it is not punctuation, and "AuxG" will be
+# converted to generic "nmod" in convert_deprels(). Therefore, we should detect
+# and fix such cases before deprels are converted.
+#------------------------------------------------------------------------------
+sub fix_list_item_labels
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'AuxG' && $node->form() =~ m/^[A-Za-z0-9]+[\)\.]$/)
+        {
+            $node->set_deprel('Adv');
+            if($node->parent()->deprel() =~ m/^Aux[CP]/)
+            {
+                my @siblings = $node->get_siblings({'ordered' => 1, 'add_self' => 0});
+                if(scalar(@siblings) > 0)
+                {
+                    $node->set_parent($siblings[0]);
+                }
             }
         }
     }
@@ -619,6 +654,13 @@ sub convert_deprels
             else
             {
                 $deprel = 'nmod'; ###!!! or nsubj or obj or whatever
+                # One use case is item labels in ordered lists ("a)", "b)" etc.)
+                # They should be attached to the head of the list item. The
+                # problem is if the head is AuxC or AuxP: during later structural
+                # conversion, the nmod node may be picked as the actual argument
+                # of the preposition; it would not happen if it stayed punctuation.
+                # Observed in Czech CLTT. It may look differently in other treebanks
+                # (for example, "a)" may be treated as two tokens there).
             }
         }
         elsif($deprel =~ m/^Aux[XK]$/)
