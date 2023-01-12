@@ -463,8 +463,10 @@ sub set_personal_pronoun_form
     # that will have to be guessed, too. But if the functor is ACT and the parent is
     # an active verb, or the functor is PAT and the parent is a passive participle,
     # then we are likely dealing with a subject.
+    # Rather than asking about is_active(), we ask about !is_passive() because certain
+    # verb forms, such as the imperative, do not have the voice feature, unfortunately.
     if(defined($aparent) &&
-       ($functor eq 'ACT' && $aparent->is_verb() && $aparent->iset()->is_active() ||
+       ($functor eq 'ACT' && $aparent->is_verb() && !$aparent->iset()->is_passive() ||
         $functor eq 'PAT' && $aparent->is_participle() && $aparent->iset()->is_passive()))
     {
         $self->get_verb_features($aparent, $iset);
