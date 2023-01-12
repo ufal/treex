@@ -52,9 +52,9 @@ sub process_atree
                     {
                         log_warn("The grandparent of a #Cor node is not a verb.");
                     }
-                    if($infinitive->deprel() !~ m/^xcomp(:|$)/)
+                    if($infinitive->deprel() !~ m/^(csubj|xcomp)(:|$)/)
                     {
-                        log_warn("The parent of a #Cor node is not xcomp of its parent.");
+                        log_warn("The parent of a #Cor node is not csubj|xcomp of its parent.");
                     }
                     # The #Cor node should be coreferential with one of the
                     # children of the matrix verb. We must search enhanced

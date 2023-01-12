@@ -151,20 +151,9 @@ sub guess_and_set_morphology
     }
     elsif($tlemma eq '#Gen')
     {
-        # Very often, if a #Gen is used in coreference, its functor is BEN (beneficiary).
-        if($language eq 'cs')
-        {
-            if($functor eq 'BEN')
-            {
-                $anode->set_form('pro_někoho');
-            }
-            else
-            {
-                $anode->set_form('někdo');
-            }
-        }
         $anode->set_tag('PRON');
         $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'ind'});
+        $self->set_indefinite_pronoun_form($anode, $aparent, $tparent, $deprel, $functor) if($language eq 'cs');
     }
     elsif($tlemma eq '#Neg')
     {
@@ -435,8 +424,8 @@ sub position_empty_node
 
 
 #------------------------------------------------------------------------------
-# According to morphological features collected from the governing verb,
-# generates the corresponding form of a personal pronoun.
+# Czech-specific: According to morphological features collected from the
+# governing verb, generates the corresponding form of a personal pronoun.
 #------------------------------------------------------------------------------
 sub set_personal_pronoun_form
 {
@@ -479,7 +468,7 @@ sub set_personal_pronoun_form
     my $form = 'on';
     # If the pronoun modifies an eventive noun ('spojování obcí někým'), it is
     # attached as 'nmod' and its case is set to genitive or instrumental. We
-    # don't know its person,  number and gender, so it is better to use an
+    # don't know its person, number and gender, so it is better to use an
     # indefinite rather than a personal form.
     if($iset->is_genitive())
     {
@@ -569,6 +558,84 @@ sub set_personal_pronoun_form
         }
     }
     $anode->set_form($form);
+    return $form;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Czech-specific: According to the governing verb and the functor, generates
+# the corresponding form of an indefinite pronoun (#Gen).
+#------------------------------------------------------------------------------
+sub set_indefinite_pronoun_form
+{
+    my $self = shift;
+    my $anode = shift; # the pronoun node
+    my $aparent = shift; # parent of the pronoun in the enhanced a-graph (at most one now; undef if the pronoun is attached to the root)
+    my $tparent = shift; # parent of the pronoun in the t-tree
+    my $deprel = shift; # proposed deprel for the pronoun node with respect to $aparent
+    my $functor = shift; # functor of the corresponding t-node
+    my $iset = $anode->iset();
+    my $case = 'nom';
+    my $form = 'někdo';
+    # Very often, if a #Gen is used in coreference, its functor is BEN (beneficiary).
+    if($functor eq 'BEN')
+    {
+        $case = 'acc';
+        $form = 'pro_někoho';
+        $iset->set_case($case);
+        $anode->set_form($form);
+    }
+    else # not 'pro_někoho'
+    {
+        if($deprel =~ m/^nmod(:|$)/)
+        {
+            # Actors of intransitive nouns are likely to be expressed in genitive: 'někoho (něčí) chůze, pád, spánek, chrápání'
+            # Actors of transitives sometimes sound better in the instrumental: 'spojování něčeho někým'
+            if($functor eq 'ACT' && defined($tparent) && scalar(grep {$_->functor() eq 'PAT'} ($tparent->children())) > 0)
+            {
+                $case = 'ins';
+            }
+            else
+            {
+                $case = 'gen';
+            }
+        }
+        elsif($functor eq 'ACT')
+        {
+            # dařit se, podařit se někomu
+            if(defined($aparent) && $aparent->lemma() =~ m/dařit$/)
+            {
+                $case = 'dat';
+            }
+        }
+        elsif($functor eq 'PAT')
+        {
+            $case = 'acc';
+        }
+        elsif($functor eq 'ADDR')
+        {
+            $case = 'dat';
+        }
+        $iset->set_case($case);
+        if($iset->is_genitive())
+        {
+            $form = 'někoho';
+        }
+        elsif($iset->is_dative())
+        {
+            $form = 'někomu';
+        }
+        elsif($iset->is_accusative())
+        {
+            $form = 'někoho';
+        }
+        elsif($iset->is_instrumental())
+        {
+            $form = 'někým';
+        }
+        $anode->set_form($form);
+    }
     return $form;
 }
 
