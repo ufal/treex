@@ -445,8 +445,9 @@ sub add_enhanced_external_subject
                 # that it will be the second subtype ('nsubj:pass:xsubj'). This
                 # is allowed by the EUD guidelines as of 2022. There will be still
                 # at most two colons (the permitted maximum is three) because
-                # subjects do not take case enhancements.
-                $edeprel .= ':xsubj';
+                # subjects do not take case enhancements. Add ':xsubj' only if the
+                # edeprel does not contain it yet!
+                $edeprel .= ':xsubj' unless($edeprel =~ m/:xsubj$/);
                 $subject->add_enhanced_dependency($node, $edeprel);
             }
         }
