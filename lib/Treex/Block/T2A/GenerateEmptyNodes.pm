@@ -39,12 +39,27 @@ sub process_zone
             # Store the functor in MISC. It may be useful to understand why the empty node is there.
             my $functor = $tnode->functor() // 'Unknown';
             $anode->set_misc_attr('Functor', $functor);
+            my ($tparent, $aparent) = $self->get_parent($tnode);
+            # Guess and set morphology first. It may improve our chances of guessing the correct deprel.
+            # If the generated node is a copy of a real node, we may be able to
+            # copy its attributes.
+            my $source_anode = $tnode->get_lex_anode();
+            if(defined($source_anode))
+            {
+                $anode->set_form($source_anode->form());
+                $anode->set_tag($source_anode->tag());
+                $anode->iset()->set_hash($source_anode->iset()->get_hash());
+            }
+            # The generated node is not a copy of a real node.
+            else
+            {
+                $self->guess_and_set_morphology($anode, $tlemma, $tparent, $functor, $aparent);
+            }
             # We need an enhanced relation to make the empty node connected with
             # the enhanced dependency graph. Try to propagate the dependency from
             # the t-tree. (The parent may also help us estimate features of the
             # generated node, such as person of #PersPron. Note however that some
             # of the features may also be available as grammatemes.)
-            my ($tparent, $aparent) = $self->get_parent($tnode);
             my $deprel = 'dep';
             # The $aparent may not exist or it may be in another sentence, in
             # which case we cannot use it.
@@ -52,7 +67,7 @@ sub process_zone
             {
                 if(defined($functor))
                 {
-                    $deprel = $self->guess_deprel($aparent, $functor);
+                    $deprel = $self->guess_deprel($aparent, $anode, $functor);
                 }
             }
             # Without connecting the empty node at least to the root, it would not
@@ -68,20 +83,6 @@ sub process_zone
             $anode->add_enhanced_dependency($aparent, $deprel);
             # Find a position for the empty node between real nodes.
             $self->position_empty_node($anode, $aparent, $major, \@lastminor);
-            # If the generated node is a copy of a real node, we may be able to
-            # copy its attributes.
-            my $source_anode = $tnode->get_lex_anode();
-            if(defined($source_anode))
-            {
-                $anode->set_form($source_anode->form());
-                $anode->set_tag($source_anode->tag());
-                $anode->iset()->set_hash($source_anode->iset()->get_hash());
-            }
-            # The generated node is not a copy of a real node.
-            else
-            {
-                $self->guess_and_set_morphology($anode, $tlemma, $tparent, $functor, $aparent, $deprel);
-            }
         }
         else # t-node is not generated
         {
@@ -113,7 +114,6 @@ sub guess_and_set_morphology
     my $tparent = shift;
     my $functor = shift;
     my $aparent = shift;
-    my $deprel = shift;
     my $language = $self->language();
     $anode->set_form('_');
     # https://ufal.mff.cuni.cz/~hajic/2018/docs/PDT20-t-man-cz.pdf
@@ -147,13 +147,13 @@ sub guess_and_set_morphology
         my $iset = $anode->iset();
         $iset->set('pos' => 'noun');
         $iset->set('prontype' => 'prs');
-        $self->set_personal_pronoun_form($anode, $aparent, $tparent, $deprel, $functor) if($language eq 'cs');
+        $self->set_personal_pronoun_form($anode, $aparent, $tparent, $functor) if($language eq 'cs');
     }
     elsif($tlemma eq '#Gen')
     {
         $anode->set_tag('PRON');
         $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'ind'});
-        $self->set_indefinite_pronoun_form($anode, $aparent, $tparent, $deprel, $functor) if($language eq 'cs');
+        $self->set_indefinite_pronoun_form($anode, $aparent, $tparent, $functor) if($language eq 'cs');
     }
     elsif($tlemma eq '#Neg')
     {
@@ -295,6 +295,7 @@ sub guess_deprel
 {
     my $self = shift;
     my $aparent = shift;
+    my $anode = shift;
     my $functor = shift;
     my $deprel = 'dep';
     if($functor =~ m/^(DENOM|PAR|PRED)$/)
@@ -309,18 +310,17 @@ sub guess_deprel
     {
         $deprel = 'vocative';
     }
+    # Most empty nodes are pronouns, hence we assume that the dependent is nominal (rather than clausal).
     ###!!! The arguments may correspond to nsubj, obj or obl:arg.
     ###!!! We should consider the voice to distinguish between nsubj and nsubj:pass;
     ###!!! even then it will not work for certain classes of verbs.
-    ###!!! We also don't know whether the argument is nominal (nsubj) or clausal (csubj)
-    ###!!! but since we typically pretend the empty node corresponds to a pronoun, it should be nominal.
     elsif($functor =~ m/^(ACT)$/)
     {
-        $deprel = $aparent->is_noun() ? 'nmod' : 'nsubj';
+        $deprel = $aparent->is_noun() ? 'nmod' : $anode->is_nominative() ? 'nsubj' : $anode->is_accusative() ? 'obj' : $anode->is_instrumental() ? 'obl:agent' : 'obl:arg';
     }
     elsif($functor =~ m/^(PAT)$/)
     {
-        $deprel = $aparent->is_noun() ? 'nmod' : 'obj';
+        $deprel = $aparent->is_noun() ? 'nmod' : $anode->is_accusative() ? 'obj' : $anode->is_nominative() ? 'nsubj:pass' : 'obl:arg';
     }
     elsif($functor =~ m/^(ADDR|EFF|ORIG)$/)
     {
@@ -433,11 +433,10 @@ sub set_personal_pronoun_form
     my $anode = shift; # the pronoun node
     my $aparent = shift; # parent of the pronoun in the enhanced a-graph (at most one now; undef if the pronoun is attached to the root)
     my $tparent = shift; # parent of the pronoun in the t-tree
-    my $deprel = shift; # proposed deprel for the pronoun node with respect to $aparent
     my $functor = shift; # functor of the corresponding t-node
     my $iset = $anode->iset();
     my $case = 'nom';
-    if($deprel =~ m/^nmod(:|$)/)
+    if($aparent->is_noun())
     {
         # Actors of intransitive nouns are likely to be expressed in genitive: 'někoho (něčí) chůze, pád, spánek, chrápání'
         # Actors of transitives sometimes sound better in the instrumental: 'spojování něčeho někým'
@@ -460,8 +459,13 @@ sub set_personal_pronoun_form
     }
     $iset->set_case($case);
     # If the pronoun represents the subject of a verb, we can guess its morphological
-    # features from the governing verb.
-    if(defined($aparent) && $deprel =~ m/^nsubj(:|$)/)
+    # features from the governing verb. We do not know yet whether it is a subject —
+    # that will have to be guessed, too. But if the functor is ACT and the parent is
+    # an active verb, or the functor is PAT and the parent is a passive participle,
+    # then we are likely dealing with a subject.
+    if(defined($aparent) &&
+       ($functor eq 'ACT' && $aparent->is_verb() && $aparent->iset()->is_active() ||
+        $functor eq 'PAT' && $aparent->is_participle() && $aparent->iset()->is_passive()))
     {
         $self->get_verb_features($aparent, $iset);
     }
@@ -573,7 +577,6 @@ sub set_indefinite_pronoun_form
     my $anode = shift; # the pronoun node
     my $aparent = shift; # parent of the pronoun in the enhanced a-graph (at most one now; undef if the pronoun is attached to the root)
     my $tparent = shift; # parent of the pronoun in the t-tree
-    my $deprel = shift; # proposed deprel for the pronoun node with respect to $aparent
     my $functor = shift; # functor of the corresponding t-node
     my $iset = $anode->iset();
     my $case = 'nom';
@@ -588,7 +591,7 @@ sub set_indefinite_pronoun_form
     }
     else # not 'pro_někoho'
     {
-        if($deprel =~ m/^nmod(:|$)/)
+        if($aparent->is_noun())
         {
             # Actors of intransitive nouns are likely to be expressed in genitive: 'někoho (něčí) chůze, pád, spánek, chrápání'
             # Actors of transitives sometimes sound better in the instrumental: 'spojování něčeho někým'
