@@ -34,7 +34,7 @@ sub process_atree
             # verb is deleted (the verb is probably known from the previous
             # sentence). Such orphaned empty nodes would not be informative
             # even if they participate in coreference clusters. Discard them.
-            elsif(scalar(@{$node->get_enhanced_deps('^root(:|$)')}) >= 1)
+            elsif(scalar(@{$node->get_enhanced_parents('^root(:|$)')}) >= 1)
             {
                 $self->remove_empty_leaf($node, $tnode);
                 splice(@nodes, $i, 1);
