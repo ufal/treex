@@ -2,6 +2,7 @@ package Treex::Block::A2A::RemoveUnusedEmptyNodes;
 use utf8;
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Coreference::Cluster;
 extends 'Treex::Core::Block';
 
 
@@ -36,6 +37,7 @@ sub process_atree
             # even if they participate in coreference clusters. Discard them.
             elsif(scalar($node->get_enhanced_parents('^root(:|$)')) >= 1)
             {
+                Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
                 $self->remove_empty_leaf($node, $tnode);
                 splice(@nodes, $i, 1);
                 $i--;
@@ -80,6 +82,7 @@ sub process_atree
                         log_warn("TO DO: Decide whether nsubj:xsubj is clausal or passive.");
                         $candidates[0]->add_enhanced_dependency($infinitive, 'nsubj:xsubj');
                         # Now we can finally remove the #Cor node.
+                        Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
                         $self->remove_empty_leaf($node, $tnode);
                         splice(@nodes, $i, 1);
                         $i--;
