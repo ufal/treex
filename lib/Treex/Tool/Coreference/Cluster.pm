@@ -123,8 +123,10 @@ sub remove_nodes_from_cluster
     # the bridging, too.
     if(scalar(@cluster_member_ids) == 0)
     {
+        my $sss = 0; ###!!! DEBUGGING
         foreach my $srcid (@bridging_source_ids)
         {
+            $sss++; ###!!! DEBUGGING
             my $srcnode = $document->get_node_by_id($srcid);
             my $bridging = $srcnode->get_misc_attr('Bridging');
             my @bridging = split(/,/, $bridging);
@@ -143,7 +145,9 @@ sub remove_nodes_from_cluster
                 $srcnode->clear_misc_attr('Bridging');
             }
         }
+        log_fatal("DEBUG: Cluster cmpr9413035c12 is being removed and we removed $sss bridging references") if($cid eq 'cmpr9413035c12'); ###!!! DEBUGGING
     }
+    log_fatal("DEBUG: Cluster cmpr9413035c12 is being removed but we failed to remove bridging reference") if($cid eq 'cmpr9413035c12'); ###!!! DEBUGGING
 }
 
 
