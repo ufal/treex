@@ -316,11 +316,11 @@ sub guess_deprel
     ###!!! even then it will not work for certain classes of verbs.
     elsif($functor =~ m/^(ACT)$/)
     {
-        $deprel = $aparent->is_noun() ? 'nmod' : $anode->is_nominative() ? 'nsubj' : $anode->is_accusative() ? 'obj' : $anode->is_instrumental() ? 'obl:agent' : 'obl:arg';
+        $deprel = $aparent->is_noun() ? 'nmod' : $anode->is_nominative() || $anode->iset()->case() eq '' ? 'nsubj' : $anode->is_accusative() ? 'obj' : $anode->is_instrumental() ? 'obl:agent' : 'obl:arg';
     }
     elsif($functor =~ m/^(PAT)$/)
     {
-        $deprel = $aparent->is_noun() ? 'nmod' : $anode->is_accusative() ? 'obj' : $anode->is_nominative() ? 'nsubj:pass' : 'obl:arg';
+        $deprel = $aparent->is_noun() ? 'nmod' : $anode->is_accusative() ? 'obj' : $anode->is_nominative() || $anode->iset()->case() eq '' ? 'nsubj:pass' : 'obl:arg';
     }
     elsif($functor =~ m/^(ADDR|EFF|ORIG)$/)
     {
@@ -451,7 +451,15 @@ sub set_personal_pronoun_form
     }
     elsif($functor eq 'PAT')
     {
-        $case = 'acc';
+        # Patients of passive participles of transitive verbs are likely to be their nominative subjects.
+        if($aparent->is_participle() && $aparent->iset()->is_passive())
+        {
+            $case = 'nom';
+        }
+        else
+        {
+            $case = 'acc';
+        }
     }
     elsif($functor eq 'ADDR')
     {
@@ -465,8 +473,8 @@ sub set_personal_pronoun_form
     # then we are likely dealing with a subject.
     # Rather than asking about is_active(), we ask about !is_passive() because certain
     # verb forms, such as the imperative, do not have the voice feature, unfortunately.
-    if(defined($aparent) &&
-       ($functor eq 'ACT' && $aparent->is_verb() && !$aparent->iset()->is_passive() ||
+    if(defined($aparent) && !$aparent->is_root() &&
+       ($functor eq 'ACT' && !$aparent->iset()->is_passive() || # non-passive predicates do not have to be verbal
         $functor eq 'PAT' && $aparent->is_participle() && $aparent->iset()->is_passive()))
     {
         $self->get_verb_features($aparent, $iset);
@@ -478,11 +486,11 @@ sub set_personal_pronoun_form
     # indefinite rather than a personal form.
     if($iset->is_genitive())
     {
-        $form = 'někoho';
+        $form = $iset->is_neuter() ? 'něčeho' : 'někoho';
     }
     elsif($iset->is_instrumental())
     {
-        $form = 'někým';
+        $form = $iset->is_neuter() ? 'něčím' : 'někým';
     }
     # If the functor of the pronoun is PAT (patient), its case is set to
     # accusative. Person, number and gender that we may have collected from the
@@ -491,7 +499,7 @@ sub set_personal_pronoun_form
     # than a personal form.
     elsif($iset->is_accusative())
     {
-        $form = 'někoho'; # ho, ji, je
+        $form = $iset->is_neuter() ? 'něco' : 'někoho'; # ho, ji, je
     }
     # If the functor of the pronoun is ADDR (patient), its case is set to
     # dative. Person, number and gender that we may have collected from the
@@ -500,7 +508,7 @@ sub set_personal_pronoun_form
     # than a personal form.
     elsif($iset->is_dative())
     {
-        $form = 'někomu'; # mu, jí, jim
+        $form = $iset->is_neuter() ? 'něčemu' : 'někomu'; # mu, jí, jim
     }
     # Some verbs have just Gender=Fem,Neut|Number=Plur,Sing ('ona dělala').
     elsif($iset->is_singular() && $iset->is_plural() && $iset->is_feminine() && $iset->is_neuter())
@@ -537,7 +545,7 @@ sub set_personal_pronoun_form
             }
         }
     }
-    else
+    else # not plural
     {
         if($iset->person() eq '1')
         {
@@ -616,7 +624,15 @@ sub set_indefinite_pronoun_form
         }
         elsif($functor eq 'PAT')
         {
-            $case = 'acc';
+            # Patients of passive participles of transitive verbs are likely to be their nominative subjects.
+            if($aparent->is_participle() && $aparent->iset()->is_passive())
+            {
+                $case = 'nom';
+            }
+            else
+            {
+                $case = 'acc';
+            }
         }
         elsif($functor eq 'ADDR')
         {
