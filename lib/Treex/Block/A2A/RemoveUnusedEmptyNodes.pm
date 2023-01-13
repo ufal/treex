@@ -30,6 +30,16 @@ sub process_atree
                 splice(@nodes, $i, 1);
                 $i--;
             }
+            # An empty node may depend directly on the artificial root if the
+            # verb is deleted (the verb is probably known from the previous
+            # sentence). Such orphaned empty nodes would not be informative
+            # even if they participate in coreference clusters. Discard them.
+            elsif(scalar(@{$node->get_enhanced_deps('^root(:|$)')}) >= 1)
+            {
+                $self->remove_empty_leaf($node, $tnode);
+                splice(@nodes, $i, 1);
+                $i--;
+            }
             # An empty node with the lemma '#Cor' occurs in control/raising
             # constructions. It is a child of a controlled infinitive and it is
             # grammatically coreferential with an argument of the matrix verb.
