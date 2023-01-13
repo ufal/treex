@@ -72,7 +72,7 @@ sub process_atree
                     # children of the matrix verb. We must search enhanced
                     # children because it could be a generated node, too (e.g.
                     # in case of pro-drop).
-                    my @candidates = grep {$_ != $node && $_->get_misc_attr('ClusterId') eq $cid} ($mverb->get_enhanced_children());
+                    my @candidates = grep {my $xcid = $_->get_misc_attr('ClusterId') // ''; $_ != $node && $xcid eq $cid} ($mverb->get_enhanced_children());
                     if(scalar(@candidates) == 1)
                     {
                         # Attach the candidate as nsubj:xsubj enhanced child of the infinitive.

@@ -64,10 +64,13 @@ sub add_nodes_to_cluster
         anode_must_have_tnode($node);
         $node->set_misc_attr('ClusterId', $cid);
         set_cluster_type($node, $type);
-        if(exists($current_member_node->wild()->{bridging_sources}))
-        {
-            @{$node->wild()->{bridging_sources}} = @{$current_member_node->wild()->{bridging_sources}};
-        }
+    }
+    # Update the bridging references between nodes. The list of sources for this
+    # cluster did not change. But each source node must add the new target nodes
+    # to its list.
+    if(exists($current_member_node->wild()->{bridging_sources}))
+    {
+        add_bridging_references_between_nodes($document, $current_member_node->wild()->{bridging_sources}, \@cluster_member_ids);
     }
 }
 
@@ -81,9 +84,7 @@ sub remove_nodes_from_cluster
 {
     my @nodes = @_;
     return if(scalar(@nodes) == 0);
-    my $document = $nodes[0]->get_document();
-    my $current_member_ids = $nodes[0]->wild()->{cluster_members};
-    my @bridging_source_ids = exists($nodes[0]->wild()->{bridging_sources}) ? @{$nodes[0]->wild()->{bridging_sources}} : ();
+    # Sanity check: All removed nodes must be from the same cluster.
     my $cid;
     my %removed_node_ids;
     foreach my $node (@nodes)
@@ -102,15 +103,34 @@ sub remove_nodes_from_cluster
             log_fatal("Previous nodes were in cluster '$cid' but this node is in cluster '$ncid'.");
         }
         $removed_node_ids{$node->id()}++;
+    }
+    my $document = $nodes[0]->get_document();
+    my @removed_node_ids = map {$_->id()} (@nodes);
+    # Update cross-references with the nodes that have this cluster as bridging target.
+    my @bridging_source_ids = ();
+    if(exists($nodes[0]->wild()->{bridging_sources}))
+    {
+        @bridging_source_ids = @{$nodes[0]->wild()->{bridging_sources}};
+        remove_bridging_references_between_nodes($document, \@bridging_source_ids, \@removed_node_ids);
+    }
+    # Update cross-references with the nodes (i.e., whole clusters) that have the removed nodes as bridging sources.
+    # Each removed node can have different targets, so we cannot base everything on the first node now.
+    foreach my $node (@nodes)
+    {
+        my @bridging_target_ids = ();
+        if(exists($node->wild()->{bridging_targets}))
+        {
+            @bridging_target_ids = @{$node->wild()->{bridging_targets}};
+            remove_bridging_references_between_nodes($document, [$node->id()], \@bridging_target_ids);
+        }
+    }
+    my $current_member_ids = $nodes[0]->wild()->{cluster_members};
+    foreach my $node (@nodes)
+    {
         $node->clear_misc_attr('ClusterId');
         $node->clear_misc_attr('MentionMisc');
         $node->clear_misc_attr('Bridging');
-        ###!!! The target nodes of the bridging relation have back references
-        ###!!! to me! We must remove them, too! Unfortunately, we cannot find
-        ###!!! the target nodes. We only know their cluster id, but not the id
-        ###!!! of any member node.
         delete($node->wild()->{cluster_members});
-        delete($node->wild()->{bridging_sources});
     }
     my @cluster_member_ids = grep {!exists($removed_node_ids{$_})} (@{$current_member_ids});
     foreach my $id (@cluster_member_ids)
@@ -120,7 +140,9 @@ sub remove_nodes_from_cluster
     }
     # If no nodes remain in the cluster, the cluster is dead.
     # If any other cluster refers to it via a bridging relation, we must remove
-    # the bridging, too.
+    # the bridging, too. (Note that the cross-references have been updated and
+    # the source nodes no longer have the references to us; but now we also must
+    # remove the Bridging annotation from their MISC.)
     if(scalar(@cluster_member_ids) == 0)
     {
         my $sss = 0; ###!!! DEBUGGING
@@ -187,11 +209,7 @@ sub add_bridging_to_cluster
     @referring_nodes = grep {my $id = $_->id(); !any {$_ eq $id} (@bridging)} (@referring_nodes);
     return if(scalar(@referring_nodes) == 0);
     push(@bridging, (map {$_->id()} (@referring_nodes)));
-    foreach my $id (@{$current_members})
-    {
-        my $node = $document->get_node_by_id($id);
-        @{$node->wild()->{bridging_sources}} = @bridging;
-    }
+    add_bridging_references_between_nodes($document, \@bridging, $current_members);
 }
 
 
@@ -276,6 +294,8 @@ sub merge_clusters
     my @cluster_member_ids = sort(@{$node1->wild()->{cluster_members}}, @{$node2->wild()->{cluster_members}});
     my @bridging_source_ids_1 = exists($node1->wild()->{bridging_sources}) ? @{$node1->wild()->{bridging_sources}} : ();
     my @bridging_source_ids_2 = exists($node2->wild()->{bridging_sources}) ? @{$node2->wild()->{bridging_sources}} : ();
+    ###!!! TEĎ NAVÍC MUSÍME SLÍT TAKÉ BRIDGING_TARGETS!
+    ###!!! DOUFÁM, ŽE TO PŮJDE UDĚLAT POMOCÍ REMOVE + ADD.
     my @bridging_source_ids = ();
     my $document = $node1->get_document();
     # Update any bridging references to the first cluster.
@@ -359,6 +379,109 @@ sub sort_bridging
         $r
     }
     (@_);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Bridging relations require for maintenance purposes that we save references
+# between mentions (or more precisely, between nodes that represent the
+# mentions). All mentions/nodes of the target cluster must know the single
+# source mention/node. They do not need to know all mentions of the source
+# cluster, as only one mention of the source cluster points to them. However,
+# they still may have multiple source references because there may be multiple
+# bridging relations with different source clusters but the same target
+# cluster. All nodes of the target cluster have identical set of source refs.
+# Furthermore, if a source mention/node is in the list of source references
+# saved at a target node/mention/cluster, then this source node must have a
+# back-reference to all mentions/nodes of the target cluster. Other mentions/
+# nodes of the source cluster do not have the same list of target mentions/
+# nodes. A mention/node may be the source of multiple bridging relations with
+# different target clusters, hence the target references do not necessarily all
+# lead to the same cluster.
+#
+# This function takes a list of source nodes and a list of target nodes (target
+# nodes should belong to one cluster, source nodes should belong to different
+# clusters), then adds target references from all source nodes to all target
+# nodes, and source references from all target nodes to all source nodes. It
+# should be called when a new bridging relation is created or when a new node
+# is added to the target cluster. It will not remove any existing references
+# from the source nodes, as they may lead to a different cluster (but it will
+# not duplicate a reference that is already there). In contrast, for the target
+# nodes we assume that there are no other sources, hence the old list will be
+# replaced with the new one, identical for all target nodes.
+#------------------------------------------------------------------------------
+sub add_bridging_references_between_nodes
+{
+    my $document = shift;
+    my $srcids = shift; # array ref
+    my $tgtids = shift; # array ref
+    my @srcnodes = map {$document->get_node_by_id($_)} (@{$srcids});
+    my @tgtnodes = map {$document->get_node_by_id($_)} (@{$tgtids});
+    foreach my $srcnode (@srcnodes)
+    {
+        # Add target references that are not yet there.
+        # If there are other target references that are not on our list, leave them intact.
+        foreach my $tgtref (@{$tgtids})
+        {
+            if(!any {$_ eq $tgtref} (@{$srcnode->wild()->{bridging_targets}}))
+            {
+                push(@{$srcnode->wild()->{bridging_targets}}, $tgtref);
+            }
+        }
+    }
+    foreach my $tgtnode (@tgtnodes)
+    {
+        # Replace the current list of source references with the new list.
+        @{$tgtnode->wild()->{bridging_sources}} = @{$srcids};
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# See above for details on what references are stored and maintained. This
+# function takes a list of source nodes and a list of target nodes, then
+# removes the corresponding source references from all target nodes, and the
+# corresponding target references from all source nodes. It should be called
+# when one or more source nodes is removed from their cluster, or one or more
+# target nodes is removed, or an individual bridging relation is removed.
+#------------------------------------------------------------------------------
+sub remove_bridging_references_between_nodes
+{
+    my $document = shift;
+    my $srcids = shift; # array ref
+    my $tgtids = shift; # array ref
+    my @srcnodes = map {$document->get_node_by_id($_)} (@{$srcids});
+    my @tgtnodes = map {$document->get_node_by_id($_)} (@{$tgtids});
+    foreach my $srcnode (@srcnodes)
+    {
+        # Remove target references to the given target nodes, keep the rest.
+        my @tgtrefs = exists($srcnode->wild()->{bridging_targets}) ? @{$srcnode->wild()->{bridging_targets}} : ();
+        @tgtrefs = grep {my $id = $_; !any {$_ eq $id} (@{$tgtids})} (@tgtrefs);
+        if(scalar(@tgtrefs) > 0)
+        {
+            $srcnode->wild()->{bridging_targets} = \@tgtrefs;
+        }
+        else
+        {
+            delete($srcnode->wild()->{bridging_targets});
+        }
+    }
+    foreach my $tgtnode (@tgtnodes)
+    {
+        # Remove source references to the given source nodes, keep the rest.
+        my @srcrefs = exists($tgtnode->wild()->{bridging_sources}) ? @{$tgtnode->wild()->{bridging_sources}} : ();
+        @srcrefs = grep {my $id = $_; !any {$_ eq $id} (@{$srcids})} (@srcrefs);
+        if(scalar(@srcrefs) > 0)
+        {
+            $tgtnode->wild()->{bridging_sources} = \@srcrefs;
+        }
+        else
+        {
+            delete($tgtnode->wild()->{bridging_sources});
+        }
+    }
 }
 
 
