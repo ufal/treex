@@ -457,7 +457,7 @@ sub set_personal_pronoun_form
     elsif($functor eq 'PAT')
     {
         # Patients of passive participles of transitive verbs are likely to be their nominative subjects.
-        if($aparent->is_participle() && $aparent->iset()->is_passive())
+        if(defined($aparent) && $aparent->is_participle() && $aparent->iset()->is_passive())
         {
             $case = 'nom';
         }
@@ -630,7 +630,7 @@ sub set_indefinite_pronoun_form
         elsif($functor eq 'PAT')
         {
             # Patients of passive participles of transitive verbs are likely to be their nominative subjects.
-            if($aparent->is_participle() && $aparent->iset()->is_passive())
+            if(defined($aparent) && $aparent->is_participle() && $aparent->iset()->is_passive())
             {
                 $case = 'nom';
             }
