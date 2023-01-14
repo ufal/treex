@@ -153,7 +153,7 @@ sub guess_and_set_morphology
     # Some ... nepřítomná jmenná část verbonominálního predikátu, zejména ve srovnávacích konstrukcích (7.4 Konstrukce s významem srovnání)
     # Total ... nepřítomný totalizátor v konstrukcích vyjadřujících způsob uvedením výjimky (7.6 Konstrukce s významem omezení a výjimečného slučování)
     # Unsp ... nepřítomné blíže nespecifikované valenční doplnění (5.2.4.1 Všeobecný aktant a blíže nespecifikovaný aktor)
-    if($tlemma =~ m/^\#(Unsp|Q?Cor|Rcp|Oblfm|Benef)$/)
+    if($tlemma =~ m/^\#(Q?Cor|Rcp|Oblfm|Benef)$/)
     {
         $anode->set_tag('PRON');
         $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs'});
@@ -167,7 +167,7 @@ sub guess_and_set_morphology
         $iset->set('prontype' => 'prs');
         $self->set_personal_pronoun_form($anode, $aparent, $tparent, $functor) if($language eq 'cs');
     }
-    elsif($tlemma eq '#Gen')
+    elsif($tlemma eq '#Gen' || $tlemma eq '#Unsp')
     {
         $anode->set_tag('PRON');
         $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'ind'});
@@ -475,8 +475,9 @@ sub guess_case
                 $case = 'nom';
             }
             # stačit, postačit, vystačit někomu
+            # škodit, uškodit někomu (ale ne poškodit někoho)
             # vyplatit se někomu
-            elsif($aparent->lemma() =~ m/(stačit|vyplatit)$/)
+            elsif($aparent->lemma() =~ m/^(postačit|stačit|škodit|uškodit|vyplatit|vystačit)$/)
             {
                 $case = 'dat';
             }
