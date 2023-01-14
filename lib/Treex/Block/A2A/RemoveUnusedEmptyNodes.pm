@@ -158,6 +158,15 @@ sub process_atree
                         }
                         if(defined($technical_head))
                         {
+                            # Later in the CorefMentions block, we will determine the mention span
+                            # on the basis of the tectogrammatical subtree. Link the technical head
+                            # to the original #Forn t-node, whether or not the technical head had
+                            # its own counterpart in the t-tree. In any case, the technical head
+                            # should correspond to something in the tectogrammatical subtree.
+                            # We must do this before we add the technical head to the cluster (in
+                            # case it did not have a t-node before).
+                            $technical_head->wild()->{'tnode.rf'} = $tnode->id();
+                            $tnode->wild()->{'anode.rf'} = $technical_head->id();
                             # Move the coreference annotation from the #Forn node to the technical head.
                             # Use the cluster maintenance functions to take care of the various internal
                             # node references. First add the new node to the cluster, then remove the
@@ -186,16 +195,10 @@ sub process_atree
                                     $technical_head->set_misc_attr($m);
                                 }
                             }
-                            $self->remove_empty_leaf($node, $tnode);
+                            # The t-node has been re-linked to the technical head, hence undef for the removing function.
+                            $self->remove_empty_leaf($node, undef);
                             splice(@nodes, $i, 1);
                             $i--;
-                            # Later in the CorefMentions block, we will determine the mention span
-                            # on the basis of the tectogrammatical subtree. Link the technical head
-                            # to the original #Forn t-node, whether or not the technical head had
-                            # its own counterpart in the t-tree. In any case, the technical head
-                            # should correspond to something in the tectogrammatical subtree.
-                            $technical_head->wild()->{'tnode.rf'} = $tnode->id();
-                            $tnode->wild()->{'anode.rf'} = $technical_head->id();
                         }
                         else
                         {
