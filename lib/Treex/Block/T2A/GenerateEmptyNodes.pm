@@ -37,6 +37,10 @@ sub process_zone
     foreach my $tnode (@tnodes)
     {
         my $functor = $tnode->functor() // 'Unknown';
+        if($functor eq 'ACT' && $self->tnode_depends_on_copula($tnode))
+        {
+            $functor .= '.cop';
+        }
         if($tnode->is_generated())
         {
             my $anode = $aroot->create_child();
@@ -293,6 +297,7 @@ sub set_personal_pronoun_form
     # verb forms, such as the imperative, do not have the voice feature, unfortunately.
     if(defined($aparent) && !$aparent->is_root() &&
        ($functor eq 'ACT' && !$self->is_passive($aparent) ||
+        $functor eq 'ACT.cop' || # if the ACT was attached directly to copula, it does not matter whether the nominal predicate was a passive participle or not
         $functor eq 'PAT' && $self->is_passive($aparent)))
     {
         $self->get_verb_features($aparent, $iset);
@@ -495,6 +500,10 @@ sub guess_case
                 $case = 'nom';
             }
         }
+        elsif($functor eq 'ACT.cop')
+        {
+            $case = 'nom';
+        }
         elsif($functor eq 'PAT')
         {
             # Patients of passive participles of transitive verbs are likely to be their nominative subjects.
@@ -623,20 +632,36 @@ sub get_verb_features
 
 #------------------------------------------------------------------------------
 # Finds out whether a predicate is passive, which influences whether its ACT
-# argument is nominative nsubj, or instrumental obl:agent. The main factor is
-# the morphological features indicating a passive participle. Nevertheless,
-# if there is a copula dependent, then the ACT in the t-tree was a relation to
-# the copula rather than to the participle, hence we still want a nominative
-# subject ("jsem opotřebovaný já", not "jsem opotřebovaný mnou/někým").
+# argument is nominative nsubj, or instrumental obl:agent. This function looks
+# at the morphological features of the predicate (is it a passive participle?)
+# Note however that one also has to consider whether the participle appears
+# with a copula. In the t-tree, the pronoun may be an ACT dependent of the
+# copula or a PAT dependent of the participle, but in both cases it should
+# become a nsubj (or maybe nsubj:pass) in nominative:
+# "jsem opotřebovaný já", not "jsem opotřebovaný mnou/někým".
 #------------------------------------------------------------------------------
 sub is_passive
 {
     my $self = shift;
-    my $node = shift;
+    my $node = shift; # the predicate node
     return 0 if(!$node->is_participle());
     return 0 if(!$node->iset()->is_passive());
-    my @copulas = grep {$_->deprel() =~ m/^cop(:|$)/} ($node->get_children());
-    return scalar(@copulas) == 0;
+    return 1;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds out whether a node depended in the t-tree on a copula that is now
+# attached to its parent in the a-tree (UD).
+#------------------------------------------------------------------------------
+sub tnode_depends_on_copula
+{
+    my $self = shift;
+    my $tnode = shift;
+    my $anode = $tnode->parent()->get_lex_anode();
+    return 0 if(!defined($anode));
+    return $anode->deprel() =~ m/^cop(:|$)/;
 }
 
 
@@ -725,6 +750,12 @@ sub guess_deprel
     elsif($functor =~ m/^(ACT)$/)
     {
         $deprel = $aparent->is_noun() ? 'nmod' : $anode->is_nominative() || $anode->iset()->case() eq '' ? 'nsubj' : $anode->is_accusative() ? 'obj' : $anode->is_instrumental() ? 'obl:agent' : 'obl:arg';
+    }
+    elsif($functor =~ m/^(ACT\.cop)$/)
+    {
+        # The nominal predicate may be a passive participle, but if the pronoun was attached to the copula, it will not be nsubj:pass.
+        # On the other hand, if the pronoun was attached as PAT to the participle, it will become nsubj:pass regardless of whether the verb "být" is attached as 'cop' or as 'aux:pass'.
+        $deprel = 'nsubj';
     }
     elsif($functor =~ m/^(PAT)$/)
     {
