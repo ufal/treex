@@ -294,8 +294,6 @@ sub merge_clusters
     my @cluster_member_ids = sort(@{$node1->wild()->{cluster_members}}, @{$node2->wild()->{cluster_members}});
     my @bridging_source_ids_1 = exists($node1->wild()->{bridging_sources}) ? @{$node1->wild()->{bridging_sources}} : ();
     my @bridging_source_ids_2 = exists($node2->wild()->{bridging_sources}) ? @{$node2->wild()->{bridging_sources}} : ();
-    ###!!! TEĎ NAVÍC MUSÍME SLÍT TAKÉ BRIDGING_TARGETS!
-    ###!!! DOUFÁM, ŽE TO PŮJDE UDĚLAT POMOCÍ REMOVE + ADD.
     my @bridging_source_ids = ();
     my $document = $node1->get_document();
     # Update any bridging references to the first cluster.
@@ -335,16 +333,19 @@ sub merge_clusters
             push(@bridging_source_ids, $srcid);
         }
     }
+    ###!!! The removing before adding may be superfluous here, as we simply need
+    ###!!! a union of the previous sources and targets, which may be achieved by
+    ###!!! the adding alone. But I am somewhat scared that something may go wrong
+    ###!!! in this complex operation, and this seems safer.
+    #remove_bridging_references_between_nodes($document, \@bridging_source_ids_1, $node1->wild()->{cluster_members});
+    #remove_bridging_references_between_nodes($document, \@bridging_source_ids_2, $node2->wild()->{cluster_members});
+    add_bridging_references_between_nodes($document, \@bridging_source_ids, \@cluster_member_ids);
     foreach my $id (@cluster_member_ids)
     {
         my $node = $document->get_node_by_id($id);
         $node->set_misc_attr('ClusterId', $merged_id);
         set_cluster_type($node, $type);
         @{$node->wild()->{cluster_members}} = @cluster_member_ids;
-        if(scalar(@bridging_source_ids) > 0)
-        {
-            @{$node->wild()->{bridging_sources}} = @bridging_source_ids;
-        }
     }
 }
 
@@ -433,7 +434,14 @@ sub add_bridging_references_between_nodes
     foreach my $tgtnode (@tgtnodes)
     {
         # Replace the current list of source references with the new list.
-        @{$tgtnode->wild()->{bridging_sources}} = @{$srcids};
+        if(scalar(@{$srcids}) > 0)
+        {
+            @{$tgtnode->wild()->{bridging_sources}} = @{$srcids};
+        }
+        else
+        {
+            delete($tgtnode->wild()->{bridging_sources});
+        }
     }
 }
 
