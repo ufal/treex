@@ -27,7 +27,6 @@ sub process_atree
             # need it and can discard it.
             if(!defined($cid))
             {
-                log_info("DEBUGGING: No cluster id to clear before removing node ".$node->id());
                 $self->remove_empty_leaf($node, $tnode);
                 splice(@nodes, $i, 1);
                 $i--;
@@ -238,7 +237,6 @@ sub remove_empty_leaf
     {
         delete($tnode->wild()->{'anode.rf'});
     }
-    log_info("DEBUGGING: Removing node ".$node->id());
     $node->remove();
 }
 
