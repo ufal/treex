@@ -441,7 +441,7 @@ sub set_personal_pronoun_form
     my $functor = shift; # functor of the corresponding t-node
     my $iset = $anode->iset();
     my $case = 'nom';
-    if($aparent->is_noun())
+    if(defined($aparent) && $aparent->is_noun())
     {
         # Actors of intransitive nouns are likely to be expressed in genitive: 'někoho (něčí) chůze, pád, spánek, chrápání'
         # Actors of transitives sometimes sound better in the instrumental: 'spojování něčeho někým'
@@ -606,7 +606,7 @@ sub set_indefinite_pronoun_form
     }
     else # not 'pro_někoho'
     {
-        if($aparent->is_noun())
+        if(defined($aparent) && $aparent->is_noun())
         {
             # Actors of intransitive nouns are likely to be expressed in genitive: 'někoho (něčí) chůze, pád, spánek, chrápání'
             # Actors of transitives sometimes sound better in the instrumental: 'spojování něčeho někým'
