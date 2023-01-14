@@ -474,9 +474,12 @@ sub close_up_gaps_in_mention
                     }
                     # Prepositions and conjunctions can be included if they depend on something that is already in the span.
                     # We proceed left-to-right, so if the function word has one or more fixed dependents, they will be included, too.
-                    # Expletive: there was one instance where reflexive 'se' was left out in Czech. With the 'expl' deprel it should
+                    # Expletive: There was one instance where reflexive 'se' was left out in Czech. With the 'expl' deprel it should
                     # be non-referential, so we should not break coreference by adding it.
-                    elsif($node->deprel() =~ m/^(case|mark|cc|fixed|expl)(:|$)/ && exists($mention->{span}{$node->parent()->get_conllu_id()}))
+                    # Auxiliary: This is because of multi-word tokens "abych/abys/aby/abychom/abyste/kdybych/kdybys/kdyby/kdybychom/kdybyste".
+                    # When the original token is split, the second word (the conditional auxiliary) lacks any connection to the t-tree, so
+                    # it could later break a span.
+                    elsif($node->deprel() =~ m/^(case|mark|cc|fixed|expl|aux)(:|$)/ && exists($mention->{span}{$node->parent()->get_conllu_id()}))
                     {
                         $mention->{span}{$id} = $node;
                         $added++;
