@@ -292,8 +292,8 @@ sub set_personal_pronoun_form
     # Rather than asking about is_active(), we ask about !is_passive() because certain
     # verb forms, such as the imperative, do not have the voice feature, unfortunately.
     if(defined($aparent) && !$aparent->is_root() &&
-       ($functor eq 'ACT' && !$aparent->iset()->is_passive() || # non-passive predicates do not have to be verbal
-        $functor eq 'PAT' && $aparent->is_participle() && $aparent->iset()->is_passive()))
+       ($functor eq 'ACT' && !$self->is_passive($aparent) ||
+        $functor eq 'PAT' && $self->is_passive($aparent))
     {
         $self->get_verb_features($aparent, $iset);
     }
@@ -481,7 +481,7 @@ sub guess_case
         elsif($functor eq 'ACT')
         {
             # Actors of passive participles of transitive verbs are likely to be their instrumental/oblique agents.
-            if($aparent->is_participle() && $aparent->iset()->is_passive())
+            if($self->is_passive($aparent))
             {
                 $case = 'ins';
             }
@@ -498,7 +498,7 @@ sub guess_case
         elsif($functor eq 'PAT')
         {
             # Patients of passive participles of transitive verbs are likely to be their nominative subjects.
-            if($aparent->is_participle() && $aparent->iset()->is_passive())
+            if($self->is_passive($aparent))
             {
                 $case = 'nom';
             }
@@ -617,6 +617,26 @@ sub get_verb_features
     $iset->set_number($number) if(defined($number) && $number ne '');
     $iset->set_gender($gender) if(defined($gender) && $gender ne '');
     $iset->set_polite($polite) if(defined($polite) && $polite ne '');
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds out whether a predicate is passive, which influences whether its ACT
+# argument is nominative nsubj, or instrumental obl:agent. The main factor is
+# the morphological features indicating a passive participle. Nevertheless,
+# if there is a copula dependent, then the ACT in the t-tree was a relation to
+# the copula rather than to the participle, hence we still want a nominative
+# subject ("jsem opotřebovaný já", not "jsem opotřebovaný mnou/někým").
+#------------------------------------------------------------------------------
+sub is_passive
+{
+    my $self = shift;
+    my $node = shift;
+    return 0 if(!$node->is_participle());
+    return 0 if(!$node->iset()->is_passive());
+    my @copulas = grep {$_->deprel() =~ m/^cop(:|$)/} ($node->get_children());
+    return scalar(@copulas) == 0;
 }
 
 
