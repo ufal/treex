@@ -103,6 +103,7 @@ sub remove_nodes_from_cluster
             log_fatal("Previous nodes were in cluster '$cid' but this node is in cluster '$ncid'.");
         }
         $removed_node_ids{$node->id()}++;
+        log_info("DEBUGGING: Cleaning cluster references of node ".$node->id());
     }
     my $document = $nodes[0]->get_document();
     my @removed_node_ids = map {$_->id()} (@nodes);

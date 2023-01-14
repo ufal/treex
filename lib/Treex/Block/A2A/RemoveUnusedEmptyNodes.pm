@@ -216,6 +216,7 @@ sub remove_empty_leaf
     {
         delete($tnode->wild()->{'anode.rf'});
     }
+    log_info("DEBUGGING: Removing node ".$node->id());
     $node->remove();
 }
 
