@@ -115,7 +115,7 @@ sub process_atree
                 {
                     my $object = $eparents[0];
                     # The basic UD parent of the infinitive is the verb that governs the object.
-                    my $mverb = $infinitive->parent();
+                    my $mverb = $object->parent();
                     if(!$mverb->is_verb())
                     {
                         log_warn("The grandparent of a #QCor node is not a verb.");
@@ -128,7 +128,7 @@ sub process_atree
                     if(scalar(@candidates) == 1)
                     {
                         # Attach the candidate as nmod(:xsubj?) enhanced child of the infinitive.
-                        $candidates[0]->add_enhanced_dependency($infinitive, 'nmod'); # nmod:xsubj would be rejected by the validator?
+                        $candidates[0]->add_enhanced_dependency($object, 'nmod'); # nmod:xsubj would be rejected by the validator?
                         # Now we can finally remove the #QCor node.
                         Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
                         $self->remove_empty_leaf($node, $tnode);
