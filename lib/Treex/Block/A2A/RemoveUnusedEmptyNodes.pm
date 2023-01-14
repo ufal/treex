@@ -99,6 +99,54 @@ sub process_atree
                     log_warn("#Cor node has $n enhanced parents. It will not be removed.");
                 }
             }
+            # Analogously to #Cor, #QCor denotes grammatical coreference in
+            # quasi-control constructions. It depends on a nominal, which is an
+            # object of a verb, and it is typically coreferential with an
+            # argument of the verb. The coreferential node could be the actor
+            # (já/ACT jsem měl o této zemi určité moje/#QCor představy),
+            # addressee (jeho postavení družstvo.ADDR přinutí jeho/#QCor
+            # smlouvu uzavřít), or it could be reachable on an upper level
+            # (pro_někoho/BEN je lepší věnovat jeho/#QCor pozornost optimalizaci
+            # provozu).
+            elsif($node->lemma() eq '#QCor')
+            {
+                my @eparents = $node->get_enhanced_parents();
+                if(scalar(@eparents) == 1)
+                {
+                    my $object = $eparents[0];
+                    # The basic UD parent of the infinitive is the verb that governs the object.
+                    my $mverb = $infinitive->parent();
+                    if(!$mverb->is_verb())
+                    {
+                        log_warn("The grandparent of a #QCor node is not a verb.");
+                    }
+                    # The #QCor node should be coreferential with one of the
+                    # children of the matrix verb. We must search enhanced
+                    # children because it could be a generated node, too (e.g.
+                    # in case of pro-drop).
+                    my @candidates = grep {my $xcid = $_->get_misc_attr('ClusterId') // ''; $_ != $node && $xcid eq $cid} ($mverb->get_enhanced_children());
+                    if(scalar(@candidates) == 1)
+                    {
+                        # Attach the candidate as nmod(:xsubj?) enhanced child of the infinitive.
+                        $candidates[0]->add_enhanced_dependency($infinitive, 'nmod'); # nmod:xsubj would be rejected by the validator?
+                        # Now we can finally remove the #QCor node.
+                        Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
+                        $self->remove_empty_leaf($node, $tnode);
+                        splice(@nodes, $i, 1);
+                        $i--;
+                    }
+                    else
+                    {
+                        my $n = scalar(@candidates);
+                        log_warn("The matrix verb has $n enhanced children coreferential with the #QCor node. The #QCor node will not be removed.");
+                    }
+                }
+                else
+                {
+                    my $n = scalar(@eparents);
+                    log_warn("#QCor node has $n enhanced parents. It will not be removed.");
+                }
+            }
             # An empty node with the lemma '#Rcp' is grammatically coreferential
             # with a plural actant, probably actor (ACT) in a reciprocal event.
             # The only purpose of the '#Rcp' node is to show that the same
