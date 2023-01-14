@@ -441,7 +441,6 @@ sub set_personal_pronoun_form
     my $functor = shift; # functor of the corresponding t-node
     my $iset = $anode->iset();
     my $case = $self->guess_case($aparent, $tparent, $functor);
-    $iset->set_case($case);
     # If the pronoun represents the subject of a verb, we can guess its morphological
     # features from the governing verb. We do not know yet whether it is a subject —
     # that will have to be guessed, too. But if the functor is ACT and the parent is
@@ -455,36 +454,36 @@ sub set_personal_pronoun_form
     {
         $self->get_verb_features($aparent, $iset);
     }
+    $iset->set_case($case);
     my $form = 'on';
     # If the pronoun modifies an eventive noun ('spojování obcí někým'), it is
     # attached as 'nmod' and its case is set to genitive or instrumental. We
     # don't know its person, number and gender, so it is better to use an
-    # indefinite rather than a personal form.
+    # indefinite rather than a personal form. For instance, in the instrumental
+    # we cannot choose between "mnou/tebou/jím/jí/námi/vámi/jimi", so we simply
+    # use "někým". The same problem occurs with non-nominative arguments of
+    # verbs.
+    ###!!! It may be possible to resolve this later using coreference. But now
+    ###!!! we cannot follow the coreference links yet.
     if($iset->is_genitive())
     {
-        $form = $iset->is_neuter() ? 'něčeho' : 'někoho';
+        $form = 'někoho'; # mne/můj/tebe/tvůj/jeho/jí/její/nás/náš/vás/váš/jich/jejich
+    }
+    elsif($iset->is_dative())
+    {
+        $form = 'někomu'; # mně/mi/tobě/ti/jemu/mu/jí/nám/vám/jim
+    }
+    elsif($iset->is_accusative())
+    {
+        $form = 'někoho'; # mne/mě/tebe/tě/jeho/ho/ji/nás/vás/je
+    }
+    elsif($iset->is_locative())
+    {
+        $form = 'někom'; # mně/tobě/něm/ní/nás/vás/nich
     }
     elsif($iset->is_instrumental())
     {
-        $form = $iset->is_neuter() ? 'něčím' : 'někým';
-    }
-    # If the functor of the pronoun is PAT (patient), its case is set to
-    # accusative. Person, number and gender that we may have collected from the
-    # verb is incorrect (it pertains to the subject, i.e., probably to the
-    # agent and not the patient). It seems better to use an indefinite rather
-    # than a personal form.
-    elsif($iset->is_accusative())
-    {
-        $form = $iset->is_neuter() ? 'něco' : 'někoho'; # ho, ji, je
-    }
-    # If the functor of the pronoun is ADDR (patient), its case is set to
-    # dative. Person, number and gender that we may have collected from the
-    # verb is incorrect (it pertains to the subject, i.e., probably to the
-    # agent and not the addressee). It seems better to use an indefinite rather
-    # than a personal form.
-    elsif($iset->is_dative())
-    {
-        $form = $iset->is_neuter() ? 'něčemu' : 'někomu'; # mu, jí, jim
+        $form = 'někým'; # mnou/tebou/jím/jí/námi/vámi/jimi
     }
     # Some verbs have just Gender=Fem,Neut|Number=Plur,Sing ('ona dělala').
     elsif($iset->is_singular() && $iset->is_plural() && $iset->is_feminine() && $iset->is_neuter())
@@ -662,6 +661,17 @@ sub guess_case
         {
             $case = 'dat';
         }
+        elsif($functor eq 'BEN')
+        {
+            ###!!! We should somehow also signal the preposition "pro".
+            $case = 'acc'; # pro někoho
+        }
+        # dostat od někoho (ORIG)
+        elsif($functor eq 'ORIG')
+        {
+            ###!!! We should somehow also signal the preposition "od".
+            $case = 'gen';
+        }
     }
     else # not defined $aparent
     {
@@ -675,7 +685,14 @@ sub guess_case
         }
         elsif($functor eq 'BEN')
         {
+            ###!!! We should somehow also signal the preposition "pro".
             $case = 'acc'; # pro někoho
+        }
+        # dostat od někoho (ORIG)
+        elsif($functor eq 'ORIG')
+        {
+            ###!!! We should somehow also signal the preposition "od".
+            $case = 'gen';
         }
         else
         {
