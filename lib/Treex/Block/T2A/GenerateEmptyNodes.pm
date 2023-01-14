@@ -49,6 +49,19 @@ sub process_zone
                 $anode->set_form($source_anode->form());
                 $anode->set_tag($source_anode->tag());
                 $anode->iset()->set_hash($source_anode->iset()->get_hash());
+                # The original node may have a wrong case.
+                my $source_case = $source_anode->iset()->case();
+                if($source_case ne '')
+                {
+                    my $target_case = $self->guess_case($aparent, $tparent, $functor);
+                    if($target_case ne $source_case)
+                    {
+                        $anode->iset()->set_case($target_case);
+                        # The copied word form is wrong (unless there is case syncretism).
+                        # Use parentheses to signal that the form cannot be trusted.
+                        $anode->set_form('('.$anode->form().')');
+                    }
+                }
             }
             # The generated node is not a copy of a real node.
             else
