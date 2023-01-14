@@ -10,6 +10,17 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
+    # Side effect: Note in the CoNLL-U sentence-level comments that t-layer was available for this sentence.
+    my $bwild = $zone->get_bundle()->wild();
+    my $comment = $bwild->{comment};
+    my @comment;
+    if ($comment)
+    {
+        chomp($comment);
+        @comment = split(/\n/, $comment);
+    }
+    push(@comment, 'Tectogrammatical annotation available.');
+    $bwild->{comment} = join("\n", @comment)."\n";
     my $troot = $zone->get_tree('t');
     my $aroot = $zone->get_tree('a');
     my @tnodes = $troot->get_descendants({ordered => 1});
