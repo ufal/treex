@@ -178,7 +178,7 @@ sub guess_and_set_morphology
     elsif($tlemma eq '#Unsp')
     {
         $anode->set_tag('PRON');
-        $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => '3', 'number' => 'plur', 'gender' => 'masc', 'case' => 'nom'});
+        $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => '3', 'number' => 'plur', 'gender' => 'masc', 'animacy' => 'anim', 'case' => 'nom'});
         $anode->set_form('oni') if($language eq 'cs');
     }
     elsif($tlemma eq '#Neg')
@@ -449,7 +449,8 @@ sub guess_case
         {
             # Actors of intransitive nouns are likely to be expressed in genitive: 'někoho (něčí) chůze, pád, spánek, chrápání'
             # Actors of transitives sometimes sound better in the instrumental: 'spojování něčeho někým'
-            if($functor eq 'ACT' && defined($tparent) && scalar(grep {$_->functor() eq 'PAT'} ($tparent->children())) > 0)
+            # However, this seems to work with verbal nouns ('-ní', '-tí') but not with other eventive nouns ('příležitost').
+            if($functor eq 'ACT' && defined($aparent) && $aparent->is_verbal_noun() && defined($tparent) && scalar(grep {$_->functor() eq 'PAT'} ($tparent->children())) > 0)
             {
                 $case = 'ins';
             }
