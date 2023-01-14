@@ -371,7 +371,14 @@ sub set_personal_pronoun_form
         }
         elsif($iset->person() eq '2')
         {
-            $form = 'ty';
+            if($iset->polite() eq 'form')
+            {
+                $form = 'vy';
+            }
+            else
+            {
+                $form = 'ty';
+            }
         }
         else
         {
@@ -575,7 +582,7 @@ sub get_verb_features
     my $iset = shift; # iset structure where to set the pronominal features
     # The node may not be verb but it may be a nominal predicate and there may
     # still be auxiliary children with more information.
-    my ($person, $number, $gender);
+    my ($person, $number, $gender, $polite);
     while(1)
     {
         my $niset = $node->iset();
@@ -589,6 +596,11 @@ sub get_verb_features
             $person = $niset->person() if(!defined($person) && $niset->person() ne '');
             $number = $niset->number() if(!defined($number) && $niset->number() ne '');
             $gender = $niset->gender() if(!defined($gender) && $niset->gender() ne '');
+            # Vykání (polite 2nd person in Czech): auxiliary is in plural, participle respects the semantic number (singular or plural).
+            if(defined($number) && $number eq 'sing' && $niset->number() eq 'plur' && defined($person) && $person eq '2')
+            {
+                $polite = 'form';
+            }
         }
         # An open complement (xcomp) of another verb is often non-finite and the
         # features can be found at the matrix verb and its auxiliaries.
@@ -604,6 +616,7 @@ sub get_verb_features
     $iset->set_person($person) if(defined($person) && $person ne '');
     $iset->set_number($number) if(defined($number) && $number ne '');
     $iset->set_gender($gender) if(defined($gender) && $gender ne '');
+    $iset->set_polite($polite) if(defined($polite) && $polite ne '');
 }
 
 
