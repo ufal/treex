@@ -282,10 +282,10 @@ sub detect_indirect_object
     if($phrase->node()->is_verb())
     {
         my @dependents = $phrase->dependents();
-        # If there is a clausal complement (ccomp or xcomp), we assume that it
-        # takes the role of the direct object. Any other object will be labeled
-        # as indirect.
-        if(any {$self->is_deprel($_->deprel(), 'cxcomp')} (@dependents))
+        # If there is a clausal complement (ccomp but not xcomp), we assume
+        # that it takes the role of the direct object. Any other object will be
+        # labeled as indirect.
+        if(any {$self->is_deprel($_->deprel(), 'ccomp')} (@dependents))
         {
             foreach my $d (@dependents)
             {
@@ -296,6 +296,11 @@ sub detect_indirect_object
             }
         }
         # If there is an accusative object without preposition, all other objects are indirect.
+        # Note that this heuristic should not apply to case-marking Indo-European languages,
+        # as non-accusatives (and non-nominatives) should already be oblique there.
+        # If there are multiple accusatives (Czech "učit někoho něco"), the direct
+        # object will have to be selected in a language-specific module (e.g.,
+        # HamleDT::CS::FixUD).
         elsif(any {$self->is_deprel($_->deprel(), 'obj') && $self->get_phrase_case($_) eq 'acc'} (@dependents))
         {
             foreach my $d (@dependents)

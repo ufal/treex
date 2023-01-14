@@ -345,10 +345,13 @@ sub convert_deprels
         # Object: obj, iobj, ccomp, xcomp
         elsif($deprel eq 'Obj')
         {
-            ###!!! If a verb has two or more objects, we should select one direct object and the others will be indirect.
-            ###!!! We would probably have to consider all valency frames to do that properly.
-            ###!!! TODO: An approximation that we probably could do in the meantime is that
-            ###!!! if there is one accusative and one or more non-accusatives, then the accusative is the direct object.
+            # If a verb has two or more bare accusative objects, we should select
+            # one for the 'obj' relation and the others will be 'iobj'. There
+            # is only a handful of verbs that allow this (e.g., "učit někoho něco"
+            # = to teach somebody something) in languages that have the dative
+            # case (which is oblique). This will have to be resolved later when
+            # the tree structure is converted. See Treex::Tool::PhraseBuilder::
+            # PragueToUD::detect_indirect_object().
             if($self->is_clausal_head($node))
             {
                 # If this is an infinitive then it is an xcomp (controlled clausal complement).
@@ -375,9 +378,11 @@ sub convert_deprels
             }
             else # nominal object
             {
-                # New in UD 2.1 for case-marking Indo-European languages:
-                # Prepositional objects are no longer "obj" but they are also not plain "obl".
-                # Instead, they get a special subtype, "obl:arg".
+                # Specific to case-marking Indo-European languages:
+                # Non-accusative objects (including prepositional objects) are
+                # considered oblique, i.e., they are not 'obj'. To preserve the
+                # information that the original annotation considers them
+                # arguments (objects), they get a special subtype, 'obl:arg'.
                 # We convert deprels before the structure is changed, so we can
                 # ask whether the direct parent node is a preposition.
                 ###!!! This will not work properly if there is coordination!
