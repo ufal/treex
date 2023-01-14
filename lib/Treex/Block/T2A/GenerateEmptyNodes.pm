@@ -293,7 +293,7 @@ sub set_personal_pronoun_form
     # verb forms, such as the imperative, do not have the voice feature, unfortunately.
     if(defined($aparent) && !$aparent->is_root() &&
        ($functor eq 'ACT' && !$self->is_passive($aparent) ||
-        $functor eq 'PAT' && $self->is_passive($aparent))
+        $functor eq 'PAT' && $self->is_passive($aparent)))
     {
         $self->get_verb_features($aparent, $iset);
     }
