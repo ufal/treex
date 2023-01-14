@@ -167,17 +167,25 @@ sub guess_and_set_morphology
         $iset->set('prontype' => 'prs');
         $self->set_personal_pronoun_form($anode, $aparent, $tparent, $functor) if($language eq 'cs');
     }
-    elsif($tlemma eq '#Gen' || $tlemma eq '#Unsp')
+    elsif($tlemma eq '#Gen')
     {
         $anode->set_tag('PRON');
         $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'ind'});
         $self->set_indefinite_pronoun_form($anode, $aparent, $tparent, $functor) if($language eq 'cs');
     }
+    # Unlike #Gen, the functor of #Unsp is always ACT and the verb is in third
+    # person plural, so 'oni' is better than 'někdo'.
+    elsif($tlemma eq '#Unsp')
+    {
+        $anode->set_tag('PRON');
+        $anode->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => '3', 'number' => 'plur', 'gender' => 'masc', 'case' => 'nom'});
+        $anode->set_form('oni') if($language eq 'cs');
+    }
     elsif($tlemma eq '#Neg')
     {
-        $anode->set_form('ne') if($language eq 'cs');
         $anode->set_tag('PART');
         $anode->iset()->set_hash({'pos' => 'part', 'polarity' => 'neg'});
+        $anode->set_form('ne') if($language eq 'cs');
     }
     # Empty verb that cannot be copied from an overt node but it has overt dependents.
     # Example: "jak [je] vidno" (missing "je"; the other two words should depend on it in the Prague style).
