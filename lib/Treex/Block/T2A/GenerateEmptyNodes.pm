@@ -440,36 +440,7 @@ sub set_personal_pronoun_form
     my $tparent = shift; # parent of the pronoun in the t-tree
     my $functor = shift; # functor of the corresponding t-node
     my $iset = $anode->iset();
-    my $case = 'nom';
-    if(defined($aparent) && $aparent->is_noun())
-    {
-        # Actors of intransitive nouns are likely to be expressed in genitive: 'někoho (něčí) chůze, pád, spánek, chrápání'
-        # Actors of transitives sometimes sound better in the instrumental: 'spojování něčeho někým'
-        if($functor eq 'ACT' && defined($tparent) && scalar(grep {$_->functor() eq 'PAT'} ($tparent->children())) > 0)
-        {
-            $case = 'ins';
-        }
-        else
-        {
-            $case = 'gen';
-        }
-    }
-    elsif($functor eq 'PAT')
-    {
-        # Patients of passive participles of transitive verbs are likely to be their nominative subjects.
-        if(defined($aparent) && $aparent->is_participle() && $aparent->iset()->is_passive())
-        {
-            $case = 'nom';
-        }
-        else
-        {
-            $case = 'acc';
-        }
-    }
-    elsif($functor eq 'ADDR')
-    {
-        $case = 'dat';
-    }
+    my $case = $self->guess_case($aparent, $tparent, $functor);
     $iset->set_case($case);
     # If the pronoun represents the subject of a verb, we can guess its morphological
     # features from the governing verb. We do not know yet whether it is a subject —
@@ -594,7 +565,7 @@ sub set_indefinite_pronoun_form
     my $tparent = shift; # parent of the pronoun in the t-tree
     my $functor = shift; # functor of the corresponding t-node
     my $iset = $anode->iset();
-    my $case = 'nom';
+    my $case = $self->guess_case($aparent, $tparent, $functor);
     my $form = 'někdo';
     # Very often, if a #Gen is used in coreference, its functor is BEN (beneficiary).
     if($functor eq 'BEN')
@@ -606,43 +577,6 @@ sub set_indefinite_pronoun_form
     }
     else # not 'pro_někoho'
     {
-        if(defined($aparent) && $aparent->is_noun())
-        {
-            # Actors of intransitive nouns are likely to be expressed in genitive: 'někoho (něčí) chůze, pád, spánek, chrápání'
-            # Actors of transitives sometimes sound better in the instrumental: 'spojování něčeho někým'
-            if($functor eq 'ACT' && defined($tparent) && scalar(grep {$_->functor() eq 'PAT'} ($tparent->children())) > 0)
-            {
-                $case = 'ins';
-            }
-            else
-            {
-                $case = 'gen';
-            }
-        }
-        elsif($functor eq 'ACT')
-        {
-            # dařit se, podařit se někomu
-            if(defined($aparent) && $aparent->lemma() =~ m/dařit$/)
-            {
-                $case = 'dat';
-            }
-        }
-        elsif($functor eq 'PAT')
-        {
-            # Patients of passive participles of transitive verbs are likely to be their nominative subjects.
-            if(defined($aparent) && $aparent->is_participle() && $aparent->iset()->is_passive())
-            {
-                $case = 'nom';
-            }
-            else
-            {
-                $case = 'acc';
-            }
-        }
-        elsif($functor eq 'ADDR')
-        {
-            $case = 'dat';
-        }
         $iset->set_case($case);
         if($iset->is_genitive())
         {
@@ -663,6 +597,92 @@ sub set_indefinite_pronoun_form
         $anode->set_form($form);
     }
     return $form;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Czech-specific: Guesses morphological case of an argument of a verb, based on
+# the lemma of the verb and the functor of the argument.
+#------------------------------------------------------------------------------
+sub guess_case
+{
+    my $self = shift;
+    my $aparent = shift; # parent of the pronoun in the enhanced a-graph (at most one now; undef if the pronoun is attached to the root)
+    my $tparent = shift; # parent of the pronoun in the t-tree
+    my $functor = shift; # functor of the corresponding t-node
+    my $case = 'nom';
+    # If we cannot access the parent node (because it is the root), some heuristics cannot be used.
+    if(defined($aparent))
+    {
+        if($aparent->is_noun())
+        {
+            # Actors of intransitive nouns are likely to be expressed in genitive: 'někoho (něčí) chůze, pád, spánek, chrápání'
+            # Actors of transitives sometimes sound better in the instrumental: 'spojování něčeho někým'
+            if($functor eq 'ACT' && defined($tparent) && scalar(grep {$_->functor() eq 'PAT'} ($tparent->children())) > 0)
+            {
+                $case = 'ins';
+            }
+            else
+            {
+                $case = 'gen';
+            }
+        }
+        elsif($functor eq 'ACT')
+        {
+            # dařit se, podařit se někomu
+            if($aparent->lemma() =~ m/dařit$/)
+            {
+                $case = 'dat';
+            }
+            else
+            {
+                $case = 'nom';
+            }
+        }
+        elsif($functor eq 'PAT')
+        {
+            # Patients of passive participles of transitive verbs are likely to be their nominative subjects.
+            if($aparent->is_participle() && $aparent->iset()->is_passive())
+            {
+                $case = 'nom';
+            }
+            # stačit, postačit, vystačit někomu
+            # vyplatit se někomu
+            elsif($aparent->lemma() =~ m/(stačit|vyplatit)$/)
+            {
+                $case = 'dat';
+            }
+            else
+            {
+                $case = 'acc';
+            }
+        }
+        elsif($functor eq 'ADDR')
+        {
+            $case = 'dat';
+        }
+    }
+    else # not defined $aparent
+    {
+        if($functor eq 'PAT')
+        {
+            $case = 'acc';
+        }
+        elsif($functor eq 'ADDR')
+        {
+            $case = 'dat';
+        }
+        elsif($functor eq 'BEN')
+        {
+            $case = 'acc'; # pro někoho
+        }
+        else
+        {
+            $case = 'nom';
+        }
+    }
+    return $case;
 }
 
 
