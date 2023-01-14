@@ -158,28 +158,44 @@ sub process_atree
                         }
                         if(defined($technical_head))
                         {
-                            # Later in the CorefMentions block, we will determine the mention span
-                            # on the basis of the tectogrammatical subtree. Link the technical head
-                            # to the original #Forn t-node, whether or not the technical head had
-                            # its own counterpart in the t-tree. In any case, the technical head
-                            # should correspond to something in the tectogrammatical subtree.
-                            $technical_head->wild()->{'tnode.rf'} = $tnode->id();
+                            # Move the coreference annotation from the #Forn node to the technical head.
+                            # Use the cluster maintenance functions to take care of the various internal
+                            # node references. First add the new node to the cluster, then remove the
+                            # old node (adding a new node requires us to provide another node that is
+                            # already in the cluster).
+                            Treex::Tool::Coreference::Cluster::add_nodes_to_cluster($cid, $node, $technical_head);
+                            Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
+                            # The two functions above have also moved ClusterId and ClusterType in MISC.
+                            # However, there may be other annotations that have not been moved, in
+                            # particular Bridging. Move them now.
+                            ###!!! If there is Bridging, the result will be incorrect.
+                            ###!!! The mentions/nodes of the target cluster used to have the #Forn node
+                            ###!!! in their bridging source references, the reference was removed during
+                            ###!!! remove_nodes...() above but it was not replaced with a reference to
+                            ###!!! the technical head.
                             my @misc = $node->get_misc();
                             foreach my $m (@misc)
                             {
                                 if($m =~ m/^(.+?)=(.+)$/)
                                 {
                                     $technical_head->set_misc_attr($1, $2);
+                                    log_fatal("The current implementation is not prepared for #Forn nodes that are source points of bridging.") if($1 eq 'Bridging');
                                 }
                                 else
                                 {
                                     $technical_head->set_misc_attr($m);
                                 }
                             }
-                            log_info("DEBUGGING: No cleanup? Removing #Forn node ".$node->id());
                             $self->remove_empty_leaf($node, $tnode);
                             splice(@nodes, $i, 1);
                             $i--;
+                            # Later in the CorefMentions block, we will determine the mention span
+                            # on the basis of the tectogrammatical subtree. Link the technical head
+                            # to the original #Forn t-node, whether or not the technical head had
+                            # its own counterpart in the t-tree. In any case, the technical head
+                            # should correspond to something in the tectogrammatical subtree.
+                            $technical_head->wild()->{'tnode.rf'} = $tnode->id();
+                            $tnode->wild()->{'anode.rf'} = $technical_head->id();
                         }
                         else
                         {
