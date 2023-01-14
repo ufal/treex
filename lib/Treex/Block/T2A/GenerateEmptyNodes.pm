@@ -11,6 +11,7 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     # Side effect: Note in the CoNLL-U sentence-level comments that t-layer was available for this sentence.
+    ###!!! Maybe this should be done in a separate block, as it is an independent piece of information.
     my $bwild = $zone->get_bundle()->wild();
     my $comment = $bwild->{comment};
     my @comment;
@@ -563,8 +564,9 @@ sub guess_case
 
 
 #------------------------------------------------------------------------------
-# Gets morphological features of the parent. It may be useful if the parent is
-# a verb and the empty node is a personal pronoun.
+# Gets morphological features of a predicate. This function can be called for
+# a parent of an empty node, if the empty node is assumed to be the subject,
+# and project the features to the features of the empty node.
 #------------------------------------------------------------------------------
 sub get_verb_features
 {
@@ -580,7 +582,7 @@ sub get_verb_features
         $person = $niset->person() if(!defined($person) && $niset->person() ne '');
         $number = $niset->number() if(!defined($number) && $niset->number() ne '');
         $gender = $niset->gender() if(!defined($gender) && $niset->gender() ne '');
-        my @auxiliaries = grep {$_->is_auxiliary()} ($node->get_children());
+        my @auxiliaries = grep {$_->iset()->is_auxiliary()} ($node->get_children());
         foreach my $aux (@auxiliaries)
         {
             $niset = $aux->iset();
