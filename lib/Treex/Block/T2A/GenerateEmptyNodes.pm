@@ -487,7 +487,16 @@ sub guess_case
         }
         elsif($functor eq 'ADDR')
         {
-            $case = 'dat';
+            # stimulovat někoho
+            # žádat, požádat někoho (ale ne vyžádat si od někoho)
+            if($aparent->lemma() =~ m/^(požádat|stimulovat|žádat)$/)
+            {
+                $case = 'acc';
+            }
+            else
+            {
+                $case = 'dat';
+            }
         }
         elsif($functor eq 'BEN')
         {
