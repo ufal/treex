@@ -27,6 +27,7 @@ sub process_atree
             # need it and can discard it.
             if(!defined($cid))
             {
+                log_info("DEBUGGING: No cluster id to clear before removing node ".$node->id());
                 $self->remove_empty_leaf($node, $tnode);
                 splice(@nodes, $i, 1);
                 $i--;
@@ -111,6 +112,7 @@ sub process_atree
             # That probably does not hurt, so we do not attempt to solve it.
             elsif($node->lemma() eq '#Rcp')
             {
+                Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
                 $self->remove_empty_leaf($node, $tnode);
                 splice(@nodes, $i, 1);
                 $i--;
@@ -174,6 +176,7 @@ sub process_atree
                                     $technical_head->set_misc_attr($m);
                                 }
                             }
+                            log_info("DEBUGGING: No cleanup? Removing #Forn node ".$node->id());
                             $self->remove_empty_leaf($node, $tnode);
                             splice(@nodes, $i, 1);
                             $i--;
