@@ -2084,6 +2084,14 @@ sub fix_annotation_errors
         # promoted as the head of an "obl" phrase. It should not be "case" or "mark".
         $subtree[4]->set_deprel('obl');
     }
+    # PDT-C train-l lnd94104-111-p1s1
+    elsif($spanstring =~ m/Tenis ad - Hamburk První kolo :/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[1]->set_deprel('conj');
+        $subtree[3]->set_deprel('parataxis');
+        $subtree[5]->set_deprel('parataxis');
+    }
     # Make sure that no node has more than one subject. This is to prevent
     # validation errors in UD. However, instead of randomly picking a subject
     # and re-labeling it as dep, we should investigate and fix the error
