@@ -2209,7 +2209,7 @@ sub fix_annotation_errors
             $node->set_lemma('být');
             $node->set_tag('VB-P---3P-NAI--');
             $node->set_conll_pos('VB-P---3P-NAI--');
-            $node->iset()->set_hash({'aspect' => 'imp', 'mood' => 'ind', 'number' => 'plur', 'person' => '3', 'polarity' => 'neg', 'tense' => 'pres', 'verbform' => 'fin', 'voice' => 'act', 'style' => 'vrnc'});
+            $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'aspect' => 'imp', 'mood' => 'ind', 'number' => 'plur', 'person' => '3', 'polarity' => 'neg', 'tense' => 'pres', 'verbform' => 'fin', 'voice' => 'act', 'style' => 'vrnc'});
         }
     }
 }
