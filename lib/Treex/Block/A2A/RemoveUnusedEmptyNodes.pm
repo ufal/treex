@@ -85,6 +85,11 @@ sub process_atree
                         }
                         $edeprel .= ':xsubj';
                         $candidates[0]->add_enhanced_dependency($infinitive, $edeprel);
+                        # Remember both functors at the candidate.
+                        my $functor1 = $candidates[0]->get_misc_attr('Functor') // '_';
+                        my $functor2 = $node->get_misc_attr('Functor') // '_';
+                        my $functor12 = $mverb->get_conllu_id().':'.$functor1.','.$infinitive->get_conllu_id().':'.$functor2;
+                        $candidates[0]->set_misc_attr('Functor');
                         # Now we can finally remove the #Cor node.
                         Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
                         $self->remove_empty_leaf($node, $tnode);
@@ -136,6 +141,11 @@ sub process_atree
                         ###!!! we will have to first document it for the validator (and pretend that
                         ###!!! it can be used also in basic dependencies).
                         $candidates[0]->add_enhanced_dependency($object, 'nmod:gen');
+                        # Remember both functors at the candidate.
+                        my $functor1 = $candidates[0]->get_misc_attr('Functor') // '_';
+                        my $functor2 = $node->get_misc_attr('Functor') // '_';
+                        my $functor12 = $mverb->get_conllu_id().':'.$functor1.','.$object->get_conllu_id().':'.$functor2;
+                        $candidates[0]->set_misc_attr('Functor');
                         # Now we can finally remove the #QCor node.
                         Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
                         $self->remove_empty_leaf($node, $tnode);
