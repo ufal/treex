@@ -128,7 +128,7 @@ sub process_atree
                     if(scalar(@candidates) == 1)
                     {
                         # Attach the candidate as nmod(:xsubj?) enhanced child of the infinitive.
-                        $candidates[0]->add_enhanced_dependency($object, 'nmod'); # nmod:xsubj would be rejected by the validator?
+                        $candidates[0]->add_enhanced_dependency($object, 'nmod'); # nmod:xsubj would be rejected by the validator? And maybe it should be nmod:gen because it would be in genitive?
                         # Now we can finally remove the #QCor node.
                         Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
                         $self->remove_empty_leaf($node, $tnode);

@@ -317,6 +317,11 @@ sub set_personal_pronoun_form
     {
         $form = 'někoho'; # mne/můj/tebe/tvůj/jeho/jí/její/nás/náš/vás/váš/jich/jejich
     }
+    elsif($iset->is_ablative())
+    {
+        $form = 'od_někoho'; # mne/tebe/něj/ní/nás/vás/nich
+        $iset->set_case('gen');
+    }
     elsif($iset->is_dative())
     {
         $form = 'někomu'; # mně/mi/tobě/ti/jemu/mu/jí/nám/vám/jim
@@ -324,6 +329,11 @@ sub set_personal_pronoun_form
     elsif($iset->is_accusative())
     {
         $form = 'někoho'; # mne/mě/tebe/tě/jeho/ho/ji/nás/vás/je
+    }
+    elsif($iset->is_benefactive())
+    {
+        $form = 'pro_někoho'; # mne/mě/tebe/tě/něj/ni/nás/vás/ně
+        $iset->set_case('acc');
     }
     elsif($iset->is_locative())
     {
@@ -420,36 +430,35 @@ sub set_indefinite_pronoun_form
     my $functor = shift; # functor of the corresponding t-node
     my $iset = $anode->iset();
     my $case = $self->guess_case($aparent, $tparent, $functor);
+    $iset->set_case($case);
     my $form = 'někdo';
-    # Very often, if a #Gen is used in coreference, its functor is BEN (beneficiary).
-    if($functor eq 'BEN')
+    if($iset->is_genitive())
     {
-        $case = 'acc';
+        $form = 'někoho';
+    }
+    elsif($iset->is_ablative())
+    {
+        $form = 'od_někoho';
+        $iset->set_case('gen');
+    }
+    elsif($iset->is_dative())
+    {
+        $form = 'někomu';
+    }
+    elsif($iset->is_accusative())
+    {
+        $form = 'někoho';
+    }
+    elsif($iset->is_benefactive())
+    {
         $form = 'pro_někoho';
-        $iset->set_case($case);
-        $anode->set_form($form);
+        $iset->set_case('acc');
     }
-    else # not 'pro_někoho'
+    elsif($iset->is_instrumental())
     {
-        $iset->set_case($case);
-        if($iset->is_genitive())
-        {
-            $form = 'někoho';
-        }
-        elsif($iset->is_dative())
-        {
-            $form = 'někomu';
-        }
-        elsif($iset->is_accusative())
-        {
-            $form = 'někoho';
-        }
-        elsif($iset->is_instrumental())
-        {
-            $form = 'někým';
-        }
-        $anode->set_form($form);
+        $form = 'někým';
     }
+    $anode->set_form($form);
     return $form;
 }
 
@@ -538,14 +547,18 @@ sub guess_case
         }
         elsif($functor eq 'BEN')
         {
-            ###!!! We should somehow also signal the preposition "pro".
-            $case = 'acc'; # pro někoho
+            # There is no benefactive case in Czech but we use it to signal the
+            # preposition "pro". Later we will create the form with "pro" and
+            # change the case to 'acc'.
+            $case = 'ben';
         }
         # dostat od někoho (ORIG)
         elsif($functor eq 'ORIG')
         {
-            ###!!! We should somehow also signal the preposition "od".
-            $case = 'gen';
+            # There is no ablative case in Czech but we use it to signal the
+            # preposition "od". Later we will create the form with "od" and
+            # change the case to 'gen'.
+            $case = 'abl';
         }
     }
     else # not defined $aparent
@@ -560,14 +573,18 @@ sub guess_case
         }
         elsif($functor eq 'BEN')
         {
-            ###!!! We should somehow also signal the preposition "pro".
-            $case = 'acc'; # pro někoho
+            # There is no benefactive case in Czech but we use it to signal the
+            # preposition "pro". Later we will create the form with "pro" and
+            # change the case to 'acc'.
+            $case = 'ben';
         }
         # dostat od někoho (ORIG)
         elsif($functor eq 'ORIG')
         {
-            ###!!! We should somehow also signal the preposition "od".
-            $case = 'gen';
+            # There is no ablative case in Czech but we use it to signal the
+            # preposition "od". Later we will create the form with "od" and
+            # change the case to 'gen'.
+            $case = 'abl';
         }
         else
         {
