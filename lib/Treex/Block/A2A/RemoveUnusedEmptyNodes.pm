@@ -86,10 +86,7 @@ sub process_atree
                         $edeprel .= ':xsubj';
                         $candidates[0]->add_enhanced_dependency($infinitive, $edeprel);
                         # Remember both functors at the candidate.
-                        my $functor1 = $candidates[0]->get_misc_attr('Functor') // '_';
-                        my $functor2 = $node->get_misc_attr('Functor') // '_';
-                        my $functor12 = $mverb->get_conllu_id().':'.$functor1.','.$infinitive->get_conllu_id().':'.$functor2;
-                        $candidates[0]->set_misc_attr('Functor');
+                        $self->merge_functors($candidates[0], $mverb, $node, $infinitive);
                         # Now we can finally remove the #Cor node.
                         Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
                         $self->remove_empty_leaf($node, $tnode);
@@ -142,10 +139,7 @@ sub process_atree
                         ###!!! it can be used also in basic dependencies).
                         $candidates[0]->add_enhanced_dependency($object, 'nmod:gen');
                         # Remember both functors at the candidate.
-                        my $functor1 = $candidates[0]->get_misc_attr('Functor') // '_';
-                        my $functor2 = $node->get_misc_attr('Functor') // '_';
-                        my $functor12 = $mverb->get_conllu_id().':'.$functor1.','.$object->get_conllu_id().':'.$functor2;
-                        $candidates[0]->set_misc_attr('Functor');
+                        $self->merge_functors($candidates[0], $mverb, $node, $object);
                         # Now we can finally remove the #QCor node.
                         Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
                         $self->remove_empty_leaf($node, $tnode);
@@ -303,6 +297,63 @@ sub remove_empty_leaf
         delete($tnode->wild()->{'anode.rf'});
     }
     $node->remove();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Most of the time, the functor in MISC has just one value: Functor=ACT.
+# However, when merging a #Cor/#QCor node with its antecedent, we want to store
+# both functors at the antecedent. Sometimes we could even accummulate more
+# than two functors. Whenever there is more than one functor, we also save the
+# CoNLL-U id of the parent node to which it pertains: Functor=2:ACT,5:PAT.
+#------------------------------------------------------------------------------
+sub merge_functors
+{
+    my $self = shift;
+    my $node1 = shift; # take functors from this node; also save the result here
+    my $parent1 = shift; # if node1 has only one functor so far, it pertains to this parent node
+    my $node2 = shift; # take functors also from this node
+    my $parent2 = shift; # if node2 has only one functor so far, it pertains to this parent node
+    # Remember both functors at the candidate.
+    my @functors;
+    my $functor1 = $node1->get_misc_attr('Functor');
+    if(defined($functor1) && $functor1 ne '')
+    {
+        if($functor1 =~ m/,/)
+        {
+            push(@functors, split(/,/, $functor1));
+        }
+        elsif($functor1 =~ m/:/)
+        {
+            push(@functors, $functor1);
+        }
+        else
+        {
+            push(@functors, $parent1->get_conllu_id().':'.$functor1);
+        }
+    }
+    my $functor2 = $node2->get_misc_attr('Functor');
+    if(defined($functor2) && $functor2 ne '')
+    {
+        if($functor2 =~ m/,/)
+        {
+            push(@functors, split(/,/, $functor2));
+        }
+        elsif($functor2 =~ m/:/)
+        {
+            push(@functors, $functor2);
+        }
+        else
+        {
+            push(@functors, $parent2->get_conllu_id().':'.$functor2);
+        }
+    }
+    @functors = map {m/^(.+?):(.+)$/; [$1, $2]} (@functors);
+    @functors = sort {my $r = $a->[0] <=> $b->[0]; unless($r) {$r = lc($a->[1]) cmp lc($b->[1])} $r} (@functors);
+    @functors = map {$_->[0].':'.$_->[1]} (@functors);
+    my $functor12 = join(',', @functors);
+    $node1->set_misc_attr('Functor', $functor12);
 }
 
 
