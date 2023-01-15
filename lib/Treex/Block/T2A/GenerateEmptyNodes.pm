@@ -72,6 +72,8 @@ sub process_zone
                     my $target_case = $self->guess_case($aparent, $tparent, $functor);
                     if($target_case ne $source_case)
                     {
+                        $target_case = 'gen' if($target_case eq 'abl');
+                        $target_case = 'acc' if($target_case eq 'ben');
                         $anode->iset()->set_case($target_case);
                         # The copied word form is wrong (unless there is case syncretism).
                         # Use parentheses to signal that the form cannot be trusted.
@@ -486,6 +488,21 @@ sub guess_case
             if($functor eq 'ACT' && defined($aparent) && $aparent->is_verbal_noun() && defined($tparent) && scalar(grep {$_->functor() eq 'PAT'} ($tparent->children())) > 0)
             {
                 $case = 'ins';
+            }
+            elsif($functor eq 'BEN')
+            {
+                # There is no benefactive case in Czech but we use it to signal the
+                # preposition "pro". Later we will create the form with "pro" and
+                # change the case to 'acc'.
+                $case = 'ben';
+            }
+            # dostat od někoho (ORIG)
+            elsif($functor eq 'ORIG')
+            {
+                # There is no ablative case in Czech but we use it to signal the
+                # preposition "od". Later we will create the form with "od" and
+                # change the case to 'gen'.
+                $case = 'abl';
             }
             else
             {

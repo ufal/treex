@@ -78,9 +78,13 @@ sub process_atree
                         # Attach the candidate as nsubj:xsubj enhanced child of the infinitive.
                         # It is possible that this relation already exists (block A2A::AddEnhancedUD)
                         # but then add_enhanced_dependency() will do nothing.
-                        ###!!! Like in A2A::AddEnhancedUD, we should decide whether it is a nominal or clausal subject (nsubj vs. csubj) and whether it is active or passive (nsubj:pass).
-                        log_warn("TO DO: Decide whether nsubj:xsubj is clausal or passive.");
-                        $candidates[0]->add_enhanced_dependency($infinitive, 'nsubj:xsubj');
+                        my $edeprel = $candidates[0]->deprel() =~ m/^(csubj|ccomp|advcl)(:|$)/ ? 'csubj' : 'nsubj';
+                        if($node->iset()->is_passive() || scalar($node->get_enhanced_children('^(aux|expl):pass(:|$)')) > 0)
+                        {
+                            $edeprel .= ':pass';
+                        }
+                        $edeprel .= ':xsubj';
+                        $candidates[0]->add_enhanced_dependency($infinitive, $edeprel);
                         # Now we can finally remove the #Cor node.
                         Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
                         $self->remove_empty_leaf($node, $tnode);
@@ -127,8 +131,11 @@ sub process_atree
                     my @candidates = grep {my $xcid = $_->get_misc_attr('ClusterId') // ''; $_ != $node && $xcid eq $cid} ($mverb->get_enhanced_children());
                     if(scalar(@candidates) == 1)
                     {
-                        # Attach the candidate as nmod(:xsubj?) enhanced child of the infinitive.
-                        $candidates[0]->add_enhanced_dependency($object, 'nmod'); # nmod:xsubj would be rejected by the validator? And maybe it should be nmod:gen because it would be in genitive?
+                        # Attach the candidate as nmod:gen enhanced child of the infinitive.
+                        ###!!! If we want to instead use something like nmod:xsubj:gen or nmod:agent,
+                        ###!!! we will have to first document it for the validator (and pretend that
+                        ###!!! it can be used also in basic dependencies).
+                        $candidates[0]->add_enhanced_dependency($object, 'nmod:gen');
                         # Now we can finally remove the #QCor node.
                         Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
                         $self->remove_empty_leaf($node, $tnode);
