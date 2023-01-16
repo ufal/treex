@@ -5,6 +5,13 @@ use Treex::Core::Common;
 use Treex::Tool::Coreference::Cluster;
 extends 'Treex::Core::Block';
 
+has mention_text => (
+    is            => 'rw',
+    isa           => 'Bool',
+    default       => 0,
+    documentation => 'Save MentionText in MISC. Default: 0.'
+);
+
 
 
 sub process_atree
@@ -571,7 +578,7 @@ sub mark_mention
         log_fatal("Mention head $id:$form ($address) is not included in the span '$mspan'.");
     }
     $mention->{head}->set_misc_attr('MentionSpan', $mspan);
-    $mention->{head}->set_misc_attr('MentionText', $mtext);
+    $mention->{head}->set_misc_attr('MentionText', $mtext) if($self->mention_text());
     # We will want to later run A2A::CorefMentionHeads to find out whether the
     # UD head should be different from the tectogrammatical head, and to move
     # the mention annotation to the UD head node.
