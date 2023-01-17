@@ -73,7 +73,7 @@ sub process_atree
                         }
                         if($infinitive->deprel() !~ m/^(csubj|xcomp)(:|$)/)
                         {
-                            log_warn(sprintf("The parent of a #Cor node is not csubj|xcomp of its parent: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form());
+                            log_warn(sprintf("The parent of a #Cor node is not csubj|xcomp of its parent: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
                         }
                         # Attach the candidate as nsubj:xsubj enhanced child of the infinitive.
                         # It is possible that this relation already exists (block A2A::AddEnhancedUD)
