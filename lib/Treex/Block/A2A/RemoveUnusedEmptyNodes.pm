@@ -67,9 +67,12 @@ sub process_atree
                         {
                             log_warn(sprintf("The parent of a #Cor node is not an infinitive: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
                         }
-                        if(!$mverb->is_verb())
+                        # We assume that the prototypical configuration for #Cor is control verb + infinitive ("někdo musí přijít").
+                        # However, #Cor can occur in other constructions, too. What we denote as $mverb here could be an adjective
+                        # (participle or nonverbal predicate: "pro někoho možné ověřit").
+                        if(!$mverb->is_verb() && !$mverb->is_adjective())
                         {
-                            log_warn(sprintf("The grandparent of a #Cor node is not a verb: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
+                            log_warn(sprintf("The grandparent of a #Cor node is not a verb or adjective: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
                         }
                         if($infinitive->deprel() !~ m/^(csubj|xcomp)(:|$)/)
                         {
@@ -129,9 +132,12 @@ sub process_atree
                     my @candidates = grep {my $xcid = $_->get_misc_attr('ClusterId') // ''; $_ != $node && $_ != $object && $xcid eq $cid} ($mverb->get_enhanced_children());
                     if(scalar(@candidates) == 1)
                     {
-                        if(!$mverb->is_verb())
+                        # We assume that the prototypical configuration for #Cor is verb + object ("někdo má představy").
+                        # However, #Cor can occur in other constructions, too. What we denote as $mverb here could be an adjective
+                        # (participle or nonverbal predicate: "někým podané návrhy").
+                        if(!$mverb->is_verb() && !$mverb->is_adjective())
                         {
-                            log_warn(sprintf("The grandparent of a #QCor node is not a verb: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $object->form()));
+                            log_warn(sprintf("The grandparent of a #QCor node is not a verb or adjective: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $object->form()));
                         }
                         # Attach the candidate as nmod:gen enhanced child of the infinitive.
                         ###!!! If we want to instead use something like nmod:xsubj:gen or nmod:agent,
