@@ -54,20 +54,8 @@ sub process_atree
                 if(scalar(@eparents) == 1)
                 {
                     my $infinitive = $eparents[0];
-                    if(!$infinitive->is_infinitive())
-                    {
-                        log_warn("The parent of a #Cor node is not an infinitive.");
-                    }
                     # The basic UD parent of the infinitive is the matrix verb.
                     my $mverb = $infinitive->parent();
-                    if(!$mverb->is_verb())
-                    {
-                        log_warn("The grandparent of a #Cor node is not a verb.");
-                    }
-                    if($infinitive->deprel() !~ m/^(csubj|xcomp)(:|$)/)
-                    {
-                        log_warn("The parent of a #Cor node is not csubj|xcomp of its parent.");
-                    }
                     # The #Cor node should be coreferential with one of the
                     # children of the matrix verb. We must search enhanced
                     # children because it could be a generated node, too (e.g.
@@ -75,6 +63,18 @@ sub process_atree
                     my @candidates = grep {my $xcid = $_->get_misc_attr('ClusterId') // ''; $_ != $node && $_ != $infinitive && $xcid eq $cid} ($mverb->get_enhanced_children());
                     if(scalar(@candidates) == 1)
                     {
+                        if(!$infinitive->is_infinitive())
+                        {
+                            log_warn(sprintf("The parent of a #Cor node is not an infinitive: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
+                        }
+                        if(!$mverb->is_verb())
+                        {
+                            log_warn(sprintf("The grandparent of a #Cor node is not a verb: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
+                        }
+                        if($infinitive->deprel() !~ m/^(csubj|xcomp)(:|$)/)
+                        {
+                            log_warn(sprintf("The parent of a #Cor node is not csubj|xcomp of its parent: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form());
+                        }
                         # Attach the candidate as nsubj:xsubj enhanced child of the infinitive.
                         # It is possible that this relation already exists (block A2A::AddEnhancedUD)
                         # but then add_enhanced_dependency() will do nothing.
@@ -122,10 +122,6 @@ sub process_atree
                     my $object = $eparents[0];
                     # The basic UD parent of the infinitive is the verb that governs the object.
                     my $mverb = $object->parent();
-                    if(!$mverb->is_verb())
-                    {
-                        log_warn("The grandparent of a #QCor node is not a verb.");
-                    }
                     # The #QCor node should be coreferential with one of the
                     # children of the matrix verb. We must search enhanced
                     # children because it could be a generated node, too (e.g.
@@ -133,6 +129,10 @@ sub process_atree
                     my @candidates = grep {my $xcid = $_->get_misc_attr('ClusterId') // ''; $_ != $node && $_ != $object && $xcid eq $cid} ($mverb->get_enhanced_children());
                     if(scalar(@candidates) == 1)
                     {
+                        if(!$mverb->is_verb())
+                        {
+                            log_warn(sprintf("The grandparent of a #QCor node is not a verb: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $object->form()));
+                        }
                         # Attach the candidate as nmod:gen enhanced child of the infinitive.
                         ###!!! If we want to instead use something like nmod:xsubj:gen or nmod:agent,
                         ###!!! we will have to first document it for the validator (and pretend that
