@@ -69,7 +69,7 @@ sub process_zone
                 my $source_case = $source_anode->iset()->case();
                 if($source_case ne '')
                 {
-                    my $target_case = $self->guess_case($aparent, $tparent, $functor);
+                    my $target_case = $self->guess_case($anode, $aparent, $tparent, $functor);
                     if($target_case ne $source_case)
                     {
                         $target_case = 'gen' if($target_case eq 'abl');
@@ -289,7 +289,7 @@ sub set_personal_pronoun_form
     my $tparent = shift; # parent of the pronoun in the t-tree
     my $functor = shift; # functor of the corresponding t-node
     my $iset = $anode->iset();
-    my $case = $self->guess_case($aparent, $tparent, $functor);
+    my $case = $self->guess_case($anode, $aparent, $tparent, $functor);
     # If the pronoun represents the subject of a verb, we can guess its morphological
     # features from the governing verb. We do not know yet whether it is a subject —
     # that will have to be guessed, too. But if the functor is ACT and the parent is
@@ -431,7 +431,7 @@ sub set_indefinite_pronoun_form
     my $tparent = shift; # parent of the pronoun in the t-tree
     my $functor = shift; # functor of the corresponding t-node
     my $iset = $anode->iset();
-    my $case = $self->guess_case($aparent, $tparent, $functor);
+    my $case = $self->guess_case($anode, $aparent, $tparent, $functor);
     $iset->set_case($case);
     my $form = 'někdo';
     if($iset->is_genitive())
@@ -473,14 +473,23 @@ sub set_indefinite_pronoun_form
 sub guess_case
 {
     my $self = shift;
-    my $aparent = shift; # parent of the pronoun in the enhanced a-graph (at most one now; undef if the pronoun is attached to the root)
-    my $tparent = shift; # parent of the pronoun in the t-tree
+    my $anode = shift; # generated node (pronoun or even noun) whose case is being guessed
+    my $aparent = shift; # parent of the node in the enhanced a-graph (at most one now; undef if the pronoun is attached to the root)
+    my $tparent = shift; # parent of the corresponding t-node in the t-tree
     my $functor = shift; # functor of the corresponding t-node
     my $case = 'nom';
     # If we cannot access the parent node (because it is the root), some heuristics cannot be used.
     if(defined($aparent))
     {
-        if($aparent->is_noun())
+        # For some reason, generated copies of nouns in coordinations tend to
+        # be attached to the source of the copy. Then we assume that the case
+        # should be the same. (It indeed should if they are really conjuncts
+        # of the same coordination.)
+        if(defined($anode->form()) && $anode->form() eq $aparent->form())
+        {
+            $case = $aparent->iset()->case();
+        }
+        elsif($aparent->is_noun())
         {
             # Actors of intransitive nouns are likely to be expressed in genitive: 'někoho (něčí) chůze, pád, spánek, chrápání'
             # Actors of transitives sometimes sound better in the instrumental: 'spojování něčeho někým'
