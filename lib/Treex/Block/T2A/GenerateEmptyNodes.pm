@@ -634,24 +634,83 @@ sub get_verb_features
     my $iset = shift; # iset structure where to set the pronominal features
     # The node may not be verb but it may be a nominal predicate and there may
     # still be auxiliary children with more information.
-    my ($person, $number, $gender, $polite);
+    my $person = '';
+    my $number = '';
+    my $gender = '';
+    my $polite = '';
     while(1)
     {
         my $niset = $node->iset();
-        $person = $niset->person() if(!defined($person) && $niset->person() ne '');
-        $number = $niset->number() if(!defined($number) && $niset->number() ne '');
-        $gender = $niset->gender() if(!defined($gender) && $niset->gender() ne '');
+        my $nperson = $niset->get_joined('person');
+        my $nnumber = $niset->get_joined('number');
+        my $ngender = $niset->get_joined('gender');
+        if($person eq '' && $nperson ne '')
+        {
+            $person = $nperson;
+        }
+        # dělala = Fem Sing or Neut Plur
+        # But it can be disambiguated by a 1st/2nd person auxiliary (dělala jsem).
+        if($number eq '' && $nnumber ne '' || $number eq 'plur|sing' && $nnumber =~ m/^(sing|plur)$/)
+        {
+            $number = $nnumber;
+        }
+        if($gender eq '' && $ngender ne '')
+        {
+            $gender = $ngender;
+        }
+        if($gender eq 'fem|neut')
+        {
+            if($ngender =~ m/^(fem|neut)$/)
+            {
+                $gender = $ngender;
+            }
+            elsif($number eq 'sing')
+            {
+                $gender = 'fem';
+            }
+            elsif($number eq 'plur')
+            {
+                $gender = 'neut';
+            }
+        }
         my @auxiliaries = grep {$_->iset()->is_auxiliary()} ($node->get_children());
         foreach my $aux (@auxiliaries)
         {
             $niset = $aux->iset();
-            $person = $niset->person() if(!defined($person) && $niset->person() ne '');
-            $number = $niset->number() if(!defined($number) && $niset->number() ne '');
-            $gender = $niset->gender() if(!defined($gender) && $niset->gender() ne '');
+            my $nperson = $niset->get_joined('person');
+            my $nnumber = $niset->get_joined('number');
+            my $ngender = $niset->get_joined('gender');
+            if($person eq '' && $nperson ne '')
+            {
+                $person = $nperson;
+            }
+            if($number eq '' && $nnumber ne '' || $number eq 'plur|sing' && $nnumber =~ m/^(sing|plur)$/)
+            {
+                $number = $nnumber;
+            }
             # Vykání (polite 2nd person in Czech): auxiliary is in plural, participle respects the semantic number (singular or plural).
-            if(defined($number) && $number eq 'sing' && $niset->number() eq 'plur' && defined($person) && $person eq '2')
+            if($number eq 'sing' && $nnumber eq 'plur' && $person eq '2')
             {
                 $polite = 'form';
+            }
+            if($gender eq '' && $ngender ne '')
+            {
+                $gender = $ngender;
+            }
+            if($gender eq 'fem|neut')
+            {
+                if($ngender =~ m/^(fem|neut)$/)
+                {
+                    $gender = $ngender;
+                }
+                elsif($number eq 'sing')
+                {
+                    $gender = 'fem';
+                }
+                elsif($number eq 'plur')
+                {
+                    $gender = 'neut';
+                }
             }
         }
         # An open complement (xcomp) of another verb is often non-finite and the
