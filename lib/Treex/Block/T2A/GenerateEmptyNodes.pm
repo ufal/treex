@@ -136,6 +136,7 @@ sub process_zone
             }
         }
     }
+    $aroot->_normalize_ords_and_conllu_ids();
 }
 
 
