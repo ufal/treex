@@ -1099,7 +1099,8 @@ sub get_node_by_conllu_id
     my $id = shift;
     my $root = $self->get_root();
     return $root if($id == 0);
-    my @results = grep {$_->get_conllu_id() == $id} ($root->get_descendants());
+    # We must do string comparison, otherwise 12.10 == 12.1.
+    my @results = grep {$_->get_conllu_id() eq $id} ($root->get_descendants());
     if(scalar(@results) == 0)
     {
         log_warn($self->get_forms_with_ords_and_conllu_ids());
