@@ -18,8 +18,9 @@ sub process_atree
         my $node = $nodes[$i];
         # Only check empty nodes that are linked to the t-layer. That way we
         # preserve any empty nodes that may have been added by the block
-        # A2A::AddEnhancedUD.
-        if($node->is_empty() && exists($node->wild()->{'tnode.rf'}))
+        # A2A::AddEnhancedUD. Also skip nodes that are not leaves (we may have
+        # caused this by GenerateEmptyNodes::adjust_copied_conjunct()).
+        if($node->is_empty() && exists($node->wild()->{'tnode.rf'}) && scalar($node->get_enhanced_children()) == 0)
         {
             my $tnode = $document->get_node_by_id($node->wild()->{'tnode.rf'});
             my $cid = $node->get_misc_attr('ClusterId');
