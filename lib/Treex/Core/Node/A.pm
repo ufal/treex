@@ -625,6 +625,31 @@ sub get_enhanced_deps
 
 
 #------------------------------------------------------------------------------
+# Takes the list of incoming enhanced edges for a node and saves it at the
+# node, rewriting earlier list of edeps, if present. Each element of the list
+# is a pair: 1. ord of the parent node; 2. relation label.
+#------------------------------------------------------------------------------
+sub set_enhanced_deps
+{
+    my $self = shift;
+    my @edeps = @_;
+    my $conllu_id = $self->get_conllu_id();
+    foreach my $edep (@edeps)
+    {
+        if($edep->[0] eq $conllu_id)
+        {
+            my $ord = $self->ord();
+            my $form = $self->form() // '';
+            log_fatal("Self-loops are not allowed in the enhanced graph but we are attempting to attach the node no. $ord ('$form') to itself.");
+        }
+    }
+    my $wild = $self->wild();
+    $wild->{enhanced} = [@edeps];
+}
+
+
+
+#------------------------------------------------------------------------------
 # Removes all incoming enhanced edges from a node.
 #------------------------------------------------------------------------------
 sub clear_enhanced_deps
@@ -1007,6 +1032,18 @@ sub cmp_conllu_ids
         $r = $amin <=> $bmin;
     }
     return $r;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sorts a list of CoNLL-U nodes (there can be empty nodes with decimal ids).
+# This is a static class function rather than method of a particular Node::A
+# object (it does not use the $self reference).
+#------------------------------------------------------------------------------
+sub sort_nodes_by_conllu_ids
+{
+    return sort {cmp_conllu_ids($a->get_conllu_id(), $b->get_conllu_id())} (@_);
 }
 
 
