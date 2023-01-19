@@ -1003,7 +1003,7 @@ sub adjust_copied_conjunct
     # However, if we also want to process generated children, we should move
     # this method to a separate block and call it after the current block has
     # finished generating empty nodes for all generated t-nodes.
-    my @achildren = Treex::Core::Node::A::sort_nodes_by_conllu_ids(map {$document->get_node_by_id($_->wild()->{'anode.rf'})} (grep {defined($_->wild()->{'anode.rf'})} (@tchildren)));
+    my @achildren = Treex::Core::Node::A::sort_nodes_by_conllu_ids(map {$document->get_node_by_id($_->get_lex_anode())} (grep {defined($_->get_lex_anode())} (@tchildren)));
     return if(scalar(@achildren) == 0);
     # Re-attach the children to the copied a-node in the enhanced graph.
     foreach my $achild (@achildren)
