@@ -68,12 +68,12 @@ sub process_zone
         # as nmod to the a-node that corresponds to the other conjunct, which
         # is overtly represented on the surface. Hence the parent in the a-tree
         # should have the same form.
-        next if($overt_noun->form() ne $anode->form());
+        next if(!defined($overt_noun->form()) || !defined($anode->form()) || $overt_noun->form() ne $anode->form());
         # Does the corresponding t-node have children (such as the adjective)?
         my @tchildren = $tnode->get_children();
         next if(scalar(@tchildren) == 0);
         # We will need the a-nodes that correspond to the t-children.
-        my @achildren = Treex::Core::Node::A::sort_nodes_by_conllu_ids(grep {defined($_)} (map {$document->get_node_by_id($_->wild()->{'anode.rf'})} (@tchildren)));
+        my @achildren = Treex::Core::Node::A::sort_nodes_by_conllu_ids(map {my $id = $_->wild()->{'anode.rf'}; die("Unknown anode.rf") if(!defined($id) || $id eq ''); $document->get_node_by_id($id)} (@tchildren));
         next if(scalar(@achildren) == 0);
         ###!!! I don't have an example with multiple @achildren. It should be
         ###!!! possible to process but it would be more difficult to identify
