@@ -20,6 +20,12 @@ sub process_tnode
         if(defined($anode))
         {
             $anode->wild()->{'tnode.rf'} = $tnode->id();
+            # Also remember the reference from the t-node to the a-node. It
+            # seems superfluous now that it is identical to $tnode->get_lex_anode()
+            # but we will later need our own reference with generated t-nodes:
+            # a reference that will return a unique a-node belonging only to
+            # this t-node.
+            $tnode->wild()->{'anode.rf'} = $anode->id();
         }
     }
 }
