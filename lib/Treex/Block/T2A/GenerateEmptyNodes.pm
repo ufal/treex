@@ -64,6 +64,7 @@ sub process_zone
             {
                 $anode->set_form($source_anode->form());
                 $anode->set_tag($source_anode->tag());
+                $anode->set_conll_pos($source_anode->conll_pos()); # XPOS
                 $anode->iset()->set_hash($source_anode->iset()->get_hash());
                 # The original node may have a wrong case.
                 my $source_case = $source_anode->iset()->case();
@@ -986,6 +987,9 @@ sub adjust_copied_conjunct
     my $copy_anode = shift;
     my $copy_tnode = shift;
     my $document = $copy_anode->get_document();
+    # We should not use this method for verbs. It would apply to numerous
+    # instances of gapping, which should be solved eventually, but differently.
+    return if(!$copy_anode->is_noun());
     # Is the corresponding t-node a member of coordination or apposition?
     # Note: In the future we may find out that a similar procedure is needed
     # for other constructions that are not coordination or apposition. But for
