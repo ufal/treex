@@ -10,6 +10,7 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
+    my $document = $zone->get_document();
     my $troot = $zone->get_tree('t');
     my $aroot = $zone->get_tree('a');
     my @tnodes = $troot->get_descendants({ordered => 1});
@@ -24,8 +25,15 @@ sub process_zone
         # for other constructions that are not coordination or apposition. But for
         # now let's stick to the prototypical situation.
         return if(!$tnode->is_member());
-        # Get the corresponding a-node.
-        my $anode = $tnode->get_lex_anode();
+        # Get the corresponding a-node. Remember: $tnode->get_lex_anode()
+        # always refers to a regular node in the basic UD tree; there may be
+        # multiple t-nodes pointing to the same lexical a-node (in our case,
+        # both the overt noun and its generated copy will point to the same
+        # a-node). In contrast, $tnode->wild()->{'anode.rf'} is our addition.
+        # For most t-nodes it still returns the lexical a-node as above, but
+        # for generated t-nodes it returns the corresponding empty a-node that
+        # we created in the block T2A::GenerateEmptyNodes.
+        my $anode = $document->get_node_by_id($tnode->wild()->{'anode.rf'});
         # Sanity checks: We expect the a-node to be empty and to refer back to
         # this t-node. That means that the lex_anode reference at the t-node
         # was updated once the empty a-node was created; originally it lead to
