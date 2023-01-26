@@ -147,10 +147,10 @@ sub process_atree
                         # We assume that the prototypical configuration for #Cor is verb + object ("někdo má představy").
                         # However, #Cor can occur in other constructions, too. What we denote as $mverb here could be an adjective
                         # (participle or nonverbal predicate: "někým podané návrhy").
-                        if(!$mverb->is_verb() && !$mverb->is_adjective())
-                        {
-                            log_warn(sprintf("The grandparent of a #QCor node is not a verb or adjective: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $object->form()));
-                        }
+                        #if(!$mverb->is_verb() && !$mverb->is_adjective())
+                        #{
+                        #    log_warn(sprintf("The grandparent of a #QCor node is not a verb or adjective: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $object->form()));
+                        #}
                         # Attach the candidate as nmod:gen enhanced child of the infinitive.
                         ###!!! If we want to instead use something like nmod:xsubj:gen or nmod:agent,
                         ###!!! we will have to first document it for the validator (and pretend that
