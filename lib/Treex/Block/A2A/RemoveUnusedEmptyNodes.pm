@@ -62,7 +62,7 @@ sub process_atree
                     # children because it could be a generated node, too (e.g.
                     # in case of pro-drop).
                     my @candidates = grep {my $xcid = $_->get_misc_attr('ClusterId') // ''; $_ != $node && $_ != $infinitive && $xcid eq $cid} ($mverb->get_enhanced_children());
-                    if(scalar(@candidates) == 1)
+                    if(scalar(@candidates) >= 1)
                     {
                         if(!$infinitive->is_infinitive())
                         {
@@ -100,7 +100,7 @@ sub process_atree
                     else
                     {
                         my $n = scalar(@candidates);
-                        log_warn("The matrix verb has $n enhanced children coreferential with the #Cor node. The #Cor node will not be removed.");
+                        log_warn("The matrix verb has no enhanced children coreferential with the #Cor node. The #Cor node will not be removed.");
                     }
                 }
                 else
@@ -131,7 +131,7 @@ sub process_atree
                     # children because it could be a generated node, too (e.g.
                     # in case of pro-drop).
                     my @candidates = grep {my $xcid = $_->get_misc_attr('ClusterId') // ''; $_ != $node && $_ != $object && $xcid eq $cid} ($mverb->get_enhanced_children());
-                    if(scalar(@candidates) == 1)
+                    if(scalar(@candidates) >= 1)
                     {
                         # We assume that the prototypical configuration for #Cor is verb + object ("někdo má představy").
                         # However, #Cor can occur in other constructions, too. What we denote as $mverb here could be an adjective
@@ -156,7 +156,7 @@ sub process_atree
                     else
                     {
                         my $n = scalar(@candidates);
-                        log_warn("The matrix verb has $n enhanced children coreferential with the #QCor node. The #QCor node will not be removed.");
+                        log_warn("The matrix verb has no enhanced children coreferential with the #QCor node. The #QCor node will not be removed.");
                     }
                 }
                 else
