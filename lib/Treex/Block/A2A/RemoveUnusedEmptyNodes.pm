@@ -62,23 +62,34 @@ sub process_atree
                     # children because it could be a generated node, too (e.g.
                     # in case of pro-drop).
                     my @candidates = grep {my $xcid = $_->get_misc_attr('ClusterId') // ''; $_ != $node && $_ != $infinitive && $xcid eq $cid} ($mverb->get_enhanced_children());
+                    # Sometimes the antecedent is elsewhere in the tree. For
+                    # example: politik autoritářský, zvyklý #Cor rozhodovat sám.
+                    # So if we do not find the antecedent on the first try, we
+                    # will climb up the tree and at each level collect all
+                    # descendants and see if the antecedent has appeared.
+                    while(scalar(@candidates) == 0)
+                    {
+                        last if($mverb->is_root());
+                        $mverb = $mverb->parent();
+                        @candidates = grep {my $xcid = $_->get_misc_attr('ClusterId') // ''; $_ != $node && $_ != $infinitive && $xcid eq $cid} (Treex::Core::Node::A::sort_nodes_by_conllu_ids($mverb, $mverb->get_enhanced_descendants()));
+                    }
                     if(scalar(@candidates) >= 1)
                     {
-                        if(!$infinitive->is_infinitive())
-                        {
-                            log_warn(sprintf("The parent of a #Cor node is not an infinitive: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
-                        }
+                        #if(!$infinitive->is_infinitive())
+                        #{
+                        #    log_warn(sprintf("The parent of a #Cor node is not an infinitive: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
+                        #}
                         # We assume that the prototypical configuration for #Cor is control verb + infinitive ("někdo musí přijít").
                         # However, #Cor can occur in other constructions, too. What we denote as $mverb here could be an adjective
                         # (participle or nonverbal predicate: "pro někoho možné ověřit").
-                        if(!$mverb->is_verb() && !$mverb->is_adjective())
-                        {
-                            log_warn(sprintf("The grandparent of a #Cor node is not a verb or adjective: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
-                        }
-                        if($infinitive->deprel() !~ m/^(csubj|xcomp)(:|$)/)
-                        {
-                            log_warn(sprintf("The parent of a #Cor node is not csubj|xcomp of its parent: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
-                        }
+                        #if(!$mverb->is_verb() && !$mverb->is_adjective())
+                        #{
+                            #log_warn(sprintf("The grandparent of a #Cor node is not a verb or adjective: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
+                        #}
+                        #if($infinitive->deprel() !~ m/^(csubj|xcomp)(:|$)/)
+                        #{
+                            #log_warn(sprintf("The parent of a #Cor node is not csubj|xcomp of its parent: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
+                        #}
                         # Attach the candidate as nsubj:xsubj enhanced child of the infinitive.
                         # It is possible that this relation already exists (block A2A::AddEnhancedUD)
                         # but then add_enhanced_dependency() will do nothing.
@@ -356,7 +367,11 @@ sub merge_functors
             push(@functors, $parent2->get_conllu_id().':'.$functor2);
         }
     }
-    @functors = map {m/^(.+?):(.+)$/; [$1, $2]} (@functors);
+    # Make sure every parent-functor pair occurs at most once. (Occasionally
+    # there seem to be duplicate empty nodes, perhaps because of an error somewhere
+    # else, yielding double relations.)
+    my %functors; map {$functors{$_}++} (@functors);
+    @functors = map {m/^(.+?):(.+)$/; [$1, $2]} (keys(%functors));
     @functors = sort {my $r = $a->[0] <=> $b->[0]; unless($r) {$r = lc($a->[1]) cmp lc($b->[1])} $r} (@functors);
     @functors = map {$_->[0].':'.$_->[1]} (@functors);
     my $functor12 = join(',', @functors);
