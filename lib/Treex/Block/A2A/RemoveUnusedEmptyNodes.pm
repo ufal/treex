@@ -335,7 +335,7 @@ sub find_cor_qcor_parents_and_antecedent
         foreach my $descendant (@subtree)
         {
             my $id = $descendant->get_conllu_id();
-            log_info("DEBUG: skipping $id, visited before.");
+            log_info("DEBUG: skipping $id, visited before.") if($visited{$id});
             next if($visited{$id});
             $visited{$id}++;
             my $xcid = $descendant->get_misc_attr('ClusterId') // '';
