@@ -336,7 +336,7 @@ sub find_cor_qcor_parents_and_antecedent
         {
             next if($visited{$descendant});
             $visited{$descendant}++;
-            my $xcid == $descendant->get_misc_attr('ClusterId') // '';
+            my $xcid = $descendant->get_misc_attr('ClusterId') // '';
             next if($xcid ne $cid);
             next if($descendant == $node);
             next if(any {$_ == $descendant} (@eparents));
