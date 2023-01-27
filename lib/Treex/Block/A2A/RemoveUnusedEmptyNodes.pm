@@ -338,7 +338,9 @@ sub find_cor_qcor_parents_and_antecedent
             log_info("DEBUG: skipping $id, visited before.") if($visited{$id});
             next if($visited{$id});
             $visited{$id}++;
+            next if($descendant->is_root());
             my $xcid = $descendant->get_misc_attr('ClusterId') // '';
+            log_info(sprintf("DEBUG: %s:%s is in cluster %s.", $id, $descendant->form(), $cid));
             next if($xcid ne $cid);
             next if($descendant == $node);
             next if(any {$_ == $descendant} (@eparents));
@@ -352,8 +354,8 @@ sub find_cor_qcor_parents_and_antecedent
     }
     if(scalar(@candidates) == 0)
     {
-        log_info(sprintf("DEBUG: visited %s", join(' ', map {my $id = $_; my $vnode = $node->get_node_by_conllu_id($id); $id.':'.($vnode->is_root() ? 'ROOT': $vnode->form())} (keys(%visited)))));
-        log_fatal("DEBUG: Still nothing found.");
+        #log_info(sprintf("DEBUG: visited %s", join(' ', map {my $id = $_; my $vnode = $node->get_node_by_conllu_id($id); $id.':'.($vnode->is_root() ? 'ROOT': $vnode->form())} (keys(%visited)))));
+        log_info("DEBUG: Still nothing found.");
     }
     # If there are still no candidates, we will return undef as the second result.
     return (\@eparents, $candidates[0]);
