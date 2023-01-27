@@ -268,6 +268,9 @@ sub find_cor_qcor_parents_and_antecedent
     # level (pro_někoho/BEN je lepší věnovat jeho/#QCor pozornost optimalizaci
     # provozu).
     my @eparents = $node->get_enhanced_parents();
+    log_info(sprintf("DEBUG: %s", $node->get_address()));
+    log_info(sprintf("DEBUG: %s node %s", $node->lemma(), $node->get_conllu_id()));
+    log_info(sprintf("DEBUG: eparents %s", join(' ', map {$_->get_conllu_id().':'.$_->form()} (@eparents))));
     # Find the matrix verb(s), i.e., enhanced grandparents of $node. Ignore
     # conj parents of @eparents, such relations would lead from one eparent to
     # another. Note: We call the grandparent matrix verb, but it could be also
@@ -284,6 +287,7 @@ sub find_cor_qcor_parents_and_antecedent
             }
         }
     }
+    log_info(sprintf("DEBUG: mverbs %s", join(' ', map {$_->get_conllu_id().':'.$_->form()} (@mverbs))));
     # The #Cor node should be coreferential with one of the children of the
     # matrix verb. We must search enhanced children because it could be a
     # generated node, too (e.g. in case of pro-drop).
@@ -291,6 +295,7 @@ sub find_cor_qcor_parents_and_antecedent
     foreach my $mverb (@mverbs)
     {
         my @echildren = $mverb->get_enhanced_children('^conj(:|$)', 1); # not conj children
+        log_info(sprintf("DEBUG: echildren %s", join(' ', map {$_->get_conllu_id().':'.$_->form()} (@echildren))));
         foreach my $echild (@echildren)
         {
             # Look for children whose cluster id is $cid.
@@ -313,6 +318,7 @@ sub find_cor_qcor_parents_and_antecedent
     {
         return (\@eparents, $candidates[0]);
     }
+    log_info("DEBUG: Nothing found, searching the rest of the sentence.");
     # Sometimes the antecedent is elsewhere in the tree. For example: "politik
     # autoritářský, zvyklý #Cor rozhodovat sám". So if we do not find the
     # antecedent at the first try, we will climb up the tree and at each level
@@ -321,9 +327,11 @@ sub find_cor_qcor_parents_and_antecedent
     my @queue = @mverbs;
     while(scalar(@candidates) == 0 and scalar(@queue) > 0)
     {
+        log_info(sprintf("DEBUG: queue %s", join(' ', map {$_->get_conllu_id().':'.$_->form()} (@queue))));
         my $mverb = shift(@queue);
         next if($visited{$mverb});
         my @subtree = Treex::Core::Node::A::sort_nodes_by_conllu_ids($mverb, $mverb->get_enhanced_descendants());
+        log_info(sprintf("DEBUG: subtree %s", join(' ', map {$_->get_conllu_id().':'.$_->form()} (@subtree))));
         foreach my $descendant (@subtree)
         {
             next if($visited{$descendant});
@@ -339,6 +347,11 @@ sub find_cor_qcor_parents_and_antecedent
         {
             push(@queue, grep {!$visited{$_}} ($mverb->get_enhanced_parents()));
         }
+    }
+    if(scalar(@candidates) == 0)
+    {
+        log_info(sprintf("DEBUG: visited %s", join(' ', map {$_->get_conllu_id().':'.$_->form()} (keys(%visited)))));
+        log_fatal("DEBUG: Still nothing found.");
     }
     # If there are still no candidates, we will return undef as the second result.
     return (\@eparents, $candidates[0]);
