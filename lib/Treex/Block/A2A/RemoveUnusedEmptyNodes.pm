@@ -51,73 +51,34 @@ sub process_atree
             # to the controlled infinitive.
             elsif($node->lemma() eq '#Cor')
             {
-                my @eparents = $node->get_enhanced_parents();
-                if(scalar(@eparents) == 1)
+                my ($eparents, $antecedent);
+                ($eparents, $antecedent) = $self->find_cor_qcor_parents_and_antecedent($node, $cid);
+                if(defined($antecedent) && scalar(@{$eparents}) > 0)
                 {
-                    my $infinitive = $eparents[0];
-                    # The basic UD parent of the infinitive is the matrix verb.
-                    my $mverb = $infinitive->parent();
-                    # The #Cor node should be coreferential with one of the
-                    # children of the matrix verb. We must search enhanced
-                    # children because it could be a generated node, too (e.g.
-                    # in case of pro-drop).
-                    my @candidates = grep {my $xcid = $_->get_misc_attr('ClusterId') // ''; $_ != $node && $_ != $infinitive && $xcid eq $cid} ($mverb->get_enhanced_children());
-                    # Sometimes the antecedent is elsewhere in the tree. For
-                    # example: politik autoritářský, zvyklý #Cor rozhodovat sám.
-                    # So if we do not find the antecedent on the first try, we
-                    # will climb up the tree and at each level collect all
-                    # descendants and see if the antecedent has appeared.
-                    while(scalar(@candidates) == 0)
+                    # Attach the antecedent as nsubj:xsubj enhanced child of the infinitive(s).
+                    # It is possible that this relation already exists (block A2A::AddEnhancedUD)
+                    # but then add_enhanced_dependency() will do nothing.
+                    foreach my $eparent (@{$eparents})
                     {
-                        last if($mverb->is_root());
-                        $mverb = $mverb->parent();
-                        @candidates = grep {my $xcid = $_->get_misc_attr('ClusterId') // ''; $_ != $node && $_ != $infinitive && $xcid eq $cid} (Treex::Core::Node::A::sort_nodes_by_conllu_ids($mverb, $mverb->get_enhanced_descendants()));
-                    }
-                    if(scalar(@candidates) >= 1)
-                    {
-                        #if(!$infinitive->is_infinitive())
-                        #{
-                        #    log_warn(sprintf("The parent of a #Cor node is not an infinitive: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
-                        #}
-                        # We assume that the prototypical configuration for #Cor is control verb + infinitive ("někdo musí přijít").
-                        # However, #Cor can occur in other constructions, too. What we denote as $mverb here could be an adjective
-                        # (participle or nonverbal predicate: "pro někoho možné ověřit").
-                        #if(!$mverb->is_verb() && !$mverb->is_adjective())
-                        #{
-                            #log_warn(sprintf("The grandparent of a #Cor node is not a verb or adjective: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
-                        #}
-                        #if($infinitive->deprel() !~ m/^(csubj|xcomp)(:|$)/)
-                        #{
-                            #log_warn(sprintf("The parent of a #Cor node is not csubj|xcomp of its parent: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $infinitive->form()));
-                        #}
-                        # Attach the candidate as nsubj:xsubj enhanced child of the infinitive.
-                        # It is possible that this relation already exists (block A2A::AddEnhancedUD)
-                        # but then add_enhanced_dependency() will do nothing.
-                        my $edeprel = $candidates[0]->deprel() =~ m/^(csubj|ccomp|advcl)(:|$)/ ? 'csubj' : 'nsubj';
-                        if($node->iset()->is_passive() || scalar($node->get_enhanced_children('^(aux|expl):pass(:|$)')) > 0)
+                        my $edeprel = $antecedent->deprel() =~ m/^(csubj|ccomp|advcl)(:|$)/ ? 'csubj' : 'nsubj';
+                        if($eparent->iset()->is_passive() || scalar($eparent->get_enhanced_children('^(aux|expl):pass(:|$)')) > 0)
                         {
                             $edeprel .= ':pass';
                         }
                         $edeprel .= ':xsubj';
-                        $candidates[0]->add_enhanced_dependency($infinitive, $edeprel);
+                        $antecedent->add_enhanced_dependency($eparent, $edeprel);
                         # Remember both functors at the candidate.
-                        $self->merge_functors($candidates[0], $mverb, $node, $infinitive);
-                        # Now we can finally remove the #Cor node.
-                        Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
-                        $self->remove_empty_leaf($node, $tnode);
-                        splice(@nodes, $i, 1);
-                        $i--;
+                        $self->merge_functors($antecedent, $mverb, $node, $eparent);
                     }
-                    else
-                    {
-                        my $n = scalar(@candidates);
-                        log_warn("The matrix verb has no enhanced children coreferential with the #Cor node. The #Cor node will not be removed.");
-                    }
+                    # Now we can finally remove the #Cor node.
+                    Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
+                    $self->remove_empty_leaf($node, $tnode);
+                    splice(@nodes, $i, 1);
+                    $i--;
                 }
                 else
                 {
-                    my $n = scalar(@eparents);
-                    log_warn("#Cor node has $n enhanced parents. It will not be removed.");
+                    log_warn("#Cor node has no enhanced parents or the matrix verb has no enhanced children coreferential with the #Cor node. The #Cor node will not be removed.");
                 }
             }
             # Analogously to #Cor, #QCor denotes grammatical coreference in
@@ -131,49 +92,29 @@ sub process_atree
             # provozu).
             elsif($node->lemma() eq '#QCor')
             {
-                my @eparents = $node->get_enhanced_parents();
-                if(scalar(@eparents) == 1)
+                my ($eparents, $antecedent);
+                ($eparents, $antecedent) = $self->find_cor_qcor_parents_and_antecedent($node, $cid);
+                if(defined($antecedent) && scalar(@{$eparents}) > 0)
                 {
-                    my $object = $eparents[0];
-                    # The basic UD parent of the infinitive is the verb that governs the object.
-                    my $mverb = $object->parent();
-                    # The #QCor node should be coreferential with one of the
-                    # children of the matrix verb. We must search enhanced
-                    # children because it could be a generated node, too (e.g.
-                    # in case of pro-drop).
-                    my @candidates = grep {my $xcid = $_->get_misc_attr('ClusterId') // ''; $_ != $node && $_ != $object && $xcid eq $cid} ($mverb->get_enhanced_children());
-                    if(scalar(@candidates) >= 1)
+                    # Attach the antecedent as nmod:gen enhanced child of the object(s).
+                    ###!!! If we want to instead use something like nmod:xsubj:gen or nmod:agent,
+                    ###!!! we will have to first document it for the validator (and pretend that
+                    ###!!! it can be used also in basic dependencies).
+                    foreach my $eparent (@{$eparents})
                     {
-                        # We assume that the prototypical configuration for #Cor is verb + object ("někdo má představy").
-                        # However, #Cor can occur in other constructions, too. What we denote as $mverb here could be an adjective
-                        # (participle or nonverbal predicate: "někým podané návrhy").
-                        #if(!$mverb->is_verb() && !$mverb->is_adjective())
-                        #{
-                        #    log_warn(sprintf("The grandparent of a #QCor node is not a verb or adjective: '%s %s %s'.", $candidates[0]->form(), $mverb->form(), $object->form()));
-                        #}
-                        # Attach the candidate as nmod:gen enhanced child of the infinitive.
-                        ###!!! If we want to instead use something like nmod:xsubj:gen or nmod:agent,
-                        ###!!! we will have to first document it for the validator (and pretend that
-                        ###!!! it can be used also in basic dependencies).
-                        $candidates[0]->add_enhanced_dependency($object, 'nmod:gen');
+                        $antecedent->add_enhanced_dependency($eparent, 'nmod:gen');
                         # Remember both functors at the candidate.
-                        $self->merge_functors($candidates[0], $mverb, $node, $object);
-                        # Now we can finally remove the #QCor node.
-                        Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
-                        $self->remove_empty_leaf($node, $tnode);
-                        splice(@nodes, $i, 1);
-                        $i--;
+                        $self->merge_functors($antecedent, $mverb, $node, $eparent);
                     }
-                    else
-                    {
-                        my $n = scalar(@candidates);
-                        log_warn("The matrix verb has no enhanced children coreferential with the #QCor node. The #QCor node will not be removed.");
-                    }
+                    # Now we can finally remove the #QCor node.
+                    Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
+                    $self->remove_empty_leaf($node, $tnode);
+                    splice(@nodes, $i, 1);
+                    $i--;
                 }
                 else
                 {
-                    my $n = scalar(@eparents);
-                    log_warn("#QCor node has $n enhanced parents. It will not be removed.");
+                    log_warn("#QCor node has no enhanced parents or the matrix verb has no enhanced children coreferential with the #QCor node. The #QCor node will not be removed.");
                 }
             }
             # An empty node with the lemma '#Rcp' is grammatically coreferential
@@ -290,6 +231,115 @@ sub process_atree
         }
     }
     $root->_normalize_ords_and_conllu_ids();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds an antecedent of a #Cor/#QCor node. It should be in the same sentence
+# (grammatical coreference) and the caller will want to merge the #Cor/#QCor
+# node with it. It also returns the enhanced parent(s) of the #Cor/#QCor node
+# because upon merging, the antecedent should be attached as their nsubj:xsubj.
+#------------------------------------------------------------------------------
+sub find_cor_qcor_parents_and_antecedent
+{
+    my $self = shift;
+    my $node = shift; # the #Cor/#QCor node
+    my $cid = shift; # cluster (entity) id of the #Cor/#QCor node
+    if($node->lemma() !~ m/^\#Q?Cor$/)
+    {
+        log_fatal('This is not a #Cor/#QCor node.');
+    }
+    # An empty node with the lemma '#Cor' occurs in control/raising
+    # constructions. It is a child of a controlled infinitive and it is
+    # grammatically coreferential with an argument of the matrix verb. In UD it
+    # should be merged with its antecedent and there should be an enhanced
+    # dependency nsubj:xsubj that will link the antecedent to the controlled
+    # infinitive. Note that there might be multiple coordinate infinitives, not
+    # just one.
+    # Analogously to #Cor, #QCor denotes grammatical coreference in quasi-
+    # control constructions. It depends on a nominal, which is an object of
+    # a verb, and it is typically coreferential with an argument of the verb.
+    # The coreferential node could be the actor (já/ACT jsem měl o této zemi
+    # určité moje/#QCor představy), addressee (jeho postavení družstvo.ADDR
+    # přinutí jeho/#QCor smlouvu uzavřít), or it could be reachable on an upper
+    # level (pro_někoho/BEN je lepší věnovat jeho/#QCor pozornost optimalizaci
+    # provozu).
+    my @eparents = $node->get_enhanced_parents();
+    # Find the matrix verb(s), i.e., enhanced grandparents of $node. Ignore
+    # conj parents of @eparents, such relations would lead from one eparent to
+    # another. Note: We call the grandparent matrix verb, but it could be also
+    # an adjective (participle).
+    my @mverbs;
+    for my $eparent (@eparents)
+    {
+        my @egparents = $eparent->get_enhanced_parents('^conj(:|$)', 1);
+        foreach my $egparent (@egparents)
+        {
+            if(!any {$_ == $egparent} (@mverbs))
+            {
+                push(@mverbs, $egparent);
+            }
+        }
+    }
+    # The #Cor node should be coreferential with one of the children of the
+    # matrix verb. We must search enhanced children because it could be a
+    # generated node, too (e.g. in case of pro-drop).
+    my @candidates;
+    foreach my $mverb (@mverbs)
+    {
+        my @echildren = $mverb->get_enhanced_children('^conj(:|$)', 1); # not conj children
+        foreach my $echild (@echildren)
+        {
+            # Look for children whose cluster id is $cid.
+            my $xcid = $echild->get_misc_attr('ClusterId') // '';
+            next if($xcid ne $cid);
+            # Avoid finding the original #Cor/#QCor node (we never know which
+            # enhanced relation will lead us back).
+            next if($echild == $node);
+            # Avoid finding one of the eparents (infinitives). This is not
+            # expected to happen but it is not guaranteed. And returning the
+            # eparent would later lead to a self-loop enhanced relation, which
+            # is not allowed.
+            next if(any {$_ == $echild} (@eparents));
+            # Avoid duplicates.
+            next if(any {$_ == $echild} (@candidates));
+            push(@candidates, $echild);
+        }
+    }
+    if(scalar(@candidates) > 0)
+    {
+        return (\@eparents, $candidates[0]);
+    }
+    # Sometimes the antecedent is elsewhere in the tree. For example: "politik
+    # autoritářský, zvyklý #Cor rozhodovat sám". So if we do not find the
+    # antecedent at the first try, we will climb up the tree and at each level
+    # collect all descendants and see if the antecedent has appeared.
+    my %visited;
+    my @queue = @mverbs;
+    while(scalar(@candidates) == 0 and scalar(@queue) > 0)
+    {
+        my $mverb = shift(@queue);
+        next if($visited{$mverb});
+        my @subtree = Treex::Core::Node::A::sort_nodes_by_conllu_ids($mverb, $mverb->get_enhanced_descendants());
+        foreach my $descendant (@subtree)
+        {
+            next if($visited{$descendant});
+            $visited{$descendant}++;
+            my $xcid == $descendant->get_misc_attr('ClusterId') // '';
+            next if($xcid ne $cid);
+            next if($descendant == $node);
+            next if(any {$_ == $descendant} (@eparents));
+            next if(any {$_ == $descendant} (@candidates));
+            push(@candidates, $descendant);
+        }
+        if(scalar(@candidates) == 0)
+        {
+            push(@queue, grep {!$visited{$_}} ($mverb->get_enhanced_parents()));
+        }
+    }
+    # If there are still no candidates, we will return undef as the second result.
+    return (\@eparents, $candidates[0]);
 }
 
 
