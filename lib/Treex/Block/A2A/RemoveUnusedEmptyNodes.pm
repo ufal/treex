@@ -55,6 +55,7 @@ sub process_atree
                 ($eparents, $antecedent) = $self->find_cor_qcor_parents_and_antecedent($node, $cid);
                 if(defined($antecedent) && scalar(@{$eparents}) > 0)
                 {
+                    my $current_parent_of_antecedent = ($antecedent->get_enhanced_parents())[0]; ###!!! We need this for functor merging.
                     # Attach the antecedent as nsubj:xsubj enhanced child of the infinitive(s).
                     # It is possible that this relation already exists (block A2A::AddEnhancedUD)
                     # but then add_enhanced_dependency() will do nothing.
@@ -68,7 +69,7 @@ sub process_atree
                         $edeprel .= ':xsubj';
                         $antecedent->add_enhanced_dependency($eparent, $edeprel);
                         # Remember both functors at the candidate.
-                        $self->merge_functors($antecedent, $mverb, $node, $eparent);
+                        $self->merge_functors($antecedent, $current_parent_of_antecedent, $node, $eparent);
                     }
                     # Now we can finally remove the #Cor node.
                     Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
@@ -96,6 +97,7 @@ sub process_atree
                 ($eparents, $antecedent) = $self->find_cor_qcor_parents_and_antecedent($node, $cid);
                 if(defined($antecedent) && scalar(@{$eparents}) > 0)
                 {
+                    my $current_parent_of_antecedent = ($antecedent->get_enhanced_parents())[0]; ###!!! We need this for functor merging.
                     # Attach the antecedent as nmod:gen enhanced child of the object(s).
                     ###!!! If we want to instead use something like nmod:xsubj:gen or nmod:agent,
                     ###!!! we will have to first document it for the validator (and pretend that
@@ -104,7 +106,7 @@ sub process_atree
                     {
                         $antecedent->add_enhanced_dependency($eparent, 'nmod:gen');
                         # Remember both functors at the candidate.
-                        $self->merge_functors($antecedent, $mverb, $node, $eparent);
+                        $self->merge_functors($antecedent, $current_parent_of_antecedent, $node, $eparent);
                     }
                     # Now we can finally remove the #QCor node.
                     Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
