@@ -55,7 +55,8 @@ sub process_zone
             $anode->set_lemma($tlemma);
             my ($tparent, $aparent) = $self->get_parent($tnode);
             # Store the functor in MISC. It may be useful to understand why the empty node is there.
-            $anode->add_functor_relation($aparent->get_conllu_id(), $functor);
+            my $apid = defined($aparent) ? $aparent->get_conllu_id() : 0;
+            $anode->add_functor_relation($apid, $functor);
             # Guess and set morphology first. It may improve our chances of guessing the correct deprel.
             # If the generated node is a copy of a real node, we may be able to
             # copy its attributes.
@@ -131,7 +132,8 @@ sub process_zone
                 # with normal nodes, too, so they are available everywhere in
                 # UD. This is a nasty side effect, it would be better to have
                 # a separate block for functors.
-                $anode->add_functor_relation($anode->parent()->get_conllu_id(), $functor);
+                my $apid = defined($anode->parent()) ? $anode->parent()->get_conllu_id() : 0;
+                $anode->add_functor_relation($apid, $functor);
             }
         }
     }
