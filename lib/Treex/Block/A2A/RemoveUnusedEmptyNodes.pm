@@ -71,16 +71,16 @@ sub process_atree
                         # Remember both functors at the candidate.
                         $self->merge_functors($antecedent, $current_parent_of_antecedent, $node, $eparent);
                     }
-                    # Now we can finally remove the #Cor node.
-                    Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
-                    $self->remove_empty_leaf($node, $tnode);
-                    splice(@nodes, $i, 1);
-                    $i--;
                 }
                 else
                 {
-                    log_warn("#Cor node has no enhanced parents or the matrix verb has no enhanced children coreferential with the #Cor node. The #Cor node will not be removed.");
+                    log_warn("#Cor node has no enhanced parents or the matrix verb has no enhanced children coreferential with the #Cor node.");
                 }
+                # Now we can finally remove the #Cor node.
+                Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
+                $self->remove_empty_leaf($node, $tnode);
+                splice(@nodes, $i, 1);
+                $i--;
             }
             # Analogously to #Cor, #QCor denotes grammatical coreference in
             # quasi-control constructions. It depends on a nominal, which is an
@@ -108,16 +108,16 @@ sub process_atree
                         # Remember both functors at the candidate.
                         $self->merge_functors($antecedent, $current_parent_of_antecedent, $node, $eparent);
                     }
-                    # Now we can finally remove the #QCor node.
-                    Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
-                    $self->remove_empty_leaf($node, $tnode);
-                    splice(@nodes, $i, 1);
-                    $i--;
                 }
                 else
                 {
-                    log_warn("#QCor node has no enhanced parents or the matrix verb has no enhanced children coreferential with the #QCor node. The #QCor node will not be removed.");
+                    log_warn("#QCor node has no enhanced parents or the matrix verb has no enhanced children coreferential with the #QCor node.");
                 }
+                # Now we can finally remove the #QCor node.
+                Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
+                $self->remove_empty_leaf($node, $tnode);
+                splice(@nodes, $i, 1);
+                $i--;
             }
             # An empty node with the lemma '#Rcp' is grammatically coreferential
             # with a plural actant, probably actor (ACT) in a reciprocal event.
@@ -268,9 +268,9 @@ sub find_cor_qcor_parents_and_antecedent
     # level (pro_někoho/BEN je lepší věnovat jeho/#QCor pozornost optimalizaci
     # provozu).
     my @eparents = $node->get_enhanced_parents();
-    log_info(sprintf("DEBUG: %s", $node->get_address()));
-    log_info(sprintf("DEBUG: %s node %s, cluster %s", $node->lemma(), $node->get_conllu_id(), $cid));
-    log_info(sprintf("DEBUG: eparents %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@eparents))));
+    #log_info(sprintf("DEBUG: %s", $node->get_address()));
+    #log_info(sprintf("DEBUG: %s node %s, cluster %s", $node->lemma(), $node->get_conllu_id(), $cid));
+    #log_info(sprintf("DEBUG: eparents %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@eparents))));
     # Find the matrix verb(s), i.e., enhanced grandparents of $node. Ignore
     # conj parents of @eparents, such relations would lead from one eparent to
     # another. Note: We call the grandparent matrix verb, but it could be also
@@ -287,7 +287,7 @@ sub find_cor_qcor_parents_and_antecedent
             }
         }
     }
-    log_info(sprintf("DEBUG: mverbs %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@mverbs))));
+    #log_info(sprintf("DEBUG: mverbs %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@mverbs))));
     # The #Cor node should be coreferential with one of the children of the
     # matrix verb. We must search enhanced children because it could be a
     # generated node, too (e.g. in case of pro-drop).
@@ -295,7 +295,7 @@ sub find_cor_qcor_parents_and_antecedent
     foreach my $mverb (@mverbs)
     {
         my @echildren = $mverb->get_enhanced_children('^conj(:|$)', 1); # not conj children
-        log_info(sprintf("DEBUG: echildren %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@echildren))));
+        #log_info(sprintf("DEBUG: echildren %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@echildren))));
         foreach my $echild (@echildren)
         {
             # Look for children whose cluster id is $cid.
@@ -318,7 +318,7 @@ sub find_cor_qcor_parents_and_antecedent
     {
         return (\@eparents, $candidates[0]);
     }
-    log_info("DEBUG: Nothing found, searching the rest of the sentence.");
+    #log_info("DEBUG: Nothing found, searching the rest of the sentence.");
     # Sometimes the antecedent is elsewhere in the tree. For example: "politik
     # autoritářský, zvyklý #Cor rozhodovat sám". So if we do not find the
     # antecedent at the first try, we will climb up the tree and at each level
@@ -327,20 +327,20 @@ sub find_cor_qcor_parents_and_antecedent
     my @queue = @mverbs;
     while(scalar(@candidates) == 0 and scalar(@queue) > 0)
     {
-        log_info(sprintf("DEBUG: queue %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@queue))));
+        #log_info(sprintf("DEBUG: queue %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@queue))));
         my $mverb = shift(@queue);
         next if($visited{$mverb->get_conllu_id()});
         my @subtree = Treex::Core::Node::A::sort_nodes_by_conllu_ids($mverb, $mverb->get_enhanced_descendants());
-        log_info(sprintf("DEBUG: subtree %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@subtree))));
+        #log_info(sprintf("DEBUG: subtree %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@subtree))));
         foreach my $descendant (@subtree)
         {
             my $id = $descendant->get_conllu_id();
-            log_info("DEBUG: skipping $id, visited before.") if($visited{$id});
+            #log_info("DEBUG: skipping $id, visited before.") if($visited{$id});
             next if($visited{$id});
             $visited{$id}++;
             next if($descendant->is_root());
             my $xcid = $descendant->get_misc_attr('ClusterId') // '';
-            log_info(sprintf("DEBUG: %s:%s is in cluster %s.", $id, $descendant->form(), $cid));
+            #log_info(sprintf("DEBUG: %s:%s is in cluster %s.", $id, $descendant->form(), $cid));
             next if($xcid ne $cid);
             next if($descendant == $node);
             next if(any {$_ == $descendant} (@eparents));
@@ -352,10 +352,14 @@ sub find_cor_qcor_parents_and_antecedent
             push(@queue, grep {!$visited{$_->get_conllu_id()}} ($mverb->get_enhanced_parents()));
         }
     }
+    # It is nevertheless possible that no antecedent can be found in the current
+    # sentence. Even grammatical coreference can sometimes reach across sentence
+    # boundaries. Example: ln94207-36-p29s6, ln94207-36-p29s7
+    # ... je třeba umožňovat samostatnost. Důvěřovat, že ...
     if(scalar(@candidates) == 0)
     {
         #log_info(sprintf("DEBUG: visited %s", join(' ', map {my $id = $_; my $vnode = $node->get_node_by_conllu_id($id); $id.':'.($vnode->is_root() ? 'ROOT': $vnode->form())} (keys(%visited)))));
-        log_info("DEBUG: Still nothing found.");
+        #log_info("DEBUG: Still nothing found.");
     }
     # If there are still no candidates, we will return undef as the second result.
     return (\@eparents, $candidates[0]);
