@@ -269,8 +269,8 @@ sub find_cor_qcor_parents_and_antecedent
     # provozu).
     my @eparents = $node->get_enhanced_parents();
     log_info(sprintf("DEBUG: %s", $node->get_address()));
-    log_info(sprintf("DEBUG: %s node %s", $node->lemma(), $node->get_conllu_id()));
-    log_info(sprintf("DEBUG: eparents %s", join(' ', map {$_->get_conllu_id().':'.$_->form()} (@eparents))));
+    log_info(sprintf("DEBUG: %s node %s, cluster %s", $node->lemma(), $node->get_conllu_id(), $cid));
+    log_info(sprintf("DEBUG: eparents %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@eparents))));
     # Find the matrix verb(s), i.e., enhanced grandparents of $node. Ignore
     # conj parents of @eparents, such relations would lead from one eparent to
     # another. Note: We call the grandparent matrix verb, but it could be also
@@ -287,7 +287,7 @@ sub find_cor_qcor_parents_and_antecedent
             }
         }
     }
-    log_info(sprintf("DEBUG: mverbs %s", join(' ', map {$_->get_conllu_id().':'.$_->form()} (@mverbs))));
+    log_info(sprintf("DEBUG: mverbs %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@mverbs))));
     # The #Cor node should be coreferential with one of the children of the
     # matrix verb. We must search enhanced children because it could be a
     # generated node, too (e.g. in case of pro-drop).
@@ -295,7 +295,7 @@ sub find_cor_qcor_parents_and_antecedent
     foreach my $mverb (@mverbs)
     {
         my @echildren = $mverb->get_enhanced_children('^conj(:|$)', 1); # not conj children
-        log_info(sprintf("DEBUG: echildren %s", join(' ', map {$_->get_conllu_id().':'.$_->form()} (@echildren))));
+        log_info(sprintf("DEBUG: echildren %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@echildren))));
         foreach my $echild (@echildren)
         {
             # Look for children whose cluster id is $cid.
@@ -327,15 +327,17 @@ sub find_cor_qcor_parents_and_antecedent
     my @queue = @mverbs;
     while(scalar(@candidates) == 0 and scalar(@queue) > 0)
     {
-        log_info(sprintf("DEBUG: queue %s", join(' ', map {$_->get_conllu_id().':'.$_->form()} (@queue))));
+        log_info(sprintf("DEBUG: queue %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@queue))));
         my $mverb = shift(@queue);
-        next if($visited{$mverb});
+        next if($visited{$mverb->get_conllu_id()});
         my @subtree = Treex::Core::Node::A::sort_nodes_by_conllu_ids($mverb, $mverb->get_enhanced_descendants());
-        log_info(sprintf("DEBUG: subtree %s", join(' ', map {$_->get_conllu_id().':'.$_->form()} (@subtree))));
+        log_info(sprintf("DEBUG: subtree %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@subtree))));
         foreach my $descendant (@subtree)
         {
-            next if($visited{$descendant});
-            $visited{$descendant}++;
+            my $id = $descendant->get_conllu_id();
+            log_info("DEBUG: skipping $id, visited before.");
+            next if($visited{$id});
+            $visited{$id}++;
             my $xcid = $descendant->get_misc_attr('ClusterId') // '';
             next if($xcid ne $cid);
             next if($descendant == $node);
@@ -345,12 +347,12 @@ sub find_cor_qcor_parents_and_antecedent
         }
         if(scalar(@candidates) == 0)
         {
-            push(@queue, grep {!$visited{$_}} ($mverb->get_enhanced_parents()));
+            push(@queue, grep {!$visited{$_->get_conllu_id()}} ($mverb->get_enhanced_parents()));
         }
     }
     if(scalar(@candidates) == 0)
     {
-        log_info(sprintf("DEBUG: visited %s", join(' ', map {$_->get_conllu_id().':'.$_->form()} (keys(%visited)))));
+        log_info(sprintf("DEBUG: visited %s", join(' ', map {my $id = $_; my $vnode = $node->get_node_by_conllu_id($id); $id.':'.($vnode->is_root() ? 'ROOT': $vnode->form())} (keys(%visited)))));
         log_fatal("DEBUG: Still nothing found.");
     }
     # If there are still no candidates, we will return undef as the second result.
