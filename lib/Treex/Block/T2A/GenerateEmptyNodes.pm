@@ -54,9 +54,6 @@ sub process_zone
             my $tlemma = $tnode->t_lemma();
             $anode->set_lemma($tlemma);
             my ($tparent, $aparent) = $self->get_parent($tnode);
-            # Store the functor in MISC. It may be useful to understand why the empty node is there.
-            my $apid = defined($aparent) ? $aparent->get_conllu_id() : 0;
-            $anode->add_functor_relation($apid, $functor);
             # Guess and set morphology first. It may improve our chances of guessing the correct deprel.
             # If the generated node is a copy of a real node, we may be able to
             # copy its attributes.
@@ -128,12 +125,6 @@ sub process_zone
             if(defined($anode) and $anode->get_root() == $aroot)
             {
                 $major = $anode->ord();
-                # Since we store functors at the empty nodes above, store them
-                # with normal nodes, too, so they are available everywhere in
-                # UD. This is a nasty side effect, it would be better to have
-                # a separate block for functors.
-                my $apid = defined($anode->parent()) ? $anode->parent()->get_conllu_id() : 0;
-                $anode->add_functor_relation($apid, $functor);
             }
         }
     }
@@ -984,10 +975,6 @@ Generates an empty node (as in enhanced UD graphs, in the form recognized by
 Write::CoNLLU) for every generated t-node, and stores in its wild attributes
 a reference to the corresponding t-node (in the same fashion as GenerateA2TRefs
 stores references from real a-nodes to corresponding t-nodes).
-
-As a side-effect, all a-nodes that have a corresponding t-node (i.e., not just
-the newly generated empty nodes) will have the functor stored as a misc
-attribute.
 
 While it may be useful to run T2A::GenerateA2TRefs before the conversion from
 Prague to UD (so that the conversion procedure has access to tectogrammatic
