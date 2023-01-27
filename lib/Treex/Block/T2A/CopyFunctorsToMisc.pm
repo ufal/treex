@@ -14,6 +14,14 @@ sub process_anode
     my $tnode = $anode->get_document()->get_node_by_id($anode->wild()->{'tnode.rf'});
     my $functor = $tnode->functor();
     return if(!defined($functor));
+    # If an actor depends on a nominal predicate with copula, we must distinguish
+    # whether it was originally the actor of the copula (i.e., the subject of the
+    # non-verbal clause), or it was the actor of the nominal part (which could be
+    # an eventive noun).
+    if($functor eq 'ACT' && $self->tnode_depends_on_copula($tnode))
+    {
+        $functor .= '.cop';
+    }
     # We need the a-parent of the a-node. But preferably the one that corresponds to the t-parent of the t-node.
     ###!!! At present we simply take all enhanced parents of the a-node.
     my @eparents = $anode->get_enhanced_parents();
@@ -21,6 +29,21 @@ sub process_anode
     {
         $anode->add_functor_relation($eparent->get_conllu_id(), $functor);
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds out whether a node depended in the t-tree on a copula that is now
+# attached to its parent in the a-tree (UD).
+#------------------------------------------------------------------------------
+sub tnode_depends_on_copula
+{
+    my $self = shift;
+    my $tnode = shift;
+    my $anode = $tnode->parent()->get_lex_anode();
+    return 0 if(!defined($anode));
+    return $anode->deprel() =~ m/^cop(:|$)/;
 }
 
 
