@@ -1329,6 +1329,39 @@ sub expand_empty_nodes
 
 
 
+#==============================================================================
+# Saving tectogrammatical functors in the MISC attributes of an a-node (UD).
+# One a-node may have multiple functors, corresponding to incoming edges in the
+# enhanced graph.
+#==============================================================================
+
+
+
+#------------------------------------------------------------------------------
+# Adds a functor relation (i.e., CoNLL-U ID of the parent and the functor) to
+# MISC. Does nothing if this relation is already there.
+#------------------------------------------------------------------------------
+sub add_functor_relation
+{
+    my $self = shift;
+    my $parentid = shift; # CoNLL-U id of the parent
+    my $functor = shift;
+    my @functors;
+    my $functors = $self->get_misc_attr('Functor');
+    if(defined($functors))
+    {
+        @functors = map {m/^([0-9\.]+):(.+)$/; [$1, $2]} (split(',', $functor));
+    }
+    unless(any {$_->[0] eq $parentid && $_->[1] eq $functor} (@functors))
+    {
+        push(@functors, [$parentid, $functor]);
+        @functors = sort {my $r = $a->[0] <=> $b->[0]; unless($r) {$r = lc($a->[1]) cmp lc($b->[1])} $r} (@functors);
+        $self->set_misc_attr('Functor', join(',', map {$_->[0].':'.$_->[1]} (@functors)));
+    }
+}
+
+
+
 #----------- CoNLL attributes -------------
 
 sub conll_deprel { return $_[0]->get_attr('conll/deprel'); }
