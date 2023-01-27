@@ -1346,18 +1346,31 @@ sub add_functor_relation
     my $self = shift;
     my $parentid = shift; # CoNLL-U id of the parent
     my $functor = shift;
-    my @functors;
-    my $functors = $self->get_misc_attr('Functor');
-    if(defined($functors))
-    {
-        @functors = map {m/^([0-9\.]+):(.+)$/; [$1, $2]} (split(',', $functor));
-    }
+    my @functors = $self->get_functor_relations();
     unless(any {$_->[0] eq $parentid && $_->[1] eq $functor} (@functors))
     {
         push(@functors, [$parentid, $functor]);
         @functors = sort {my $r = $a->[0] <=> $b->[0]; unless($r) {$r = lc($a->[1]) cmp lc($b->[1])} $r} (@functors);
         $self->set_misc_attr('Functor', join(',', map {$_->[0].':'.$_->[1]} (@functors)));
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of functor relations. Each relation is an array reference,
+# the array has two elements: the CoNLL-U id of the parent and the functor.
+#------------------------------------------------------------------------------
+sub get_functor_relations
+{
+    my $self = shift;
+    my @functors = ();
+    my $functors = $self->get_misc_attr('Functor');
+    if(defined($functors))
+    {
+        @functors = map {m/^([0-9\.]+):(.+)$/; [$1, $2]} (split(',', $functors));
+    }
+    return @functors;
 }
 
 

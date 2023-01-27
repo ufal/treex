@@ -55,7 +55,6 @@ sub process_atree
                 ($eparents, $antecedent) = $self->find_cor_qcor_parents_and_antecedent($node, $cid);
                 if(defined($antecedent) && scalar(@{$eparents}) > 0)
                 {
-                    my $current_parent_of_antecedent = ($antecedent->get_enhanced_parents())[0]; ###!!! We need this for functor merging.
                     # Attach the antecedent as nsubj:xsubj enhanced child of the infinitive(s).
                     # It is possible that this relation already exists (block A2A::AddEnhancedUD)
                     # but then add_enhanced_dependency() will do nothing.
@@ -69,7 +68,7 @@ sub process_atree
                         $edeprel .= ':xsubj';
                         $antecedent->add_enhanced_dependency($eparent, $edeprel);
                         # Remember both functors at the candidate.
-                        $self->merge_functors($antecedent, $current_parent_of_antecedent, $node, $eparent);
+                        $self->merge_functors($antecedent, $node);
                     }
                 }
                 else
@@ -97,7 +96,6 @@ sub process_atree
                 ($eparents, $antecedent) = $self->find_cor_qcor_parents_and_antecedent($node, $cid);
                 if(defined($antecedent) && scalar(@{$eparents}) > 0)
                 {
-                    my $current_parent_of_antecedent = ($antecedent->get_enhanced_parents())[0]; ###!!! We need this for functor merging.
                     # Attach the antecedent as nmod:gen enhanced child of the object(s).
                     ###!!! If we want to instead use something like nmod:xsubj:gen or nmod:agent,
                     ###!!! we will have to first document it for the validator (and pretend that
@@ -106,7 +104,7 @@ sub process_atree
                     {
                         $antecedent->add_enhanced_dependency($eparent, 'nmod:gen');
                         # Remember both functors at the candidate.
-                        $self->merge_functors($antecedent, $current_parent_of_antecedent, $node, $eparent);
+                        $self->merge_functors($antecedent, $node);
                     }
                 }
                 else
@@ -403,52 +401,18 @@ sub merge_functors
 {
     my $self = shift;
     my $node1 = shift; # take functors from this node; also save the result here
-    my $parent1 = shift; # if node1 has only one functor so far, it pertains to this parent node
     my $node2 = shift; # take functors also from this node
-    my $parent2 = shift; # if node2 has only one functor so far, it pertains to this parent node
-    # Remember both functors at the candidate.
-    my @functors;
-    my $functor1 = $node1->get_misc_attr('Functor');
-    if(defined($functor1) && $functor1 ne '')
+    # Remember functors from both nodes at the first node. It would be slightly
+    # faster if, instead of repeatedly calling node->add_functor_relation(), we
+    # first merged the two lists and then sorted and serialized the result only
+    # once. But it should still be a method of Node::A so that the serialization
+    # is transparent for the rest of Treex. And merging longer lists is probably
+    # not very frequent.
+    my @functors2 = $node2->get_functor_relations();
+    foreach my $fr (@functors2)
     {
-        if($functor1 =~ m/,/)
-        {
-            push(@functors, split(/,/, $functor1));
-        }
-        elsif($functor1 =~ m/:/)
-        {
-            push(@functors, $functor1);
-        }
-        else
-        {
-            push(@functors, $parent1->get_conllu_id().':'.$functor1);
-        }
+        $node1->add_functor_relation($fr->[0], $fr->[1]);
     }
-    my $functor2 = $node2->get_misc_attr('Functor');
-    if(defined($functor2) && $functor2 ne '')
-    {
-        if($functor2 =~ m/,/)
-        {
-            push(@functors, split(/,/, $functor2));
-        }
-        elsif($functor2 =~ m/:/)
-        {
-            push(@functors, $functor2);
-        }
-        else
-        {
-            push(@functors, $parent2->get_conllu_id().':'.$functor2);
-        }
-    }
-    # Make sure every parent-functor pair occurs at most once. (Occasionally
-    # there seem to be duplicate empty nodes, perhaps because of an error somewhere
-    # else, yielding double relations.)
-    my %functors; map {$functors{$_}++} (@functors);
-    @functors = map {m/^(.+?):(.+)$/; [$1, $2]} (keys(%functors));
-    @functors = sort {my $r = $a->[0] <=> $b->[0]; unless($r) {$r = lc($a->[1]) cmp lc($b->[1])} $r} (@functors);
-    @functors = map {$_->[0].':'.$_->[1]} (@functors);
-    my $functor12 = join(',', @functors);
-    $node1->set_misc_attr('Functor', $functor12);
 }
 
 
