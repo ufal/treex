@@ -9,6 +9,8 @@ use Digest::MD5 qw(md5_hex);
 use PerlIO::via::gzip;
 use File::Basename;
 
+use File::Glob 'bsd_glob';
+
 has filenames => (
     is     => 'ro',
     isa    => 'ArrayRef[Str]',
@@ -60,7 +62,7 @@ sub string_to_filenames {
     # "!" means glob pattern which can contain {dir1,dir2}
     # so it cannot be combined with separating tokens with comma.
     if ($string =~ /^!(.+)/) {
-        my @filenames = glob $1;
+        my @filenames = bsd_glob $1;
         log_warn "No filenames matched '$1' pattern" if !@filenames;
         return \@filenames;
     }
