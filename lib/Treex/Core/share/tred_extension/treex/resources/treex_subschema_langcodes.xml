@@ -288,6 +288,7 @@
       <value>quz</value> <!-- Cusco Quechua -->
       <value>ay</value> <!-- Aymara -->
       <value>shp</value> <!-- Shipibo -->
+      <value>bor</value> <!-- Bororo -->
       <value>jaa</value> <!-- Madi -->
       <value>xav</value> <!-- Xavante -->
       <!-- Tupian languages -->
@@ -311,6 +312,7 @@
       <value>vo</value> <!-- Volapük -->
       <value>pcm</value> <!-- Nigerian Pidgin (Naija) -->
       <value>swl</value> <!-- Swedish Sign Language -->
+      <value>qaf</value> <!-- Maghrebi Arabic-French (code-switching) -->
       <value>qfn</value> <!-- Frisian-Dutch (code-switching) -->
       <value>qhe</value> <!-- Hindi-English (code-switching) -->
       <value>qtd</value> <!-- Turkish-German (code-switching) -->
