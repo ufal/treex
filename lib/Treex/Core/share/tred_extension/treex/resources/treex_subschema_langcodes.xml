@@ -44,6 +44,7 @@
       <value>en</value> <!-- English -->
       <value>de</value> <!-- German -->
       <value>nds</value> <!-- Low Saxon -->
+      <value>osx</value> <!-- Old Saxon -->
       <value>nl</value> <!-- Dutch -->
       <value>af</value> <!-- Afrikaans -->
       <value>fy</value> <!-- Frisian -->
@@ -66,12 +67,14 @@
       <value>lij</value> <!-- Ligurian -->
       <value>nap</value> <!-- Neapolitan -->
       <value>es</value> <!-- Spanish -->
+      <value>lad</value> <!-- Ladino -->
       <value>pt</value> <!-- Portuguese -->
       <value>gl</value> <!-- Galician -->
       <value>an</value> <!-- Aragonese -->
       <value>ca</value> <!-- Catalan -->
       <value>oc</value> <!-- Occitan -->
       <value>fr</value> <!-- French -->
+      <value>frm</value> <!-- Middle French -->
       <value>fro</value> <!-- Old French -->
       <value>wa</value> <!-- Walloon -->
       <value>ht</value> <!-- Haitian -->
@@ -97,6 +100,8 @@
       <value>sq</value> <!-- Albanian -->
       <value>aln</value> <!-- Gheg (Albanian) -->
       <value>el</value> <!-- Greek -->
+      <value>cpg</value> <!-- Cappadocian -->
+      <value>pnt</value> <!-- Pontic -->
       <value>grc</value> <!-- Ancient Greek -->
       <value>hy</value> <!-- Armenian -->
       <value>hyw</value> <!-- Western Armenian -->
@@ -112,10 +117,12 @@
       <value>ae</value> <!-- Avestan -->
       <value>os</value> <!-- Ossetic -->
       <value>tg</value> <!-- Tajiki (in Cyrillic script) -->
+      <value>bal</value> <!-- Balochi -->
       <value>ps</value> <!-- Pashto -->
       <!-- Dardic and Indo-Aryan languages -->
       <value>ks</value> <!-- Kashmiri (in Arabic script) -->
       <value>sa</value> <!-- Sanskrit -->
+      <value>pra</value> <!-- Prakrit -->
       <value>pi</value> <!-- Pāli -->
       <value>sd</value> <!-- Sindhi -->
       <value>pa</value> <!-- Punjabi -->
@@ -123,7 +130,9 @@
       <value>hi</value> <!-- Hindi -->
       <value>bh</value> <!-- Bihari -->
       <value>bho</value> <!-- Bhojpuri -->
+      <value>mag</value> <!-- Magahi -->
       <value>xnr</value> <!-- Kangri -->
+      <value>mjl</value> <!-- Mandyali -->
       <value>ne</value> <!-- Nepali -->
       <value>or</value> <!-- Oriya -->
       <value>bn</value> <!-- Bengali -->
@@ -138,12 +147,15 @@
       <value>aii</value> <!-- Assyrian -->
       <value>ar</value> <!-- Arabic -->
       <value>ajp</value> <!-- South Levantine Arabic -->
+      <value>aeb</value> <!-- Tunisian Arabic -->
       <value>mt</value> <!-- Maltese -->
       <value>hbo</value> <!-- Ancient Hebrew -->
       <value>he</value> <!-- Hebrew -->
       <value>am</value> <!-- Amharic -->
       <value>ti</value> <!-- Tigrinya -->
       <!-- other Afroasiatic languages -->
+      <value>kab</value> <!-- Kabyle -->
+      <value>gqa</value> <!-- Ga -->
       <value>ha</value> <!-- Hausa -->
       <value>say</value> <!-- Zaar -->
       <value>cop</value> <!-- Coptic -->
@@ -153,15 +165,18 @@
       <value>bej</value> <!-- Beja -->
       <!-- Nilo-Saharan languages -->
       <value>kr</value> <!-- Kanuri -->
+      <value>laj</value> <!-- Lango -->
       <!-- Niger-Congo languages -->
       <value>ff</value> <!-- Fulah / Fulbe -->
       <value>wo</value> <!-- Wolof -->
       <value>bm</value> <!-- Bambara -->
+      <value>mxx</value> <!-- Mauka -->
       <value>tw</value> <!-- Twi (Akan) -->
       <value>ee</value> <!-- Ewe -->
       <value>yo</value> <!-- Yoruba -->
       <value>ig</value> <!-- Igbo -->
       <value>sg</value> <!-- Sango -->
+      <value>kfz</value> <!-- Koromfe -->
       <!-- Bantu languages -->
       <value>ln</value> <!-- Lingala (Ngala) C30 -->
       <value>rw</value> <!-- Kinyarwanda (Rwanda) [J]D61 -->
@@ -186,12 +201,18 @@
       <value>nd</value> <!-- North Ndebele S44 -->
       <value>nr</value> <!-- South Ndebele S407 -->
       <value>ts</value> <!-- Tsonga S53 -->
+      <value>cgg</value> <!-- Kiga -->
+      <value>bav</value> <!-- Babungo -->
+      <value>nyn</value> <!-- Nkore -->
+      <!-- other African languages -->
+      <value>naq</value> <!-- Khoekhoe -->
       <!-- Uralic languages -->
       <value>hu</value> <!-- Hungarian -->
       <value>fi</value> <!-- Finnish -->
       <value>krl</value> <!-- Karelian -->
       <value>olo</value> <!-- Livvi -->
       <value>et</value> <!-- Estonian -->
+      <value>vep</value> <!-- Veps -->
       <value>kv</value> <!-- Komi -->
       <value>koi</value> <!-- Komi Permyak -->
       <value>kpv</value> <!-- Komi Zyrian -->
@@ -203,10 +224,13 @@
       <!-- other European and Caucasian languages -->
       <value>eu</value> <!-- Basque -->
       <value>ka</value> <!-- Georgian -->
+      <value>lzz</value> <!-- Laz -->
       <value>ab</value> <!-- Abkhaz -->
       <value>abq</value> <!-- Abaza -->
       <value>ce</value> <!-- Chechen -->
       <value>av</value> <!-- Avaric -->
+      <value>dar</value> <!-- Dargwa -->
+      <value>lez</value> <!-- Lezgian -->
       <!-- Turkic languages -->
       <value>otk</value> <!-- Old Turkish -->
       <value>tr</value> <!-- Turkish -->
@@ -228,6 +252,8 @@
       <value>sjo</value> <!-- Xibe -->
       <value>ko</value> <!-- Korean -->
       <value>ja</value> <!-- Japanese -->
+      <value>ojp</value> <!-- Old Japanese -->
+      <value>sux</value> <!-- Sumerian -->
       <!-- Dravidian languages -->
       <value>te</value> <!-- Telugu -->
       <value>kn</value> <!-- Kannada -->
@@ -246,9 +272,12 @@
       <value>ii</value> <!-- Yi -->
       <value>bo</value> <!-- Tibetan -->
       <value>dz</value> <!-- Dzongkha -->
+      <value>prx</value> <!-- Purki -->
+      <value>lus</value> <!-- Mizo -->
       <!-- Austro-Asian languages -->
       <value>vi</value> <!-- Vietnamese -->
       <value>km</value> <!-- Khmer -->
+      <value>pbv</value> <!-- Pnar -->
       <!-- Austronesian languages -->
       <value>mg</value> <!-- Malagasy -->
       <value>ms</value> <!-- Malay -->
@@ -258,6 +287,8 @@
       <value>ch</value> <!-- Chamorro -->
       <value>tl</value> <!-- Tagalog -->
       <value>ceb</value> <!-- Cebuano -->
+      <value>hil</value> <!-- Hiligaynon -->
+      <value>ifb</value> <!-- Batad Ifugao -->
       <value>na</value> <!-- Nauruan -->
       <value>mh</value> <!-- Marshallese -->
       <value>ho</value> <!-- Hiri Motu -->
@@ -268,8 +299,10 @@
       <value>ty</value> <!-- Tahitian -->
       <!-- Australian languages -->
       <value>dbl</value> <!-- Dyirbal -->
+      <value>zmu</value> <!-- Muruwari -->
       <value>wbp</value> <!-- Warlpiri -->
       <value>yii</value> <!-- Yidiny -->
+      <value>gcd</value> <!-- Yukulta -->
       <!-- Chukotko-Kamchatkan languages -->
       <value>ckt</value> <!-- Chukchi -->
       <!-- Eskimo-Aleutan languages -->
@@ -281,8 +314,12 @@
       <value>cr</value> <!-- Cree -->
       <value>oj</value> <!-- Ojibwa -->
       <value>nv</value> <!-- Navajo -->
+      <value>mov</value> <!-- Mojave -->
       <value>nhi</value> <!-- Western Sierra Puebla Nahuatl -->
+      <value>azz</value> <!-- Highland Puebla Nahuatl -->
+      <value>nci</value> <!-- Classical Nahuatl -->
       <value>quc</value> <!-- Kiche -->
+      <value>bzd</value> <!-- Bribri -->
       <value>apu</value> <!-- Apurinã -->
       <value>qu</value> <!-- Quechua -->
       <value>quz</value> <!-- Cusco Quechua -->
@@ -313,6 +350,7 @@
       <value>pcm</value> <!-- Nigerian Pidgin (Naija) -->
       <value>swl</value> <!-- Swedish Sign Language -->
       <value>qaf</value> <!-- Maghrebi Arabic-French (code-switching) -->
+      <value>qee</value> <!-- Spanish-English (code-switching) -->
       <value>qfn</value> <!-- Frisian-Dutch (code-switching) -->
       <value>qhe</value> <!-- Hindi-English (code-switching) -->
       <value>qtd</value> <!-- Turkish-German (code-switching) -->
