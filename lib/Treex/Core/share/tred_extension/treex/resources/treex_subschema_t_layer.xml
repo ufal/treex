@@ -392,6 +392,8 @@
         <choice>
           <value>discourse</value>
           <value>list</value>
+          <value>entrel</value>  <!-- in order to correspond to tdata_evald_discourse_schema.xml -->
+          <value>question-answer</value>  <!-- in order to correspond to tdata_evald_discourse_schema.xml -->
         </choice>
       </member>
       <member name="start_group_id" required="0">
@@ -480,6 +482,8 @@
       <value>spec</value>
       <value>synchr</value>
       <value>other</value>
+      <value>question-answer</value> <!-- in order to correspond to tdata_evald_discourse_schema.xml -->
+      <value>empty_relation</value> <!-- in order to correspond to tdata_evald_discourse_schema.xml -->
     </choice>
   </type>
 
