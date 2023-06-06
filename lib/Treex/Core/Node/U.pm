@@ -1,0 +1,159 @@
+package Treex::Core::Node::U;
+
+use namespace::autoclean;
+
+use Moose;
+use Treex::Core::Common;
+extends 'Treex::Core::Node';
+with 'Treex::Core::Node::Ordered';
+with 'Treex::Core::Node::InClause';
+
+# u-layer attributes
+has [
+    qw( nodetype u_lemma
+    )
+] => ( is => 'rw' );
+
+sub get_pml_type_name
+{
+    my ($self) = @_;
+    return $self->is_root() ? 'u-root.type' : 'u-node.type';
+}
+
+#==============================================================================
+# Helpers for reference lists. (Cloned from Treex::Core::Node::T. Maybe these
+# helper methods could be inherited from Treex::Core::Node?)
+#==============================================================================
+
+sub _get_node_list
+{
+    my ( $self, $list, $arg_ref ) = @_;
+    $list = $self->get_attr($list);
+    my $doc = $self->get_document();
+    my @nodes = $list ? ( map { $doc->get_node_by_id($_) } @{$list} ) : ();
+    return $arg_ref ? $self->_process_switches( $arg_ref, @nodes ) : @nodes;
+}
+
+sub _set_node_list
+{
+    my $self = shift;
+    my $list = shift;
+    $self->set_attr( $list, [ map { $_->get_attr('id') } @_ ] );
+    return;
+}
+
+sub _add_to_node_list
+{
+    my $self = shift;
+    my $list = shift;
+    # Get the current elements of the list.
+    my $cur_ref = $self->get_attr($list);
+    my @cur = $cur_ref ? @{$cur_ref} : ();
+    # Grep only those that are not already in the list.
+    my @new = grep
+    {
+        my $id = $_;
+        !any { $_ eq $id } @cur
+    }
+    map { $_->get_attr('id') } @_;
+    # Set the new list value.
+    $self->set_attr( $list, [ @cur, @new ] );
+    return;
+}
+
+sub _remove_from_node_list
+{
+    my $self = shift;
+    my $list = shift;
+    my @prev = $self->_get_node_list($list);
+    my @remain;
+    foreach my $node (@prev)
+    {
+        if ( !grep { $_ == $node } @_ )
+        {
+            push(@remain, $node);
+        }
+    }
+    $self->_set_node_list( $list, @remain );
+    return;
+}
+
+#==============================================================================
+# References to the t-layer (tectogrammatical layer).
+#==============================================================================
+
+sub get_tnode
+{
+    my $self = shift;
+    my $t_rf = $self->get_attr('t.rf');
+    my $document = $self->get_document();
+    return $document->get_node_by_id($t_rf) if $t_rf;
+    return;
+}
+
+sub set_tnode
+{
+    my $self = shift;
+    my $tnode = shift;
+    my $new_id = defined($tnode) ? $tnode->get_attr('id') : undef;
+    $self->set_attr('t.rf', $new_id);
+    return;
+}
+
+#==============================================================================
+# Attributes that contain references.
+#==============================================================================
+
+override '_get_reference_attrs' => sub
+{
+    my ($self) = @_;
+    return ('t.rf');
+};
+
+1;
+
+__END__
+
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Core::Node::U
+
+=head1 DESCRIPTION
+
+u-layer (Uniform Meaning Representation, UMR) node
+
+
+=head1 METHODS
+
+=head2 Access to t-layer (tectogrammatical nodes)
+
+=over
+
+=item $tnode = $unode->get_tnode()
+
+Return the corresponding t-node (from C<t.rf>).
+
+=item set_tnode
+
+Set the corresponding t-node (to C<t.rf>).
+
+OPTIONS
+
+=over
+
+=back
+
+=back
+
+
+=head1 AUTHOR
+
+Daniel Zeman <zeman@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2023 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

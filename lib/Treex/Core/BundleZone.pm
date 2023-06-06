@@ -6,6 +6,7 @@ use MooseX::NonMoose;
 
 use Treex::Core::Node::A;
 use Treex::Core::Node::T;
+use Treex::Core::Node::U;
 use Treex::Core::Node::N;
 use Treex::Core::Node::P;
 
@@ -42,6 +43,11 @@ sub create_ttree {
     return $self->create_tree('t',$params_rf);
 }
 
+sub create_utree {
+    my ($self,$params_rf) = @_;
+    return $self->create_tree('u',$params_rf);
+}
+
 sub create_ntree {
     my ($self,$params_rf) = @_;
     return $self->create_tree('n',$params_rf);
@@ -70,11 +76,10 @@ sub create_tree {
         }
     }
 
-    #my $class = "Treex::Core::Node::" . uc($layer);
-    #my $tree_root = eval { $class->new( { _called_from_core_ => 1 } ) } or log_fatal $!;    #layer subclasses not available yet
     my $opts = { _called_from_core_ => 1 };
     my $tree_root = $layer eq 'a' ? Treex::Core::Node::A->new($opts)
                   : $layer eq 't' ? Treex::Core::Node::T->new($opts)
+                  : $layer eq 'u' ? Treex::Core::Node::U->new($opts)
                   : $layer eq 'n' ? Treex::Core::Node::N->new($opts)
                   : $layer eq 'p' ? Treex::Core::Node::P->new($opts)
                   : log_fatal "Cannot create tree for unknown layer $layer";
@@ -149,6 +154,11 @@ sub get_ttree {
     return $self->get_tree('t');
 }
 
+sub get_utree {
+    my $self = shift;
+    return $self->get_tree('u');
+}
+
 sub get_ntree {
     my $self = shift;
     return $self->get_tree('n');
@@ -179,6 +189,11 @@ sub has_ttree {
     return $self->has_tree('t');
 }
 
+sub has_utree {
+    my $self = shift;
+    return $self->has_tree('u');
+}
+
 sub has_ntree {
     my $self = shift;
     return $self->has_tree('n');
@@ -191,9 +206,7 @@ sub has_ptree {
 
 sub get_all_trees {
     my $self = shift;
-
-    return grep {defined}
-        map     { $self->{trees}->{ $_ . "_tree" }; } qw(a t n p);
+    return grep {defined} map { $self->{trees}->{ $_ . '_tree' }; } qw(a t u n p);
 }
 
 sub sentence {
@@ -312,6 +325,8 @@ I<n> - named entity trees. You can create trees by following methods:
 
 =item $zone->create_ttree();
 
+=item $zone->create_utree();
+
 =item $zone->create_ptree();
 
 =item $zone->create_ntree();
@@ -328,6 +343,8 @@ You can access trees by
 =item $zone->get_atree();
 
 =item $zone->get_ttree();
+
+=item $zone->get_utree();
 
 =item $zone->get_ptree();
 
@@ -347,6 +364,8 @@ Presence of a tree of a certain type can be detected by
 =item $zone->has_atree();
 
 =item $zone->has_ttree();
+
+=item $zone->has_utree();
 
 =item $zone->has_ptree();
 
@@ -395,8 +414,10 @@ Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
 Martin Popel <popel@ufal.mff.cuni.cz>
 
+Daniel Zeman <zeman@ufal.mff.cuni.cz>
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011, 2023 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
