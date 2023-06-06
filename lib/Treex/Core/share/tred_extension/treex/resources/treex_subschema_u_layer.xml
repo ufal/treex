@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<pml_schema xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/"  version="1.1">
+  <revision>1.0.0</revision>
+  <description>U-layer schema</description>
+  <!-- Treex PML schema  -->
+
+  <type name="u-root.type">
+    <structure role="#NODE" name="u-root">
+      <member as_attribute="1" name="id" role="#ID" required="1">
+        <cdata format="ID"/>
+      </member>
+      <member name="language" as_attribute="1" ><cdata format="any"/></member>
+      <member name="direction" as_attribute="1"><cdata format="any"/></member>
+
+      <member name="ttree.rf">
+        <cdata format="PMLREF"/>
+      </member>
+      <member name="nodetype">
+        <constant>root</constant>
+      </member>
+      <!-- DZ: Not sure if we have use for UMR-specific ord. Keeping it here for the moment. -->
+      <member name="ord" role="#ORDER" required="0">
+	    <cdata format="nonNegativeInteger"/>
+      </member>
+      <member name="children" role="#CHILDNODES">
+        <list ordered="1" type="t-node.type"/>
+      </member>
+      <member name="wild_dump"><cdata format="any"/></member>
+    </structure>
+  </type>
+
+  <type name="u-node.type">
+    <structure role="#NODE" name="u-node">
+      <member name="children" role="#CHILDNODES"><list ordered="1" type="u-node.type"/></member>
+      <member name="id" as_attribute="1" role="#ID" required="1"><cdata format="ID"/></member>
+      <member name="nodetype" type="u-nodetype.type"/>
+      <member name="ord" role="#ORDER" required="0"><cdata format="nonNegativeInteger"/></member>
+
+      <member name="u_lemma"><cdata format="any"/></member> <!-- DZ: Testing just one UMR-specific attribute for now. In the end we probably won't need an attribute named like this. -->
+
+      <!--  References -->
+      <member name="t" type="u-t.type"/> <!--name of getter/setter methods may be changed soon-->
+
+      <member name="wild_dump"><cdata format="any"/></member>
+    </structure>
+  </type>
+
+<!-- *************** Types of u-layer attributes *******************  -->
+
+  <type name="bool.type">
+    <choice>
+      <value>0</value>
+      <value>1</value>
+    </choice>
+  </type>
+
+</pml_schema>
