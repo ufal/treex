@@ -48,6 +48,31 @@
 
 <!-- *************** Types of u-layer attributes *******************  -->
 
+  <type name="u-nodetype.type"> <!-- !!! cloned from t-layer's t-nodetype.type; needs to be revisited! -->
+    <choice>
+      <value>atom</value>
+      <value>coap</value>
+      <value>complex</value>
+      <value>dphr</value>
+      <value>fphr</value>
+      <value>list</value>
+      <value>qcomplex</value>
+    </choice>
+  </type>
+
+  <type name="u-t.type"> <!-- !!! cloned from t-layer's t-a.type; needs to be revisited! -->
+    <structure>
+      <member name="lex.rf">
+        <cdata format="PMLREF"/>
+      </member>
+      <member name="aux.rf">
+        <list ordered="0">
+          <cdata format="PMLREF"/>
+        </list>
+      </member>
+    </structure>
+  </type>
+
   <type name="bool.type">
     <choice>
       <value>0</value>
