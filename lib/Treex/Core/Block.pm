@@ -361,15 +361,15 @@ sub process_zone {
     my ( $self, $zone, $bundleNo ) = @_;
     my $overriden = 0;
 
-    for my $layer (qw(a t n p)) {
+    for my $layer (qw(a t u n p)) {
         if ($self->_try_process_layer( $zone, $layer, $bundleNo )){
             $overriden++;
         }
     }
 
     if (!$overriden && $self->if_missing_tree =~ /fatal|warn/){
-        my $message = "At least one of the methods /process_(document|bundle|zone|[atnp](tree|node))/ "
-            . "must be overriden and the corresponding [atnp] trees must be present in bundles.\n"
+        my $message = "At least one of the methods /process_(document|bundle|zone|[atunp](tree|node))/ "
+            . "must be overriden and the corresponding [atunp] trees must be present in bundles.\n"
             . "The zone '" . $zone->get_label() . "' contains trees ( "
             . ( join ',', map { $_->get_layer() } $zone->get_all_trees() ) . ").";
         log_fatal($message) if $self->if_missing_tree eq 'fatal';
@@ -535,13 +535,13 @@ attribute C<language> (and possibly also C<selector>) to be specified.
 
 =item $block->process_I<X>tree($tree);
 
-Here I<X> stands for a,t,n or p.
-This method is executed on the root node of a tree on a given layer (a,t,n,p).
+Here I<X> stands for a, t, u, n or p.
+This method is executed on the root node of a tree on a given layer (a, t, u, n, p).
 
 =item $block->process_I<X>node($node);
 
-Here I<X> stands for a,t,n or p.
-This method is executed on the every node of a tree on a given layer (a,t,n,p).
+Here I<X> stands for a, t, u, n or p.
+This method is executed on the every node of a tree on a given layer (a, t, u, n, p).
 Note that for layers a, t, and n, this method is not executed on the root node
 (because the root node is just a "technical" root without the attributes of regular nodes).
 However, C<process_pnode> is executed also on the root node
@@ -631,8 +631,10 @@ Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
 Martin Popel <popel@ufal.mff.cuni.cz>
 
+Daniel Zeman <zeman@ufal.mff.cuni.cz>
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012, 2023 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
