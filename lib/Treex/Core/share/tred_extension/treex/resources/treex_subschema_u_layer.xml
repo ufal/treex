@@ -24,7 +24,7 @@
 	    <cdata format="nonNegativeInteger"/>
       </member>
       <member name="children" role="#CHILDNODES">
-        <list ordered="1" type="t-node.type"/>
+        <list ordered="1" type="u-node.type"/>
       </member>
       <member name="wild_dump"><cdata format="any"/></member>
     </structure>
