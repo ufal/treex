@@ -12,13 +12,14 @@
   <import type="p-nonterminal.type" schema="treex_subschema_p_layer.xml"/>
   <import type="a-root.type" schema="treex_subschema_a_layer.xml"/>
   <import type="t-root.type" schema="treex_subschema_t_layer.xml"/>
+  <import type="u-root.type" schema="treex_subschema_u_layer.xml"/>
   <import type="n-root.type" schema="treex_subschema_n_layer.xml"/>
   <import type="w-doc.type" schema="treex_subschema_w_layer.xml"/>
 
 
   <!-- Each document contains "meta-attributes" common for the whole
- document (such as the source text to be translated) and a list of
- tree bundles related to the individual sentences. -->
+  document (such as the source text to be translated) and a list of
+  tree bundles related to the individual sentences. -->
 
 
   <root name="treex_document">
@@ -44,7 +45,7 @@
        </member>
 
        <member name="wild_dump"><cdata format="any"/></member>
-       
+
     </structure>
   </type>
 
@@ -129,6 +130,7 @@
         <structure>
           <member name="a_tree" type="a-root.type"/> <!-- pozor,      bude potreba zmenit a-root.type!!! -->
           <member name="t_tree" type="t-root.type"/>
+          <member name="u_tree" type="u-root.type"/> <!-- meaning representation, UMR-ready -->
           <member name="n_tree" type="n-root.type"/>
           <member name="p_tree" type="p-nonterminal.type"/>
         </structure>
