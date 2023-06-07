@@ -21,6 +21,7 @@ sub _build_colors {
         'nnode'            => '#ffff00',
         'tnode'            => '#4488ff',
         'tnode_coord'      => '#ccddff',
+        'unode'            => '#4488ff',
         'terminal'         => '#ffff66',
         'terminal_head'    => '#90ee90',
         'nonterminal_head' => '#90ee90',
@@ -126,7 +127,6 @@ This package provides names for common colors used in TrEd.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2012, 2023 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
-
