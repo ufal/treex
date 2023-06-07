@@ -37,7 +37,8 @@
       <member name="nodetype" type="u-nodetype.type"/>
       <member name="ord" role="#ORDER" required="0"><cdata format="nonNegativeInteger"/></member>
 
-      <member name="u_lemma"><cdata format="any"/></member> <!-- DZ: Testing just one UMR-specific attribute for now. In the end we probably won't need an attribute named like this. -->
+      <member name="u_lemma"><cdata format="any"/></member>
+      <member name="functor"><alt type="func.type"/></member>
 
       <!--  References -->
       <member name="t" type="u-t.type"/> <!--name of getter/setter methods may be changed soon-->
