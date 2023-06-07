@@ -47,14 +47,13 @@ sub node_style {
     if ( $node->is_root() ) {
         $styles .= '#{Node-rellevel:' . $node->{'_shift_down'} . '}';
     }
-
     my $layer = $node->get_layer;
     my %subs;
+    $subs{u} = \&_unode_style;
     $subs{t} = \&_tnode_style;
     $subs{a} = \&_anode_style;
     $subs{n} = \&_nnode_style;
     $subs{p} = \&_pnode_style;
-
     if ( defined $subs{$layer} ) {
         return $styles . &{ $subs{$layer} }( $self, $node );
     }
@@ -80,31 +79,24 @@ sub _anode_style {
 
 sub _tnode_style {
     my ( $self, $node ) = @_;
-
     my $style = '#{Oval-fill:' . $self->_colors->get('tnode') . '}';
     return $style if $node->is_root;
-
     $style .= '#{Node-shape:' . ( $node->{is_generated} ? 'rectangle' : 'oval' ) . '}';
-
     my $coord_circle = '#{Line-decoration:shape=oval;coords=-20,-20,20,20;outline=' . $self->_colors->get('coord') . ';width=1;dash=5,5 }';
     $coord_circle .= '#{Line-arrow:&}#{Line-arrowshape:&}#{Line-dash:&}';
     $coord_circle .= '#{Line-tag:&}#{Line-smooth:&}#{Oval-fill:' . $self->_colors->get('tnode_coord') . '}';
-
     # For coordination roots
     my $k1 = '20 / sqrt((xp-xn)**2 + (yp-yn)**2)';
     my $x1 = 'xn-(xn-xp)*' . $k1;
     my $y1 = 'yn-(yn-yp)*' . $k1;
-
     # For coordination members
     my $k2 = '(1 - 20 / sqrt((xp-xn)**2 + (yp-yn)**2))';
     my $x2 = 'xn-(xn-xp)*' . $k2;
     my $y2 = 'yn-(yn-yp)*' . $k2;
-
     my $line_width = 2;
     my $line_color = $self->_colors->get('edge');
     my $line_coords;
     my $line_dash;
-
     if ($node->{is_member}) {
         if (not $node->is_root and $self->_is_coord($node->parent)) {
             $line_width = 1;
@@ -118,13 +110,11 @@ sub _tnode_style {
         $line_color = $self->_colors->get('coord');
         $line_width = 1;
     }
-
     if (($node->{functor} and $node->{functor} =~ m/^(?:PAR|PARTL|VOCAT|RHEM|CM|FPHR|PREC)$/) or (not $node->is_root and $node->parent->is_root)) {
         $line_width = 1;
         $line_dash = '2,4';
         $line_color = $self->_colors->get('edge');
     }
-
     if ($self->_is_coord($node)) {
         $line_coords = "n,n,n,n&$x1,$y1";
         $line_width = '0&'.$line_width;
@@ -133,17 +123,34 @@ sub _tnode_style {
     } else {
         $line_coords = 'n,n';
     }
-
     if (not $node->is_root and $self->_is_coord($node->parent)) {
         $line_coords .= ",$x2,$y2";
     } else {
         $line_coords .= ',p,p';
     }
-    
     $style .= $coord_circle if $self->_is_coord($node);
     $style .= "#{Line-width:$line_width}#{Line-fill:$line_color}#{Line-coords:$line_coords}";
     $style .= "#{Line-dash:$line_dash}" if $line_dash;
     $style .= '#{Oval-fill:#00ff00}' if $node->wild->{ali_root};
+    return $style;
+}
+
+sub _unode_style {
+    my ( $self, $node ) = @_;
+    my $style = '#{Oval-fill:' . $self->_colors->get('unode') . '}';
+    return $style if $node->is_root;
+    $style .= '#{Node-shape:' . ( 'oval' ) . '}';
+    my $coord_circle = '#{Line-decoration:shape=oval;coords=-20,-20,20,20;outline=' . $self->_colors->get('coord') . ';width=1;dash=5,5 }';
+    $coord_circle .= '#{Line-arrow:&}#{Line-arrowshape:&}#{Line-dash:&}';
+    $coord_circle .= '#{Line-tag:&}#{Line-smooth:&}#{Oval-fill:' . $self->_colors->get('tnode_coord') . '}';
+    my $line_width = 2;
+    my $line_color = $self->_colors->get('edge');
+    my $line_coords;
+    my $line_dash;
+    $line_coords = 'n,n';
+    $line_coords .= ',p,p';
+    $style .= "#{Line-width:$line_width}#{Line-fill:$line_color}#{Line-coords:$line_coords}";
+    $style .= "#{Line-dash:$line_dash}" if $line_dash;
     return $style;
 }
 
@@ -154,22 +161,17 @@ sub _nnode_style {
 
 sub _pnode_style {
     my ( $self, $node ) = @_;
-
     my $terminal = $node->is_leaf;
-
     my $style = '#{Line-coords:n,n,n,p,p,p}';
     $style .= '#{nodeXSkip:4}#{nodeYSkip:0}#{NodeLabel-skipempty:1}';
     $style .= '#{NodeLabel-halign:center}#{Node-textalign:center}';
-
     if ($terminal) {
         my $shift = $node->root->{_tree_depth} - $node->{_depth};
         $style .= "#{Node-rellevel:$shift}";
     }
-
     if ( not $node->is_root and scalar( $node->parent->children ) == 1 ) {
         $style .= '#{Node-addafterskip:15}';
     }
-
     if ( not $terminal ) {
         $style .= '#{Oval-fill:' . ( $node->{is_head} ? $self->_colors->get('nonterminal_head') : $self->_colors->get('nonterminal') ) . '}';
         $style .= '#{Node-shape:rectangle}#{CurrentOval-outline:' . $self->_colors->get('current') . '}';
@@ -182,7 +184,6 @@ sub _pnode_style {
                   :                          'terminal';
         $style .= '#{Oval-fill:' . $self->_colors->get($ctype) . '}';
     }
-
     return $style;
 }
 
@@ -196,7 +197,7 @@ sub draw_arrows {
     foreach my $target_id (@$target_ids) {
         next if !defined $target_ids || $target_id eq ""; # skip blank IDs
         # some alignment links do not have their type filled, default to generic alignment
-        my $arrow_type = shift @$arrow_types // 'alignment';         
+        my $arrow_type = shift @$arrow_types // 'alignment';
 
         my $target_node
             = eval { $self->_treex_doc->get_node_by_id($target_id) };
@@ -317,6 +318,8 @@ This packages provides styling for the trees displayed in Tred.
 
 =item _tnode_style
 
+=item _unode_style
+
 =item _nnode_style
 
 =item _pnode_style
@@ -332,4 +335,3 @@ Josef Toman <toman@ufal.mff.cuni.cz>
 Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
-
