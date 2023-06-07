@@ -172,7 +172,8 @@ sub root_labels {
     }
 }
 
-sub node_labels {
+sub node_labels
+{
     my ( $self, $node ) = @_;
     my $layer = $node->get_layer;
     my %subs;
@@ -181,38 +182,47 @@ sub node_labels {
     $subs{a} = \&_anode_labels;
     $subs{n} = \&_nnode_labels;
     $subs{p} = \&_pnode_labels;
-    if ( defined $subs{$layer} ) {
+    if ( defined $subs{$layer} )
+    {
         return &{ $subs{$layer} }( $self, $node );
     }
-    else {
+    else
+    {
         log_fatal "Undefined or unknown layer: $layer";
     }
 }
 
-sub _anode_labels {
+sub _anode_labels
+{
     my ( $self, $node ) = @_;
     my $line1 = '';
     my $par   = 0;
     my $n     = $node;
-    while ( ( not $par ) and $n ) {
-        if ( $n->{is_parenthesis_root} ) {
+    while ( ( not $par ) and $n )
+    {
+        if ( $n->{is_parenthesis_root} )
+        {
             $par = 1;
         }
         $n = $n->parent;
     }
-    if ($par) {
+    if ($par)
+    {
         $line1 = $self->_colors->get( 'parenthesis', 1 );
     }
-    if ( defined($node->form) ){
+    if ( defined($node->form) )
+    {
         $line1 .= $node->form;
     }
-    elsif ( defined($node->lemma) ){
+    elsif ( defined($node->lemma) )
+    {
         $line1 .= $self->_colors->get( 'error', 1 ) . $node->lemma;
     }
     my $edge_label = $node->deprel || $node->afun || $node->conll_deprel;
     my $color = $edge_label && $edge_label ne 'NR' ? $self->_colors->get( 'afun', 1 ) : $self->_colors->get( 'error', 1 );
     my $line2 = $color . ( $edge_label || '!!' );
-    if ( $node->is_member ) {
+    if ( $node->is_member )
+    {
         my $parent = $node->parent;
         while ( $parent && ( ( $parent->afun || '' ) =~ m/^Aux[CP]$/ ) )    #skip AuxCP
         {
@@ -225,13 +235,14 @@ sub _anode_labels {
             $line2 .= '_' . $self->_colors->get( 'member', 1 ) . ( $1 ? $1 : $2 );
         }
     }
-    if ( $node->translit ) {
+    if ( $node->translit )
+    {
         $line2 .= ' ' . $self->_colors->get( 'translit', 1 ) . $node->translit;
     }
-    if ( $node->gloss ) {
+    if ( $node->gloss )
+    {
         $line2 .= ' ' . $self->_colors->get( 'gloss', 1 ) . $node->gloss;
     }
-
     my $line3_1 = $node->tag ? $node->tag : '';
     my $line3_2 = $node->lemma ? $node->lemma : '';
     $line3_1 = $self->_colors->get( 'tag', 1 ) . $line3_1;
@@ -242,28 +253,38 @@ sub _anode_labels {
     ];
 }
 
-sub _tnode_labels {
+sub _tnode_labels
+{
     my ( $self, $node ) = @_;
     my $line1 = $node->t_lemma;
-    if ( $node->is_parenthesis ) {
+    if ( $node->is_parenthesis )
+    {
         $line1 = $self->_colors->get( 'parenthesis', 1 ) . $line1;
     }
-    if ( $node->sentmod ) {
+    if ( $node->sentmod )
+    {
         $line1 .= $self->_colors->get( 'sentmod', 1 ) . '.' . $node->sentmod;
     }
-    foreach my $type ( 'compl', 'coref_text', 'coref_gram', 'bridging' ) {
-        if ( defined $node->{ $type . '.rf' } ) {
-            foreach my $ref ( TredMacro::ListV( $node->{ $type . '.rf' } ) ) {
+    foreach my $type ( 'compl', 'coref_text', 'coref_gram', 'bridging' )
+    {
+        if ( defined $node->{ $type . '.rf' } )
+        {
+            foreach my $ref ( TredMacro::ListV( $node->{ $type . '.rf' } ) )
+            {
                 my $ref_node = $self->_treex_doc->get_node_by_id($ref);
-                if ( $node->get_bundle->get_position() != $ref_node->get_bundle->get_position() ) {
+                if ( $node->get_bundle->get_position() != $ref_node->get_bundle->get_position() )
+                {
                     $line1 .= ' ' . $self->_colors->get( $type, 1 ) . $ref_node->{t_lemma};
                 }
             }
         }
-        elsif ( defined $node->{ $type } ) {
-           foreach my $ref ( map {$_->{ 'target_node.rf' }} TredMacro::ListV( $node->{ $type } ) ) {
+        elsif ( defined $node->{ $type } )
+        {
+           foreach my $ref ( map {$_->{ 'target_node.rf' }} TredMacro::ListV( $node->{ $type } ) )
+           {
                 my $ref_node = $self->_treex_doc->get_node_by_id($ref);
-                if ( $node->get_bundle->get_position() != $ref_node->get_bundle->get_position() ) {
+                if ( $node->get_bundle->get_position() != $ref_node->get_bundle->get_position() )
+                {
                     $line1 .= ' ' . $self->_colors->get( $type, 1 ) . $ref_node->{t_lemma};
                 }
            }
@@ -277,16 +298,19 @@ sub _tnode_labels {
     $line2 .= $self->_colors->get( 'formeme',    1 ) . ' ' . $node->formeme      if $node->formeme;
     my @a_nodes = ();
     my $line3_1 = '';
-    if ( defined $node->attr('a/aux.rf') ) {
+    if ( defined $node->attr('a/aux.rf') )
+    {
         @a_nodes = TredMacro::ListV( $node->attr('a/aux.rf') );
         @a_nodes = map { $self->_treex_doc->get_node_by_id($_) } @a_nodes;
         @a_nodes = map { { form => $_->{form}, ord => $_->{ord}, type => 'aux' } } @a_nodes;
     }
-    if ( defined $node->attr('a/lex.rf') ) {
+    if ( defined $node->attr('a/lex.rf') )
+    {
         my $a_node = $self->_treex_doc->get_node_by_id( $node->attr('a/lex.rf') );
         push @a_nodes, { form => $a_node->{form}, ord => $a_node->{ord}, type => 'lex' };
     }
-    if (@a_nodes) {
+    if (@a_nodes)
+    {
         @a_nodes = sort { $a->{ord} <=> $b->{ord} } @a_nodes;
         @a_nodes = map { ( $_->{type} eq 'lex' ? $self->_colors->get( 'lex', 1 ) : $self->_colors->get( 'aux', 1 ) ) . ( $_->{form} // '' ) } @a_nodes; #/
         $line3_1 = join " ", @a_nodes;
@@ -296,19 +320,23 @@ sub _tnode_labels {
     return [
         [$line1],
         [$line2],
-        [ $line3_1, $line3_2 ]
+        [$line3_1, $line3_2]
     ];
 }
 
-sub _unode_labels {
+sub _unode_labels
+{
     my ( $self, $node ) = @_;
     my $line1 = $node->u_lemma;
+    my $line2 = $node->functor;
     return [
-        [$line1]
+        [$line1],
+        [$line2]
     ];
 }
 
-sub _nnode_labels {
+sub _nnode_labels
+{
     my ( $self, $node ) = @_;
     return [
         [ $node->{normalized_name} ],
@@ -317,17 +345,20 @@ sub _nnode_labels {
     ];
 }
 
-sub _pnode_labels {
+sub _pnode_labels
+{
     my ( $self, $node ) = @_;
     my $line1 = '';
     my $line2 = '';
     my $edgelabel = $node->edgelabel() ? '/'.$node->edgelabel() : '';
-    if ( $node->is_leaf ) {
+    if ( $node->is_leaf )
+    {
         $line1 = $node->{form};
         $line2 = $node->{tag}.$edgelabel;
         $line2 = '-' if $line2 eq '-NONE-';
     }
-    else {
+    else
+    {
         my $phrase = $node->{phrase} ? $node->{phrase} : '';
         $line1 = $self->_colors->get( 'phrase', 1 ) . $phrase.$edgelabel . '#{black}' . join( '', map {"-$_"} TredMacro::ListV( $node->{functions} ) );
     }
