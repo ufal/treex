@@ -40,11 +40,12 @@ sub bundle_style {
     return $style;
 }
 
-sub node_style {
+sub node_style
+{
     my ( $self, $node ) = @_;
     my $styles = '';
-
-    if ( $node->is_root() ) {
+    if ( $node->is_root() )
+    {
         $styles .= '#{Node-rellevel:' . $node->{'_shift_down'} . '}';
     }
     my $layer = $node->get_layer;
@@ -54,30 +55,36 @@ sub node_style {
     $subs{a} = \&_anode_style;
     $subs{n} = \&_nnode_style;
     $subs{p} = \&_pnode_style;
-    if ( defined $subs{$layer} ) {
+    if ( defined $subs{$layer} )
+    {
         return $styles . &{ $subs{$layer} }( $self, $node );
     }
-    else {
+    else
+    {
         log_fatal "Undefined or unknown layer: $layer";
     }
 }
 
-sub _anode_style {
+sub _anode_style
+{
     my ( $self, $node ) = @_;
     my $linestyle = $node->wild->{changed} ? '#{Line-width:5}' : '';
-    if (defined $node->wild->{edgecolor}) {
+    if (defined $node->wild->{edgecolor})
+    {
         $linestyle .= '#{Line-fill:' . $node->wild->{edgecolor} . '}';
     }
     $linestyle .= '#{Line-width:5}' if $node->wild->{joined};
     $linestyle .= '#{Line-fill:#ff0000}' if $node->wild->{unchangeable};
-    if ( $node->clause_number ) {
+    if ( $node->clause_number )
+    {
         my $clr = $self->_colors->get_clause_color( $node->clause_number );
         return '#{Oval-fill:' . $clr . '}' . '#{Line-fill:' . $clr . '}' . $linestyle;
     }
     return '#{Oval-fill:' . $self->_colors->get('anode') . '}' . $linestyle;
 }
 
-sub _tnode_style {
+sub _tnode_style
+{
     my ( $self, $node ) = @_;
     my $style = '#{Oval-fill:' . $self->_colors->get('tnode') . '}';
     return $style if $node->is_root;
@@ -97,35 +104,50 @@ sub _tnode_style {
     my $line_color = $self->_colors->get('edge');
     my $line_coords;
     my $line_dash;
-    if ($node->{is_member}) {
-        if (not $node->is_root and $self->_is_coord($node->parent)) {
+    if ($node->{is_member})
+    {
+        if (not $node->is_root and $self->_is_coord($node->parent))
+        {
             $line_width = 1;
             $line_color = $self->_colors->get('coord');
-        } else {
+        }
+        else
+        {
             $line_color = $self->_colors->get('error');
         }
-    } elsif (not $node->is_root and $self->_is_coord($node->parent)) {
+    }
+    elsif (not $node->is_root and $self->_is_coord($node->parent))
+    {
         $line_color = $self->_colors->get('coord_mod');
-    } elsif ($self->_is_coord($node)) {
+    }
+    elsif ($self->_is_coord($node))
+    {
         $line_color = $self->_colors->get('coord');
         $line_width = 1;
     }
-    if (($node->{functor} and $node->{functor} =~ m/^(?:PAR|PARTL|VOCAT|RHEM|CM|FPHR|PREC)$/) or (not $node->is_root and $node->parent->is_root)) {
+    if (($node->{functor} and $node->{functor} =~ m/^(?:PAR|PARTL|VOCAT|RHEM|CM|FPHR|PREC)$/) or (not $node->is_root and $node->parent->is_root))
+    {
         $line_width = 1;
         $line_dash = '2,4';
         $line_color = $self->_colors->get('edge');
     }
-    if ($self->_is_coord($node)) {
+    if ($self->_is_coord($node))
+    {
         $line_coords = "n,n,n,n&$x1,$y1";
         $line_width = '0&'.$line_width;
         $line_color = 'white&'.$line_color;
         $line_dash = '&'.$line_dash if $line_dash;
-    } else {
+    }
+    else
+    {
         $line_coords = 'n,n';
     }
-    if (not $node->is_root and $self->_is_coord($node->parent)) {
+    if (not $node->is_root and $self->_is_coord($node->parent))
+    {
         $line_coords .= ",$x2,$y2";
-    } else {
+    }
+    else
+    {
         $line_coords .= ',p,p';
     }
     $style .= $coord_circle if $self->_is_coord($node);
@@ -135,7 +157,8 @@ sub _tnode_style {
     return $style;
 }
 
-sub _unode_style {
+sub _unode_style
+{
     my ( $self, $node ) = @_;
     my $style = '#{Oval-fill:' . $self->_colors->get('unode') . '}';
     return $style if $node->is_root;
@@ -154,30 +177,36 @@ sub _unode_style {
     return $style;
 }
 
-sub _nnode_style {
+sub _nnode_style
+{
     my ( $self, $node ) = @_;
     return '#{Oval-fill:' . $self->_colors->get('nnode') . '}';
 }
 
-sub _pnode_style {
+sub _pnode_style
+{
     my ( $self, $node ) = @_;
     my $terminal = $node->is_leaf;
     my $style = '#{Line-coords:n,n,n,p,p,p}';
     $style .= '#{nodeXSkip:4}#{nodeYSkip:0}#{NodeLabel-skipempty:1}';
     $style .= '#{NodeLabel-halign:center}#{Node-textalign:center}';
-    if ($terminal) {
+    if ($terminal)
+    {
         my $shift = $node->root->{_tree_depth} - $node->{_depth};
         $style .= "#{Node-rellevel:$shift}";
     }
-    if ( not $node->is_root and scalar( $node->parent->children ) == 1 ) {
+    if ( not $node->is_root and scalar( $node->parent->children ) == 1 )
+    {
         $style .= '#{Node-addafterskip:15}';
     }
-    if ( not $terminal ) {
+    if ( not $terminal )
+    {
         $style .= '#{Oval-fill:' . ( $node->{is_head} ? $self->_colors->get('nonterminal_head') : $self->_colors->get('nonterminal') ) . '}';
         $style .= '#{Node-shape:rectangle}#{CurrentOval-outline:' . $self->_colors->get('current') . '}';
         $style .= '#{CurrentOval-width:2}#{Node-surroundtext:1}#{NodeLabel-valign:center}';
     }
-    else {
+    else
+    {
         $style .= '#{Line-dash:.}';
         my $ctype = $node->tag eq '-NONE-' ? 'trace'
                   : $node->is_head         ? 'terminal_head'

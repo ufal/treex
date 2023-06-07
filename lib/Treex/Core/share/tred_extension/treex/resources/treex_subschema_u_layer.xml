@@ -73,10 +73,82 @@
     </structure>
   </type>
 
-  <type name="bool.type">
+  <!-- DZ: Initially copying functor values from the t-layer. We will see
+       whether we want to keep (a subset of) them or switch completely to
+       PropBank-style ARG0, ARG1, ARGM etc. -->
+  <type name="func.type">
     <choice>
-      <value>0</value>
-      <value>1</value>
+      <value>ACT</value>
+      <value>AUTH</value>
+      <value>PAT</value>
+      <value>ADDR</value>
+      <value>EFF</value>
+      <value>ORIG</value>
+      <value>ACMP</value>
+      <value>ADVS</value>
+      <value>AIM</value>
+      <value>APP</value>
+      <value>APPS</value>
+      <value>ATT</value>
+      <value>BEN</value>
+      <value>CAUS</value>
+      <value>CNCS</value>
+      <value>CM</value>
+      <value>COMPL</value>
+      <value>CONJ</value>
+      <value>COND</value>
+      <value>CONFR</value>
+      <value>CONTRA</value>
+      <value>CONTRD</value>
+      <value>CPHR</value>
+      <value>CPR</value>
+      <value>CRIT</value>
+      <value>CSQ</value>
+      <value>DENOM</value>
+      <value>DIFF</value>
+      <value>DIR1</value>
+      <value>DIR2</value>
+      <value>DIR3</value>
+      <value>DISJ</value>
+      <value>DPHR</value>
+      <value>EXT</value>
+      <value>FPHR</value>
+      <value>GRAD</value>
+      <value>HER</value>
+      <value>ID</value>
+      <value>INTF</value>
+      <value>INTT</value>
+      <value>LOC</value>
+      <value>MANN</value>
+      <value>MAT</value>
+      <value>MEANS</value>
+      <value>MOD</value>
+      <value>NE</value>
+      <value>OPER</value>
+      <value>PAR</value>
+      <value>PARTL</value>
+      <value>PREC</value>
+      <value>PRED</value>
+      <value>REAS</value>
+      <value>REG</value>
+      <value>RESL</value>
+      <value>RESTR</value>
+      <value>RHEM</value>
+      <value>RSTR</value>
+      <value>SM</value>
+      <value>SUBS</value>
+      <value>TFHL</value>
+      <value>TFRWH</value>
+      <value>THL</value>
+      <value>THO</value>
+      <value>TOWH</value>
+      <value>TPAR</value>
+      <value>TSIN</value>
+      <value>TTILL</value>
+      <value>TWHEN</value>
+      <value>VOCAT</value>
+      <value>DESCR</value>
+      <value>???</value>
     </choice>
   </type>
 
