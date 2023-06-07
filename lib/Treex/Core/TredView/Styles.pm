@@ -125,6 +125,9 @@ sub _tnode_style
         $line_color = $self->_colors->get('coord');
         $line_width = 1;
     }
+    # Render the edge as dashed if the child node is "independent", i.e., it
+    # has one of the "independent" functors or it is attached to the artificial
+    # root.
     if (($node->{functor} and $node->{functor} =~ m/^(?:PAR|PARTL|VOCAT|RHEM|CM|FPHR|PREC)$/) or (not $node->is_root and $node->parent->is_root))
     {
         $line_width = 1;
@@ -170,6 +173,15 @@ sub _unode_style
     my $line_color = $self->_colors->get('edge');
     my $line_coords;
     my $line_dash;
+    # Render the edge as dashed if the child node is "independent", i.e., it
+    # has one of the "independent" functors or it is attached to the artificial
+    # root.
+    if (($node->{functor} and $node->{functor} =~ m/^(?:PAR|PARTL|VOCAT|RHEM|CM|FPHR|PREC)$/) or (not $node->is_root and $node->parent->is_root))
+    {
+        $line_width = 1;
+        $line_dash = '2,4';
+        $line_color = $self->_colors->get('edge');
+    }
     $line_coords = 'n,n';
     $line_coords .= ',p,p';
     $style .= "#{Line-width:$line_width}#{Line-fill:$line_color}#{Line-coords:$line_coords}";
