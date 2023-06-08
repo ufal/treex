@@ -327,7 +327,7 @@ sub _tnode_labels
 sub _unode_labels
 {
     my ( $self, $node ) = @_;
-    my $line1 = $node->u_lemma;
+    my $line1 = $node->concept;
     my $line2 = $node->functor;
     return [
         [$line1],
