@@ -37,7 +37,7 @@
       <member name="nodetype" type="u-nodetype.type"/>
       <member name="ord" role="#ORDER" required="0"><cdata format="nonNegativeInteger"/></member>
 
-      <member name="u_lemma"><cdata format="any"/></member>
+      <member name="concept"><cdata format="any"/></member>
       <member name="functor"><alt type="func.type"/></member>
 
       <!--  References -->

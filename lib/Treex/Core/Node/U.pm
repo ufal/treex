@@ -10,7 +10,7 @@ with 'Treex::Core::Node::InClause';
 
 # u-layer attributes
 has [
-    qw( nodetype u_lemma functor
+    qw( nodetype concept functor
     )
 ] => ( is => 'rw' );
 

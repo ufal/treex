@@ -39,7 +39,7 @@ sub add_tnode_to_unode
     $unode->set_tnode($tnode);
     # Set u-node attributes based on the t-node.
     $unode->_set_ord($tnode->ord());
-    $unode->set_u_lemma($tnode->t_lemma());
+    $unode->set_concept($tnode->t_lemma());
     $unode->set_functor($tnode->functor());
     return $unode;
 }
