@@ -101,13 +101,45 @@ sub set_tnode
 }
 
 #==============================================================================
+# Reference within the same u-graph for referential nodes.
+#==============================================================================
+
+sub get_ref_node
+{
+    my $self = shift;
+    # reference can be obtained only for referential nodes
+    return undef if ($self->nodetype ne "ref");
+    return $self->get_deref_attr('same_as.rf')
+}
+
+sub set_ref_node
+{
+    my $self = shift;
+    my $refnode = shift;
+    if ($self->nodetype ne "ref") {
+        log_warn("Setting a reference node for the non-referential node $self->id skipped.");
+        return;
+    }
+    $self->set_deref_attr('same_as.rf', $refnode);
+}
+
+sub make_referential
+{
+    my $self = shift;
+    my $refnode = shift;
+    $self->set_nodetype('ref');
+    $self->set_ref_node($refnode);
+    $self->set_concept(undef)
+}
+
+#==============================================================================
 # Attributes that contain references.
 #==============================================================================
 
 override '_get_reference_attrs' => sub
 {
     my ($self) = @_;
-    return ('t.rf');
+    return ('t.rf', 'same_as.rf');
 };
 
 1;
