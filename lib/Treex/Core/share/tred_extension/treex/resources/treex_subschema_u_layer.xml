@@ -41,7 +41,7 @@
       <member name="functor"><alt type="func.type"/></member>
 
       <!--  References -->
-      <member name="t" type="u-t.type"/> <!--name of getter/setter methods may be changed soon-->
+      <member name="t.rf"><cdata format="PMLREF"/></member>
       <member name="same_as.rf"><cdata format="PMLREF"/></member>
 
       <member name="wild_dump"><cdata format="any"/></member>
@@ -62,19 +62,6 @@
       <value>list</value>
       <value>qcomplex</value>
     </choice>
-  </type>
-
-  <type name="u-t.type"> <!-- !!! cloned from t-layer's t-a.type; needs to be revisited! -->
-    <structure>
-      <member name="lex.rf">
-        <cdata format="PMLREF"/>
-      </member>
-      <member name="aux.rf">
-        <list ordered="0">
-          <cdata format="PMLREF"/>
-        </list>
-      </member>
-    </structure>
   </type>
 
   <!-- DZ: Initially copying functor values from the t-layer. We will see
