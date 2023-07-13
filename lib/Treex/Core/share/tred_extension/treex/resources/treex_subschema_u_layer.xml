@@ -42,6 +42,7 @@
 
       <!--  References -->
       <member name="t" type="u-t.type"/> <!--name of getter/setter methods may be changed soon-->
+      <member name="same_as.rf"><cdata format="PMLREF"/></member>
 
       <member name="wild_dump"><cdata format="any"/></member>
     </structure>
@@ -49,8 +50,10 @@
 
 <!-- *************** Types of u-layer attributes *******************  -->
 
-  <type name="u-nodetype.type"> <!-- !!! cloned from t-layer's t-nodetype.type; needs to be revisited! -->
+  <type name="u-nodetype.type">
     <choice>
+      <value>ref</value>
+      <!-- !!! cloned from t-layer's t-nodetype.type; needs to be revisited! -->
       <value>atom</value>
       <value>coap</value>
       <value>complex</value>
