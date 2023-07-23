@@ -3,48 +3,146 @@ package Treex::Block::T2U::ConvertCoreference;
 use Moose;
 use Treex::Core::Common;
 
+use Graph::Directed;
+
 extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );
 
-# only return the 1st node in a coref chain + never go across the sentence boundary
-# (return undefs instead)
-sub _filter_coref_node {
-    my ( $self, $tnode, $tantec ) = @_;
-    return first { $_->get_root == $tnode->get_root } $tantec->get_coref_chain( { add_self => 1, ordered => 1 } );
+has '_tcoref_graph' => ( is => 'rw', isa => 'Graph::Directed' );
+
+sub process_tnode {
+    my ($self, $tnode) = @_;
+
+    my @tantes = $tnode->get_coref_nodes;
+    return if !@tantes;
+
+    if (@tantes > 1) {
+        log_warn("Tnode ".$tnode->id." has more than a single antecedent. Taking the first, skipping the rest.");
+    }
+    my $tante = $tantes[0];
+
+    my $tcoref_graph = $self->_tcoref_graph;
+    $tcoref_graph->add_edge($tnode->id, $tante->id);
 }
 
-sub process_unode {
+before 'process_document' => sub {
+    my ($self, $doc) = @_;
+    my $tcoref_graph = Graph::Directed->new();
+    $self->_set_tcoref_graph($tcoref_graph);
+};
 
-    my ( $self, $unode ) = @_;
+after 'process_document' => sub {
+    my ($self, $doc) = @_;
 
-    my $tnode = $unode->get_tnode;
-    # this can happen for e.g. the generated polarity node
-    return if !defined $tnode;
+    my $tcoref_graph = $self->_tcoref_graph;
 
-    # skip if the tnode is not an anaphor
-    my @ante_tnodes = $tnode->get_coref_nodes();
-    return if (!@ante_tnodes);
-    # TODO: what are the cases with multiple antecedents? Skip for the time being.
-    return if (@ante_tnodes > 1);
+    my @tcoref_sorted = ();
 
-    # TODO: special treatment of event concept modifiers, i.e. relative clauses and participles
-        
-    # look for the antecedent that is the first mention
-    my $sentfirst_ante_tnode = $self->_filter_coref_node($tnode, $ante_tnodes[0]);
-
-    # intra-sentential link
-    # the current node is just a reference to the antecedent concept
-    if (defined $sentfirst_ante_tnode) {
-        my ($sentfirst_ante_unode) = $sentfirst_ante_tnode->get_referencing_nodes('t.rf');
-        $unode->make_referential($sentfirst_ante_unode);
+    eval {
+        @tcoref_sorted = $tcoref_graph->topological_sort();
     }
-    # inter-sentential link
-    else {
-        # TODO: implement this    
+    or do {
+        my @cycle_nodes = $tcoref_graph->find_a_cycle;
+        while (@cycle_nodes) {
+            log_warn("A coreference cycle found: " . join(" ", @cycle_nodes) . ". Skipping.");
+            $tcoref_graph = $tcoref_graph->delete_cycle(@cycle_nodes);
+            @cycle_nodes = $tcoref_graph->find_a_cycle;
+        }
+        @tcoref_sorted = $tcoref_graph->topological_sort();
+    };
+
+    foreach my $tnode_id (@tcoref_sorted) {
+        my $tnode = $doc->get_node_by_id($tnode_id);
+        my ($unode) = $tnode->get_referencing_nodes('t.rf');
+
+        my ($tante_id) = $tcoref_graph->successors($tnode_id);
+
+        if (defined $tante_id) {
+            my $tante = $doc->get_node_by_id($tante_id);
+            my ($uante) = $tante->get_referencing_nodes('t.rf');
+
+            # inter-sentential link
+            # - the link must be represented by the ":coref" attribute
+            # - the following intra-sentential links with underspecified anaphors
+            #   must be anchored in this node
+            if ($unode->root != $uante->root) {
+                $unode->add_coref($uante);
+                $self->_anchor_references($unode);
+            }
+            # intra-sentential links with underspecified anaphors
+            # - propagate such anaphors via the wild attribute `anaphs`
+            elsif ($tnode->t_lemma =~ /^(\#Cor)|(\#QCor)|(\#PersPron)$/) {
+                $self->_propagate_anaphors($unode, $uante);
+            }
+            # intra-sentential links with nominal anaphors
+            # - the link must be represented by the ":coref" attribute
+            # - the following intra-sentential links with underspecified anaphors
+            #   must be anchored in this node
+            elsif (defined $tnode->gram_sempos && $tnode->gram_sempos =~ /^n/) {
+                $unode->add_coref($uante, "same-entity");
+                $self->_anchor_references($unode);
+            }
+            else {
+                log_warn "Don't know what to do so far for the u-node: ". $unode->id;
+            }
+        }
+        # non-anaphoric antecedent
+        # - the following intra-sentential links with underspecified anaphors
+        #   must be anchored in this node
+        else {
+            $self->_anchor_references($unode);
+        }
     }
     
-    return;
+};
+
+sub _anchor_references {
+    my ($self, $unode) = @_;
+
+    # make a reference to this node from all following non-nominal anaphors
+    my $unode_anaphs = delete $unode->wild->{'anaphs'} // [];
+    foreach my $uanaph (@$unode_anaphs) {
+        $uanaph->make_referential($unode);
+    }
+    my ($person, $number) = $self->_infere_entity_info($unode, @$unode_anaphs);
+    $unode->set_entity_refperson($person) if defined $person;
+    $unode->set_entity_refnumber($number) if defined $number;
+}
+
+my %T2U_PERSON = (
+    "1" => "1st",
+    "2" => "2nd",
+    "3" => "3rd",
+    "inher" => "Inher",
+);
+my %T2U_NUMBER = (
+    "sg" => "Singular",
+    "pl" => "Plural",
+    "inher" => "Inher",
+);
+
+sub _infere_entity_info {
+    my ($self, $unode, @uanaphs) = @_;
+
+    my $tnode = $unode->get_tnode;
+
+    my $person;
+    my $number;
+    if (defined $tnode) {
+        $person = $tnode->gram_person ? $T2U_PERSON{$tnode->gram_person} : undef;
+        $number = $tnode->gram_number ? $T2U_NUMBER{$tnode->gram_number} : undef;
+    }
+    return ($person, $number);
+}
+
+sub _propagate_anaphors {
+    my ($self, $unode, $uante) = @_;
+    my $unode_anaphs = delete $unode->wild->{'anaphs'} // [];
+    push @$unode_anaphs, $unode;
+    my $uante_anaphs = $uante->wild->{'anaphs'} // [];
+    push @$uante_anaphs, @$unode_anaphs;
+    $uante->wild->{'anaphs'} = $uante_anaphs;
 }
 
 1;
