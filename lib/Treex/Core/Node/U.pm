@@ -101,6 +101,16 @@ sub set_tnode
 }
 
 #==============================================================================
+# Entity attributes.
+#==============================================================================
+
+sub entity_refperson    { return $_[0]->get_attr( 'entity/ref-person' ); }
+sub entity_refnumber    { return $_[0]->get_attr( 'entity/ref-number' ); }
+
+sub set_entity_refperson    { return $_[0]->set_attr( 'entity/ref-person',   $_[1] ); }
+sub set_entity_refnumber    { return $_[0]->set_attr( 'entity/ref-number',   $_[1] ); }
+
+#==============================================================================
 # Reference within the same u-graph for referential nodes.
 #==============================================================================
 
@@ -130,6 +140,28 @@ sub make_referential
     $self->set_nodetype('ref');
     $self->set_ref_node($refnode);
     $self->set_concept(undef)
+}
+
+#==============================================================================
+# Document-level coreference.
+#==============================================================================
+
+sub get_coref {
+    my ($self) = @_;
+    my $coref_list = $self->get_attr("coref") // [];
+    my $doc = $self->get_document;
+    return map {
+        [$doc->get_node_by_id($_->{'target_node.rf'}), $_->{'type'}]
+    } @$coref_list;
+}
+
+sub add_coref {
+    my ($self, $uante, $type) = @_;
+    $type //= "same-entity";
+    my $coref_list = $self->get_attr("coref") // [];
+    my $new_coref = {'target_node.rf' => $uante->id, 'type' => $type};
+    push @$coref_list, $new_coref;
+    $self->set_attr("coref", $coref_list);
 }
 
 #==============================================================================

@@ -37,6 +37,12 @@
       <member name="nodetype" type="u-nodetype.type"/>
       <member name="ord" role="#ORDER" required="0"><cdata format="nonNegativeInteger"/></member>
 
+      <member name="entity" type="u-entity.type"/>
+
+      <member name="coref" required="0">
+        <list ordered="0" type="u-coref-link.type"/>
+      </member>
+
       <member name="concept"><cdata format="any"/></member>
       <member name="functor"><alt type="func.type"/></member>
 
@@ -141,6 +147,42 @@
       <value>DESCR</value>
       <value>???</value>
     </choice>
+  </type>
+
+  <type name="u-entity.type">
+    <structure>
+      <member name="ref-person"  type="u-refperson.type"/>
+      <member name="ref-number" type="u-refnumber.type"/>
+    </structure>
+  </type>
+
+  <type name="u-refperson.type">
+    <choice>
+      <value>1st</value>
+      <value>2nd</value>
+      <value>3rd</value>
+    </choice>
+  </type>
+
+  <type name="u-refnumber.type">
+    <choice>
+      <value>Singular</value>
+      <value>Plural</value>
+    </choice>
+  </type>
+
+  <type name="u-coref-link.type">
+    <structure>
+      <member name="target_node.rf" required="1">
+        <cdata format="PMLREF"/></member>
+      <member name="type" required="0">
+        <choice>
+          <value>same-entity</value>
+          <value>same-event</value>
+          <value>subset-of</value>
+        </choice>
+      </member>
+    </structure>
   </type>
 
 </pml_schema>
