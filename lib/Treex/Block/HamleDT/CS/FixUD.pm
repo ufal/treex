@@ -273,6 +273,9 @@ sub classify_numerals
     {
         $iset->add('pos' => 'num', 'numtype' => 'card', 'prontype' => 'ind');
     }
+    # Summer 2023 (after UD 2.12): Feature NumValue=1,2,3 finally recognized
+    # as useless and removed from Czech UD data.
+    $iset->clear('numvalue');
 }
 
 
