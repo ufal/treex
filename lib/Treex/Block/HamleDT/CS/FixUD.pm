@@ -469,6 +469,7 @@ sub fix_copula_location
     # too, but the actual constructions are unusual and maybe it will be safer
     # to leave them as they are.
     return if($node->deprel() =~ m/^conj(:|$)/ && $node->parent()->ord() > $new_head->ord());
+    return if(any {$_->deprel() =~ m/^conj(:|$)/ && $new_head->ord() > $_->ord()} @other_children);
     $new_head->set_parent($node->parent());
     $new_head->set_deprel($node->deprel());
     foreach my $child (@other_children)
