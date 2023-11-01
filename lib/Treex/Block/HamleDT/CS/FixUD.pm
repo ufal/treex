@@ -456,13 +456,19 @@ sub fix_copula_location
     return unless(scalar(@children) > 0);
     # Does it have one or more adverbial modifiers?
     # (Ignore adverbial clauses because those would bring up the double subject problem, and they are unlikely anyway.)
-    my @adverbials = grep {$_->deprel() =~ m/^(obl|advmod)(:|$)/} (@children);
+    ###!!! Exclude "přece" in fixed expression "přece jenom", it would later get relabeled "cc" and could not serve as a head.
+    my @adverbials = grep {$_->deprel() =~ m/^(obl|advmod)(:|$)/ && $_->lemma() ne 'přece'} (@children);
     return unless(scalar(@adverbials) > 0);
     ###!!! If there are multiple adverbials, we should prefer location over time. But we cannot distinguish them.
     # Make the first adverbial the head.
     # Attach the other children and the copula to it.
     my $new_head = shift(@adverbials);
     my @other_children = grep {$_ != $new_head} (@children);
+    # There are a few sentences where the transformation would result in
+    # right-to-left coordination. We could attempt to transform the coordination
+    # too, but the actual constructions are unusual and maybe it will be safer
+    # to leave them as they are.
+    return if($node->deprel() =~ m/^conj(:|$)/ && $node->parent()->ord() > $new_head->ord());
     $new_head->set_parent($node->parent());
     $new_head->set_deprel($node->deprel());
     foreach my $child (@other_children)
