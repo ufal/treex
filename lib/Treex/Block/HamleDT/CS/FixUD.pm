@@ -31,6 +31,7 @@ sub process_atree
         $self->fix_jak_znamo($root);
         $self->fix_annotation_errors($node);
         $self->identify_acl_relcl($node);
+        $self->fix_copula_location($node);
     }
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
@@ -431,6 +432,45 @@ sub identify_acl_relcl
     ###!!! with the bad noun, the clause is recognized as relative, otherwise
     ###!!! it is not.
     $node->set_deprel('acl:relcl');
+}
+
+
+
+#------------------------------------------------------------------------------
+# Identifies existential-locative clauses of the type "to be somewhere" and
+# transforms them to copular clauses. This is a Czech-specific step because in
+# (Czech) PDT, such clauses are not treated as copular but in UD v2 they
+# they should. For example, both "V ledničce je jídlo" and "Jídlo je
+# v ledničce" should be treated as if "je" were a copula, i.e., the structure
+# should be similar to "Jídlo je dobré".
+#------------------------------------------------------------------------------
+sub fix_copula_location
+{
+    my $self = shift;
+    my $node = shift;
+    # Is this node the copular verb "být"?
+    return unless($node->lemma() eq 'být');
+    # Does it have a subject?
+    my @children = $node->children({'ordered' => 1});
+    my @subjects = grep {$_->deprel() =~ m/^[nc]subj(:|$)/} (@children);
+    return unless(scalar(@children) > 0);
+    # Does it have one or more adverbial modifiers?
+    # (Ignore adverbial clauses because those would bring up the double subject problem, and they are unlikely anyway.)
+    my @adverbials = grep {$_->deprel() =~ m/^(obl|advmod)(:|$)/} (@children);
+    return unless(scalar(@adverbials) > 0);
+    ###!!! If there are multiple adverbials, we should prefer location over time. But we cannot distinguish them.
+    # Make the first adverbial the head.
+    # Attach the other children and the copula to it.
+    my $new_head = shift(@adverbials);
+    my @other_children = grep {$_ != $new_head} (@children);
+    $new_head->set_parent($node->parent());
+    $new_head->set_deprel($node->deprel());
+    foreach my $child (@other_children)
+    {
+        $child->set_parent($new_head);
+    }
+    $node->set_parent($new_head);
+    $node->set_deprel('cop');
 }
 
 
