@@ -437,6 +437,20 @@ sub identify_acl_relcl
 
 
 #------------------------------------------------------------------------------
+# Attempts to guess whether a node heads a temporal modifier, based on its
+# lemma. Needed in fix_copula_location() below, where temporal modifiers should
+# have lower priority than locations and other adverbials.
+#------------------------------------------------------------------------------
+sub is_temporal_modifier
+{
+    my $self = shift;
+    my $node = shift;
+    return $node->lemma() =~ m/^(kdy|někdy|vždy(cky)?|pokaždé|nikdy|teď|nyní|tehdy|tenkrát|později|pak|poté|potom|už|již|dosud|dříve|dávno|brzy|zatím|ještě|stále|nadále|opět|nakonec|často|dlouho|zároveň|současně|doba|čas|období|den|denně|dnes|včera|předevčírem|zítra|pozítří|pondělí|úterý|středa|čtvrtek|pátek|sobota|neděle|svátek|velikonoce|vánoce|měsíc|měsíčně|leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec|jaro|léto|podzim|zima|prázdniny|ročně|letos|loni|napřesrok|století|novověk|středověk|starověk|pravěk)$/i;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Identifies existential-locative clauses of the type "to be somewhere" and
 # transforms them to copular clauses. This is a Czech-specific step because in
 # (Czech) PDT, such clauses are not treated as copular but in UD v2 they
@@ -451,13 +465,14 @@ sub fix_copula_location
     # Is this node the copular verb "být"?
     return unless($node->lemma() eq 'být');
     # Does it have a subject?
-    my @children = $node->children({'ordered' => 1});
+    my @children = $node->children();
     my @subjects = grep {$_->deprel() =~ m/^[nc]subj(:|$)/} (@children);
     return unless(scalar(@children) > 0);
     # Does it have one or more adverbial modifiers?
     # (Ignore adverbial clauses because those would bring up the double subject problem, and they are unlikely anyway.)
     ###!!! Exclude "přece" in fixed expression "přece jenom", it would later get relabeled "cc" and could not serve as a head.
-    my @adverbials = grep {$_->deprel() =~ m/^(obl|advmod)(:|$)/ && $_->lemma() ne 'přece'} (@children);
+    # Sort it so that temporal modifiers have lower priority, i.e. come later in the list.
+    my @adverbials = sort {my $at = $self->is_temporal_modifier($a); my $bt = $self->is_temporal_modifier($b); my $r = ($at && !$bt) ? 1 : (!$at && $bt) ? -1 : 0; unless($r) {$r = $a->ord() <=> $b->ord()} $r} (grep {$_->deprel() =~ m/^(obl|advmod)(:|$)/ && $_->lemma() ne 'přece'} (@children));
     return unless(scalar(@adverbials) > 0);
     ###!!! If there are multiple adverbials, we should prefer location over time. But we cannot distinguish them.
     # Make the first adverbial the head.
