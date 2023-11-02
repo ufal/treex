@@ -449,7 +449,7 @@ sub is_temporal_modifier
 {
     my $self = shift;
     my $node = shift;
-    return $node->lemma() =~ m/^(kdy|někdy|vždy(cky)?|pokaždé|nikdy|teď|nyní|právě|tentokrát|tehdy|tenkrát|později|pak|poté|potom|už|již|dosud|dříve|dávno|brzy|zatím|ještě|stále|nadále|opět|nakonec|často|dlouho|zároveň|současně|doba|čas|období|chvíle|chvilka|vteřina|vteřinka|sekunda|minuta|minutka|hodina|hodinka|ráno|dopoledne|poledne|odpoledne|večer|noc|půlnoc|den|denně|dnes|včera|předevčírem|zítra|pozítří|pondělí|úterý|středa|čtvrtek|pátek|sobota|neděle|svátek|víkend|týden|velikonoce|vánoce|měsíc|měsíčně|leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec|čtvrtletí|kvartál|jaro|léto|podzim|zima|prázdniny|ročně|letos|loni|napřesrok|dekáda|století|éra|novověk|středověk|starověk|pravěk)$/i;
+    return $node->lemma() =~ m/^(kdy|někdy|vždy(cky)?|pokaždé|nikdy|teď|nyní|právě|tentokrát|tehdy|tenkrát|později|pak|poté|potom|už|již|dosud|dříve|dávno|brzy|zatím|ještě|stále|nadále|opět|nakonec|často|dlouho|zároveň|současně|doba|čas|období|chvíle|chvilka|vteřina|vteřinka|sekunda|minuta|minutka|hodina|hodinka|ráno|dopoledne|poledne|odpoledne|večer|noc|půlnoc|den|denně|dnes|včera|předevčírem|zítra|pozítří|pondělí|úterý|středa|čtvrtek|pátek|sobota|neděle|svátek|víkend|týden|velikonoce|vánoce|měsíc|měsíčně|leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec|čtvrtletí|kvartál|jaro|léto|podzim|zima|prázdniny|ročně|letos|loni|napřesrok|dekáda|století|éra|novověk|středověk|starověk|pravěk|minulost|současno(st)?|budoucno(st)?)$/i;
 }
 
 
@@ -2172,6 +2172,13 @@ sub fix_annotation_errors
         $subtree[1]->set_deprel('conj');
         $subtree[3]->set_deprel('parataxis');
         $subtree[5]->set_deprel('parataxis');
+    }
+    # FicTree test test-ku_smlas062-s14
+    elsif($spanstring =~ m/, že chtěla opravdu zemřít/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[3]->set_parent($subtree[2]);
+        $subtree[3]->set_deprel('advmod');
     }
     # Make sure that no node has more than one subject. This is to prevent
     # validation errors in UD. However, instead of randomly picking a subject
