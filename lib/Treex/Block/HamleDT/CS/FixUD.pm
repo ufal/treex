@@ -2180,6 +2180,61 @@ sub fix_annotation_errors
         $subtree[3]->set_parent($subtree[2]);
         $subtree[3]->set_deprel('advmod');
     }
+    # CAC train a03w-s91
+    elsif($spanstring =~ m/^, zejména jde - li o práce/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[1]->set_deprel('advmod');
+        $subtree[3]->set_parent($subtree[4]);
+        $subtree[4]->set_parent($subtree[2]);
+        $subtree[4]->set_deprel('mark');
+    }
+    # CAC train n38w-s158
+    elsif($spanstring =~ m/^a jedná - li podvědomě ,/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[0]->set_deprel('cc');
+        $subtree[2]->set_parent($subtree[3]);
+        $subtree[3]->set_parent($subtree[1]);
+        $subtree[3]->set_deprel('mark');
+    }
+    # CAC train s08w-s34
+    elsif($spanstring =~ m/^, i v poměru k výrobě oceli ,/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[3]->set_parent($subtree[2]);
+        $subtree[3]->set_deprel('fixed');
+        $subtree[4]->set_parent($subtree[2]);
+        $subtree[4]->set_deprel('fixed');
+    }
+    # CAC train s24w-s90
+    elsif($spanstring =~ m/^, ba dokonce až i k skeptickým názorům/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[3]->set_deprel('cc');
+        $subtree[5]->set_parent($subtree[7]);
+        $subtree[5]->set_deprel('case');
+    }
+    # CAC train s27w-s3
+    elsif($spanstring =~ m/^, a to ve spolupráci s matematiky/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[4]->set_parent($subtree[3]);
+        $subtree[4]->set_deprel('fixed');
+    }
+    # CAC train s68w-s159
+    elsif($spanstring =~ m/^a značíme je velkými písmeny na rozdíl od malých písmen/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[9]->set_parent($subtree[1]);
+        $subtree[9]->set_deprel('obl');
+        $subtree[5]->set_parent($subtree[9]);
+        $subtree[5]->set_deprel('case');
+        $subtree[6]->set_parent($subtree[5]);
+        $subtree[6]->set-deprel('fixed');
+        $subtree[7]->set_parent($subtree[5]);
+        $subtree[7]->set-deprel('fixed');
+    }
     # Make sure that no node has more than one subject. This is to prevent
     # validation errors in UD. However, instead of randomly picking a subject
     # and re-labeling it as dep, we should investigate and fix the error
