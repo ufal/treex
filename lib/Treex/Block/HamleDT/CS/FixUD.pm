@@ -2231,9 +2231,9 @@ sub fix_annotation_errors
         $subtree[5]->set_parent($subtree[9]);
         $subtree[5]->set_deprel('case');
         $subtree[6]->set_parent($subtree[5]);
-        $subtree[6]->set-deprel('fixed');
+        $subtree[6]->set_deprel('fixed');
         $subtree[7]->set_parent($subtree[5]);
-        $subtree[7]->set-deprel('fixed');
+        $subtree[7]->set_deprel('fixed');
     }
     # Make sure that no node has more than one subject. This is to prevent
     # validation errors in UD. However, instead of randomly picking a subject
