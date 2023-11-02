@@ -445,7 +445,7 @@ sub is_temporal_modifier
 {
     my $self = shift;
     my $node = shift;
-    return $node->lemma() =~ m/^(kdy|někdy|vždy(cky)?|pokaždé|nikdy|teď|nyní|tehdy|tenkrát|později|pak|poté|potom|už|již|dosud|dříve|dávno|brzy|zatím|ještě|stále|nadále|opět|nakonec|často|dlouho|zároveň|současně|doba|čas|období|den|denně|dnes|včera|předevčírem|zítra|pozítří|pondělí|úterý|středa|čtvrtek|pátek|sobota|neděle|svátek|velikonoce|vánoce|měsíc|měsíčně|leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec|jaro|léto|podzim|zima|prázdniny|ročně|letos|loni|napřesrok|století|novověk|středověk|starověk|pravěk)$/i;
+    return $node->lemma() =~ m/^(kdy|někdy|vždy(cky)?|pokaždé|nikdy|teď|nyní|tehdy|tenkrát|později|pak|poté|potom|už|již|dosud|dříve|dávno|brzy|zatím|ještě|stále|nadále|opět|nakonec|často|dlouho|zároveň|současně|doba|čas|období|chvíle|vteřina|sekunda|minuta|hodina|ráno|dopoledne|poledne|odpoledne|večer|noc|půlnoc|den|denně|dnes|včera|předevčírem|zítra|pozítří|pondělí|úterý|středa|čtvrtek|pátek|sobota|neděle|svátek|víkend|týden|velikonoce|vánoce|měsíc|měsíčně|leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec|čtvrtletí|kvartál|jaro|léto|podzim|zima|prázdniny|ročně|letos|loni|napřesrok|dekáda|století|éra|novověk|středověk|starověk|pravěk)$/i;
 }
 
 
@@ -471,8 +471,20 @@ sub fix_copula_location
     # Does it have one or more adverbial modifiers?
     # (Ignore adverbial clauses because those would bring up the double subject problem, and they are unlikely anyway.)
     ###!!! Exclude "přece" in fixed expression "přece jenom", it would later get relabeled "cc" and could not serve as a head.
+    # Also exclude other particles ("jen") that are unlikely to function as predicates.
     # Sort it so that temporal modifiers have lower priority, i.e. come later in the list.
-    my @adverbials = sort {my $at = $self->is_temporal_modifier($a); my $bt = $self->is_temporal_modifier($b); my $r = ($at && !$bt) ? 1 : (!$at && $bt) ? -1 : 0; unless($r) {$r = $a->ord() <=> $b->ord()} $r} (grep {$_->deprel() =~ m/^(obl|advmod)(:|$)/ && $_->lemma() ne 'přece'} (@children));
+    my @adverbials = sort
+    {
+        my $at = $self->is_temporal_modifier($a);
+        my $bt = $self->is_temporal_modifier($b);
+        my $r = ($at && !$bt) ? 1 : (!$at && $bt) ? -1 : 0;
+        unless($r)
+        {
+            $r = $a->ord() <=> $b->ord()
+        }
+        $r
+    }
+    (grep {$_->deprel() =~ m/^(obl|advmod)(:|$)/ && $_->lemma() !~ m/^(jen|přece)$/i} (@children));
     return unless(scalar(@adverbials) > 0);
     ###!!! If there are multiple adverbials, we should prefer location over time. But we cannot distinguish them.
     # Make the first adverbial the head.
