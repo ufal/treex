@@ -2177,6 +2177,10 @@ sub fix_annotation_errors
     elsif($spanstring =~ m/, že chtěla opravdu zemřít/i)
     {
         my @subtree = $self->get_node_subtree($node);
+        if($node != $subtree[2])
+        {
+            log_fatal('Hlava je '.$node->form());
+        }
         $subtree[3]->set_parent($subtree[2]);
         $subtree[3]->set_deprel('advmod');
     }
