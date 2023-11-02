@@ -277,6 +277,10 @@ sub classify_numerals
     # Summer 2023 (after UD 2.12): Feature NumValue=1,2,3 finally recognized
     # as useless and removed from Czech UD data.
     $iset->clear('numvalue');
+    # Same for Style=Arch. It would not be comparable across treebanks because
+    # their texts are from different periods and what is archaic now may not
+    # have been archaic 100 years ago.
+    $iset->clear('style') if($iset->is_archaic());
 }
 
 
