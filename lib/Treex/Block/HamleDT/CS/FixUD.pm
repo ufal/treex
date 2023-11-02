@@ -445,7 +445,7 @@ sub is_temporal_modifier
 {
     my $self = shift;
     my $node = shift;
-    return $node->lemma() =~ m/^(kdy|někdy|vždy(cky)?|pokaždé|nikdy|teď|nyní|tehdy|tenkrát|později|pak|poté|potom|už|již|dosud|dříve|dávno|brzy|zatím|ještě|stále|nadále|opět|nakonec|často|dlouho|zároveň|současně|doba|čas|období|chvíle|vteřina|sekunda|minuta|hodina|ráno|dopoledne|poledne|odpoledne|večer|noc|půlnoc|den|denně|dnes|včera|předevčírem|zítra|pozítří|pondělí|úterý|středa|čtvrtek|pátek|sobota|neděle|svátek|víkend|týden|velikonoce|vánoce|měsíc|měsíčně|leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec|čtvrtletí|kvartál|jaro|léto|podzim|zima|prázdniny|ročně|letos|loni|napřesrok|dekáda|století|éra|novověk|středověk|starověk|pravěk)$/i;
+    return $node->lemma() =~ m/^(kdy|někdy|vždy(cky)?|pokaždé|nikdy|teď|nyní|právě|tehdy|tenkrát|později|pak|poté|potom|už|již|dosud|dříve|dávno|brzy|zatím|ještě|stále|nadále|opět|nakonec|často|dlouho|zároveň|současně|doba|čas|období|chvíle|chvilka|vteřina|vteřinka|sekunda|minuta|minutka|hodina|hodinka|ráno|dopoledne|poledne|odpoledne|večer|noc|půlnoc|den|denně|dnes|včera|předevčírem|zítra|pozítří|pondělí|úterý|středa|čtvrtek|pátek|sobota|neděle|svátek|víkend|týden|velikonoce|vánoce|měsíc|měsíčně|leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec|čtvrtletí|kvartál|jaro|léto|podzim|zima|prázdniny|ročně|letos|loni|napřesrok|dekáda|století|éra|novověk|středověk|starověk|pravěk)$/i;
 }
 
 
@@ -484,7 +484,7 @@ sub fix_copula_location
         }
         $r
     }
-    (grep {$_->deprel() =~ m/^(obl|advmod)(:|$)/ && $_->lemma() !~ m/^(jen|přece)$/i} (@children));
+    (grep {$_->deprel() =~ m/^(obl|advmod)(:|$)/ && $_->lemma() !~ m/^(asi|jen|přece)$/i} (@children));
     return unless(scalar(@adverbials) > 0);
     ###!!! If there are multiple adverbials, we should prefer location over time. But we cannot distinguish them.
     # Make the first adverbial the head.
