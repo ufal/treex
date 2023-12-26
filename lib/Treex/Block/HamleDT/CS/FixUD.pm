@@ -443,13 +443,19 @@ sub identify_acl_relcl
 #------------------------------------------------------------------------------
 # Attempts to guess whether a node heads a temporal modifier, based on its
 # lemma. Needed in fix_copula_location() below, where temporal modifiers should
-# have lower priority than locations and other adverbials.
+# have lower priority than locations and other adverbials. Besides temporal
+# modifiers, the function also flags other adverbs that are unlikely to be the
+# predicate.
 #------------------------------------------------------------------------------
-sub is_temporal_modifier
+sub is_unlikely_adverbial_predicate
 {
     my $self = shift;
     my $node = shift;
-    return $node->lemma() =~ m/^(kdy|někdy|vždy(cky)?|pokaždé|nikdy|teď|nyní|právě|tentokrát|tehdy|tenkrát|později|pak|poté|potom|už|již|dosud|dříve|dávno|brzy|zatím|ještě|stále|nadále|opět|nakonec|často|dlouho|zároveň|současně|doba|čas|období|chvíle|chvilka|vteřina|vteřinka|sekunda|minuta|minutka|hodina|hodinka|ráno|dopoledne|poledne|odpoledne|večer|noc|půlnoc|den|denně|dnes|včera|předevčírem|zítra|pozítří|pondělí|úterý|středa|čtvrtek|pátek|sobota|neděle|svátek|víkend|týden|velikonoce|vánoce|měsíc|měsíčně|leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec|čtvrtletí|kvartál|jaro|léto|podzim|zima|prázdniny|ročně|letos|loni|napřesrok|dekáda|století|éra|novověk|středověk|starověk|pravěk|minulost|současno(st)?|budoucno(st)?)$/i;
+    return
+        # temporal
+        $node->lemma() =~ m/^(kdy|někdy|vždy(cky)?|pokaždé|nikdy|teď|nyní|právě|tentokrát|tehdy|tenkrát|pozdě(ji)?|pak|poté|potom|už|již|dosud|dříve|dávno|brzy|teprve|zatím|ještě|stále|nadále|pořád|opět|nakonec|často|dlouho|zároveň|současně|doba|čas|období|momentálně|chvíle|chvilka|vteřina|vteřinka|sekunda|minuta|minutka|hodina|hodinka|ráno|dopoledne|poledne|odpoledne|večer|noc|půlnoc|den|denně|dnes|dodnes|včera|předevčírem|zítra|pozítří|pondělí|úterý|středa|čtvrtek|pátek|sobota|neděle|svátek|víkend|týden|velikonoce|vánoce|měsíc|měsíčně|leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec|čtvrtletí|kvartál|jaro|léto|podzim|zima|prázdniny|ročně|letos|loni|napřesrok|dekáda|století|éra|novověk|středověk|starověk|pravěk|minulost|současno(st)?|budoucno(st)?)$/i
+        || # other unlikely
+        $node->lemma() =~ m/^(dokonce|hodně|jednou|ještě|jistě|konečně|málo|méně|mimochodem|moc|možná|najednou|naopak|naprosto|naštěstí|navíc|obdobně|opravdu|osobně|ostatně|plně|podobně|prakticky|pravděpodobně|proč|prostě|proto|především|přesto|přičemž|přitom|rovněž|samozřejmě|skutečně|stejně|také|údajně|určitě|většinou|více|vlastně|zcela|zřejmě)$/i;
 }
 
 
@@ -479,8 +485,8 @@ sub fix_copula_location
     # Sort it so that temporal modifiers have lower priority, i.e. come later in the list.
     my @adverbials = sort
     {
-        my $at = $self->is_temporal_modifier($a);
-        my $bt = $self->is_temporal_modifier($b);
+        my $at = $self->is_unlikely_adverbial_predicate($a);
+        my $bt = $self->is_unlikely_adverbial_predicate($b);
         my $r = ($at && !$bt) ? 1 : (!$at && $bt) ? -1 : 0;
         unless($r)
         {
@@ -488,7 +494,7 @@ sub fix_copula_location
         }
         $r
     }
-    (grep {$_->deprel() =~ m/^(obl|advmod)(:|$)/ && $_->lemma() !~ m/^(asi|jen|přece)$/i} (@children));
+    (grep {$_->deprel() =~ m/^(obl|advmod)(:|$)/ && $_->lemma() !~ m/^(asi|jen|přece|už)$/i} (@children));
     return unless(scalar(@adverbials) > 0);
     ###!!! If there are multiple adverbials, we should prefer location over time. But we cannot distinguish them.
     # Make the first adverbial the head.
