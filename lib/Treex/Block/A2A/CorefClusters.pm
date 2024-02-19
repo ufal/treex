@@ -193,7 +193,8 @@ sub process_cluster_type
     if(defined($srctype) && defined($ctype) && $srctype ne $ctype)
     {
         log_warn("Cluster type mismatch.");
-        Treex::Tool::Coreference::Cluster::add_mention_misc($srcnode, "ClusterTypeMismatch:$srctype:$ctype:1"); # :1 identifies where the error occurred in the source code
+        # We may want to annotate the mismatch for debugging purposes but otherwise it should not appear in the final data.
+        #Treex::Tool::Coreference::Cluster::add_mention_misc($srcnode, "ClusterTypeMismatch:$srctype:$ctype:1"); # :1 identifies where the error occurred in the source code
         # This mismatch is less likely than the other one below, as it would occur
         # between two coreference edges originating at the same source node. We
         # do not change $srctype, so the current edge will, too, use the previously
@@ -209,8 +210,9 @@ sub process_cluster_type
     if(defined($srctype) && defined($tgttype) && $srctype ne $tgttype)
     {
         log_warn("Cluster type mismatch.");
-        Treex::Tool::Coreference::Cluster::add_mention_misc($srcnode, "ClusterTypeMismatch:$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
-        Treex::Tool::Coreference::Cluster::add_mention_misc($tgtnode, "ClusterTypeMismatch:$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
+        # We may want to annotate the mismatch for debugging purposes but otherwise it should not appear in the final data.
+        #Treex::Tool::Coreference::Cluster::add_mention_misc($srcnode, "ClusterTypeMismatch:$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
+        #Treex::Tool::Coreference::Cluster::add_mention_misc($tgtnode, "ClusterTypeMismatch:$srctype:$tgttype:2"); # :2 identifies where the error occurred in the source code
         # The conflict can be only between 'gen' and 'spec'. We will unify the type and give priority to 'gen'
         # (Anja says that the annotators looked specifically for 'gen', then batch-annotated everything else as 'spec').
         # Mark the new type at all nodes that are already in the cluster. We were called before the new coreference link is added,
