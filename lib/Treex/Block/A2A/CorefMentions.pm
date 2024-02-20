@@ -522,68 +522,71 @@ sub add_brackets_on_mention_boundary
 {
     my $self = shift;
     my $mention = shift; # hash ref with the attributes of the mention
-    my $left = 0;
-    my $right = 0;
-    foreach my $node (@{$mention->{nodes}})
+    my @bracket_pairs = (['(', ')'], ['[', ']'], ['{', '}']);
+    foreach my $bp (@bracket_pairs)
     {
-        if($node->form() eq '(')
+        my $left = 0;
+        my $right = 0;
+        foreach my $node (@{$mention->{nodes}})
         {
-            $left++;
-        }
-        elsif($node->form() eq ')')
-        {
-            $right++;
-        }
-    }
-    if($left != $right)
-    {
-        # Identify the nodes immediately preceding / following the mention.
-        # This cannot be done by simple decrementing / incrementing the node id,
-        # as there may be empty nodes with decimal ids.
-        my @allnodes = $self->sort_nodes_by_ids($mention->{head}->get_root()->get_descendants());
-        my $inside = 0;
-        my $previous_node;
-        my @available_left;
-        my @available_right;
-        foreach my $node (@allnodes)
-        {
-            if(exists($mention->{span}{$node->get_conllu_id()}))
+            if($node->form() eq $bp->[0])
             {
-                if(!$inside && defined($previous_node) && $previous_node->form() eq '(') # )
-                {
-                    push(@available_left, $previous_node);
-                }
-                $inside = 1;
+                $left++;
             }
-            else
+            elsif($node->form() eq $bp->[1])
             {
-                # (
-                if($inside && $node->form() eq ')')
-                {
-                    push(@available_right, $node);
-                }
-                $inside = 0;
+                $right++;
             }
-            $previous_node = $node;
         }
-        # Try to complete brackets in the mention span.
-        my $added = 0;
-        while($left > $right && scalar(@available_right) > 0)
+        if($left != $right)
         {
-            my $bracket = pop(@available_right);
-            $mention->{span}{$bracket->get_conllu_id()} = $bracket;
-            $right++;
-            $added++;
+            # Identify the nodes immediately preceding / following the mention.
+            # This cannot be done by simple decrementing / incrementing the node id,
+            # as there may be empty nodes with decimal ids.
+            my @allnodes = $self->sort_nodes_by_ids($mention->{head}->get_root()->get_descendants());
+            my $inside = 0;
+            my $previous_node;
+            my @available_left;
+            my @available_right;
+            foreach my $node (@allnodes)
+            {
+                if(exists($mention->{span}{$node->get_conllu_id()}))
+                {
+                    if(!$inside && defined($previous_node) && $previous_node->form() eq $bp->[0])
+                    {
+                        push(@available_left, $previous_node);
+                    }
+                    $inside = 1;
+                }
+                else
+                {
+                    if($inside && $node->form() eq $bp->[1])
+                    {
+                        push(@available_right, $node);
+                    }
+                    $inside = 0;
+                }
+                $previous_node = $node;
+            }
+            # Try to complete brackets in the mention span.
+            my $added = 0;
+            while($left > $right && scalar(@available_right) > 0)
+            {
+                my $bracket = pop(@available_right);
+                $mention->{span}{$bracket->get_conllu_id()} = $bracket;
+                $right++;
+                $added++;
+            }
+            while($right > $left && scalar(@available_left) > 0)
+            {
+                my $bracket = shift(@available_left);
+                $mention->{span}{$bracket->get_conllu_id()} = $bracket;
+                $left++;
+                $added++;
+            }
+            # Recompute the mention nodes if we have added nodes.
+            @{$mention->{nodes}} = $self->sort_nodes_by_ids(values(%{$mention->{span}})) if($added);
         }
-        while($right > $left && scalar(@available_left) > 0)
-        {
-            my $bracket = shift(@available_left);
-            $mention->{span}{$bracket->get_conllu_id()} = $bracket;
-            $left++;
-            $added++;
-        }
-        # Recompute the mention nodes if we have added nodes.
-        @{$mention->{nodes}} = $self->sort_nodes_by_ids(values(%{$mention->{span}})) if($added);
     }
 }
 
