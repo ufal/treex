@@ -236,6 +236,7 @@ sub polish_mention_span
     $self->remove_mention_initial_punctuation($mention);
     $self->remove_mention_final_punctuation($mention);
     $self->close_up_gaps_in_mention($mention);
+    $self->add_brackets_on_mention_boundary($mention);
 }
 
 
@@ -507,6 +508,83 @@ sub close_up_gaps_in_mention
     }
     # Recompute the mention nodes if we have added nodes.
     @{$mention->{nodes}} = $self->sort_nodes_by_ids(values(%{$mention->{span}})) if($added);
+}
+
+
+
+#------------------------------------------------------------------------------
+# If one bracket is included in the span and its corresponding other bracket is
+# just outside the span, include the other bracket, too. This method does not
+# do a complex investigation of brackets in the document; it only counts
+# brackets inside the span and looks at the immediate neighbors of the span.
+#------------------------------------------------------------------------------
+sub add_brackets_on_mention_boundary
+{
+    my $self = shift;
+    my $mention = shift; # hash ref with the attributes of the mention
+    my $left = 0;
+    my $right = 0;
+    foreach my $node (@{$mention->{nodes}})
+    {
+        if($node->form() eq '(')
+        {
+            $left++;
+        }
+        elsif($node->form() eq ')')
+        {
+            $right++;
+        }
+    }
+    if($left != $right)
+    {
+        # Identify the nodes immediately preceding / following the mention.
+        # This cannot be done by simple decrementing / incrementing the node id,
+        # as there may be empty nodes with decimal ids.
+        my @allnodes = $self->sort_nodes_by_ids($mention->{head}->get_root()->get_descendants());
+        my $inside = 0;
+        my $previous_node;
+        my @available_left;
+        my @available_right;
+        foreach my $node (@allnodes)
+        {
+            if(exists($mention->{span}{$node->get_conllu_id()}))
+            {
+                if(!$inside && defined($previous_node) && $previous_node->form() eq '(') # )
+                {
+                    push(@available_left, $previous_node);
+                }
+                $inside = 1;
+            }
+            else
+            {
+                # (
+                if($inside && $node->form() eq ')')
+                {
+                    push(@available_right, $node);
+                }
+                $inside = 0;
+            }
+            $previous_node = $node;
+        }
+        # Try to complete brackets in the mention span.
+        my $added = 0;
+        while($left > $right && scalar(@available_right) > 0)
+        {
+            my $bracket = pop(@available_right);
+            $mention->{span}{$bracket->get_conllu_id()} = $bracket;
+            $right++;
+            $added++;
+        }
+        while($right > $left && scalar(@available_left) > 0)
+        {
+            my $bracket = shift(@available_left);
+            $mention->{span}{$bracket->get_conllu_id()} = $bracket;
+            $left++;
+            $added++;
+        }
+        # Recompute the mention nodes if we have added nodes.
+        @{$mention->{nodes}} = $self->sort_nodes_by_ids(values(%{$mention->{span}})) if($added);
+    }
 }
 
 
