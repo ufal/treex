@@ -585,12 +585,15 @@ sub project_dependencies
     if($head_rule eq 'first_conjunct')
     {
         # If the first conjunct has a deprel other than 'dep', and another conjunct has 'dep',
-        # then the other conjunct is an orphan caused by ellipsis. This is specific to the
-        # conversion from the Prague style to Universal Dependencies.
+        # then the other conjunct is an orphan caused by ellipsis. We should probably also
+        # exclude cases where the first conjunct is 'root' and not 'VERB' because it means
+        # that it was originally 'ExD', converted to 'dep', and it became root only because
+        # it was attached to the artificial root node (non-verbal sentence with coordination).
+        # All this is specific to the conversion from the Prague style to Universal Dependencies.
         ###!!! It should be solved elsewhere because orphans are not the main business of coordination.
         ###!!! A group of sibling orphans could be a phrase type of its own. However, it is difficult
         ###!!! to separate the issue from coordination and at present we just hack it here.
-        my $dep_means_orphan = $self->deprel() ne 'dep';
+        my $dep_means_orphan = !($self->deprel() eq 'dep' || $self->deprel() eq 'root' && !($head_node->is_verb() || $head_node->is_participle()));
         if($dep_means_orphan)
         {
             my $first_orphan_node;
