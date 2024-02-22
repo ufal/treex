@@ -698,7 +698,7 @@ sub fix_constructions
     {
         $deprel = 'fixed';
         $node->set_deprel($deprel);
-        $parent->set_deprel('advmod');
+        $parent->set_deprel('advmod') unless($parent->parent()->is_root());
     }
     # The expression "všeho všudy" ("altogether") functions as an adverb.
     elsif(lc($node->form()) eq 'všeho' && $parent->ord() == $node->ord()+1 &&
