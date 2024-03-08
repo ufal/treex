@@ -257,7 +257,7 @@ sub process_atree
                         my @edeps = $node->get_enhanced_deps();
                         foreach my $edep (@edeps)
                         {
-                            $survivor->add_enhanced_dependency($edep->[0], $edep->[1]);
+                            $survivor->add_enhanced_dependency($root->get_node_by_conllu_id($edep->[0]), $edep->[1]);
                         }
                         # Remember both functors at the survivor.
                         $self->merge_functors($survivor, $node);
