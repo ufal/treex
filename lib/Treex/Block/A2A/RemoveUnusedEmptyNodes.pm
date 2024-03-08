@@ -228,6 +228,47 @@ sub process_atree
                     }
                 }
             }
+            # Occasionally a shared dependent of coordination may have been
+            # duplicated but the two t-nodes are still coreferential (the reason
+            # for duplication may have been different functors between the nodes
+            # and individual conjuncts):
+            # "zákon o nepromlčitelnosti (komunistických zločinů) a trestním postihu komunistických zločinů"
+            # If empty a-node X is coreferential with non-empty a-node Y in the
+            # same sentence, and they have the same form (which is the remaining
+            # trace that they were probably generated from the same surface
+            # word), remove node X and add an enhanced dependency from Y to the
+            # parent of X.
+            else
+            {
+                my $form = $node->form();
+                my @same_form = grep {!$_->is_empty() && $_->form() eq $form} (@nodes);
+                if(scalar(@same_form) > 0)
+                {
+                    my @coreferential = grep
+                    {
+                        my $cid1 = $_->get_misc_attr('ClusterId');
+                        defined($cid1) && $cid1 eq $cid
+                    }
+                    (@same_form);
+                    if(scalar(@coreferential) > 0)
+                    {
+                        my $survivor = $coreferential[0];
+                        # Copy incoming edges of the removed node as incoming edges of the survivor.
+                        my @edeps = $self->get_enhanced_deps();
+                        foreach my $edep (@edeps)
+                        {
+                            $survivor->add_enhanced_dependency($edep->[0], $edep->[1]);
+                        }
+                        # Remember both functors at the survivor.
+                        $self->merge_functors($survivor, $node);
+                        # Now we can remove the extra node.
+                        Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
+                        $self->remove_empty_leaf($node, $tnode);
+                        splice(@nodes, $i, 1);
+                        $i--;
+                    }
+                }
+            }
         }
     }
     $root->_normalize_ords_and_conllu_ids();
