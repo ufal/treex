@@ -17,6 +17,16 @@ sub process_anode
     my $self = shift;
     my $anode = shift;
     my $last_cluster_id = $self->last_cluster_id();
+    ###!!! In a few cases, annotation errors in PDT cause validity problems later in CorefUD.
+    ###!!! Ideally we should fix the source annotation but that is out of our reach at present.
+    ###!!! So, instead, we hard-code ids of nodes whose coreference links should be ignored.
+    my $sentid = $node->get_bundle()->id();
+    # Rozdílný vývoj v ČR a SR rok po rozpadu ČSFR *
+    # ČR a SR jsou anotovány jako koreferenční (!), dvě překrývající se zmínky entity cmpr9413012c1 jsou "v ČR" a "v SR".
+    if($sentid eq 'cmpr9413-012-p3s1A' && $anode->form() eq 'SR')
+    {
+        return;
+    }
     # Only nodes linked to t-layer can have coreference annotation.
     if(exists($anode->wild()->{'tnode.rf'}))
     {
