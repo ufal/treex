@@ -455,7 +455,7 @@ sub is_unlikely_adverbial_predicate
         # temporal
         $node->lemma() =~ m/^(kdy|někdy|vždy(cky)?|pokaždé|nikdy|teď|nyní|právě|tentokrát|tehdy|tenkrát|pozdě(ji)?|pak|poté|potom|už|již|dosud|dříve|dávno|brzy|teprve|zatím|ještě|stále|nadále|pořád|opět|nakonec|často|dlouho|zároveň|současně|doba|čas|období|momentálně|chvíle|chvilka|vteřina|vteřinka|sekunda|minuta|minutka|hodina|hodinka|ráno|dopoledne|poledne|odpoledne|večer|noc|půlnoc|den|denně|dnes|dodnes|včera|předevčírem|zítra|pozítří|pondělí|úterý|středa|čtvrtek|pátek|sobota|neděle|svátek|víkend|týden|velikonoce|vánoce|měsíc|měsíčně|leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec|čtvrtletí|kvartál|jaro|léto|podzim|zima|prázdniny|ročně|letos|loni|napřesrok|dekáda|století|éra|novověk|středověk|starověk|pravěk|minulost|současno(st)?|budoucno(st)?)$/i
         || # other unlikely
-        $node->lemma() =~ m/^(dokonce|hodně|jednou|ještě|jistě|konečně|málo|méně|mimochodem|moc|možná|najednou|naopak|naprosto|naštěstí|navíc|obdobně|opravdu|osobně|ostatně|plně|podobně|prakticky|pravděpodobně|proč|prostě|proto|především|přesto|přičemž|přitom|rovněž|samozřejmě|skutečně|stejně|také|údajně|určitě|většinou|více|vlastně|zcela|zřejmě)$/i;
+        $node->lemma() =~ m/^(dokonce|hodně|jednou|ještě|jistě|konečně|málo|méně|mimochodem|moc|možná|najednou|naopak|naprosto|naštěstí|navíc|obdobně|opravdu|osobně|ostatně|plně|podobně|podstata|prakticky|pravděpodobně|proč|prostě|proto|především|přesto|přičemž|přitom|rovněž|samozřejmě|skutečně|stejně|také|údajně|určitě|většinou|více|vlastně|zcela|zřejmě)$/i;
 }
 
 
@@ -474,10 +474,12 @@ sub fix_copula_location
     my $node = shift;
     # Is this node the copular verb "být"?
     return unless($node->lemma() eq 'být');
+    # If it is already a copula or auxiliary, do not do anything.
+    return if($node->deprel() =~ m/^(cop|aux)(:|$)/);
     # Does it have a subject?
     my @children = $node->children();
     my @subjects = grep {$_->deprel() =~ m/^[nc]subj(:|$)/} (@children);
-    return unless(scalar(@children) > 0);
+    return unless(scalar(@subjects) > 0);
     # Does it have one or more adverbial modifiers?
     # (Ignore adverbial clauses because those would bring up the double subject problem, and they are unlikely anyway.)
     ###!!! Exclude "přece" in fixed expression "přece jenom", it would later get relabeled "cc" and could not serve as a head.
