@@ -21,9 +21,15 @@ sub process_anode
     ###!!! Ideally we should fix the source annotation but that is out of our reach at present.
     ###!!! So, instead, we hard-code ids of nodes whose coreference links should be ignored.
     my $sentid = $anode->get_bundle()->id();
-    # Rozdílný vývoj v ČR a SR rok po rozpadu ČSFR *
-    # ČR a SR jsou anotovány jako koreferenční (!), dvě překrývající se zmínky entity cmpr9413012c1 jsou "v ČR" a "v SR".
-    if($sentid eq 'cmpr9413-012-p3s1A' && $anode->form() eq 'SR')
+    if(
+        # Rozdílný vývoj v ČR a SR rok po rozpadu ČSFR *
+        # ČR a SR jsou anotovány jako koreferenční (!), dvě překrývající se zmínky entity cmpr9413012c1 jsou "v ČR" a "v SR".
+        $sentid eq 'cmpr9413-012-p3s1A' && $anode->form() eq 'SR' ||
+        # na mezinárodních konferencích v Bukurešti v roce 1974 a Mexico City v roce 1984
+        # "konference" je na t-rovině zduplikována, jenže pak je označena koreference mezi mexickou a bukurešťskou konferencí!
+        # K tomu je problém s chybnou anotací syntaxe na analytické rovině.
+        $sentid eq 'ln94208-79-p7s1' && $anode->is_empty() && $anode->lemma() eq 'konference'
+    )
     {
         return;
     }
