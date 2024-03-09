@@ -263,6 +263,13 @@ sub remove_mention_final_conjunction
         # Naturally, the blacklist is language-specific (currently only for Czech).
         # Beware: 'jen' is a Czech particle ('only'), but it can also be a noun
         # (Japanese 'yen'), hence a mention head! Avoid removing the head.
+        # Both 'či' and 'nikoliv' can be removed by this rule; however, if the
+        # mention ends with a subordinate clause "zda ... či nikoliv", then we
+        # should not remove either of them (train ln95045_081 #4)!
+        if(defined($mention->{nodes}[-2]->form()) && $mention->{nodes}[-2]->form() eq 'či' && $form =~ m/^nikoliv?$/)
+        {
+            last;
+        }
         if($last_node != $mention->{head} && $form =~ m/^(alespoň|či|i|jen|nakonec|ne|nebo|nejen|nikoliv?|především|současně|tak|také|tedy|též|třeba|tudíž|zejména)$/i && $upos ne 'NOUN')
         {
             pop(@{$mention->{nodes}});
