@@ -476,10 +476,8 @@ sub fix_copula_location
     return unless($node->lemma() eq 'být');
     # If it is already a copula or auxiliary, do not do anything.
     return if($node->deprel() =~ m/^(cop|aux)(:|$)/);
-    # Does it have a subject?
     my @children = $node->children();
-    my @subjects = grep {$_->deprel() =~ m/^[nc]subj(:|$)/} (@children);
-    return unless(scalar(@subjects) > 0);
+    return unless(scalar(@children) > 0);
     # Does it have one or more adverbial modifiers?
     # (Ignore adverbial clauses because those would bring up the double subject problem, and they are unlikely anyway.)
     ###!!! Exclude "přece" in fixed expression "přece jenom", it would later get relabeled "cc" and could not serve as a head.
