@@ -863,34 +863,38 @@ sub fix_crossing_mentions
     my $mentions = shift; # array ref
     my $i = shift; # index to @{$mentions}
     my $j = shift; # index to @{$mentions}
-    foreach my $node (@{$inboth})
+    my $root = $mentions->[$i]{nodes}[0]->get_root();
+    foreach my $nid (@{$inboth})
     {
+        my $node = $root->get_node_by_conllu_id($nid);
         my $ancestor = $node->parent();
+        my $ancestorid = $ancestor->get_conllu_id();
         while(1)
         {
-            if(any {$_ == $ancestor} (@{$inionly}))
+            if(any {$_ == $ancestorid} (@{$inionly}))
             {
-                # Move $node from @inboth to @inionly. Also physicaly remove it from mention $j and adjust all variables.
-                @{$inboth} = grep {$_ != $node} (@{$inboth});
-                @{$inionly} = $self->sort_nodes_by_ids(@{$inionly}, $node);
+                # Move $nid from @inboth to @inionly. Also physicaly remove the node from mention $j and adjust all variables.
+                @{$inboth} = grep {$_ != $nid} (@{$inboth});
+                @{$inionly} = $self->sort_node_ids(@{$inionly}, $nid);
                 @{$mentions->[$j]{nodes}} = grep {$_ != $node} (@{$mentions->[$j]{nodes}});
-                delete($mentions->[$j]{span}{$node->get_conllu_id()});
+                delete($mentions->[$j]{span}{$nid});
                 $mentions->[$j]{head} = $mentions->[$j]{nodes}[0] if($mentions->[$j]{head} == $node);
                 last;
             }
-            elsif(any {$_ == $ancestor} (@{$injonly}))
+            elsif(any {$_ == $ancestorid} (@{$injonly}))
             {
-                # Move $node from @inboth to @injonly. Also physicaly remove it from mention $i and adjust all variables.
-                @{$inboth} = grep {$_ != $node} (@{$inboth});
-                @{$injonly} = $self->sort_nodes_by_ids(@{$injonly}, $node);
+                # Move $nid from @inboth to @injonly. Also physicaly remove the node from mention $i and adjust all variables.
+                @{$inboth} = grep {$_ != $nid} (@{$inboth});
+                @{$injonly} = $self->sort_nodes_by_ids(@{$injonly}, $nid);
                 @{$mentions->[$i]{nodes}} = grep {$_ != $node} (@{$mentions->[$i]{nodes}});
-                delete($mentions->[$i]{span}{$node->get_conllu_id()});
+                delete($mentions->[$i]{span}{$nid});
                 $mentions->[$i]{head} = $mentions->[$i]{nodes}[0] if($mentions->[$i]{head} == $node);
                 last;
             }
-            elsif(any {$_ == $ancestor} (@{$inboth}) && $ancestor->deprel() !~ m/^root(:|$)/)
+            elsif(any {$_ == $ancestorid} (@{$inboth}) && $ancestor->deprel() !~ m/^root(:|$)/)
             {
                 $ancestor = $ancestor->parent();
+                $ancestorid = $ancestor->get_conllu_id();
             }
             else
             {
