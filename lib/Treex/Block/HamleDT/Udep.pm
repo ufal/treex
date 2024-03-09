@@ -1034,9 +1034,9 @@ sub dissolve_chains_of_auxiliaries
     foreach my $node (@nodes)
     {
         # An auxiliary verb may be attached to another auxiliary verb in coordination ([cs] "byl a bude prodáván").
-        # Thus we must check whether the deprel is aux (or aux:pass). We also cannot dissolve the chain if the
-        # grandparent is root.
-        if($node->iset()->is_auxiliary() && $node->parent()->iset()->is_auxiliary() && $node->deprel() =~ m/^aux/ && !$node->parent()->parent()->is_root())
+        # Thus we must check whether the deprel is aux (or aux:pass); it is not important whether the UPOS tag is AUX.
+        # We also cannot dissolve the chain if the grandparent is root.
+        if($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->deprel() =~ m/^aux(:|$)/ && !$node->parent()->parent()->is_root())
         {
             $node->set_parent($node->parent()->parent());
         }
