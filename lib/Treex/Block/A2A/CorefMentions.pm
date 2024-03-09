@@ -728,6 +728,7 @@ sub check_spans
                     $firstgapi = $k if(defined($firsti) && !defined($firstgapi));
                 }
             }
+            # Are the mentions discontinuous?
             my $disconti = defined($firstgapi) && $firstgapi < $lasti;
             my $discontj = defined($firstgapj) && $firstgapj < $lastj;
             # The worst troubles arise with pairs of mentions of the same entity.
@@ -741,6 +742,8 @@ sub check_spans
                     # same entity.
                     my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
                     log_warn("Crossing mentions of entity '$mentions[$i]{cid}':\n$message");
+                    # Try to fix it by removing the intersection nodes from the mention to which they are not connected by basic dependencies.
+                    $self->fix_crossing_mentions(\@inboth, \@inionly, \@injonly, \@mentions, $i, $j);
                 }
                 elsif(!scalar(@inboth) && $disconti && $discontj && ($firsti < $firstj && $lasti > $firstj || $firstj < $firsti && $lastj > $firsti))
                 {
@@ -832,6 +835,68 @@ sub check_spans
                     $mentions[$j]{head} = undef;
                     $mentions[$j]{removed} = 1;
                 }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes two crossing mentions of the same entity.
+# Example train ln94200_61#36:
+# ... dochází k permanentnímu zpevňování koruny a to zpevnění ... činí ...
+# In t-tree there is a generated copy of the node "koruny". In UD there is no
+# extra node; instead, the overt "koruny" node is used in both mentions,
+# "permanentnímu zpevňování koruny" and "to zpevnění (koruny)". It would be
+# better if we do not include "koruny" in the second mention. Then the mentions
+# will not be crossing any more.
+# Heuristic: For the nodes that are in both mentions, follow their basic dependencies until an ancestor that belongs only to one of the mentions.
+# Then keep the node in this mention and remove it from the other mention.
+#------------------------------------------------------------------------------
+sub fix_crossing_mentions
+{
+    my $self = shift;
+    my $inboth = shift; # array ref
+    my $inionly = shift; # array ref
+    my $injonly = shift; # array ref
+    my $mentions = shift; # array ref
+    my $i = shift; # index to @{$mentions}
+    my $j = shift; # index to @{$mentions}
+    foreach my $node (@{$inboth})
+    {
+        my $ancestor = $node->parent();
+        while(1)
+        {
+            if(any {$_ == $ancestor} (@{$inionly}))
+            {
+                # Move $node from @inboth to @inionly. Also physicaly remove it from mention $j and adjust all variables.
+                @{$inboth} = grep {$_ != $node} (@{$inboth});
+                @{$inionly} = $self->sort_nodes_by_ids(@{$inionly}, $node);
+                @{$mentions->[$j]{nodes}} = grep {$_ != $node} (@{$mentions->[$j]{nodes}});
+                delete($mentions->[$j]{span}{$node->get_conllu_id()});
+                $mentions->[$j]{head} = $mentions->[$j]{nodes}[0] if($mentions->[$j]{head} == $node);
+                break;
+            }
+            elsif(any {$_ == $ancestor} (@{$injonly}))
+            {
+                # Move $node from @inboth to @injonly. Also physicaly remove it from mention $i and adjust all variables.
+                @{$inboth} = grep {$_ != $node} (@{$inboth});
+                @{$injonly} = $self->sort_nodes_by_ids(@{$injonly}, $node);
+                @{$mentions->[$i]{nodes}} = grep {$_ != $node} (@{$mentions->[$i]{nodes}});
+                delete($mentions->[$i]{span}{$node->get_conllu_id()});
+                $mentions->[$i]{head} = $mentions->[$i]{nodes}[0] if($mentions->[$i]{head} == $node);
+                break;
+            }
+            elsif(any {$_ == $ancestor} (@{$inboth}) && $ancestor->deprel() !~ m/^root(:|$)/)
+            {
+                $ancestor = $ancestor->parent();
+            }
+            else
+            {
+                # No solution was found.
+                log_warn("Did not find a solution for crossing mentions of entity '$mentions[$i]{cid}'.");
+                break;
             }
         }
     }
