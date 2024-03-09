@@ -876,7 +876,7 @@ sub fix_crossing_mentions
                 @{$mentions->[$j]{nodes}} = grep {$_ != $node} (@{$mentions->[$j]{nodes}});
                 delete($mentions->[$j]{span}{$node->get_conllu_id()});
                 $mentions->[$j]{head} = $mentions->[$j]{nodes}[0] if($mentions->[$j]{head} == $node);
-                break;
+                last;
             }
             elsif(any {$_ == $ancestor} (@{$injonly}))
             {
@@ -886,7 +886,7 @@ sub fix_crossing_mentions
                 @{$mentions->[$i]{nodes}} = grep {$_ != $node} (@{$mentions->[$i]{nodes}});
                 delete($mentions->[$i]{span}{$node->get_conllu_id()});
                 $mentions->[$i]{head} = $mentions->[$i]{nodes}[0] if($mentions->[$i]{head} == $node);
-                break;
+                last;
             }
             elsif(any {$_ == $ancestor} (@{$inboth}) && $ancestor->deprel() !~ m/^root(:|$)/)
             {
@@ -896,7 +896,7 @@ sub fix_crossing_mentions
             {
                 # No solution was found.
                 log_warn("Did not find a solution for crossing mentions of entity '$mentions->[$i]{cid}'.");
-                break;
+                last;
             }
         }
     }
