@@ -895,7 +895,7 @@ sub fix_crossing_mentions
             else
             {
                 # No solution was found.
-                log_warn("Did not find a solution for crossing mentions of entity '$mentions[$i]{cid}'.");
+                log_warn("Did not find a solution for crossing mentions of entity '$mentions->[$i]{cid}'.");
                 break;
             }
         }
