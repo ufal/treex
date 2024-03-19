@@ -751,7 +751,7 @@ sub add_enhanced_empty_node
         $empnode->set_lemma($srcverb->lemma());
         $empnode->set_tag($srcverb->tag());
         $empnode->iset()->set_hash($srcverb->iset()->get_hash());
-        $empnode->set_conll_pos($srcverb->get_conll_pos());
+        $empnode->set_conll_pos($srcverb->conll_pos());
     }
     # Re-attach the $node as a child of the empty node. We do not know what the
     # relation between the empty node and $node should be. We just use 'dep'
