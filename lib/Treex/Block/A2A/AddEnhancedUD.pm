@@ -835,6 +835,14 @@ sub get_empty_node_position
         }
         else
         {
+            # The next child is probably a content word. Typically, in gapping
+            # there are at least two such children. If we have multiple children
+            # now, remove the first of them because it will be more natural to
+            # put the verb between the first and the second child.
+            if(scalar(@empchildren) > 1)
+            {
+                shift(@empchildren);
+            }
             last;
         }
     }
