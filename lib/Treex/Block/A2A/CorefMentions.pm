@@ -892,7 +892,7 @@ sub fix_crossing_mentions
             {
                 # Move $nid from @inboth to @injonly. Also physicaly remove the node from mention $i and adjust all variables.
                 @{$inboth} = grep {$_ != $nid} (@{$inboth});
-                @{$injonly} = $self->sort_nodes_by_ids(@{$injonly}, $nid);
+                @{$injonly} = $self->sort_node_ids(@{$injonly}, $nid);
                 @{$mentions->[$i]{nodes}} = grep {$_ != $node} (@{$mentions->[$i]{nodes}});
                 delete($mentions->[$i]{span}{$nid});
                 $mentions->[$i]{head} = $mentions->[$i]{nodes}[0] if($mentions->[$i]{head} == $node);
