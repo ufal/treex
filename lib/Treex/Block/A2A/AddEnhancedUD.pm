@@ -822,37 +822,66 @@ sub get_empty_node_position
     my $self = shift;
     my $node = shift; # node to be replaced by the empty node and to become a child of the empty node
     my $emptynodes = shift; # hash ref, keys are ids of existing empty nodes
-    # The current node and some of its current children will become children of
-    # the empty node. We are looking for those children that are attached as orphan.
-    my @children = $node->get_enhanced_children('^orphan(:|$)');
-    my @empchildren = sort {$a->ord() <=> $b->ord()} ($node, @children);
-    # If there are at least two orphans including the current node, the most
-    # natural placement of the abstract predicate is probably between the first
-    # and the second orphan. Remove the first orphan because the position will
-    # be set right before the first node remaining on the list.
-    if(scalar(@empchildren) > 1)
-    {
-        shift(@empchildren);
-    }
-    my $posmajor = $empchildren[0]->ord() - 1;
-    my $posminor = 1;
-    # If the current node is a conj child of another node, discard children that
-    # occur before that other node.
+    # If the current node is a conj child of another node, we must make sure
+    # that the empty node will not be placed before that other node.
+    my $conjminord = 0;
     my @conjparents = sort {$a->ord() <=> $b->ord()} ($node->get_enhanced_parents('^conj(:|$)'));
     if(scalar(@conjparents) > 0)
     {
-        @empchildren = grep {$_->ord() > $conjparents[-1]->ord()} (@empchildren);
-        if(scalar(@empchildren) > 0)
+        $conjminord = $conjparents[-1]->ord();
+    }
+    # The current node will become a child of the empty node and so will its
+    # children that are currently attached as orphan in the basic tree. The
+    # most natural placement of the empty node is probably between the first
+    # and the second orphan (whereas the current node also counts as orphan)
+    # but we must be careful about other dependents of the orphans. Some of
+    # them (punctuation and conjunctions) may even be reattached to the empty
+    # node. To start, find the dependent orphan(s).
+    my @orphans = grep {$_->deprel() =~ m/^orphan(:|$)/} ($node->children({'ordered' => 1}));
+    # If the first dependent orphan lies after the current node, we want to
+    # place the empty node before the orphan. Not necessarily right before it,
+    # but before its leftmost dependent that is still to the right of the
+    # current node.
+    my $right_neighbor;
+    if(scalar(@orphans) > 0)
+    {
+        if($orphans[0]->ord() > $node->ord())
         {
-            $posmajor = $empchildren[0]->ord() - 1;
+            # Place the empty node between the current node and its first orphan child.
+            my @descendants = grep {$_->ord() > $node->ord() && $_->ord() > $conjminord} ($orphans[0]->get_descendants({'add_self' => 1, 'ordered' => 1}));
+            $right_neighbor = $descendants[0];
         }
-        # The else branch should not be needed because at least $node should be
-        # located after all its conj parents. But there is no guarantee that the
-        # basic annotation is correct.
+        elsif(scalar(@orphans) > 1 && $orphans[1]->ord() < $node->ord())
+        {
+            # Place the empty node between the first and the second orphan child.
+            my @descendants = grep {$_->ord() > $orphans[0]->ord() && $_->ord() > $conjminord} ($orphans[1]->get_descendants({'add_self' => 1, 'ordered' => 1}));
+            $right_neighbor = $descendants[0];
+        }
         else
         {
-            $posmajor = $conjparents[-1]->ord();
+            # Place the empty node between the first orphan child and the current node.
+            my @descendants = grep {$_->ord() > $orphans[0]->ord() && $_->ord() > $conjminord} ($node->get_descendants({'add_self' => 1, 'ordered' => 1}));
+            $right_neighbor = $descendants[0];
         }
+    }
+    else
+    {
+        # The current node has no orphan children, which is not expected.
+        # Place the empty node before its first descendant, except punctuation.
+        my @descendants = grep {$_->deprel() !~ m/^punct(:|$)/ && $_->ord() > $conjminord} ($node->get_descendants({'add_self' => 1, 'ordered' => 1}));
+        $right_neighbor = $descendants[0];
+    }
+    # It is possible that we did not find a right neighbor that fulfills the
+    # conjminord requirement.
+    my $posmajor;
+    my $posminor = 1;
+    if(defined($right_neighbor))
+    {
+        $posmajor = $right_neighbor->ord() - 1;
+    }
+    else
+    {
+        $posmajor = $conjminord;
     }
     while(exists($emptynodes->{"$posmajor.$posminor"}))
     {
