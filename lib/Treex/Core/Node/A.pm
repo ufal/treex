@@ -693,6 +693,31 @@ sub add_enhanced_dependency
 
 
 #------------------------------------------------------------------------------
+# Figures out whether there is an enhanced relation from node x to node y whose
+# deprel matches a regular expression.
+#------------------------------------------------------------------------------
+sub is_enhanced_dependency
+{
+    my $self = shift; # child
+    my $parent = shift;
+    my $relregex = shift;
+    my $negate = shift; # look for relations that do not match $relregex
+    my $parent_conllu_id = $parent->get_conllu_id();
+    my @edeps = grep {$_->[0] == $parent_conllu_id} ($self->get_enhanced_deps());
+    if($negate)
+    {
+        @edeps = grep {$_->[1] !~ m/$relregex/} (@edeps);
+    }
+    else
+    {
+        @edeps = grep {$_->[1] =~ m/$relregex/} (@edeps);
+    }
+    return scalar(@edeps);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the list of parents of a node in the enhanced graph, i.e., the list
 # of nodes from which there is at least one edge incoming to the given node.
 # The list is ordered by their ord value.

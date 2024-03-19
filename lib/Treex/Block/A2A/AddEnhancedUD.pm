@@ -822,29 +822,17 @@ sub get_empty_node_position
     my $self = shift;
     my $node = shift; # node to be replaced by the empty node and to become a child of the empty node
     my $emptynodes = shift; # hash ref, keys are ids of existing empty nodes
-    # The current node and all its current children will become children of the
-    # empty node.
-    my @children = $node->get_enhanced_children();
+    # The current node and some of its current children will become children of
+    # the empty node. We are looking for those children that are attached as orphan.
+    my @children = $node->get_enhanced_children('^orphan(:|$)');
     my @empchildren = sort {$a->ord() <=> $b->ord()} ($node, @children);
-    # Skip punctuation and function words if there are other children.
-    while(scalar(@empchildren) > 1)
+    # If there are at least two orphans including the current node, the most
+    # natural placement of the abstract predicate is probably between the first
+    # and the second orphan. Remove the first orphan because the position will
+    # be set right before the first node remaining on the list.
+    if(scalar(@empchildren) > 1)
     {
-        if($self->is_edep($node, $empchildren[0], '^(punct|mark|cc)(:|$)'))
-        {
-            shift(@empchildren);
-        }
-        else
-        {
-            # The next child is probably a content word. Typically, in gapping
-            # there are at least two such children. If we have multiple children
-            # now, remove the first of them because it will be more natural to
-            # put the verb between the first and the second child.
-            if(scalar(@empchildren) > 1)
-            {
-                shift(@empchildren);
-            }
-            last;
-        }
+        shift(@empchildren);
     }
     my $posmajor = $empchildren[0]->ord() - 1;
     my $posminor = 1;
@@ -879,23 +867,6 @@ sub get_empty_node_position
 #==============================================================================
 # Helper functions for manipulation of the enhanced graph.
 #==============================================================================
-
-
-
-#------------------------------------------------------------------------------
-# Figures out whether there is an enhanced relation from node x to node y whose
-# deprel matches a regular expression.
-#------------------------------------------------------------------------------
-sub is_edep
-{
-    my $self = shift;
-    my $parent = shift;
-    my $child = shift;
-    my $regex = shift;
-    my $parent_conllu_id = $parent->get_conllu_id();
-    my @edeps = grep {$_->[0] == $parent_conllu_id && $_->[1] =~ m/$regex/} ($child->get_enhanced_deps());
-    return scalar(@edeps);
-}
 
 
 
