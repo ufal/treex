@@ -898,10 +898,19 @@ sub fix_crossing_mentions
                 $mentions->[$i]{head} = $mentions->[$i]{nodes}[0] if($mentions->[$i]{head} == $node);
                 last;
             }
-            elsif(any {$_ == $ancestorid} (@{$inboth}) && defined($ancestor->parent()) && defined($ancestor->deprel()) && $ancestor->deprel() !~ m/^root(:|$)/)
+            elsif(any {$_ == $ancestorid} (@{$inboth}))
             {
                 $ancestor = $ancestor->parent();
-                $ancestorid = $ancestor->get_conllu_id();
+                if(defined($ancestor))
+                {
+                    $ancestorid = $ancestor->get_conllu_id();
+                }
+                else
+                {
+                    # No solution was found.
+                    log_warn("Did not find a solution for crossing mentions of entity '$mentions->[$i]{cid}'.");
+                    last;
+                }
             }
             else
             {
