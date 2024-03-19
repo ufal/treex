@@ -826,6 +826,18 @@ sub get_empty_node_position
     # empty node.
     my @children = $node->get_enhanced_children();
     my @empchildren = sort {$a->ord() <=> $b->ord()} ($node, @children);
+    # Skip punctuation and function words if there are other children.
+    while(scalar(@empchildren) > 1)
+    {
+        if($self->is_edep($node, $empchildren[0], '^(punct|mark|cc)(:|$)'))
+        {
+            shift(@empchildren);
+        }
+        else
+        {
+            last;
+        }
+    }
     my $posmajor = $empchildren[0]->ord() - 1;
     my $posminor = 1;
     # If the current node is a conj child of another node, discard children that
@@ -859,6 +871,23 @@ sub get_empty_node_position
 #==============================================================================
 # Helper functions for manipulation of the enhanced graph.
 #==============================================================================
+
+
+
+#------------------------------------------------------------------------------
+# Figures out whether there is an enhanced relation from node x to node y whose
+# deprel matches a regular expression.
+#------------------------------------------------------------------------------
+sub is_edep
+{
+    my $self = shift;
+    my $parent = shift;
+    my $child = shift;
+    my $regex = shift;
+    my $parent_conllu_id = $parent->get_conllu_id();
+    my @edeps = grep {$_->[0] == $parent_conllu_id && $_->[1] =~ m/$regex/} ($child->get_enhanced_deps());
+    return scalar(@edeps);
+}
 
 
 
