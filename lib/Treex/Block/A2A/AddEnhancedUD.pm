@@ -727,6 +727,7 @@ sub add_enhanced_empty_node
     ###!!! If there is one, we should process the parent first. However, for now
     ###!!! we simply ignore the 'orphan' and change it to 'dep'.
     my @origiedges = $node->get_enhanced_deps();
+    my $srcverb;
     foreach my $ie (@origiedges)
     {
         my $parent = $node->get_node_by_conllu_id($ie->[0]);
@@ -736,6 +737,21 @@ sub add_enhanced_empty_node
             log_warn("Changed 'orphan' to 'dep' but we should have processed the other orphan earlier instead.");
         }
         $empnode->add_enhanced_dependency($parent, $deprel);
+        # If $ie is a 'conj' relation from a verb (or a participle tagged ADJ),
+        # remember that we want to copy the verb's morphology to the empty node.
+        if(!defined($srcverb) && $parent->iset()->verbform() ne '' && $deprel =~ m/^conj(:|$)/)
+        {
+            $srcverb = $parent;
+        }
+    }
+    # If we found a source verb to copy morphology from, copy it now.
+    if(defined($srcverb))
+    {
+        $empnode->set_form($srcverb->form());
+        $empnode->set_lemma($srcverb->lemma());
+        $empnode->set_tag($srcverb->tag());
+        $empnode->iset()->set_hash($srcverb->iset()->get_hash());
+        $empnode->set_conll_pos($srcverb->get_conll_pos());
     }
     # Re-attach the $node as a child of the empty node. We do not know what the
     # relation between the empty node and $node should be. We just use 'dep'
