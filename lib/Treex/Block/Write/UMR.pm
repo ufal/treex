@@ -1,6 +1,7 @@
 package Treex::Block::Write::UMR;
 use Moose;
 use Treex::Core::Common;
+use experimental qw( signatures );
 
 use Unicode::Normalize;
 
@@ -11,14 +12,11 @@ has '+extension' => ( default => '.umr' );
 has '_curr_sentord' => ( isa => 'Int', is => 'rw' );
 has '_used_variables' => ( isa => 'ArrayRef[Int]', is => 'rw' );
 
-sub _clear_variables {
-    my ($self) = @_;
+sub _clear_variables($self) {
     $self->_set_used_variables([(0) x ord("z") - ord("a") + 1]);
 }
 
-sub _assign_variable {
-    my ($self, $concept) = @_;
-
+sub _assign_variable($self, $concept) {
     my $concept_norm = NFKD($concept);
     $concept_norm =~ s/\p{NonspacingMark}//g;
     $concept_norm = lc $concept_norm;
@@ -29,9 +27,7 @@ sub _assign_variable {
     return "s" . $self->_curr_sentord . $varletter . ($varord + 1);
 }
 
-sub process_utree {
-    my ($self, $utree, $sentord) = @_;
-
+sub process_utree($self, $utree, $sentord) {
     $self->_set_curr_sentord($sentord);
     $self->_clear_variables();
 
@@ -40,17 +36,14 @@ sub process_utree {
     
 }
 
-sub _get_sent_header {
-    my ($self, $utree, $sentord) = @_;
+sub _get_sent_header($self, $utree) {
     my $text = "# sent_id = " . $utree->id . "\n";
     $text .= "# :: snt" . $self->_curr_sentord . "\t" . $utree->sentence . "\n";
     $text .= "\n";
     return $text;
 }
 
-sub _get_sent_graph {
-    my ($self, $utechroot) = @_;
-
+sub _get_sent_graph($self, $utechroot) {
     my $text = "# sentence level graph:\n";
 
     my @uroots = $utechroot->get_children();
@@ -64,9 +57,7 @@ sub _get_sent_graph {
     return $text;
 }
 
-sub _get_sent_subtree {
-    my ($self, $unode) = @_;
-
+sub _get_sent_subtree($self, $unode) {
     my $umr_str = '';
 
     my $concept = $unode->concept;
