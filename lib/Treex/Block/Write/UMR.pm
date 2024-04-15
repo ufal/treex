@@ -37,7 +37,9 @@ sub process_utree($self, $utree, $sentord) {
 
 sub _get_sent_header($self, $utree) {
     my $text = "# sent_id = " . $utree->id . "\n";
-    $text .= "# :: snt" . $self->_curr_sentord . "\t" . $utree->sentence . "\n";
+    my $troot = $utree->get_troot;
+    $text .= "# :: snt" . $self->_curr_sentord . "\t"
+           . $troot->get_bundle->get_zone($troot->language)->sentence . "\n";
     $text .= "\n";
     return $text
 }
