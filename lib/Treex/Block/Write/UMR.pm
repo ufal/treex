@@ -20,11 +20,11 @@ sub _assign_variable($self, $concept) {
     my $concept_norm = NFKD($concept);
     $concept_norm =~ s/\p{NonspacingMark}//g;
     $concept_norm = lc $concept_norm;
-    
+
     my $varletter = $concept_norm =~ /^([^a-z])/ ? $1 : "x";
     my $varord = $self->_used_variables->[ord($varletter) - ord("a")]++;
 
-    return "s" . $self->_curr_sentord . $varletter . ($varord + 1);
+    return "s" . $self->_curr_sentord . $varletter . ($varord + 1)
 }
 
 sub process_utree($self, $utree, $sentord) {
@@ -33,14 +33,13 @@ sub process_utree($self, $utree, $sentord) {
 
     print { $self->_file_handle } $self->_get_sent_header($utree);
     print { $self->_file_handle } $self->_get_sent_graph($utree);
-    
 }
 
 sub _get_sent_header($self, $utree) {
     my $text = "# sent_id = " . $utree->id . "\n";
     $text .= "# :: snt" . $self->_curr_sentord . "\t" . $utree->sentence . "\n";
     $text .= "\n";
-    return $text;
+    return $text
 }
 
 sub _get_sent_graph($self, $utechroot) {
@@ -49,12 +48,14 @@ sub _get_sent_graph($self, $utechroot) {
     my @uroots = $utechroot->get_children();
     if (@uroots) {
         if (@uroots > 1) {
-            log_warn("Multiple root U-nodes for the sentence = ".$utechroot->id.". Printing the first root only.\n")
+            log_warn('Multiple root U-nodes for the sentence = '
+                     . $utechroot->id
+                     . ". Printing the first root only.\n");
         }
         $text .= $self->_get_sent_subtree($uroots[0]);
     }
-    $text .= "\n"
-    return $text;
+    $text .= "\n";
+    return $text
 }
 
 sub _get_sent_subtree($self, $unode) {
@@ -70,8 +71,6 @@ sub _get_sent_subtree($self, $unode) {
     }
 
     $umr_str .= ")\n";
-
-
 }
 
 sub _get_alignment {
