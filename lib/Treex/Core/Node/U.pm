@@ -91,6 +91,15 @@ sub get_tnode
     return;
 }
 
+sub get_troot
+{
+    my $self = shift;
+    my $t_rf = $self->get_attr('ttree.rf');
+    my $document = $self->get_document();
+    return $document->get_node_by_id($t_rf) if $t_rf;
+    return;
+}
+
 sub set_tnode
 {
     my $self = shift;
