@@ -36,7 +36,8 @@ sub process_utree($self, $utree, $sentord) {
 }
 
 sub _get_sent_header($self, $utree) {
-    my $text = "# sent_id = " . $utree->id . "\n";
+    my $text = '#' x 80;
+    $text .= "\n# sent_id = " . $utree->id . "\n";
     my $troot = $utree->get_troot;
     $text .= "# :: snt" . $self->_curr_sentord . "\t"
            . $troot->get_bundle->get_zone($troot->language)->sentence . "\n";
@@ -56,7 +57,7 @@ sub _get_sent_graph($self, $utechroot) {
         }
         $text .= $self->_get_sent_subtree($uroots[0]);
     }
-    $text .= "\n";
+    $text .= "\n\n";
     return $text
 }
 
@@ -65,7 +66,7 @@ sub _get_node_indent($self, $unode) {
 }
 
 sub _get_sent_subtree($self, $unode) {
-    my $umr_str = '';
+    my $umr_str = "";
 
     my $concept = $unode->concept;
     my $var = $self->_assign_variable($concept);
@@ -82,7 +83,7 @@ sub _get_sent_subtree($self, $unode) {
         $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
         $umr_str .= ':refer-number ' . $unode->entity_refnumber;
     }
-    $umr_str .= ")";
+    $umr_str .= ')';
     return $umr_str
 }
 
