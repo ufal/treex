@@ -60,19 +60,30 @@ sub _get_sent_graph($self, $utechroot) {
     return $text
 }
 
+sub _get_node_indent($self, $unode) {
+    return ' ' x (4 * $unode->get_depth)
+}
+
 sub _get_sent_subtree($self, $unode) {
     my $umr_str = '';
 
     my $concept = $unode->concept;
     my $var = $self->_assign_variable($concept);
 
-    $umr_str .= "( " . $var . " / " . $concept . "\n";
+    $umr_str .= "( $var / $concept";
 
-    foreach my $uchild ($unode->get_children({ordered => 1})) {
-
+    for my $uchild ($unode->get_children({ordered => 1})) {
+        $umr_str .= "\n" . $self->_get_node_indent($uchild);
+        $umr_str .= ':' . $uchild->functor . ' ';
+        $umr_str .= $self->_get_sent_subtree($uchild);
     }
 
-    $umr_str .= ")\n";
+    if ($unode->entity_refnumber) {
+        $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
+        $umr_str .= ':refer-number ' . $unode->entity_refnumber;
+    }
+    $umr_str .= ")";
+    return $umr_str
 }
 
 sub _get_alignment {
