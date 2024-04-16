@@ -13,7 +13,7 @@ has '_curr_sentord' => ( isa => 'Int', is => 'rw' );
 has '_used_variables' => ( isa => 'ArrayRef[Int]', is => 'rw' );
 
 sub _clear_variables($self) {
-    $self->_set_used_variables([(0) x ord("z") - ord("a") + 1]);
+    $self->_set_used_variables([(0) x (ord("z") - ord("a") + 1)]);
 }
 
 sub _assign_variable($self, $concept) {
@@ -21,7 +21,7 @@ sub _assign_variable($self, $concept) {
     $concept_norm =~ s/\p{NonspacingMark}//g;
     $concept_norm = lc $concept_norm;
 
-    my $varletter = $concept_norm =~ /^([^a-z])/ ? $1 : "x";
+    my $varletter = $concept_norm =~ /^([a-z])/ ? $1 : "x";
     my $varord = $self->_used_variables->[ord($varletter) - ord("a")]++;
 
     return "s" . $self->_curr_sentord . $varletter . ($varord + 1)
