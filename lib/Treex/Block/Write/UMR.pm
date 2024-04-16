@@ -85,6 +85,8 @@ sub _get_doc_annot {
 
 __END__
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Block::Write::UMR
@@ -110,6 +112,8 @@ Selector of the trees to be printed.
 =head1 AUTHORS
 
 Michal Novák <mnovak@ufal.mff.cuni.cz>
+
+Jan Štěpánek <stepanek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
