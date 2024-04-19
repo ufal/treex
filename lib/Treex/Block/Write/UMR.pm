@@ -3,14 +3,15 @@ use Moose;
 use Treex::Core::Common;
 use experimental qw( signatures );
 
-use Unicode::Normalize;
+use Unicode::Normalize qw{ NFKD };
 
 extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+extension' => ( default => '.umr' );
 
-has '_curr_sentord' => ( isa => 'Int', is => 'rw' );
-has '_used_variables' => ( isa => 'ArrayRef[Int]', is => 'rw' );
+has _curr_sentord => ( isa => 'Int', is => 'rw' );
+has _used_variables => ( isa => 'ArrayRef[Int]', is => 'rw' );
+has _id_cache => ( isa => 'HashRef[Str]', is => 'ro', default => sub { {} } );
 
 sub _clear_variables($self) {
     $self->_set_used_variables([(0) x (ord("z") - ord("a") + 1)]);
@@ -33,17 +34,27 @@ sub process_utree($self, $utree, $sentord) {
 
     print { $self->_file_handle } $self->_get_sent_header($utree);
     print { $self->_file_handle } $self->_get_sent_graph($utree);
+    print { $self->_file_handle } $self->_get_alignment($utree);
+    print { $self->_file_handle } $self->_get_doc_annot($utree);
+    print { $self->_file_handle } $self->_get_sent_footer;
 }
 
 sub _get_sent_header($self, $utree) {
     my $text = '#' x 80;
     $text .= "\n# sent_id = " . $utree->id . "\n";
     my $troot = $utree->get_troot;
-    $text .= "# :: snt" . $self->_curr_sentord . "\t"
-           . $troot->get_bundle->get_zone($troot->language)->sentence . "\n";
-    $text .= "\n";
+    $text .= "# :: snt" . $self->_curr_sentord . "\n";
+    my @anodes = $troot->get_bundle
+                       ->get_zone($troot->language)
+                       ->get_atree
+                       ->get_descendants({ordered => 1});
+    $text .= join "", 'Index: ', map $_->ord . (' ' x (length($_->form) - length($_->ord) + 1)), @anodes;
+    $text .= join ' ', "\nWords:", map $_->form, @anodes;
+    $text .= "\n\n";
     return $text
 }
+
+sub _get_sent_footer($self) { "\n\n\n" }
 
 sub _get_sent_graph($self, $utechroot) {
     my $text = "# sentence level graph:\n";
@@ -57,7 +68,7 @@ sub _get_sent_graph($self, $utechroot) {
         }
         $text .= $self->_get_sent_subtree($uroots[0]);
     }
-    $text .= "\n\n";
+    $text .= "\n";
     return $text
 }
 
@@ -70,8 +81,9 @@ sub _get_sent_subtree($self, $unode) {
 
     my $concept = $unode->concept;
     my $var = $self->_assign_variable($concept);
+    $self->_id_cache->{ $unode->id } = $var;
 
-    $umr_str .= "( $var / $concept";
+    $umr_str .= "($var / $concept";
 
     for my $uchild ($unode->get_children({ordered => 1})) {
         $umr_str .= "\n" . $self->_get_node_indent($uchild);
@@ -87,10 +99,45 @@ sub _get_sent_subtree($self, $unode) {
     return $umr_str
 }
 
-sub _get_alignment {
+sub _format_alignment($self, @ords) {
+    @ords = sort { $a <=> $b } @ords;
+    my $string = "";
+    for my $i (0 .. $#ords) {
+        my $follows_prev = $i > 0      && $ords[$i] == $ords[ $i - 1 ] + 1;
+        my $next_follows = $i < $#ords && $ords[$i] == $ords[ $i + 1 ] - 1;
+        next if $follows_prev && $next_follows;
+
+        $string .= $ords[$i]
+                 . ($follows_prev  ? ','
+                   : $next_follows ? '-'
+                                   :  "-$ords[$i],");
+    }
+    return $string =~ s/,$//r
 }
 
-sub _get_doc_annot {
+sub _is_same_tree($self, $unode, $anode) {
+    $anode->get_bundle->get_position == $unode->get_bundle->get_position
+}
+
+sub _get_alignment($self, $utree) {
+    my $alignment = "\n# alignment:";
+    for my $unode ($utree->descendants) {
+        $alignment .= "\n" . $self->_id_cache->{ $unode->id } . ': ';
+        my @a_ords = map $_->ord,
+                     grep $self->_is_same_tree($unode, $_),
+                     $unode->get_tnode->get_anodes;
+        $alignment .= $self->_format_alignment(@a_ords);
+    }
+
+    $alignment .= "\n";
+    return $alignment
+}
+
+sub _get_doc_annot($self, $utree) {
+    my $doc_annot = "\n# document level annotation:\n(s"
+                  . $self->_curr_sentord . "s0 / sentence";
+    $doc_annot .= ')';
+    return $doc_annot
 }
 
 1;
