@@ -2,6 +2,7 @@ package Treex::Block::T2U::BuildUtree;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
+with 'Treex::Tool::UMR::PDTV2PB';
 
 has '+language' => ( required => 1 );
 
@@ -13,7 +14,7 @@ sub process_zone
     my $uroot = $zone->create_utree({overwrite => 1});
     $uroot->set_deref_attr('ttree.rf', $troot);
     # Recursively build the tree.
-    build_subtree($troot, $uroot);
+    $self->build_subtree($troot, $uroot);
     # Make sure the ord attributes form a sequence 1, 2, 3, ...
     $uroot->_normalize_node_ordering();
     return 1;
@@ -21,26 +22,45 @@ sub process_zone
 
 sub build_subtree
 {
-    my $tparent = shift;
-    my $uparent = shift;
+    my ($self, $tparent, $uparent) = @_;
     foreach my $tnode ($tparent->get_children({ordered => 1}))
     {
         my $unode = $uparent->create_child();
-        $unode = add_tnode_to_unode($tnode, $unode);
-        build_subtree($tnode, $unode);
+        $unode = $self->add_tnode_to_unode($tnode, $unode);
+        $self->build_subtree($tnode, $unode);
     }
     return;
 }
 
 sub add_tnode_to_unode
 {
-    my $tnode = shift;
-    my $unode = shift;
+    my ($self, $tnode, $unode) = @_;
     $unode->set_tnode($tnode);
     # Set u-node attributes based on the t-node.
     $unode->_set_ord($tnode->ord());
     $unode->set_concept($tnode->t_lemma());
-    $unode->set_functor($tnode->functor());
+    my @eps = $tnode->get_eparents;
+    my %functor;
+  EPARENT:
+    for my $ep (@eps) {
+        next unless $ep->val_frame_rf;
+
+        if (my $valframe_id = $ep->val_frame_rf) {
+            $valframe_id =~ s/^.*#//;
+            if (my $pb = $self->mapping->{$valframe_id}{ $tnode->functor }) {
+                ++$functor{$pb};
+                next EPARENT
+            }
+        }
+        ++$functor{ $tnode->functor };
+    }
+    if (1 == keys %functor) {
+        $unode->set_functor((keys %functor)[0]);
+    } else {
+        warn "More than one functor: ", join ' ', keys %functor
+            if keys %functor > 1;
+        $unode->set_functor($tnode->functor);
+    }
     return $unode;
 }
 
