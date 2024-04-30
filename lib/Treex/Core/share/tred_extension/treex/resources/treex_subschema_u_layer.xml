@@ -70,11 +70,16 @@
     </choice>
   </type>
 
-  <!-- DZ: Initially copying functor values from the t-layer. We will see
-       whether we want to keep (a subset of) them or switch completely to
-       PropBank-style ARG0, ARG1, ARGM etc. -->
   <type name="func.type">
     <choice>
+  <!-- ProbBank style -->
+      <value>ARG0</value>
+      <value>ARG1</value>
+      <value>ARG2</value>
+      <value>ARG3</value>
+
+  <!-- DZ: Initially copying functor values from the t-layer. We will see
+       whether we want to keep (a subset of) them -->
       <value>ACT</value>
       <value>AUTH</value>
       <value>PAT</value>
