@@ -52,10 +52,17 @@ sub translate_val_frame
     }
     if (1 == keys %functor) {
         $unode->set_functor((keys %functor)[0]);
+
     } else {
         warn "More than one functor: ", join ' ', keys %functor
             if keys %functor > 1;
         $unode->set_functor($tnode->functor);
+    }
+    if (my $valframe_id = $tnode->val_frame_rf) {
+        $valframe_id =~ s/^.*#//;
+        if (my $pb_concept = $self->mapping->{$valframe_id}{umr_id}) {
+            $unode->set_concept($pb_concept);
+        }
     }
 }
 
@@ -100,6 +107,8 @@ Currently none.
 =head1 AUTHORS
 
 Daniel Zeman <zeman@ufal.mff.cuni.cz>
+
+Jan Stepanek <stepanek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
