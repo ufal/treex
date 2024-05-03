@@ -136,8 +136,25 @@ sub _get_alignment($self, $utree) {
 sub _get_doc_annot($self, $utree) {
     my $doc_annot = "\n# document level annotation:\n(s"
                   . $self->_curr_sentord . "s0 / sentence";
+    $doc_annot .= $self->_coref($utree);
     $doc_annot .= ')';
     return $doc_annot
+}
+
+sub _coref($self, $utree) {
+    my @coref;
+    for my $unode ($utree->descendants) {
+        if (my @node_coref = $unode->get_coref) {
+            for my $node_coref (@node_coref) {
+                push @coref, '(' . $self->_id_cache->{ $unode->id }
+                             . ' :' . $node_coref->[1] . ' '
+                             . $self->_id_cache->{ $node_coref->[0]->id }
+                             . ')';
+            }
+        }
+    }
+    return "\n    :coref (" . join("\n            ", @coref) . ')' if @coref;
+    return ""
 }
 
 1;
