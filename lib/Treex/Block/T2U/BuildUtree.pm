@@ -32,13 +32,9 @@ sub build_subtree
     return;
 }
 
-sub add_tnode_to_unode
+sub translate_val_frame
 {
     my ($self, $tnode, $unode) = @_;
-    $unode->set_tnode($tnode);
-    # Set u-node attributes based on the t-node.
-    $unode->_set_ord($tnode->ord());
-    $unode->set_concept($tnode->t_lemma());
     my @eps = $tnode->get_eparents;
     my %functor;
   EPARENT:
@@ -61,7 +57,17 @@ sub add_tnode_to_unode
             if keys %functor > 1;
         $unode->set_functor($tnode->functor);
     }
-    return $unode;
+}
+
+sub add_tnode_to_unode
+{
+    my ($self, $tnode, $unode) = @_;
+    $unode->set_tnode($tnode);
+    # Set u-node attributes based on the t-node.
+    $unode->_set_ord($tnode->ord());
+    $unode->set_concept($tnode->t_lemma());
+    $self->translate_val_frame($tnode, $unode);
+    return $unode
 }
 
 1;
