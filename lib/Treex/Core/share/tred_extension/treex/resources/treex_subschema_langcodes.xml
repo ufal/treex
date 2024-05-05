@@ -42,6 +42,7 @@
       <value>cu</value> <!-- Old Church Slavonic -->
       <!-- Germanic languages -->
       <value>en</value> <!-- English -->
+      <value>ang</value> <!-- Old English -->
       <value>de</value> <!-- German -->
       <value>nds</value> <!-- Low Saxon -->
       <value>osx</value> <!-- Old Saxon -->
@@ -104,6 +105,7 @@
       <value>el</value> <!-- Greek -->
       <value>cpg</value> <!-- Cappadocian -->
       <value>pnt</value> <!-- Pontic -->
+      <value>xpg</value> <!-- Phrygian -->
       <value>grc</value> <!-- Ancient Greek -->
       <value>xcl</value> <!-- Classical Armenian -->
       <value>hy</value> <!-- Armenian -->
@@ -124,6 +126,7 @@
       <value>ps</value> <!-- Pashto -->
       <!-- Dardic and Indo-Aryan languages -->
       <value>ks</value> <!-- Kashmiri (in Arabic script) -->
+      <value>trw</value> <!-- Torwali -->
       <value>sa</value> <!-- Sanskrit -->
       <value>pra</value> <!-- Prakrit -->
       <value>pi</value> <!-- Pāli -->
@@ -161,6 +164,7 @@
       <value>gqa</value> <!-- Ga -->
       <value>ha</value> <!-- Hausa -->
       <value>say</value> <!-- Zaar -->
+      <value>gya</value> <!-- Northwest Gbaya -->
       <value>egy</value> <!-- Egyptian -->
       <value>cop</value> <!-- Coptic -->
       <value>aa</value> <!-- Afar -->
@@ -302,6 +306,8 @@
       <value>sm</value> <!-- Samoan -->
       <value>mi</value> <!-- Māori -->
       <value>ty</value> <!-- Tahitian -->
+      <!-- Papuan languages -->
+      <value>tww</value> <!-- Tuwari -->
       <!-- Australian languages -->
       <value>dbl</value> <!-- Dyirbal -->
       <value>zmu</value> <!-- Muruwari -->
@@ -318,6 +324,7 @@
       <!-- American Indian languages -->
       <value>cr</value> <!-- Cree -->
       <value>oj</value> <!-- Ojibwa -->
+      <value>gwi</value> <!-- Gwichin -->
       <value>nv</value> <!-- Navajo -->
       <value>mov</value> <!-- Mojave -->
       <value>sei</value> <!-- Seri -->
@@ -359,6 +366,7 @@
       <value>vo</value> <!-- Volapük -->
       <value>pcm</value> <!-- Nigerian Pidgin (Naija) -->
       <value>pap</value> <!-- Papiamento -->
+      <value>pln</value> <!-- Palenquero -->
       <value>swl</value> <!-- Swedish Sign Language -->
       <value>qaf</value> <!-- Maghrebi Arabic-French (code-switching) -->
       <value>qee</value> <!-- Spanish-English (code-switching) -->
