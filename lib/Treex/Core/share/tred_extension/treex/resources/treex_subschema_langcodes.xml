@@ -97,6 +97,7 @@
       <!-- Baltic languages -->
       <value>lt</value> <!-- Lithuanian -->
       <value>lv</value> <!-- Latvian -->
+      <value>ltg</value> <!-- Latgalian -->
       <!-- other Indo-European languages in Europe and Caucasus -->
       <value>sq</value> <!-- Albanian -->
       <value>aln</value> <!-- Gheg (Albanian) -->
@@ -160,6 +161,7 @@
       <value>gqa</value> <!-- Ga -->
       <value>ha</value> <!-- Hausa -->
       <value>say</value> <!-- Zaar -->
+      <value>egy</value> <!-- Egyptian -->
       <value>cop</value> <!-- Coptic -->
       <value>aa</value> <!-- Afar -->
       <value>om</value> <!-- Oromo -->
@@ -328,6 +330,7 @@
       <value>usp</value> <!-- Uspanteko -->
       <value>bzd</value> <!-- Bribri -->
       <value>apu</value> <!-- Apurinã -->
+      <value>pad</value> <!-- Paumari -->
       <value>qu</value> <!-- Quechua -->
       <value>quz</value> <!-- Cusco Quechua -->
       <value>ay</value> <!-- Aymara -->
@@ -362,6 +365,7 @@
       <value>qfn</value> <!-- Frisian-Dutch (code-switching) -->
       <value>qhe</value> <!-- Hindi-English (code-switching) -->
       <value>qtd</value> <!-- Turkish-German (code-switching) -->
+      <value>qte</value> <!-- Telugu-English (code-switching) -->
       <value>und</value> <!-- ISO 639-2 code for undetermined/unknown language -->
     </choice>
   </type>
