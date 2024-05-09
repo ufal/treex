@@ -34,6 +34,7 @@ like warnings {
 }, bag {
     item qr{Ambiguous mapping absorbovat-001 v-w10f1 ACT: ARG2/ARG0};
     item qr{Already exists v-w10f1};
+    item qr{v-w11f1: cákat != běhat};
     end()
 }, 'Warnings';
 
