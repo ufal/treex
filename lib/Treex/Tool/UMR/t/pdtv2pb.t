@@ -4,9 +4,16 @@ use strict;
 
 {   package My::Consumer;
     use Moose;
+
+    use Treex::Core::Log;
+    use Sub::Override;
+    my $override = 'Sub::Override'->new(
+
+    'Treex::Core::Log::log_warn' => sub { warn shift });
     with 'Treex::Tool::UMR::PDTV2PB';
     sub BUILD {}
 }
+
 
 use FindBin;
 use Test2::V0;

@@ -8,6 +8,7 @@ use Moose::Util::TypeConstraints qw{ class_type };
 class_type 'XML::LibXML::Element';
 use experimental qw( signatures );
 
+use Treex::Core::Log qw{ log_warn };
 use Text::CSV_XS;
 use XML::LibXML;
 use namespace::clean;
@@ -63,20 +64,20 @@ sub _build_mapping($self) {
         if ($row->[0]) {
             my ($verb, $frame_id) = $row->[1] =~ /(.*) \((.*)\)/;
             $self->_by_id->{$frame_id}{word} eq $verb
-                or warn "$frame_id: $verb != ",
-                        $self->_by_id->{$frame_id}{word};
+                or log_warn("$frame_id: $verb != "
+                            . $self->_by_id->{$frame_id}{word});
             $current_id = $frame_id;
             my $umr_id = ($row->[0] =~ /^"(.*)"$/)[0];
-            warn "Already exists $current_id!"
+            log_warn("Already exists $current_id!")
                 if exists $mapping{$current_id}
                 && $mapping{$current_id}{umr_id} ne $umr_id;
             $mapping{$current_id}{umr_id} = $umr_id;
 
         } elsif ($row->[3]) {
             my $functor = $row->[1] =~ s/:.*//r;
-            warn "Ambiguous mapping $mapping{$current_id}{umr_id}",
-                 " $current_id $functor:",
-                 " $row->[3]/$mapping{$current_id}{$functor}!"
+            log_warn("Ambiguous mapping $mapping{$current_id}{umr_id}"
+                     . " $current_id $functor:"
+                     . " $row->[3]/$mapping{$current_id}{$functor}!")
                 if exists $mapping{$current_id}{$functor}
                 && $mapping{$current_id}{$functor} ne $row->[3];
             $mapping{$current_id}{$functor} = $row->[3];
