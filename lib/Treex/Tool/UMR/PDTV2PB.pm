@@ -67,9 +67,18 @@ sub _build_mapping($self) {
                         $self->_by_id->{$frame_id}{word};
             $current_id = $frame_id;
             my $umr_id = ($row->[0] =~ /^"(.*)"$/)[0];
-            $mapping{$current_id} = {umr_id => $umr_id};
+            warn "Already exists $current_id!"
+                if exists $mapping{$current_id}
+                && $mapping{$current_id}{umr_id} ne $umr_id;
+            $mapping{$current_id}{umr_id} = $umr_id;
+
         } elsif ($row->[3]) {
             my $functor = $row->[1] =~ s/:.*//r;
+            warn "Ambiguous mapping $mapping{$current_id}{umr_id}",
+                 " $current_id $functor:",
+                 " $row->[3]/$mapping{$current_id}{$functor}!"
+                if exists $mapping{$current_id}{$functor}
+                && $mapping{$current_id}{$functor} ne $row->[3];
             $mapping{$current_id}{$functor} = $row->[3];
         }
     }

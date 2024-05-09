@@ -1,0 +1,11 @@
+UMR ID,PDT frame,Role_mapping,AUTOMATIC MAPPING,CORRECTION,COMMENTS,Unambiguous mapping - SSC and/or CEV,Prevailing mapping - SSC and/or CEV,Unambiguous SSC mapping (other than CEV),Info on automatic mapping,Source,Mapping via CzEngVallex,Mapping via SynSemClass5.1 (r.16488),mapping via SynSemClass5.0 (Lindat_version),mapping via SynSemClass (old_version),
+"""absorbovat-001""",absorbovat (v-w10f1),vec00476,,,,,,,,both,,,,,0
+,ACT: 1,ACT->Absorber,ARG0,,,ARG0,,,,,ACT->ARG0/17,ACT->Absorber(ARG0/25),ACT->Absorber(ARG0/25),ACT->Absorber(ARG0/25),0
+,PAT: 4,PAT->Absorbed,ARG1,,,ARG1,,,,,PAT->ARG1/28,PAT->Absorbed(ARG1/38),PAT->Absorbed(ARG1/38),PAT->Absorbed(ARG1/38),0
+"""absorbovat-001""",absorbovat (v-w10f1),vec00476,,,,,,,,both,,,,,0
+,ACT: 1,ACT->Absorber,ARG2,,,ARG0,,,,,ACT->ARG0/17,ACT->Absorber(ARG0/25),ACT->Absorber(ARG0/25),ACT->Absorber(ARG0/25),0
+,PAT: 4,PAT->Absorbed,ARG1,,,ARG1,,,,,PAT->ARG1/28,PAT->Absorbed(ARG1/38),PAT->Absorbed(ARG1/38),PAT->Absorbed(ARG1/38),0
+"""absorbovat-002""",absorbovat (v-w10f1),vec00476,,,,,,,,both,,,,,0
+,ACT: 1,ACT->Absorber,ARG2,,,ARG0,,,,,ACT->ARG0/17,ACT->Absorber(ARG0/25),ACT->Absorber(ARG0/25),ACT->Absorber(ARG0/25),0
+,PAT: 4,PAT->Absorbed,ARG1,,,ARG1,,,,,PAT->ARG1/28,PAT->Absorbed(ARG1/38),PAT->Absorbed(ARG1/38),PAT->Absorbed(ARG1/38),0
+
