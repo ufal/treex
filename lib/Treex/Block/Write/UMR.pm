@@ -49,6 +49,7 @@ sub _get_sent_header($self, $utree) {
                        ->get_atree
                        ->get_descendants({ordered => 1});
     $text .= join "", 'Index: ', map $_->ord . (' ' x (length($_->form) - length($_->ord) + 1)), @anodes;
+    $text =~ s/ +$//;
     $text .= join ' ', "\nWords:", map $_->form, @anodes;
     $text .= "\n\n";
     return $text
