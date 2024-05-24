@@ -96,6 +96,17 @@ sub _get_sent_subtree($self, $unode) {
         $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
         $umr_str .= ':refer-number ' . $unode->entity_refnumber;
     }
+
+    if ($unode->aspect) {
+        $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
+        $umr_str .= ':aspect ' . $unode->aspect;
+    }
+
+    if ($unode->modal_strength) {
+        $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
+        $umr_str .= ':modal-strength ' . $unode->modal_strength;
+    }
+
     $umr_str .= ')';
     return $umr_str
 }
