@@ -52,7 +52,6 @@ sub translate_val_frame
     }
     if (1 == keys %functor) {
         $unode->set_functor((keys %functor)[0]);
-
     } else {
         warn "More than one functor: ", join ' ', keys %functor
             if keys %functor > 1;
@@ -60,8 +59,13 @@ sub translate_val_frame
     }
     if (my $valframe_id = $tnode->val_frame_rf) {
         $valframe_id =~ s/^.*#//;
-        if (my $pb_concept = $self->mapping->{$valframe_id}{umr_id}) {
+        my $mapping = $self->mapping->{$valframe_id};
+        if (my $pb_concept = $mapping->{umr_id}) {
             $unode->set_concept($pb_concept);
+            if (grep /ARG[0-9]/, values %$mapping) {
+                $unode->set_modal_strength('full-affirmative');
+                $unode->set_aspect('activity');  # TODO: Value.
+            }
         }
     }
 }

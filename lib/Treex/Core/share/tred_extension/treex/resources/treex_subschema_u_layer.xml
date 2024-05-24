@@ -45,6 +45,8 @@
 
       <member name="concept"><cdata format="any"/></member>
       <member name="functor"><alt type="func.type"/></member>
+      <member name="aspect"><cdata format="any"/></member> <!-- valules? -->
+      <member name="modal-strength"><cdata format="any"/></member> <!-- valules? -->
 
       <!--  References -->
       <member name="t.rf"><cdata format="PMLREF"/></member>

@@ -10,7 +10,7 @@ with 'Treex::Core::Node::InClause';
 
 # u-layer attributes
 has [
-    qw( nodetype concept functor
+    qw( nodetype concept functor aspect modal_strength
     )
 ] => ( is => 'rw' );
 
