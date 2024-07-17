@@ -74,8 +74,8 @@ sub translate_val_frame
         'ACT'   => 'ARG0',
         'PAT'   => 'ARG1',
         'ADDR'  => 'ARG2',
-        'ORIG'  => 'ARG3',
-        'EFF'   => 'ARG4',
+        'ORIG'  => 'source',
+        'EFF'   => 'goal',
     ##### TEMPORAL ###########################
         'TWHEN' => 'temporal',
         'TFHL' => 'duration',
