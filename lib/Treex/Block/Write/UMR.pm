@@ -39,6 +39,32 @@ sub process_utree($self, $utree, $sentord) {
     print { $self->_file_handle } $self->_get_sent_footer;
 }
 
+sub _format_index(@anodes) {
+    my $minimal_length = length scalar @anodes;
+    my $index = "";
+    for my $anode (@anodes) {
+        my $ord = $anode->ord;
+        $index .= $ord;
+
+        my $space_length = 1 + length($anode->form) - length($ord);
+        $space_length += $minimal_length - length($anode->form)
+            if length($anode->form) < $minimal_length;
+        $index .= ' ' x $space_length;
+    }
+    return $index =~ s/ +$//r
+}
+
+sub _format_words(@anodes) {
+    my $minimal_length = length scalar @anodes;
+    my $words = join "",
+                map { $_ . ' ' x ((length($_) < $minimal_length)
+                                  ? $minimal_length
+                                  : 1)
+                } map $_->form,
+                @anodes;
+    return $words =~ s/ +$//r
+}
+
 sub _get_sent_header($self, $utree) {
     my $text = '#' x 80;
     $text .= "\n# sent_id = " . $utree->id . "\n";
@@ -48,9 +74,9 @@ sub _get_sent_header($self, $utree) {
                        ->get_zone($troot->language)
                        ->get_atree
                        ->get_descendants({ordered => 1});
-    $text .= join "", 'Index: ', map $_->ord . (' ' x (length($_->form) - length($_->ord) + 1)), @anodes;
+    $text .= join "", 'Index: ', _format_index(@anodes);
     $text =~ s/ +$//;
-    $text .= join ' ', "\nWords:", map $_->form, @anodes;
+    $text .= join "", "\nWords: ", _format_words(@anodes);
     $text .= "\n\n";
     return $text
 }
