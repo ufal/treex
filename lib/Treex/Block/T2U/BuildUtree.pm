@@ -70,6 +70,63 @@ sub translate_val_frame
     }
 }
 
+{   my %FUNCTOR_MAPPING = (
+        'ACT'   => 'ARG0',
+        'PAT'   => 'ARG1',
+        'ADDR'  => 'ARG2',
+        'ORIG'  => 'ARG3',
+        'EFF'   => 'ARG4',
+    ##### TEMPORAL ###########################
+        'TWHEN' => 'temporal',
+        'TFHL' => 'duration',
+        'TFRWH' => 'temporal',
+        'THL'   => 'duration',
+        'THO' => 'frequency',
+        'TOWH' => 'temporal',
+        'TPAR' => 'temporal',
+        'TSIN' => 'temporal',
+        'TTILL' => 'temporal',
+    ##### SPATIAL ###########################
+        'DIR1'  => 'start',
+        'DIR2'  => 'path',
+        'DIR3'  => 'goal',
+        'LOC'   => 'place',
+    ##### CAUSAL ###########################
+        'AIM'   => 'purpose',
+        'CAUS'  => 'cause',
+        'CNCS' => 'concession',
+        'COND' => 'condition',
+        'INTT' => 'purpose',
+    ##### MANNER ###########################
+        'ACMP'  => 'companion',
+    #    'CPR' => 'compared-to',
+        'CRIT' => 'according-to',  #temporarily
+        'DIFF' => 'extent',
+        'EXT' => 'extent',
+        'MANN'  => 'manner',
+        'MEANS' => 'instrument',
+        'NORM' => 'according-to',  #temporarily
+        'REG'  => 'manner',
+        'RESL' => 'extent',
+        'RESTR' => 'subtraction',
+    ##### NEW ###########################
+        'BEN'   => 'recipient',
+        'HER'   => 'source',
+    ##### NOMINAL ###########################
+        'APP'   => 'poss',  # ?? or 'part' ??
+        'AUTH' => 'source',
+    #    'ID' => 'name',
+        'RSTR'  => 'mod',
+    );
+    sub translate_non_valency_functor
+    {
+        my ($self, $tnode, $unode) = @_;
+        return unless exists $FUNCTOR_MAPPING{ $tnode->{functor} };
+        $unode->set_functor($FUNCTOR_MAPPING{ $tnode->{functor} });
+    }
+}
+
+
 sub add_tnode_to_unode
 {
     my ($self, $tnode, $unode) = @_;
@@ -78,6 +135,7 @@ sub add_tnode_to_unode
     $unode->_set_ord($tnode->ord());
     $unode->set_concept($tnode->t_lemma());
     $self->translate_val_frame($tnode, $unode);
+    $self->translate_non_valency_functor($tnode, $unode);
     return $unode
 }
 
