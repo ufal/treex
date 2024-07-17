@@ -173,8 +173,8 @@
 
   <type name="u-refnumber.type">
     <choice>
-      <value>Singular</value>
-      <value>Plural</value>
+      <value>singular</value>
+      <value>plural</value>
     </choice>
   </type>
 

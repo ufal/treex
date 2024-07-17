@@ -117,9 +117,9 @@ my %T2U_PERSON = (
     "inher" => "Inher",
 );
 my %T2U_NUMBER = (
-    "sg" => "Singular",
-    "pl" => "Plural",
-    "inher" => "Inher",
+    "sg" => "singular",
+    "pl" => "plural",
+    "inher" => "inher",
 );
 
 sub _infere_entity_info {
