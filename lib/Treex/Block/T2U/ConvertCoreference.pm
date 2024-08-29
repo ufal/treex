@@ -1,6 +1,7 @@
 package Treex::Block::T2U::ConvertCoreference;
 
 use Moose;
+use utf8;
 use Treex::Core::Common;
 
 use Graph::Directed;
@@ -80,8 +81,27 @@ after 'process_document' => sub {
             # - the following intra-sentential links with underspecified anaphors
             #   must be anchored in this node
             elsif (defined $tnode->gram_sempos && $tnode->gram_sempos =~ /^n/) {
-                $unode->add_coref($uante, "same-entity");
-                $self->_anchor_references($unode);
+                my $removed;
+                if ($tnode->t_lemma =~ /^(?:který|jaký|co|kdy|kde)$/) {
+                    my @rstr_eparents = grep 'RSTR' eq $_->functor,
+                                        $tnode->get_eparents;
+                    for my $parent (@rstr_eparents) {
+                        my @grandparents = $parent->get_eparents;
+                        for my $gp (@grandparents) {
+                            if ($gp == $tante) {
+                                my ($up) = grep $_->get_tnode == $parent,
+                                               $unode->root->descendants;
+                                $up->set_functor($unode->functor . '-of');
+                                $unode->remove;
+                                $removed = 1;
+                            }
+                        }
+                    }
+                }
+                if (! $removed) {
+                    $unode->add_coref($uante, "same-entity");
+                    $self->_anchor_references($unode);
+                }
             }
             else {
                 log_warn "Don't know what to do so far for the u-node: ". $unode->id;
