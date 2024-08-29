@@ -81,7 +81,7 @@ after 'process_document' => sub {
             # - the following intra-sentential links with underspecified anaphors
             #   must be anchored in this node
             elsif (defined $tnode->gram_sempos && $tnode->gram_sempos =~ /^n/) {
-                my $removed;
+                my $remove;
                 if ($tnode->t_lemma =~ /^(?:který|jaký|co|kdy|kde)$/) {
                     my @rstr_eparents = grep 'RSTR' eq $_->functor,
                                         $tnode->get_eparents;
@@ -92,13 +92,14 @@ after 'process_document' => sub {
                                 my ($up) = grep $_->get_tnode == $parent,
                                                $unode->root->descendants;
                                 $up->set_functor($unode->functor . '-of');
-                                $unode->remove;
-                                $removed = 1;
+                                $remove = 1;
                             }
                         }
                     }
                 }
-                if (! $removed) {
+                if ($remove) {
+                    $unode->remove;
+                } else {
                     $unode->add_coref($uante, "same-entity");
                     $self->_anchor_references($unode);
                 }
