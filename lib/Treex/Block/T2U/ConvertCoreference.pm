@@ -72,7 +72,7 @@ after 'process_document' => sub {
             }
             # intra-sentential links with underspecified anaphors
             # - propagate such anaphors via the wild attribute `anaphs`
-            elsif ($tnode->t_lemma =~ /^(\#Cor)|(\#QCor)|(\#PersPron)$/) {
+            elsif ($tnode->t_lemma =~ /^#(?:Cor|QCor|PersPron)$/) {
                 $self->_propagate_anaphors($unode, $uante);
             }
             # intra-sentential links with nominal anaphors
