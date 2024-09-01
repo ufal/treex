@@ -51,6 +51,27 @@ sub fix_morphology
     my $lemma = $node->lemma();
     my $iset = $node->iset();
     my $deprel = $node->deprel();
+    # PDT and related corpora annotate polarity on nouns, adjectives, verbs,
+    # and adverbs. The one on nouns is most problematic and it is not annotated
+    # too consistently. Deadjectival nouns (-ost) and deverbal nouns (-ní, -tí)
+    # sometimes have it and sometimes don't. E.g., "nezávislost" is lemmatized
+    # as "závislost" with Polarity=Neg. However, "neschopnost" is lemmatized
+    # as "neschopnost" with Polarity=Pos. Same for many other negative nouns
+    # like "neúspěch" or "nepřítel". In the Hičkok project we decided to never
+    # annotate polarity on nouns and always lemmatize them with the ne- prefix
+    # if they have it. For consistency, the same should now be done in the other
+    # treebanks (possibly preserving the link to the positive form in LDeriv in
+    # MISC).
+    if($iset->is_noun())
+    {
+        if($lform =~ m/^ne/ && $iset->is_negative() && $lemma !~ m/^ne/)
+        {
+            $node->set_misc_attr('LDeriv', $lemma);
+            $lemma = 'ne'.$lemma;
+            $node->set_lemma($lemma);
+        }
+        $iset->clear('polarity');
+    }
     # Jan Hajič's morphological analyzer tags "každý" simply as adjective,
     # but it is an attributive pronoun, according to the Czech grammar.
     if($lemma eq 'každý')
