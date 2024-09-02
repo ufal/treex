@@ -66,6 +66,13 @@ sub fix_morphology
         # Fix Interset features of pronominal words.
         if($node->is_pronominal())
         {
+            # In one case, "si" is mistakenly lemmatized as "být" (i.e., colloquial form of "jsi"),
+            # but it is still tagged correctly as a reflexive pronoun.
+            if($form eq 'si' && $lemma eq 'být')
+            {
+                $lemma = 'se';
+                $node->set_lemma($lemma);
+            }
             # Indefinite pronouns and determiners cannot be distinguished by their PDT tag (PZ*).
             if($lemma =~ m/^((ně|lec|ledas?|kde|bůhví|kdoví|nevím|málo|sotva)?(kdo|cos?)(si|koliv?)?|nikdo|nic)$/)
             {
