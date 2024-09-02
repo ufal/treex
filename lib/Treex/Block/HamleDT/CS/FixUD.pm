@@ -116,8 +116,15 @@ sub fix_morphology
     # will contain the necessary information.
     if($lemma =~ m/^(být|bývat|bývávat)$/)
     {
+        $iset->set('pos', 'verb');
         $iset->set('verbtype', 'aux');
         $iset->set('aspect', 'imp');
+        ###!!! In two cases in Czech Poetry, "by" was wrongly tagged as SCONJ
+        ###!!! and mark, although still lemmatized as "být".
+        if($node->deprel() eq 'mark')
+        {
+            $node->set_deprel('aux');
+        }
     }
     # The Czech conditional auxiliary "by" should not have the Person feature
     # (currently some occurrences have it and others don't, which is a mess).
