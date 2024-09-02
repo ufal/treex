@@ -130,7 +130,7 @@ sub fix_morphology
     # - "by" in Old Czech used as aorist of "být" (e.g. as a copula)
     # - "by" in code switching (Foreign=Yes, either conditional in other Slavic
     #   languages, or English preposition, or anything else)
-    if($lform eq 'by' && $iset->is_conditional() && !$iset->is_foreign())
+    if($lform eq 'by' && $iset->is_verb() && $iset->is_conditional() && !$iset->is_foreign())
     {
         $lemma = 'být';
         $node->set_lemma($lemma);
