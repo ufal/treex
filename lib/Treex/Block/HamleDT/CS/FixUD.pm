@@ -116,7 +116,31 @@ sub fix_morphology
     # will contain the necessary information.
     if($lemma =~ m/^(být|bývat|bývávat)$/)
     {
-        $node->iset()->set('verbtype', 'aux');
+        $iset->set('verbtype', 'aux');
+        $iset->set('aspect', 'imp');
+    }
+    # The Czech conditional auxiliary "by" should not have the Person feature
+    # (currently some occurrences have it and others don't, which is a mess).
+    # Although it is used in the 3rd person most of the time, it can be also
+    # 2nd person ("ty by ses bál" – decomposed to syntactic words as "ty by
+    # jsi se bál"), and in Old Czech it can be other persons in other contexts.
+    # Note that this rule should not affect the following (they should have
+    # Person annotated):
+    # - other conditional auxiliaries ("bych, bys, bychom, byste")
+    # - "by" in Old Czech used as aorist of "být" (e.g. as a copula)
+    # - "by" in code switching (Foreign=Yes, either conditional in other Slavic
+    #   languages, or English preposition, or anything else)
+    if($lform eq 'by' && $iset->is_conditional() && !$iset->is_foreign())
+    {
+        $lemma = 'být';
+        $node->set_lemma($lemma);
+        $iset->set('verbtype', 'aux');
+        $iset->set('aspect', 'imp');
+        $iset->set('verbform', 'fin');
+        $iset->clear('tense');
+        $iset->clear('person');
+        $iset->clear('number');
+        $iset->clear('gender');
     }
     # The word "proto" (lit. "for that") is etymologically a demonstrative
     # adverb but it is often used as a discourse connective: a coordinating
