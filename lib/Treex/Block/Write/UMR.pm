@@ -139,6 +139,7 @@ sub _get_sent_subtree($self, $unode) {
 
 sub _format_alignment($self, @ords) {
     @ords = sort { $a <=> $b } @ords;
+    @ords = (0) unless @ords;
     my $string = "";
     for my $i (0 .. $#ords) {
         my $follows_prev = $i > 0      && $ords[$i] == $ords[ $i - 1 ] + 1;
