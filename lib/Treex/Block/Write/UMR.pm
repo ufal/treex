@@ -106,7 +106,7 @@ sub _get_node_indent($self, $unode) {
 sub _get_sent_subtree($self, $unode) {
     my $umr_str = "";
 
-    my $concept = $unode->concept;
+    my $concept = $unode->concept // '???';  # TODO
     my $var = $self->_assign_variable($concept);
     $self->_id_cache->{ $unode->id } = $var;
 
