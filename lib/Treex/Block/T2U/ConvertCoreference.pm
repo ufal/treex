@@ -80,22 +80,11 @@ after 'process_document' => sub {
             # - the link must be represented by the ":coref" attribute
             # - the following intra-sentential links with underspecified anaphors
             #   must be anchored in this node
-            elsif (defined $tnode->gram_sempos && $tnode->gram_sempos =~ /^n/) {
+            elsif (($tnode->gram_sempos // "") =~ /^n/) {
                 my $remove;
                 if ($tnode->t_lemma =~ /^(?:který|jaký|co|kdy|kde)$/) {
-                    my @rstr_eparents = grep 'RSTR' eq $_->functor,
-                                        $tnode->get_eparents;
-                    for my $parent (@rstr_eparents) {
-                        my @grandparents = $parent->get_eparents;
-                        for my $gp (@grandparents) {
-                            if ($gp == $tante) {
-                                my ($up) = grep $_->get_tnode == $parent,
-                                               $unode->root->descendants;
-                                $up->set_functor($unode->functor . '-of');
-                                $remove = 1;
-                            }
-                        }
-                    }
+                    $remove = $self->_relative_coref(
+                        $tnode, $unode, $uante->id, $tante_id, $doc);
                 }
                 if ($remove) {
                     $unode->remove;
@@ -115,8 +104,52 @@ after 'process_document' => sub {
             $self->_anchor_references($unode);
         }
     }
-    
 };
+
+sub _get_corresponding_unode {
+    my ($self, $any_unode, $tnode) = @_;
+    my ($u) = grep $_->get_tnode == $tnode,
+              map $_->descendants,
+              map $_->get_tree($any_unode->language, 'u'),
+              $any_unode->get_document->get_bundles;
+    return $u
+}
+
+sub _relative_coref {
+    my ($self, $tnode, $unode, $uante_id, $tante_id, $doc) = @_;
+    my $remove;
+    my @rstr_eparents = grep 'RSTR' eq $_->functor,
+                        $tnode->get_eparents;
+    for my $parent (@rstr_eparents) {
+        my $up = $self->_get_corresponding_unode($unode, $parent);
+        my @grandparents = $parent->get_eparents;
+        for my $gp (@grandparents) {
+            if ($gp->id eq $tante_id) {
+                $up->set_functor($unode->functor . '-of');
+                for my $predecessor (
+                    $self->_tcoref_graph->predecessors($tnode->{id})
+                ) {
+                    $self->_tcoref_graph->delete_edge(
+                        $predecessor, $tnode->{id});
+                    $self->_tcoref_graph->add_edge(
+                        $predecessor, $tante_id);
+                    my $upred = $self->_get_corresponding_unode(
+                        $unode, $doc->get_node_by_id($predecessor));
+                    if (my $coref = $upred->{coref}) {
+                        my $i = (-1,
+                                 grep $coref->[$_]{'target_node.rf'} eq $unode->id,
+                                      0 .. $coref->count - 1)[-1];
+                        if ($i >= 0) {
+                            $coref->[$i]{'target_node.rf'} = $uante_id;
+                        }
+                    }
+                }
+                $remove = 1;
+            }
+        }
+    }
+    return $remove
+}
 
 sub _anchor_references {
     my ($self, $unode) = @_;
