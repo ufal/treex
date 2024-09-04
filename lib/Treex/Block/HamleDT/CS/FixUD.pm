@@ -72,6 +72,50 @@ sub fix_morphology
         }
         $iset->clear('polarity');
     }
+    # Some types of adjectives are gradable, others had comparative forms in
+    # Old Czech only, and yet others do not have them at all. Make sure that
+    # certain categories have non-empty degree feature even if they did not
+    # have it in the original annotation.
+    if($iset->is_adjective() && !$iset->is_pronominal() && $iset->numtype() eq '' && !$iset->is_possessive())
+    {
+        # Among those passing the above if-filter, we have the following sets:
+        # - regular adjectives, long form (český, další, nový, jiný, velký...) => they have degree (although some of them, like "další" or "jiný", do not form comparative and superlative morphologically)
+        # - short ("nominal") forms (rád, schopen, znám, možno, ochoten...) => they have degree (although comparatives are attested only in Old Czech)
+        # - passive participles, long form (spojený, daný, příslušný, uvedený, zmíněný...) => they have degree (cmp and sup rare but possible: dodělaný, dodělanější, nejdodělanější)
+        # - passive participles, short form (připraven, přesvědčen, uveden, řečen, určen...) => they have degree (for consistency/completeness; comparatives not attested)
+        # - present active participles (rozhodující, vedoucí, následující, vynikající, týkající...) => they do not have degree
+        # - past active participles (odstoupivší, zešílevší, byvší, doloživší, nastavší...) => they do not have degree
+        if(!($iset->is_participle() && $iset->is_active()))
+        {
+            if($iset->degree() eq '')
+            {
+                $iset->set('degree', 'pos');
+            }
+        }
+    }
+    # A small set of less common numerals may be tagged ambiguously as
+    # numtype=mult|sets. Members: jedny (sets); dvojí, obojí, obé, trojí (mult).
+    if($iset->contains('numtype', 'mult') && $iset->contains('numtype', 'sets'))
+    {
+        if($lemma eq 'jedny')
+        {
+            $iset->set('pos', 'num');
+            $iset->set('numtype', 'sets');
+            if($node->deprel() =~ m/^amod(:|$)/)
+            {
+                $node->set_deprel('nummod');
+            }
+        }
+        elsif($lemma =~ m/^(dvojí|obojí|obé|trojí)$/)
+        {
+            $iset->set('pos', 'adj');
+            $iset->set('numtype', 'mult');
+            if($node->deprel() =~ m/^nummod(:|$)/)
+            {
+                $node->set_deprel('amod');
+            }
+        }
+    }
     # Jan Hajič's morphological analyzer tags "každý" simply as adjective,
     # but it is an attributive pronoun, according to the Czech grammar.
     if($lemma eq 'každý')
