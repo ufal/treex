@@ -107,9 +107,20 @@ sub _get_sent_subtree($self, $unode) {
     my $umr_str = "";
 
     my $concept = $unode->concept // '???';  # TODO
-    my $var = $self->_assign_variable($concept);
-    $self->_id_cache->{ $unode->id } = $var;
+    my $var = $self->_id_cache->{ $unode->id };
+    if (! defined $var) {
+        $var = $self->_assign_variable($concept);
+        $self->_id_cache->{ $unode->id } = $var;
+    }
 
+    if ('ref' eq ($unode->{nodetype} // "")) {
+        my $ref = $unode->{'same_as.rf'};
+        return $self->_id_cache->{$ref} if $self->_id_cache->{$ref};
+
+        my $refered = (grep $ref eq $_->id, $unode->root->descendants)[0];
+        return $self->_id_cache->{$ref}
+               = $self->_assign_variable($refered->concept)
+    }
     $umr_str .= "($var / $concept";
 
     for my $uchild ($unode->get_children({ordered => 1})) {
