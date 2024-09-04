@@ -63,9 +63,9 @@ sub _build_mapping($self) {
 
         if ($row->[0]) {
             my ($verb, $frame_id) = $row->[1] =~ /(.*) \((.*)\)/;
-            $self->_by_id->{$frame_id}{word} eq $verb
+            ($self->_by_id->{$frame_id}{word} // "") eq $verb
                 or log_warn("$frame_id: $verb != "
-                            . $self->_by_id->{$frame_id}{word});
+                            . ($self->_by_id->{$frame_id}{word} // '-'));
             $current_id = $frame_id;
             my $umr_id = ($row->[0] =~ /^"(.*)"$/)[0];
             log_warn("Already exists $current_id!")
