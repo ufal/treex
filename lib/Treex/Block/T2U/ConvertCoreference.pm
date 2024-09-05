@@ -73,27 +73,30 @@ after 'process_document' => sub {
             }
             # intra-sentential links with underspecified anaphors
             # - propagate such anaphors via the wild attribute `anaphs`
-            elsif ($tnode->t_lemma =~ /^#(?:Q?Cor|PersPron)$/) {
-                $self->_propagate_anaphors($unode, $uante);
+            elsif ($tnode->t_lemma =~ /^#(?:Q?Cor|PersPron)$/
+                   && ! $tnode->children
+            ) {
+                $self->_same_sentence_coref(
+                    $tnode, $unode, $uante, $tante_id, $doc);
             }
             # intra-sentential links with nominal anaphors
             # - the link must be represented by the ":coref" attribute
             # - the following intra-sentential links with underspecified anaphors
             #   must be anchored in this node
-            else {
-                my $remove;
-                if (($tnode->gram_sempos // "") =~ /^n/
-                    && $tnode->t_lemma =~ /^(?:který|jaký|co|kdy|kde)$/
-                ) {
-                    $remove = $self->_relative_coref(
-                        $tnode, $unode, $uante->id, $tante_id, $doc);
-                }
-                if ($remove) {
+            elsif (($tnode->gram_sempos // "") =~ /^n/
+                    && $tnode->t_lemma =~ /^(?:který|jaký|co|kd[ye])$/
+               ) {
+                my $remove = $self->_relative_coref(
+                    $tnode, $unode, $uante->id, $tante_id, $doc);
+                if ($remove && ! $unode->children) {
                     $unode->remove;
                 } else {
-                    $self->_same_sentence_coref(
-                        $tnode, $unode, $uante, $tante_id, $doc);
+                    warn "NO REMOVE $tnode->{id}/$tnode->{t_lemma}\n";
                 }
+            } else {
+                $unode->add_coref($uante);
+                $self->_anchor_references($unode);
+                log_warn("Unsolved coref $unode->{id}");
             }
         }
         # non-anaphoric antecedent
@@ -122,8 +125,13 @@ sub _same_sentence_coref {
             if ($i >= 0) {
                 $coref->[$i]{'target_node.rf'} = $uante->id;
             }
+        } elsif (my $coref = $upred->{'same_as.rf'}) {
+            $upred->{'same_as.rf'} = $uante->id;
+        } else {
+            warn "CANNOT COREF $upred->{id}/$upred->{concept}, $unode->{id}/$unode->{concept}\n";
         }
     }
+    warn "CHILDREN" if $unode->children;
     $unode->{nodetype} = 'ref';
     $unode->{'same_as.rf'} = $uante->id;
 }
@@ -164,6 +172,10 @@ sub _relative_coref {
                         if ($i >= 0) {
                             $coref->[$i]{'target_node.rf'} = $uante_id;
                         }
+                    } elsif (my $same = $upred->{'same_as.rf'}) {
+                        $upred->{'same_as.rf'} = $uante_id;
+                    } else {
+                        warn "REL CANNOT COREF $upred->{id}/$upred->{concept}, $unode->{id}/$unode->{concept}\n";
                     }
                 }
                 $remove = 1;
