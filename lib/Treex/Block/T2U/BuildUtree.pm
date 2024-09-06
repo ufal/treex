@@ -1,6 +1,9 @@
 package Treex::Block::T2U::BuildUtree;
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::UMR::Common qw{ get_corresponding_unode };
+use namespace::autoclean;
+
 extends 'Treex::Core::Block';
 with 'Treex::Tool::UMR::PDTV2PB';
 
@@ -17,6 +20,10 @@ sub process_zone
     $self->build_subtree($troot, $uroot);
     # Make sure the ord attributes form a sequence 1, 2, 3, ...
     $uroot->_normalize_node_ordering();
+    for my $unode (reverse $uroot->descendants) {
+        my $tnode = $unode->get_tnode;
+        $self->adjust_coap($unode, $tnode) if 'coap' eq $tnode->nodetype;
+    }
     return 1;
 }
 
@@ -117,15 +124,62 @@ sub translate_val_frame
         'AUTH' => 'source',
     #    'ID' => 'name',
         'RSTR'  => 'mod',
+
+##### coap - COORDINATION ###########################
+        # relations "with-91" take ARG1, ARG2, the rest takes op1, op2...
+        'ADVS' => 'but-91',        # keyword
+        'CONFR' => 'contrast-91',  # event
+        'CONJ' => 'and',
+        'CONTRA' => 'contra',       # NOT in UMR
+        'CSQ' => 'consecutive',
+        'DISJ' => 'exclusive-disjunctive',
+        'GRAD' => 'and',
+        'REAS' => 'have-cause-91',  # event
     );
     sub translate_non_valency_functor
     {
         my ($self, $tnode, $unode) = @_;
         return unless exists $FUNCTOR_MAPPING{ $tnode->{functor} };
+
         $unode->set_functor($FUNCTOR_MAPPING{ $tnode->{functor} });
+    }
+
+    sub adjust_coap
+    {
+        my ($self, $unode, $tnode) = @_;
+        my @members = $tnode->get_coap_members({direct_only => 1});
+        my @functors = $self->most_frequent_functor(map $_->{functor}, @members);
+        my $relation = $FUNCTOR_MAPPING{ $functors[0] };
+        $unode->set_concept($unode->functor);
+        $unode->set_functor($relation);  # // 'EMPTY'
+        my $prefix = $relation =~ /-91/ ? 'ARG' : 'op';
+        my $i = 1;
+        for my $member (@members) {
+            my $umember = get_corresponding_unode($unode, $member, $unode->root);
+            $umember->set_functor($prefix . $i++);
+        }
     }
 }
 
+{   my %DISPATCH = (
+        -1 => sub {},
+         0 => sub { push @{ $_[0] }, $_[1] },
+         1 => sub { @{ $_[0] } = ($_[1]) });
+    sub most_frequent_functor
+    {
+        my ($self, @functors) = @_;
+        my %functor_tally;
+        ++$functor_tally{$_} for @functors;
+        my @maxfunctors = (each %functor_tally)[0];
+        while (my ($f, $t) = each %functor_tally) {
+            $DISPATCH{ $t <=> $functor_tally{ $maxfunctors[0] } }
+                ->(\@maxfunctors, $f);
+        }
+        log_warn("More than 1 most frequent functor: @maxfunctors")
+            if @maxfunctors > 1;
+        return @maxfunctors
+    }
+}
 
 sub add_tnode_to_unode
 {
