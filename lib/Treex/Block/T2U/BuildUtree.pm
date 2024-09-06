@@ -82,7 +82,7 @@ sub translate_val_frame
         'PAT'   => 'ARG1',
         'ADDR'  => 'ARG2',
         'ORIG'  => 'source',
-        'EFF'   => 'goal',
+        'EFF'   => 'effect',  #NOT in UMR
     ##### TEMPORAL ###########################
         'TWHEN' => 'temporal',
         'TFHL' => 'duration',
@@ -114,15 +114,18 @@ sub translate_val_frame
         'MEANS' => 'instrument',
         'NORM' => 'according-to',  #temporarily
         'REG'  => 'manner',
-        'RESL' => 'extent',
+        'RESL' => 'result',  # NOT in UMR
         'RESTR' => 'subtraction',
     ##### NEW ###########################
-        'BEN'   => 'recipient',
+        'BEN'   => 'affectee',
+        'CONTRD' => 'contrast-91',
         'HER'   => 'source',
+        'SUBS' => 'substitute',
     ##### NOMINAL ###########################
         'APP'   => 'poss',  # ?? or 'part' ??
         'AUTH' => 'source',
-    #    'ID' => 'name',
+        'ID' => 'name',
+        'MAT' => 'mod',  # TODO
         'RSTR'  => 'mod',
 
 ##### coap - COORDINATION ###########################
