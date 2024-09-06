@@ -3,8 +3,11 @@ package Treex::Block::T2U::ConvertCoreference;
 use Moose;
 use utf8;
 use Treex::Core::Common;
+use Treex::Tool::UMR::Common qw{ get_corresponding_unode };
 
 use Graph::Directed;
+use namespace::autoclean;
+
 
 extends 'Treex::Core::Block';
 
@@ -116,7 +119,7 @@ sub _same_sentence_coref {
         $self->_tcoref_graph->delete_edge($predecessor, $tnode->{id});
         $self->_tcoref_graph->add_edge($predecessor, $tante_id);
 
-        my $upred = $self->_get_corresponding_unode(
+        my $upred = get_corresponding_unode(
             $unode, $doc->get_node_by_id($predecessor));
         if (my $coref = $upred->{coref}) {
             my $i = (-1,
@@ -136,22 +139,13 @@ sub _same_sentence_coref {
     $unode->{'same_as.rf'} = $uante->id;
 }
 
-sub _get_corresponding_unode {
-    my ($self, $any_unode, $tnode) = @_;
-    my ($u) = grep $_->get_tnode == $tnode,
-              map $_->descendants,
-              map $_->get_tree($any_unode->language, 'u'),
-              $any_unode->get_document->get_bundles;
-    return $u
-}
-
 sub _relative_coref {
     my ($self, $tnode, $unode, $uante_id, $tante_id, $doc) = @_;
     my $remove;
     my @rstr_eparents = grep 'RSTR' eq $_->functor,
                         $tnode->get_eparents;
     for my $parent (@rstr_eparents) {
-        my $up = $self->_get_corresponding_unode($unode, $parent);
+        my $up = get_corresponding_unode($unode, $parent);
         my @grandparents = $parent->get_eparents;
         for my $gp (@grandparents) {
             if ($gp->id eq $tante_id) {
@@ -163,7 +157,7 @@ sub _relative_coref {
                         $predecessor, $tnode->{id});
                     $self->_tcoref_graph->add_edge(
                         $predecessor, $tante_id);
-                    my $upred = $self->_get_corresponding_unode(
+                    my $upred = get_corresponding_unode(
                         $unode, $doc->get_node_by_id($predecessor));
                     if (my $coref = $upred->{coref}) {
                         my $i = (-1,
