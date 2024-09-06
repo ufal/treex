@@ -60,7 +60,7 @@ sub translate_val_frame
     if (1 == keys %functor) {
         $unode->set_functor((keys %functor)[0]);
     } else {
-        warn "More than one functor: ", join ' ', keys %functor
+        log_warn("More than one functor: " . join ' ', keys %functor)
             if keys %functor > 1;
         $unode->set_functor($tnode->functor);
     }
