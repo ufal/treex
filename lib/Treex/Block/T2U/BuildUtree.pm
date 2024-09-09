@@ -142,9 +142,8 @@ sub translate_val_frame
     sub translate_non_valency_functor
     {
         my ($self, $tnode, $unode) = @_;
-        return unless exists $FUNCTOR_MAPPING{ $tnode->{functor} };
-
-        $unode->set_functor($FUNCTOR_MAPPING{ $tnode->{functor} });
+        $unode->set_functor($FUNCTOR_MAPPING{ $tnode->{functor} }
+                            // $tnode->{functor});
     }
 
     sub adjust_coap
@@ -152,7 +151,7 @@ sub translate_val_frame
         my ($self, $unode, $tnode) = @_;
         my @members = $tnode->get_coap_members({direct_only => 1});
         my @functors = $self->most_frequent_functor(map $_->{functor}, @members);
-        my $relation = $FUNCTOR_MAPPING{ $functors[0] };
+        my $relation = $FUNCTOR_MAPPING{ $functors[0] } // $functors[0];
         $unode->set_concept($unode->functor);
         $unode->set_functor($relation);  # // 'EMPTY'
         my $prefix = $relation =~ /-91/ ? 'ARG' : 'op';
