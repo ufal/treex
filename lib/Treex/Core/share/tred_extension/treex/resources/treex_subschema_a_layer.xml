@@ -207,6 +207,7 @@
       <!-- values added becuase of PDT-C 2.0 -->
       <value>Denom</value>
       <value>Vocat</value>
+      <value>Partl</value>
       <!-- afun for unrecognized value -->
       <value>NR</value>
     </choice>
