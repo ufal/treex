@@ -207,7 +207,8 @@ sub _check_congruency {
     
     # allow number incongruency for coordinations
     $number_congruency |= ( substr( $parent->tag, 3, 1 ) eq 'P' ) if ( $node->a->is_member );
-    $number_congruency |= ( substr( $node->tag, 3, 1 ) eq 'P' ) if ( $parent->a->is_member );
+    # TODO: Why can ! $parent->a happen?
+    $number_congruency |= ( substr( $node->tag, 3, 1 ) eq 'P' ) if ( $parent->a && $parent->a->is_member );
     
     # allow gender incongruency for masculine animate + names, e. g. 'ředitel Sádlo', 'ministr Hora'
     $gender_congruency |= ( substr( $parent->tag, 2, 1  ) eq 'M' ) if ( $node->ne_type =~ /^p/ );
