@@ -261,6 +261,9 @@ sub _build_syntpos {
 
 sub _build_ne_type {
     my ($self) = @_;
+    # TODO: Why can this happen?
+    return "" unless $self->a;
+
     my $n_node = $self->a->n_node;
 
     return '' if ( !$n_node );
