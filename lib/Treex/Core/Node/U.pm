@@ -44,8 +44,7 @@ sub _set_node_list
 
 sub _add_to_node_list
 {
-    my $self = shift;
-    my $list = shift;
+    my ($self, $list, @add) = @_;
     # Get the current elements of the list.
     my $cur_ref = $self->get_attr($list);
     my @cur = $cur_ref ? @{$cur_ref} : ();
@@ -55,7 +54,7 @@ sub _add_to_node_list
         my $id = $_;
         !any { $_ eq $id } @cur
     }
-    map { $_->get_attr('id') } @_;
+    map { $_->get_attr('id') } @add;
     # Set the new list value.
     $self->set_attr( $list, [ @cur, @new ] );
     return;
@@ -63,19 +62,14 @@ sub _add_to_node_list
 
 sub _remove_from_node_list
 {
-    my $self = shift;
-    my $list = shift;
+    my ($self, $list, @remove) = @_;
     my @prev = $self->_get_node_list($list);
     my @remain;
-    foreach my $node (@prev)
-    {
-        if ( !grep { $_ == $node } @_ )
-        {
-            push(@remain, $node);
-        }
+    for my $node (@prev) {
+        push @remain, $node if ! grep $_ == $node, @remove;
     }
-    $self->_set_node_list( $list, @remain );
-    return;
+    $self->_set_node_list($list, @remain);
+    return
 }
 
 #==============================================================================
@@ -112,7 +106,10 @@ sub set_tnode
 sub get_alignment
 {
     my ($self) = @_;
-    my @a_ids = $self->get_attr('alignment.rf')->values;
+    my $alignment = $self->get_attr('alignment.rf')
+        or return;
+
+    my @a_ids = $alignment->values;
     return map $self->get_document->get_node_by_id($_), @a_ids
 }
 
