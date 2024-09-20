@@ -175,10 +175,12 @@ sub _get_alignment($self, $utree) {
     my $alignment = "\n# alignment:";
     for my $unode ($utree->descendants) {
         $alignment .= "\n" . $self->_id_cache->{ $unode->id } . ': ';
-        my @a_ords = map $_->ord,
-                     grep $self->_is_same_tree($unode, $_),
-                     $unode->get_tnode->get_anodes;
-        $alignment .= $self->_format_alignment(@a_ords);
+        if ($unode->get_tnode) {
+            my @a_ords = map $_->ord,
+                         grep $self->_is_same_tree($unode, $_),
+                         $unode->get_tnode->get_anodes;
+            $alignment .= $self->_format_alignment(@a_ords);
+        }
     }
 
     $alignment .= "\n";
