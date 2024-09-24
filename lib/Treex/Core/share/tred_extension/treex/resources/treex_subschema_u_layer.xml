@@ -51,6 +51,9 @@
       <!--  References -->
       <member name="t.rf"><cdata format="PMLREF"/></member>
       <member name="same_as.rf"><cdata format="PMLREF"/></member>
+      <member name="alignment.rf">
+        <list ordered="0"><cdata format="PMLREF"/></list>
+      </member>
 
       <member name="wild_dump"><cdata format="any"/></member>
     </structure>
