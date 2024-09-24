@@ -39,9 +39,41 @@ sub adjust_contrd
     return
 }
 
-=head1 Treex::Block::T2U::AdjustStructure
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::T2U::AdjustStructure
+
+=head1 DESCRIPTION
+
+Do some structure adjustments after converting a t-layer tree to a u-layer
+tree.
+
+=head1 PARAMETERS
+
+Required:
+
+=over
+
+=item language
+
+=back
+
+Optional:
+
+Currently none.
+
+=head1 AUTHORS
+
+Jan Stepanek <stepanek@ufal..mff.cuni.cz>
+
+Copyright © 2023 by Institute of Formal and Applied Linguistics, Charles
+University in Prague
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut
-
 
 __PACKAGE__
