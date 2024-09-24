@@ -192,6 +192,7 @@ sub add_tnode_to_unode
     $unode->set_concept($tnode->t_lemma());
     $self->translate_val_frame($tnode, $unode);
     $self->translate_non_valency_functor($tnode, $unode);
+    $unode->copy_alignment($tnode);
     return $unode
 }
 

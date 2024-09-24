@@ -109,6 +109,23 @@ sub set_tnode
     return;
 }
 
+sub get_alignment
+{
+    my ($self) = @_;
+    my @a_ids = $self->get_attr('alignment.rf')->values;
+    return map $self->get_document->get_node_by_id($_), @a_ids
+}
+
+sub copy_alignment
+{
+    my ($self, $tnode) = @_;
+    if (my @anodes = $tnode->get_anodes) {
+        $self->set_attr('alignment.rf', [map $_->id, @anodes]);
+    }
+}
+
+
+
 #==============================================================================
 # Entity attributes.
 #==============================================================================
@@ -180,7 +197,7 @@ sub add_coref {
 override '_get_reference_attrs' => sub
 {
     my ($self) = @_;
-    return ('t.rf', 'same_as.rf');
+    return qw( t.rf same_as.rf alignment.rf );
 };
 
 1;
@@ -224,6 +241,8 @@ OPTIONS
 =head1 AUTHOR
 
 Daniel Zeman <zeman@ufal.mff.cuni.cz>
+
+Jan Stepanek <stepanek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -178,7 +178,7 @@ sub _get_alignment($self, $utree) {
         if ($unode->get_tnode) {
             my @a_ords = map $_->ord,
                          grep $self->_is_same_tree($unode, $_),
-                         $unode->get_tnode->get_anodes;
+                         $unode->get_alignment;
             $alignment .= $self->_format_alignment(@a_ords);
         }
     }
