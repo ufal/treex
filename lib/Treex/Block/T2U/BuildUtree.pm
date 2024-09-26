@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 package Treex::Block::T2U::BuildUtree;
 use Moose;
 use Treex::Core::Common;
@@ -183,13 +184,28 @@ sub translate_val_frame
     }
 }
 
+{
+    my %T_LEMMA2CONCEPT = (
+        '#PersPron' => 'entity',
+        '#Gen' => 'entity',
+        '#Unsp' => 'entity',
+    );
+    sub set_concept
+    {
+        my ($self, $unode, $tnode) = @_;
+        my $tlemma = $tnode->t_lemma;
+        $unode->set_concept($T_LEMMA2CONCEPT{$tlemma} // $tlemma);
+        return
+    }
+}
+
 sub add_tnode_to_unode
 {
     my ($self, $tnode, $unode) = @_;
     $unode->set_tnode($tnode);
     # Set u-node attributes based on the t-node.
     $unode->_set_ord($tnode->ord());
-    $unode->set_concept($tnode->t_lemma());
+    $self->set_concept($unode, $tnode);
     $self->translate_val_frame($tnode, $unode);
     $self->translate_non_valency_functor($tnode, $unode);
     $unode->copy_alignment($tnode);
