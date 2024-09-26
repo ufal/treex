@@ -32,7 +32,7 @@ sub get_corresponding_unode {
     my @uroots = $uroot
         // map $_->get_tree($any_unode->language, 'u'),
            $any_unode->get_document->get_bundles;
-    my ($u) = grep $_->get_tnode == $tnode,
+    my ($u) = grep $tnode == ($_->get_tnode // 0),
         map $_->descendants, @uroots;
     return $u
 }
