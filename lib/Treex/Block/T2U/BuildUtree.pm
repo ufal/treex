@@ -123,7 +123,7 @@ sub translate_val_frame
         'HER'   => 'source',
         'SUBS' => 'substitute',
     ##### NOMINAL ###########################
-        'APP'   => 'poss',  # ?? or 'part' ??
+        'APP'   => 'possessor',  # ?? or 'part' ??
         'AUTH' => 'source',
         'ID' => 'name',
         'MAT' => 'mod',  # TODO
@@ -139,6 +139,7 @@ sub translate_val_frame
         'DISJ' => 'exclusive-disjunctive',
         'GRAD' => 'and',
         'REAS' => 'have-cause-91',  # event
+        'OPER' => 'interval',
     );
     sub translate_non_valency_functor
     {
@@ -187,8 +188,9 @@ sub translate_val_frame
 {
     my %T_LEMMA2CONCEPT = (
         '#PersPron' => 'entity',
-        '#Gen' => 'entity',
-        '#Unsp' => 'entity',
+        '#Gen'      => 'entity',
+        '#Unsp'     => 'entity',
+        '#EmpVerb'  => 'event',
     );
     sub set_concept
     {
