@@ -154,7 +154,7 @@ sub translate_val_frame
         my @functors = $self->most_frequent_functor(map $_->{functor}, @members);
         my $relation = $FUNCTOR_MAPPING{ $functors[0] } // $functors[0];
         $unode->set_concept($unode->functor);
-        $unode->set_functor($relation);  # // 'EMPTY'
+        $unode->set_functor($relation // 'EMPTY');
         my $prefix = $relation =~ /-91/ ? 'ARG' : 'op';
         my $i = 1;
         for my $member (@members) {
