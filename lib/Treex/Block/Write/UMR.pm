@@ -123,7 +123,7 @@ sub _get_sent_subtree($self, $unode) {
         return $self->_id_cache->{$ref}
                = $self->_assign_variable($refered->concept)
     }
-    $umr_str .= "($var / $concept";
+    $umr_str .= "($var / " . $self->_printable($concept);
 
     for my $uchild ($unode->get_children({ordered => 1})) {
         $umr_str .= "\n" . $self->_get_node_indent($uchild);
@@ -148,6 +148,12 @@ sub _get_sent_subtree($self, $unode) {
 
     $umr_str .= ')';
     return $umr_str
+}
+
+my %PRINT = ( ')' => '%rpar;');
+sub _printable($self, $concept) {
+    return $PRINT{$concept} if exists $PRINT{$concept};
+    return $concept
 }
 
 sub _format_alignment($self, @ords) {
