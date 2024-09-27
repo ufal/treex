@@ -45,19 +45,25 @@ sub adjust_coap($self, $unode, $tnode) {
         my $ch = $_;
         ! grep $ch == $_, @t_members
     } grep ! $_->is_member, $tnode->children;
-    my @u_members = grep 'ref' ne $_->nodetype // "",
+    my @u_members = grep 'ref' ne ($_->nodetype // ""),
                     map get_corresponding_unode($unode, $_, $unode->root),
                     @t_members;
+    warn ("No memebers $tnode->{id}"), return
+        unless @u_members;
+
     for my $tcommon (@t_common) {
         my $ucommon = get_corresponding_unode($unode, $tcommon,
                                               $unode->root);
+        warn("No unode for $tcommon->{id}"), next
+            unless $ucommon;
+
         $ucommon->set_parent($u_members[0]);
         for my $other_member (@u_members[1 .. $#u_members]) {
             my $ref = $other_member->create_child;
             $ref->{ord} = 0;
             $ref->{nodetype} = 'ref';
             $ref->set_functor($ucommon->functor);
-            $ref->{'same_as.rf'} = ('ref' eq $ucommon->{nodetype})
+            $ref->{'same_as.rf'} = ('ref' eq ($ucommon->{nodetype} // ""))
                                  ? $self->_solve_ref($ucommon)->id
                                  : $ucommon->id;
         }
@@ -66,7 +72,7 @@ sub adjust_coap($self, $unode, $tnode) {
 }
 
 sub _solve_ref($self, $unode) {
-    while ('ref' eq $unode->{nodetype}) {
+    while ('ref' eq ($unode->{nodetype} // "")) {
         $unode = $unode->get_document->get_node_by_id($unode->{'same_as.rf'});
     }
     return $unode
