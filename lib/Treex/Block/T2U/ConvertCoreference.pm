@@ -128,7 +128,7 @@ sub _same_sentence_coref {
             if ($i >= 0) {
                 $coref->[$i]{'target_node.rf'} = $uante->id;
             }
-        } elsif (my $coref = $upred->{'same_as.rf'}) {
+        } elsif ($upred->{'same_as.rf'}) {
             $upred->{'same_as.rf'} = $uante->id;
         } else {
             warn "CANNOT COREF $upred->{id}/$upred->{concept}, $unode->{id}/$unode->{concept}\n";
