@@ -156,10 +156,11 @@ sub translate_val_frame
         my $relation = $FUNCTOR_MAPPING{ $functors[0] } // $functors[0];
         $unode->set_concept($unode->functor);
         $unode->set_functor($relation // 'EMPTY');
-        my $prefix = $relation =~ /-91/ ? 'ARG' : 'op';
+        my $prefix = $unode->concept =~ /-91/ ? 'ARG' : 'op';
         my $i = 1;
         for my $member (@members) {
             my $umember = get_corresponding_unode($unode, $member, $unode->root);
+            log_warn("ARG$i under " . $unode->concept) if 'ARG' eq $prefix && $i > 2;
             $umember->set_functor($prefix . $i++);
         }
     }
