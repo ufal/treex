@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 package Treex::Block::T2U::ConvertCoreference;
 
 use Moose;
@@ -18,11 +19,21 @@ has '_tcoref_graph' => ( is => 'rw', isa => 'Graph::Directed' );
 sub process_tnode {
     my ($self, $tnode) = @_;
 
-    my @tantes = $tnode->get_coref_nodes;
-    return if !@tantes;
+    my @tantes = $tnode->get_coref_nodes({appos_aware => 1});
+    return unless @tantes;
 
     if (@tantes > 1) {
-        log_warn("Tnode ".$tnode->id." has more than a single antecedent. Taking the first, skipping the rest.");
+        log_warn("Tnode ".$tnode->id." has more than a single antecedent. Selecting the closer one.");
+        if ($tnode->root != $tantes[0]->root) {
+            @tantes = $tantes[-1];
+        } else {
+            my $closest = shift @tantes;
+            for my $tante (@tantes) {
+                $closest = $tante if abs($tnode->ord - $tante->ord)
+                                     < abs($tnode->ord - $closest->ord);
+            }
+            @tantes = $closest;
+        }
     }
     my $tante = $tantes[0];
 
@@ -149,6 +160,7 @@ sub _relative_coref {
         my @grandparents = $parent->get_eparents;
         for my $gp (@grandparents) {
             if ($gp->id eq $tante_id) {
+                $remove = 1;
                 $up->set_functor($unode->functor . '-of');
                 for my $predecessor (
                     $self->_tcoref_graph->predecessors($tnode->{id})
@@ -163,16 +175,15 @@ sub _relative_coref {
                         my $i = (-1,
                                  grep $coref->[$_]{'target_node.rf'} eq $unode->id,
                                       0 .. $coref->count - 1)[-1];
-                        if ($i >= 0) {
-                            $coref->[$i]{'target_node.rf'} = $uante_id;
-                        }
+                        $coref->[$i]{'target_node.rf'} = $uante_id if $i >= 0;
                     } elsif (my $same = $upred->{'same_as.rf'}) {
                         $upred->{'same_as.rf'} = $uante_id;
                     } else {
                         warn "REL CANNOT COREF $upred->{id}/$upred->{concept}, $unode->{id}/$unode->{concept}\n";
                     }
                 }
-                $remove = 1;
+            } else {
+                warn "Different id $tante_id ", $gp->id;
             }
         }
     }
