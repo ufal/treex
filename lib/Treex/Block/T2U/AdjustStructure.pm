@@ -44,7 +44,7 @@ sub adjust_coap($self, $unode, $tnode) {
     my @t_common = grep {
         my $ch = $_;
         ! grep $ch == $_, @t_members
-    } grep ! $_->is_member, $tnode->children;
+    } grep ! $_->is_member && 'CM' ne $_->functor, $tnode->children;
     my @u_members = grep 'ref' ne ($_->nodetype // ""),
                     map get_corresponding_unode($unode, $_, $unode->root),
                     @t_members;
