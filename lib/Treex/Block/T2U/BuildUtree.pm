@@ -191,6 +191,9 @@ sub translate_val_frame
         '#PersPron' => 'entity',
         '#Gen'      => 'entity',
         '#Unsp'     => 'entity',
+        '#Oblfm'    => 'entity',
+        '#Benef'    => 'entity',
+        '#EmpNoun'  => 'entity',
         '#EmpVerb'  => 'event',
     );
     sub set_concept
