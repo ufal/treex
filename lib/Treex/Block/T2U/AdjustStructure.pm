@@ -40,7 +40,7 @@ sub adjust_contrd($self, $unode, $tnode) {
 }
 
 sub adjust_coap($self, $unode, $tnode) {
-    my @t_members = $tnode->get_coap_members({direct => 1});
+    my @t_members = $tnode->get_coap_members;
     my @t_common = grep {
         my $ch = $_;
         ! grep $ch == $_, @t_members
