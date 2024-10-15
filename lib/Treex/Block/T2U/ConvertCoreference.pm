@@ -19,24 +19,25 @@ has '_tcoref_graph' => ( is => 'rw', isa => 'Graph::Directed' );
 sub process_tnode {
     my ($self, $tnode) = @_;
 
-    my @tantes = $tnode->get_coref_nodes({appos_aware => 1});
+    my @tantes = map $_->get_coap_members, $tnode->get_coref_nodes;
     return unless @tantes;
 
     if (@tantes > 1) {
         log_warn("Tnode ".$tnode->id." has more than a single antecedent. Selecting the closer one.");
         if ($tnode->root != $tantes[0]->root) {
             @tantes = $tantes[-1];
+
         } else {
             my $closest = shift @tantes;
             for my $tante (@tantes) {
-                $closest = $tante if abs($tnode->ord - $tante->ord)
-                                     < abs($tnode->ord - $closest->ord);
+                $closest = $tante
+                    if _path_length($tnode, $tante)
+                       < _path_length($tnode, $closest);
             }
             @tantes = $closest;
         }
     }
     my $tante = $tantes[0];
-
     my $tcoref_graph = $self->_tcoref_graph;
     $tcoref_graph->add_edge($tnode->id, $tante->id);
 }
@@ -87,30 +88,20 @@ after 'process_document' => sub {
             }
             # intra-sentential links with underspecified anaphors
             # - propagate such anaphors via the wild attribute `anaphs`
-            elsif ($tnode->t_lemma =~ /^#(?:Q?Cor|PersPron)$/
+            elsif ($tnode->t_lemma
+                       =~ /^(?:#(?:Q?Cor|PersPron)|který|jenž|jaký|co|kd[ye])$/
                    && ! $tnode->children
             ) {
                 $self->_same_sentence_coref(
                     $tnode, $unode, $uante, $tante_id, $doc);
-            }
-            # intra-sentential links with nominal anaphors
-            # - the link must be represented by the ":coref" attribute
-            # - the following intra-sentential links with underspecified anaphors
-            #   must be anchored in this node
-            elsif (($tnode->gram_sempos // "") =~ /^n/
-                    && $tnode->t_lemma =~ /^(?:který|jaký|co|kd[ye])$/
-               ) {
-                my $remove = $self->_relative_coref(
-                    $tnode, $unode, $uante->id, $tante_id, $doc);
-                if ($remove && ! $unode->children) {
-                    $unode->remove;
-                } else {
-                    warn "NO REMOVE $tnode->{id}/$tnode->{t_lemma}\n";
+                if ($tnode->t_lemma =~ /^(?:který|jenž|jaký|co|kd[ye])$/) {
+                    $self->_relative_coref(
+                        $tnode, $unode, $uante->id, $tante_id, $doc);
                 }
             } else {
                 $unode->add_coref($uante);
                 $self->_anchor_references($unode);
-                log_warn("Unsolved coref $unode->{id}");
+                log_warn("Unsolved coref $tnode_id $tante_id");
             }
         }
         # non-anaphoric antecedent
@@ -153,44 +144,37 @@ sub _same_sentence_coref {
     }
 }
 
+# TODO: Coordinated verbs only if all of them share the "ktery" (see wsj2454.cz)
+# $tnode is "ktery", $up is a RSTR verb, $gp is a coref antecedent.
 sub _relative_coref {
     my ($self, $tnode, $unode, $uante_id, $tante_id, $doc) = @_;
     my $remove;
-    my @rstr_eparents = grep 'RSTR' eq $_->functor,
-                        $tnode->get_eparents;
-    for my $parent (@rstr_eparents) {
-        my $up = get_corresponding_unode($unode, $parent);
-        my @grandparents = $parent->get_eparents;
-        for my $gp (@grandparents) {
-            if ($gp->id eq $tante_id) {
-                $remove = 1;
-                $up->set_functor($unode->functor . '-of');
-                for my $predecessor (
-                    $self->_tcoref_graph->predecessors($tnode->id)
-                ) {
-                    $self->_tcoref_graph->delete_edge(
-                        $predecessor, $tnode->id);
-                    $self->_tcoref_graph->add_edge(
-                        $predecessor, $tante_id);
-                    my $upred = get_corresponding_unode(
-                        $unode, $doc->get_node_by_id($predecessor));
-                    if (my $coref = $upred->{coref}) {
-                        my $i = (-1,
-                                 grep $coref->[$_]{'target_node.rf'} eq $unode->id,
-                                      0 .. $coref->count - 1)[-1];
-                        $coref->[$i]{'target_node.rf'} = $uante_id if $i >= 0;
-                    } elsif (my $same = $upred->{'same_as.rf'}) {
-                        $upred->{'same_as.rf'} = $uante_id;
-                    } else {
-                        warn "REL CANNOT COREF $upred->{id}/$upred->{concept}, $unode->{id}/$unode->{concept}\n";
-                    }
-                }
-            } else {
-                warn "Different id $tante_id ", $gp->id;
-            }
-        }
+    my $parent = $tnode->parent;
+
+    my @eparents = $tnode->get_eparents;
+    my @rstr_eparents = grep 'RSTR' eq $_->functor, @eparents;
+
+    # There is a non-RSTR parent, we can't proceed.
+    log_debug("Non RSTR parent $tnode->{id}"),
+    return if @eparents != @rstr_eparents;
+
+    log_warn("parent not same as eparents $tnode->{id}"),
+    return if 'coap' ne $parent->nodetype
+           && @eparents != 1
+           && $eparents[0] != $parent;
+
+    if ($parent->parent->id ne $tante_id
+        && $parent->_get_transitive_coap_root != $tante_id
+    ) {
+        log_debug("Cannot create *-of: $tnode->{id}/$tnode->{t_lemma} "
+                  . "$parent->{id}/$parent->{t_lemma} "
+                  . $tante_id);
+        return
     }
-    return $remove
+
+    my $uparent = $unode->parent;
+    $uparent->set_functor($unode->functor . '-of');
+    $unode->remove;
 }
 
 sub _anchor_references {
@@ -239,6 +223,31 @@ sub _propagate_anaphors {
     my $uante_anaphs = $uante->wild->{'anaphs'} // [];
     push @$uante_anaphs, @$unode_anaphs;
     $uante->wild->{'anaphs'} = $uante_anaphs;
+}
+
+sub _rank {
+    my ($node) = @_;
+    my $rank = 0;
+    $node = $node->parent, ++$rank while $node->parent;
+    return $rank
+}
+
+sub _path_length {
+    my ($node1, $node2) = @_;
+    my @ranks = map _rank($_), $node1, $node2;
+    my ($n1, $n2) = ($node1, $node2);
+    my $cmp = $ranks[0] <=> $ranks[1];
+    my $length = abs($ranks[0] - $ranks[1]);
+    warn "LENGTH: $n1->{id} $n2->{id} = $length";
+    if ($cmp) {
+        my $move_up = {-1 => \$n2, 1 => \$n1}->{$cmp};
+        $$move_up = $$move_up->parent for 1 .. $length;
+    }
+    while ($n1 != $n2) {
+        $length += 2;
+        $_ = $_->parent for $n1, $n2;
+    }
+    return $length
 }
 
 1;
