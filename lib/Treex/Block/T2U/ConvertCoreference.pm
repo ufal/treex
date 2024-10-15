@@ -125,9 +125,9 @@ after 'process_document' => sub {
 sub _same_sentence_coref {
     my ($self, $tnode, $unode, $uante, $tante_id, $doc) = @_;
     for my $predecessor (
-        $self->_tcoref_graph->predecessors($tnode->{id})
+        $self->_tcoref_graph->predecessors($tnode->id)
     ) {
-        $self->_tcoref_graph->delete_edge($predecessor, $tnode->{id});
+        $self->_tcoref_graph->delete_edge($predecessor, $tnode->id);
         $self->_tcoref_graph->add_edge($predecessor, $tante_id);
 
         my $upred = get_corresponding_unode(
@@ -163,10 +163,10 @@ sub _relative_coref {
                 $remove = 1;
                 $up->set_functor($unode->functor . '-of');
                 for my $predecessor (
-                    $self->_tcoref_graph->predecessors($tnode->{id})
+                    $self->_tcoref_graph->predecessors($tnode->id)
                 ) {
                     $self->_tcoref_graph->delete_edge(
-                        $predecessor, $tnode->{id});
+                        $predecessor, $tnode->id);
                     $self->_tcoref_graph->add_edge(
                         $predecessor, $tante_id);
                     my $upred = get_corresponding_unode(
