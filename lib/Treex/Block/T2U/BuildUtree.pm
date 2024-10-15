@@ -152,7 +152,10 @@ sub translate_val_frame
     {
         my ($self, $unode, $tnode) = @_;
         my @members = $tnode->get_coap_members({direct_only => 1});
-        my @functors = $self->most_frequent_functor(map $_->{functor}, @members);
+
+        # To find the functor, we need all members, not just the direct ones.
+        my @functors = $self->most_frequent_functor(map $_->{functor},
+                                                    $tnode->get_coap_members);
         my $relation = $FUNCTOR_MAPPING{ $functors[0] } // $functors[0];
         $unode->set_concept($unode->functor);
         $unode->set_functor($relation // 'EMPTY');
