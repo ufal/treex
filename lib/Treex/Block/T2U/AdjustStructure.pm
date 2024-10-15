@@ -4,7 +4,8 @@ use experimental qw( signatures );
 
 use Moose;
 
-use Treex::Tool::UMR::Common qw{ get_corresponding_unode };
+use Treex::Tool::UMR::Common qw{ get_corresponding_unode
+                                 is_coord expand_coord };
 
 use namespace::autoclean;
 
@@ -17,6 +18,8 @@ sub process_unode($self, $unode, $bundle_no) {
     my $tnode = $unode->get_tnode;
     $self->adjust_contrd($unode, $tnode) if 'CONTRD' eq $tnode->functor;
     $self->adjust_coap($unode, $tnode) if 'coap' eq $tnode->nodetype;
+    $self->remove_double_edge($unode, $1, $tnode)
+        if $unode->functor =~ /^(.+)-of$/;
     return
 }
 
@@ -66,6 +69,23 @@ sub adjust_coap($self, $unode, $tnode) {
             $ref->{'same_as.rf'} = ('ref' eq ($ucommon->{nodetype} // ""))
                                  ? $self->_solve_ref($ucommon)->id
                                  : $ucommon->id;
+        }
+    }
+    return
+}
+
+# TODO: tnode not needed?
+sub remove_double_edge($self, $unode, $functor, $tnode) {
+    my @unodes = expand_coord($unode);
+    warn "Expand: ", join ' ', map $_->concept, @unodes;
+    for my $uexp (map $_->children, @unodes) {
+        warn "Try $uexp->{concept}";
+        if ($uexp->functor eq $functor) {
+            if ('ref' eq $uexp->{nodetype}) {
+                $uexp->remove;
+            } else {
+                warn "Double $functor $tnode->{id} $uexp->{concept}";
+            }
         }
     }
     return
