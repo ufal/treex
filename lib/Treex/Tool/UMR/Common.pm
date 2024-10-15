@@ -25,7 +25,7 @@ use warnings;
 use strict;
 
 use Exporter qw{ import };
-our @EXPORT_OK = qw{ get_corresponding_unode };
+our @EXPORT_OK = qw{ get_corresponding_unode is_coord expand_coord };
 
 sub get_corresponding_unode {
     my ($any_unode, $tnode, $uroot) = @_;
@@ -35,6 +35,25 @@ sub get_corresponding_unode {
     my ($u) = grep $tnode == ($_->get_tnode // 0),
         map $_->descendants, @uroots;
     return $u
+}
+
+sub is_coord {
+    my ($unode) = @_;
+    return $unode->concept =~ /^(?:(?:but|contrast|have-cause)-91
+                                   |and|contra|consecutive
+                                   |exclusive-disjunctive|interval)$/x
+            ? 1 : 0
+}
+
+sub expand_coord {
+    my ($unode) = @_;
+    return $unode unless is_coord($unode);
+
+    my $expansion_re = $unode->concept =~ /-91$/ ? qr/^ARG[1-9]/ : qr/^op[1-9]/;
+    my @expansion = map expand_coord($_),
+                    grep $_->functor =~ /$expansion_re/,
+                    $unode->children;
+    return @expansion
 }
 
 __PACKAGE__
