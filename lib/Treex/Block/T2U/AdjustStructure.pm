@@ -1,6 +1,5 @@
 # -*- encoding: utf-8 -*-
 package Treex::Block::T2U::AdjustStructure;
-use experimental qw( signatures );
 
 use Moose;
 
@@ -9,6 +8,7 @@ use Treex::Tool::UMR::Common qw{ get_corresponding_unode
                                  is_coord expand_coord };
 
 use namespace::autoclean;
+use experimental qw( signatures );
 
 extends 'Treex::Core::Block';
 
