@@ -4,6 +4,7 @@ use experimental qw( signatures );
 
 use Moose;
 
+use Treex::Core::Common;
 use Treex::Tool::UMR::Common qw{ get_corresponding_unode
                                  is_coord expand_coord };
 
@@ -51,13 +52,13 @@ sub adjust_coap($self, $unode, $tnode) {
     my @u_members = grep 'ref' ne ($_->nodetype // ""),
                     map get_corresponding_unode($unode, $_, $unode->root),
                     @t_members;
-    warn ("No memebers $tnode->{id}"), return
+   log_warn("No memebers $tnode->{id}"), return
         unless @u_members;
 
     for my $tcommon (@t_common) {
         my $ucommon = get_corresponding_unode($unode, $tcommon,
                                               $unode->root);
-        warn("No unode for $tcommon->{id}"), next
+        log_debug("No unode for $tcommon->{id}", 1), next
             unless $ucommon;
 
         $ucommon->set_parent($u_members[0]);
