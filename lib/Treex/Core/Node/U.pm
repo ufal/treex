@@ -96,8 +96,7 @@ sub get_troot
 
 sub set_tnode
 {
-    my $self = shift;
-    my $tnode = shift;
+    my ($self, $tnode) = @_;
     my $new_id = defined($tnode) ? $tnode->get_attr('id') : undef;
     $self->set_attr('t.rf', $new_id);
     return;
@@ -147,8 +146,7 @@ sub get_ref_node
 
 sub set_ref_node
 {
-    my $self = shift;
-    my $refnode = shift;
+    my ($self, $refnode) = @_;
     if ($self->nodetype ne "ref") {
         log_warn("Setting a reference node for the non-referential node $self->id skipped.");
         return;
@@ -158,8 +156,7 @@ sub set_ref_node
 
 sub make_referential
 {
-    my $self = shift;
-    my $refnode = shift;
+    my ($self, $refnode) = @_;
     $self->set_nodetype('ref');
     $self->set_ref_node($refnode);
     $self->set_concept(undef)
