@@ -140,14 +140,17 @@ sub _same_sentence_coref {
                 $coref->[$i]{'target_node.rf'} = $uante->id;
             }
         } elsif ($upred->{'same_as.rf'}) {
-            $upred->{'same_as.rf'} = $uante->id;
+            $upred->make_referential($uante);
         } else {
             warn "CANNOT COREF $upred->{id}/$upred->{concept}, $unode->{id}/$unode->{concept}\n";
         }
     }
-    warn "CHILDREN" if $unode->children;
-    $unode->{nodetype} = 'ref';
-    $unode->{'same_as.rf'} = $uante->id;
+    if ($unode->children) {
+        log_warn(sprintf "Cannot turn %s (%s) into REF because of CHILDREN",
+                 map $_->id, $unode, $tnode);
+    } else {
+        $unode->make_referential($uante);
+    }
 }
 
 sub _relative_coref {
