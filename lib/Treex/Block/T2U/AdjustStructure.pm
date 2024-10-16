@@ -64,11 +64,10 @@ sub adjust_coap($self, $unode, $tnode) {
         for my $other_member (@u_members[1 .. $#u_members]) {
             my $ref = $other_member->create_child;
             $ref->{ord} = 0;
-            $ref->{nodetype} = 'ref';
             $ref->set_functor($ucommon->functor);
-            $ref->{'same_as.rf'} = ('ref' eq ($ucommon->{nodetype} // ""))
-                                 ? $self->_solve_ref($ucommon)->id
-                                 : $ucommon->id;
+            $ref->make_referential(('ref' eq ($ucommon->{nodetype} // ""))
+                                   ? $self->_solve_ref($ucommon)
+                                   : $ucommon);
         }
     }
     return
