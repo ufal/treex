@@ -131,9 +131,10 @@ sub _same_sentence_coref {
                 $coref->[$i]{'target_node.rf'} = $uante->id;
             }
         } elsif ($upred->{'same_as.rf'}) {
+            log_debug("SAME COREF $predecessor/$upred->{concept}, $tnode->{id}/$unode->{concept}", 1);
             $upred->make_referential($uante);
         } else {
-            warn "CANNOT COREF $upred->{id}/$upred->{concept}, $unode->{id}/$unode->{concept}\n";
+            log_warn("CANNOT COREF $upred->{id}/$upred->{concept}, $unode->{id}/$unode->{concept}");
         }
     }
     if ($unode->children) {
@@ -155,7 +156,7 @@ sub _relative_coref {
     my @rstr_eparents = grep 'RSTR' eq $_->functor, @eparents;
 
     # There is a non-RSTR parent, we can't proceed.
-    log_debug("Non RSTR parent $tnode->{id}"),
+    log_debug("Non RSTR parent $tnode->{id}", 1),
     return if @eparents != @rstr_eparents;
 
     log_warn("parent not same as eparents $tnode->{id}"),
@@ -168,7 +169,7 @@ sub _relative_coref {
     ) {
         log_debug("Cannot create *-of: $tnode->{id}/$tnode->{t_lemma} "
                   . "$parent->{id}/$parent->{t_lemma} "
-                  . $tante_id);
+                  . $tante_id, 1);
         return
     }
 
