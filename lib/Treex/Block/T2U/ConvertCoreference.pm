@@ -48,6 +48,8 @@ before 'process_document' => sub {
     $self->_set_tcoref_graph($tcoref_graph);
 };
 
+my $RELATIVE = '(?:který|jenž|jaký|co|kd[ye]|odkud|kudy|kam)';
+
 after 'process_document' => sub {
     my ($self, $doc) = @_;
 
@@ -89,12 +91,12 @@ after 'process_document' => sub {
             # intra-sentential links with underspecified anaphors
             # - propagate such anaphors via the wild attribute `anaphs`
             elsif ($tnode->t_lemma
-                       =~ /^(?:#(?:Q?Cor|PersPron)|který|jenž|jaký|co|kd[ye])$/
+                       =~ /^(?:#(?:Q?Cor|PersPron)|$RELATIVE)$/
                    && ! $tnode->children
             ) {
                 $self->_same_sentence_coref(
                     $tnode, $unode, $uante, $tante_id, $doc);
-                if ($tnode->t_lemma =~ /^(?:který|jenž|jaký|co|kd[ye])$/) {
+                if ($tnode->t_lemma =~ /^$RELATIVE$/) {
                     $self->_relative_coref(
                         $tnode, $unode, $uante->id, $tante_id, $doc);
                 }
