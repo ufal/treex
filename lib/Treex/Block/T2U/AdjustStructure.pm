@@ -50,6 +50,7 @@ sub adjust_coap($self, $unode, $tnode) {
         ! grep $ch == $_, @t_members
     } grep ! $_->is_member && 'CM' ne $_->functor, $tnode->children;
     my @u_members = grep 'ref' ne ($_->nodetype // ""),
+                    grep defined,
                     map get_corresponding_unode($unode, $_, $unode->root),
                     @t_members;
    log_warn("No memebers $tnode->{id}"), return

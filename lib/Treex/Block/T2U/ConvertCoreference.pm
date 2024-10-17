@@ -165,7 +165,7 @@ sub _relative_coref {
            && $eparents[0] != $parent;
 
     if ($parent->parent->id ne $tante_id
-        && $parent->_get_transitive_coap_root != $tante_id
+        && ($parent->_get_transitive_coap_root // {id => ""})->{id} ne $tante_id
     ) {
         log_debug("Cannot create *-of: $tnode->{id}/$tnode->{t_lemma} "
                   . "$parent->{id}/$parent->{t_lemma} "
