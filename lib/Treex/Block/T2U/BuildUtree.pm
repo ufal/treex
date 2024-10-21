@@ -102,19 +102,19 @@ sub translate_val_frame
     ##### CAUSAL ###########################
         'AIM'   => 'purpose',
         'CAUS'  => 'cause',
-        'CNCS' => 'concession',
+        'CNCS' => 'but-91', # TODO
         'COND' => 'condition',
         'INTT' => 'purpose',
     ##### MANNER ###########################
         'ACMP'  => 'companion',
-    #    'CPR' => 'compared-to',
-        'CRIT' => 'according-to',  #temporarily
+        'CPR' => 'comparison',
+        'CRIT' => 'regard',
         'DIFF' => 'extent',
         'EXT' => 'extent',
         'MANN'  => 'manner',
         'MEANS' => 'instrument',
-        'NORM' => 'according-to',  #temporarily
-        'REG'  => 'manner',
+        # 'NORM' => 'according-to',  #temporarily
+        'REG'  => 'regard',
         'RESL' => 'result',  # NOT in UMR
         'RESTR' => 'subtraction',
     ##### NEW ###########################
@@ -125,9 +125,13 @@ sub translate_val_frame
     ##### NOMINAL ###########################
         'APP'   => 'possessor',  # ?? or 'part' ??
         'AUTH' => 'source',
-        'ID' => 'name',
-        'MAT' => 'mod',  # TODO
+        'ID' => 'name', # ??
+        'MAT' => 'mod',
         'RSTR'  => 'mod',
+    ##### NOMINAL ###########################
+        'CPHR' => 'predicative-noun',
+        'DPHR' => 'part-of-phraseme',
+        # 'FPHR' => '', # ??
 
 ##### coap - COORDINATION ###########################
         # relations "with-91" take ARG1, ARG2, the rest takes op1, op2...
@@ -135,11 +139,18 @@ sub translate_val_frame
         'CONFR' => 'contrast-91',  # event
         'CONJ' => 'and',
         'CONTRA' => 'contra',       # NOT in UMR
-        'CSQ' => 'consecutive',
+        'CSQ' => 'have-cause-91',
         'DISJ' => 'exclusive-disjunctive',
-        'GRAD' => 'and',
+        'GRAD' => 'gradation',
         'REAS' => 'have-cause-91',  # event
-        'OPER' => 'interval',
+        'OPER' => 'math',
+        'APPS' => 'identity-91', # ??
+
+        # 'CM' => '',
+        # 'INTF' => '',
+        # 'MOD' => '',
+        # 'PREC' => '',
+        # 'RHEM' => '',
     );
     sub translate_non_valency_functor
     {
