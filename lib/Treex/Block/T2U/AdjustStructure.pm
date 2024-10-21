@@ -17,14 +17,15 @@ has '+language' => ( required => 1 );
 
 sub process_unode($self, $unode, $bundle_no) {
     my $tnode = $unode->get_tnode;
-    $self->adjust_contrd($unode, $tnode) if 'CONTRD' eq $tnode->functor;
+    $self->subordinate2coord($unode, $tnode)
+        if $tnode->functor =~ /^(?:CONTRD|CNCS)$/;
     $self->adjust_coap($unode, $tnode) if 'coap' eq $tnode->nodetype;
     $self->remove_double_edge($unode, $1, $tnode)
         if $unode->functor =~ /^(.+)-of$/;
     return
 }
 
-sub adjust_contrd($self, $unode, $tnode) {
+sub subordinate2coord($self, $unode, $tnode) {
     my $t_parent = $tnode->get_parent;
     my $u_parent = get_corresponding_unode($unode, $t_parent, $unode->root);
     my $operator = $u_parent->parent->create_child;

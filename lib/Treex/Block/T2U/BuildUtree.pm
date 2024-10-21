@@ -102,7 +102,7 @@ sub translate_val_frame
     ##### CAUSAL ###########################
         'AIM'   => 'purpose',
         'CAUS'  => 'cause',
-        'CNCS' => 'but-91', # TODO
+        'CNCS' => 'but-91',
         'COND' => 'condition',
         'INTT' => 'purpose',
     ##### MANNER ###########################
