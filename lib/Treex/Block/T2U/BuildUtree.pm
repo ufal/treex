@@ -139,7 +139,7 @@ sub translate_val_frame
         'CONFR' => 'contrast-91',  # event
         'CONJ' => 'and',
         'CONTRA' => 'contra',       # NOT in UMR
-        'CSQ' => 'have-cause-91',
+        'CSQ' => 'have-cause-91',   # switch ARG1/2
         'DISJ' => 'exclusive-disjunctive',
         'GRAD' => 'gradation',
         'REAS' => 'have-cause-91',  # event
@@ -163,6 +163,7 @@ sub translate_val_frame
     {
         my ($self, $unode, $tnode) = @_;
         my @members = $tnode->get_coap_members({direct_only => 1});
+        @members = reverse @members if 'CSQ' eq $tnode->{functor};
 
         # To find the functor, we need all members, not just the direct ones.
         my @functors = $self->most_frequent_functor(map $_->{functor},
