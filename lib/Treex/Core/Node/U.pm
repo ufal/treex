@@ -8,6 +8,8 @@ extends 'Treex::Core::Node';
 with 'Treex::Core::Node::Ordered';
 with 'Treex::Core::Node::InClause';
 
+use List::Util qw{ uniq };
+
 # u-layer attributes
 has [
     qw( nodetype concept functor aspect modal_strength
@@ -118,6 +120,16 @@ sub copy_alignment
     if (my @anodes = $tnode->get_anodes) {
         $self->set_attr('alignment.rf', [map $_->id, @anodes]);
     }
+    return
+}
+
+sub add_to_alignment
+{
+    my ($self, @anodes) = @_;
+    my $alignment = $self->get_attr('alignment.rf');
+    my @old = $alignment ? $alignment->values : ();
+    $self->set_attr('alignment.rf', [uniq(@old, map $_->id, @anodes)]);
+    return
 }
 
 
@@ -159,6 +171,7 @@ sub make_referential
     my ($self, $refnode) = @_;
     $self->set_nodetype('ref');
     $self->set_ref_node($refnode);
+    $refnode->add_to_alignment($self->get_alignment);
     $self->set_concept(undef)
 }
 

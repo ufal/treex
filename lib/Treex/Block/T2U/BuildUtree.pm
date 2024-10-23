@@ -231,7 +231,7 @@ sub add_tnode_to_unode
     $self->set_concept($unode, $tnode);
     $self->translate_val_frame($tnode, $unode);
     $self->translate_non_valency_functor($tnode, $unode);
-    $unode->copy_alignment($tnode);
+    $unode->copy_alignment($tnode) unless $tnode->is_generated;
     return $unode
 }
 
