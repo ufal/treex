@@ -134,7 +134,7 @@ sub translate_val_frame
         # 'FPHR' => '', # ??
 
 ##### coap - COORDINATION ###########################
-        # relations "with-91" take ARG1, ARG2, the rest takes op1, op2...
+        # relations with "-91" take ARG1, ARG2, the rest takes op1, op2...
         'ADVS' => 'but-91',        # keyword
         'CONFR' => 'contrast-91',  # event
         'CONJ' => 'and',
@@ -159,13 +159,10 @@ sub translate_val_frame
                             // $tnode->{functor});
     }
 
-    my %REVERSE_MEMBER_ORDER = (CSQ => undef);
     sub adjust_coap
     {
         my ($self, $unode, $tnode) = @_;
         my @members = $tnode->get_coap_members({direct_only => 1});
-        @members = reverse @members
-            if exists $REVERSE_MEMBER_ORDER{ $tnode->{functor} };
 
         # To find the functor, we need all members, not just the direct ones.
         my @functors = $self->most_frequent_functor(map $_->{functor},
@@ -174,12 +171,27 @@ sub translate_val_frame
         $unode->set_concept($unode->functor);
         $unode->set_functor($relation // 'EMPTY');
         my $prefix = $unode->concept =~ /-91/ ? 'ARG' : 'op';
+        @members = reverse @members if 'ARG' eq $prefix
+                                    && $self->should_reverse($tnode, @members);
+
         my $i = 1;
         for my $member (@members) {
             my $umember = get_corresponding_unode($unode, $member, $unode->root);
             log_warn("ARG$i under " . $unode->concept) if 'ARG' eq $prefix && $i > 2;
             $umember->set_functor($prefix . $i++);
         }
+    }
+}
+
+{   my %REVERSE_MEMBER_ORDER = (CSQ => undef);
+    sub should_reverse {
+        my ($self, $tnode, @members) = @_;
+        my $is_coord_before_all = @members == grep $tnode->ord < $_->ord,
+                                              @members;
+        my $should_reverse = $is_coord_before_all;
+        $should_reverse = ! $should_reverse
+            if exists $REVERSE_MEMBER_ORDER{ $tnode->{functor} };
+        return $should_reverse
     }
 }
 
