@@ -180,12 +180,16 @@ sub _is_same_tree($self, $unode, $anode) {
 sub _get_alignment($self, $utree) {
     my $alignment = "\n# alignment:";
     for my $unode ($utree->descendants) {
+        next if 'ref' eq $unode->nodetype;
+
         $alignment .= "\n" . $self->_id_cache->{ $unode->id } . ': ';
         if ($unode->get_alignment) {
             my @a_ords = map $_->ord,
                          grep $self->_is_same_tree($unode, $_),
                          $unode->get_alignment;
             $alignment .= $self->_format_alignment(@a_ords);
+        } else {
+            $alignment .= '0-0';
         }
     }
 
