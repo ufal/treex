@@ -159,11 +159,13 @@ sub translate_val_frame
                             // $tnode->{functor});
     }
 
+    my %REVERSE_MEMBER_ORDER = (CSQ => undef);
     sub adjust_coap
     {
         my ($self, $unode, $tnode) = @_;
         my @members = $tnode->get_coap_members({direct_only => 1});
-        @members = reverse @members if 'CSQ' eq $tnode->{functor};
+        @members = reverse @members
+            if exists $REVERSE_MEMBER_ORDER{ $tnode->{functor} };
 
         # To find the functor, we need all members, not just the direct ones.
         my @functors = $self->most_frequent_functor(map $_->{functor},
