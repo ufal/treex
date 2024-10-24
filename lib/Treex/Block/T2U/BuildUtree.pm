@@ -72,7 +72,6 @@ sub translate_val_frame
             $unode->set_concept($pb_concept);
             if (grep /ARG[0-9]/, values %$mapping) {
                 $unode->set_modal_strength('full-affirmative');
-                $unode->set_aspect('activity');  # TODO: Value.
             }
         }
     }
@@ -177,7 +176,8 @@ sub translate_val_frame
         my $i = 1;
         for my $member (@members) {
             my $umember = get_corresponding_unode($unode, $member, $unode->root);
-            log_warn("ARG$i under " . $unode->concept) if 'ARG' eq $prefix && $i > 2;
+            log_warn("ARG$i under " . $unode->concept)
+                if 'ARG' eq $prefix && $i > 2;
             $umember->set_functor($prefix . $i++);
         }
     }
@@ -234,6 +234,50 @@ sub translate_val_frame
     }
 }
 
+sub set_nodetype
+{
+    my ($self, $unode, $tnode) = @_;
+    return if 'ref' eq ($unode->nodetype // "");
+
+    my $nodetype =
+        ('v' eq $tnode->attr('gram/sempos')
+         || '#EmpVerb' eq $tnode->{t_lemma}
+         || $unode->concept =~ /^have-.*-91$/)   ? 'event'
+
+        : ('coap' eq $tnode->nodetype
+           && $unode->concept !~ /-91$/)         ? 'keyword'
+
+                                                 : 'entity';
+    $unode->set_nodetype($nodetype);
+    return
+}
+
+{   my %ASPECT_STATE;
+    @ASPECT_STATE{qw{ muset musit mít chtít hodlat moci moct dát_se smět
+                      dovést umět lze milovat nenávidět prefereovat přát_si
+                      myslet myslit znát vědět souhlasit věřit pochybovat
+                      hádat představovat_si znamenat pamatovat_si podezřívat
+                      rozumět porozumět vonět zdát_se vidět slyšet znít
+                      vlastnit patřit }} = ();
+    sub deduce_aspect {
+        my ($self, $unode, $tnode) = @_;
+
+        return 'state' if exists $ASPECT_STATE{ $tnode->t_lemma };
+
+        my $a_node = $tnode->get_lex_anode or return 'state';
+
+        my $tag = $a_node->tag;
+        my $m_aspect = substr $tag, -3, 1;
+        return 'performance' if 'P' eq $m_aspect;
+
+        my $m_lemma = $a_node->lemma;
+        return 'habitual' if 'I' eq $m_aspect && $m_lemma =~ /_\^\(\*4[ai]t\)/;
+        return 'activity' if 'I' eq $m_aspect;
+        return 'process'  if 'B' eq $m_aspect;
+        return 'state'
+    }
+}
+
 sub add_tnode_to_unode
 {
     my ($self, $tnode, $unode) = @_;
@@ -244,6 +288,9 @@ sub add_tnode_to_unode
     $self->translate_val_frame($tnode, $unode);
     $self->translate_non_valency_functor($tnode, $unode);
     $unode->copy_alignment($tnode) unless $tnode->is_generated;
+    $self->set_nodetype($unode, $tnode);
+    $unode->set_aspect($self->deduce_aspect($unode, $tnode))
+        if 'event' eq $unode->nodetype;
     return $unode
 }
 

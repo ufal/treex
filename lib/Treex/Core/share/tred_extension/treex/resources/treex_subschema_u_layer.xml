@@ -63,7 +63,10 @@
 
   <type name="u-nodetype.type">
     <choice>
+      <value>entity</value>
+      <value>event</value>
       <value>ref</value>
+      <value>keyword</value>
       <!-- !!! cloned from t-layer's t-nodetype.type; needs to be revisited! -->
       <value>atom</value>
       <value>coap</value>

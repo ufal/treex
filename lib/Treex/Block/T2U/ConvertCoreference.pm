@@ -85,7 +85,8 @@ after 'process_document' => sub {
             # - the following intra-sentential links with underspecified anaphors
             #   must be anchored in this node
             if ($unode->root != $uante->root) {
-                $unode->add_coref($uante);
+                $unode->add_coref($uante, 'same-' . $uante->nodetype);
+                $unode->set_nodetype($uante->nodetype);
                 $self->_anchor_references($unode);
             }
             # intra-sentential links with underspecified anaphors
@@ -101,7 +102,8 @@ after 'process_document' => sub {
                         $tnode, $unode, $uante->id, $tante_id, $doc);
                 }
             } else {
-                $unode->add_coref($uante);
+                $unode->add_coref($uante, 'same-' . $uante->nodetype);
+                $unode->set_nodetype($uante->nodetype);
                 $self->_anchor_references($unode);
                 log_warn("Unsolved coref $tnode_id $tante_id");
             }
