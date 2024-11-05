@@ -251,7 +251,7 @@ sub set_nodetype
     return if 'ref' eq ($unode->nodetype // "");
 
     my $nodetype =
-        ('v' eq $tnode->attr('gram/sempos')
+        ('v' eq ($tnode->attr('gram/sempos') // "")
          || '#EmpVerb' eq $tnode->{t_lemma}
          || $unode->concept =~ /^have-.*-91$/)   ? 'event'
 
