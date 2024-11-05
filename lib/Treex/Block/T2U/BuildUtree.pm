@@ -112,7 +112,7 @@ sub translate_val_frame
     ##### CAUSAL ###########################
         'AIM'   => 'purpose',
         'CAUS'  => 'cause',
-        'CNCS' => 'but-91',
+        'CNCS' => 'but-91',  # sub->coord!
         'COND' => 'condition',
         'INTT' => 'purpose',
     ##### MANNER ###########################
@@ -129,7 +129,7 @@ sub translate_val_frame
         'RESTR' => 'subtraction',
     ##### NEW ###########################
         'BEN'   => 'affectee',
-        'CONTRD' => 'contrast-91',
+        'CONTRD' => 'contrast-91', # sub->coord!
         'HER'   => 'source',
         'SUBS' => 'substitute',
     ##### NOMINAL ###########################
@@ -149,14 +149,15 @@ sub translate_val_frame
         'CONFR' => 'contrast-91',  # event
         'CONJ' => 'and',
         'CONTRA' => 'contra',       # NOT in UMR
-        'CSQ' => 'have-cause-91',   # switch ARG1/2
-        'DISJ' => 'exclusive-disjunctive',
+        'CSQ' => 'have-result-91',
+        'DISJ' => 'or', # exclusive-disjunctive
         'GRAD' => 'gradation',
         'REAS' => 'have-cause-91',  # event
         'OPER' => 'math',
         'APPS' => 'identity-91', # ??
 
         # 'CM' => '',
+        # 'ATT' => '',
         # 'INTF' => '',
         # 'MOD' => '',
         # 'PREC' => '',
@@ -194,16 +195,12 @@ sub translate_val_frame
     }
 }
 
-{   my %REVERSE_MEMBER_ORDER = (CSQ => undef);
-    sub should_reverse {
-        my ($self, $tnode, @members) = @_;
-        my $is_coord_before_all = @members == grep $tnode->ord < $_->ord,
-                                              @members;
-        my $should_reverse = $is_coord_before_all;
-        $should_reverse = ! $should_reverse
-            if exists $REVERSE_MEMBER_ORDER{ $tnode->{functor} };
-        return $should_reverse
-    }
+sub should_reverse {
+    my ($self, $tnode, @members) = @_;
+    my $is_coord_before_all = @members == grep $tnode->ord < $_->ord,
+                                          @members;
+    my $should_reverse = $is_coord_before_all;
+    return $should_reverse
 }
 
 {   my %DISPATCH = (
