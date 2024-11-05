@@ -302,6 +302,10 @@ sub add_tnode_to_unode
     $self->set_nodetype($unode, $tnode);
     $unode->set_aspect($self->deduce_aspect($unode, $tnode))
         if 'event' eq $unode->nodetype;
+    $unode->set_polarity
+        if 'neg1' eq ($tnode->get_attr('gram/negation') // "")
+        || 'negat' eq ($tnode->get_attr('gram/indeftype') // "");
+
     return $unode
 }
 
