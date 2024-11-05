@@ -185,7 +185,7 @@ sub _is_same_tree($self, $unode, $anode) {
 sub _get_alignment($self, $utree) {
     my $alignment = "\n# alignment:";
     for my $unode ($utree->descendants) {
-        next if 'ref' eq $unode->nodetype;
+        next if 'ref' eq ($unode->nodetype // "");
 
         $alignment .= "\n" . $self->_id_cache->{ $unode->id } . ': ';
         if ($unode->get_alignment) {
