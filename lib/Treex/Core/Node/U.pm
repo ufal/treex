@@ -104,6 +104,13 @@ sub set_tnode
     return;
 }
 
+sub set_polarity
+{
+    my ($self) = @_;
+    $self->set_attr('polarity', '-');
+    return
+}
+
 sub get_alignment
 {
     my ($self) = @_;

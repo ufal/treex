@@ -33,11 +33,22 @@ sub build_subtree
     my ($self, $tparent, $uparent) = @_;
     foreach my $tnode ($tparent->get_children({ordered => 1}))
     {
-        my $unode = $uparent->create_child();
-        $unode = $self->add_tnode_to_unode($tnode, $unode);
-        $self->build_subtree($tnode, $unode);
+        if ('#Neg' eq $tnode->t_lemma && 'RHEM' eq $tnode->functor) {
+            $self->negate_parent($uparent);
+        } else {
+            my $unode = $uparent->create_child();
+            $unode = $self->add_tnode_to_unode($tnode, $unode);
+            $self->build_subtree($tnode, $unode);
+        }
     }
     return;
+}
+
+sub negate_parent
+{
+    my ($self, $uparent) = @_;
+    $uparent->set_polarity;
+    return
 }
 
 sub translate_val_frame

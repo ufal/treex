@@ -141,6 +141,11 @@ sub _get_sent_subtree($self, $unode) {
         $umr_str .= ':aspect ' . $unode->aspect;
     }
 
+    if ($unode->get_attr('polarity')) {
+        $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
+        $umr_str .= ':polarity -';
+    }
+
     if ($unode->modal_strength) {
         $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
         $umr_str .= ':modal-strength ' . $unode->modal_strength;

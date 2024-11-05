@@ -46,6 +46,7 @@
       <member name="concept"><cdata format="any"/></member>
       <member name="functor"><alt type="func.type"/></member>
       <member name="aspect"><cdata format="any"/></member> <!-- valules? -->
+      <member name="polarity" type="u-polarity.type"/>
       <member name="modal-strength"><cdata format="any"/></member> <!-- valules? -->
 
       <!--  References -->
@@ -196,6 +197,12 @@
         </choice>
       </member>
     </structure>
+  </type>
+
+  <type name="u-polarity.type">
+    <choice>
+      <value>-</value>
+    </choice>
   </type>
 
 </pml_schema>
