@@ -15,7 +15,7 @@ extends 'Treex::Core::Block';
 has '+language' => ( required => 1 );
 
 
-sub process_unode($self, $unode, $bundle_no) {
+sub process_unode($self, $unode, $) {
     my $tnode = $unode->get_tnode;
     $self->subordinate2coord($unode, $tnode)
         if $tnode->functor =~ /^(?:CONTRD|CNCS)$/;
@@ -130,7 +130,7 @@ Currently none.
 
 =head1 AUTHORS
 
-Jan Stepanek <stepanek@ufal..mff.cuni.cz>
+Jan Stepanek <stepanek@ufal.mff.cuni.cz>
 
 Copyright © 2024 by Institute of Formal and Applied Linguistics, Charles
 University in Prague
