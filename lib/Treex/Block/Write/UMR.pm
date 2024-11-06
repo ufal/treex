@@ -12,6 +12,7 @@ has '+extension' => ( default => '.umr' );
 has _curr_sentord => ( isa => 'Int', is => 'rw' );
 has _used_variables => ( isa => 'ArrayRef[Int]', is => 'rw' );
 has _id_cache => ( isa => 'HashRef[Str]', is => 'ro', default => sub { {} } );
+has _buffer => ( isa => 'Str', is => 'rw', default => "" );
 
 sub _clear_variables($self) {
     $self->_set_used_variables([(0) x (ord("z") - ord("a") + 1)]);
@@ -32,11 +33,22 @@ sub process_utree($self, $utree, $sentord) {
     $self->_set_curr_sentord($sentord);
     $self->_clear_variables();
 
-    print { $self->_file_handle } $self->_get_sent_header($utree);
-    print { $self->_file_handle } $self->_get_sent_graph($utree);
-    print { $self->_file_handle } $self->_get_alignment($utree);
-    print { $self->_file_handle } $self->_get_doc_annot($utree);
-    print { $self->_file_handle } $self->_get_sent_footer;
+    $self->_add_to_buffer($self->_get_sent_header($utree));
+    $self->_add_to_buffer($self->_get_sent_graph($utree));
+    $self->_add_to_buffer($self->_get_alignment($utree));
+    $self->_add_to_buffer($self->_get_doc_annot($utree));
+    $self->_add_to_buffer($self->_get_sent_footer);
+}
+
+after process_document => sub ($self, @) {
+    $self->_resolve_cataphoras;
+    print { $self->_file_handle } $self->_buffer;
+    # use Data::Dumper; warn Dumper $self->_id_cache;
+};
+
+sub _add_to_buffer($self, $string) {
+    $self->_set_buffer($self->_buffer . $string);
+    return
 }
 
 sub _format_index(@anodes) {
@@ -215,15 +227,24 @@ sub _coref($self, $utree) {
     for my $unode ($utree->descendants) {
         if (my @node_coref = $unode->get_coref) {
             for my $node_coref (@node_coref) {
+                my $id = $self->_id_cache->{ $node_coref->[0]->id };
                 push @coref, '(' . $self->_id_cache->{ $unode->id }
                              . ' :' . $node_coref->[1] . ' '
-                             . $self->_id_cache->{ $node_coref->[0]->id }
+                             . ($id // $self->_cataphora($node_coref->[0]->id))
                              . ')';
             }
         }
     }
     return "\n    :coref (" . join("\n            ", @coref) . ')' if @coref;
     return ""
+}
+
+sub _cataphora($self, $id) { sprintf "\x00%s\x01", $id }
+
+sub _resolve_cataphoras($self) {
+    $self->_set_buffer(
+        $self->_buffer =~ s/\x00([^\x01]+)\x01/$self->_id_cache->{$1}/reg);
+    return
 }
 
 1;
