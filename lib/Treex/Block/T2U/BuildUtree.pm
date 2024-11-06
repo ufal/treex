@@ -156,12 +156,12 @@ sub translate_val_frame
         'OPER' => 'math',
         'APPS' => 'identity-91', # ??
 
-        # 'CM' => '',
-        # 'ATT' => '',
+        'CM' => 'clausal-marker',
+        'ATT' => 'clausal-marker',
         # 'INTF' => '',
-        # 'MOD' => '',
-        # 'PREC' => '',
-        # 'RHEM' => '',
+        'MOD' => 'clausal-marker',
+        'PREC' => 'clausal-marker',
+        'RHEM' => 'clausal-marker',
     );
     sub translate_non_valency_functor
     {
