@@ -167,7 +167,7 @@ sub translate_val_frame
     {
         my ($self, $tnode, $unode) = @_;
         $unode->set_functor($FUNCTOR_MAPPING{ $tnode->{functor} }
-                            // $tnode->{functor});
+                            // ('!!' . $tnode->{functor}));
     }
 
     sub adjust_coap
