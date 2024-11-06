@@ -73,12 +73,25 @@ after 'process_document' => sub {
     foreach my $tnode_id (@tcoref_sorted) {
         my $tnode = $doc->get_node_by_id($tnode_id);
         my ($unode) = $tnode->get_referencing_nodes('t.rf');
+        next unless $unode;
 
         my ($tante_id) = $tcoref_graph->successors($tnode_id);
 
         if (defined $tante_id) {
             my $tante = $doc->get_node_by_id($tante_id);
             my ($uante) = $tante->get_referencing_nodes('t.rf');
+
+            if ('INTF' eq $tante->functor) {
+                $uante->remove;
+                if (my ($tante_ante)
+                        = $self->_tcoref_graph->successors($tante_id)
+                ) {
+                    $self->_tcoref_graph->delete_edge($tnode_id, $tante_id);
+                    $self->_tcoref_graph->add_edge($tnode_id, $tante_ante);
+                    redo
+                }
+                next
+            }
 
             # inter-sentential link
             # - the link must be represented by the ":coref" attribute
