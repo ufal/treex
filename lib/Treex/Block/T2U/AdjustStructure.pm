@@ -22,6 +22,8 @@ sub process_unode($self, $unode, $) {
     $self->adjust_coap($unode, $tnode) if 'coap' eq $tnode->nodetype;
     $self->remove_double_edge($unode, $1, $tnode)
         if $unode->functor =~ /^(.+)-of$/;
+    $self->negate_sibling($unode, $tnode)
+        if '#Neg' eq $tnode->t_lemma && 'CM' eq $tnode->functor;
     return
 }
 
@@ -41,6 +43,26 @@ sub subordinate2coord($self, $unode, $tnode) {
     $unode->_remove_from_node_list('alignment.rf', @auxc);
     $operator->_add_to_node_list('alignment.rf', @auxc);
 
+    return
+}
+
+sub negate_sibling($self, $unode, $tnode) {
+    my $tparent = $tnode->parent;
+    my $is_left = $tnode->ord < $tparent->ord;
+    my ($tord, $tpord) = map $_->ord, $tnode, $tparent;
+    my @tsiblings = sort { abs($a->ord - $tord) <=> abs($b->ord - $tord) }
+                    grep { ($_->ord <=> $tpord) == ($is_left ? -1 : 1) }
+                    grep $_->is_member,
+                    $tparent->children;
+    @tsiblings = ($tsiblings[0]);
+    log_warn("0 siblings $tnode->{id}") if ! defined $tsiblings[0];
+    @tsiblings = $tsiblings[0]->get_coap_members if $tsiblings[0]->is_coap_root;
+    my @siblings = map get_corresponding_unode($unode, $_, $unode->root),
+                   @tsiblings;
+    $_->set_polarity for @siblings;
+    log_warn("POLARITY $tnode->{id}") if @tsiblings != 1;
+    log_warn("POLARITY_M $tnode->{id}") if @siblings > 1;
+    $unode->remove;
     return
 }
 
