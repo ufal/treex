@@ -81,9 +81,6 @@ sub translate_val_frame
         my $mapping = $self->mapping->{$valframe_id};
         if (my $pb_concept = $mapping->{umr_id}) {
             $unode->set_concept($pb_concept);
-            if (grep /ARG[0-9]/, values %$mapping) {
-                $unode->set_modal_strength('full-affirmative');
-            }
         }
     }
 }
