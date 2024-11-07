@@ -239,22 +239,38 @@ sub should_reverse {
     }
 }
 
-sub set_nodetype
-{
-    my ($self, $unode, $tnode) = @_;
-    return if 'ref' eq ($unode->nodetype // "");
+{   my %EVENT;
+    @EVENT{qw{
+        belong-91 correlate-91 emit-sound-91 exist-91 have-91 have-actor-91
+        have-affectee-91 have-age-91 have-cause-91 have-causer-91 have-color-91
+        have-companion-91 have-configuration-91 have-degree-91 have-degree-92
+        have-direction-91 have-duration-91 have-example-91 have-experience-91
+        have-extent-91 have-force-91 have-frequency-91 have-goal-91
+        have-group-91 have-instrument-91 have-manner-91 have-material-91
+        have-medium-91 have-mod-91 have-org-role-92 have-orientation-91
+        have-other-role-91 have-part-91 have-path-91 have-place-91
+        have-purpose-91 have-quant-91 have-reason-91 have-recipient-91
+        have-rel-role-92 have-result-91 have-role-91 have-size-91
+        have-source-91 have-start-91 have-temporal-91 have-theme-91
+        have-topic-91 have-undergoer-91 have-vocative-91 identity-91 include-91
+        infer-91 mean-91 resemble-91 say-91 }} = ();
+    sub set_nodetype
+    {
+        my ($self, $unode, $tnode) = @_;
+        return if 'ref' eq ($unode->nodetype // "");
 
-    my $nodetype =
-        ('v' eq ($tnode->attr('gram/sempos') // "")
-         || '#EmpVerb' eq $tnode->{t_lemma}
-         || $unode->concept =~ /^have-.*-91$/)   ? 'event'
+        my $nodetype =
+            ('v' eq ($tnode->attr('gram/sempos') // "")
+             || '#EmpVerb' eq $tnode->{t_lemma}
+             || exists $EVENT{ $unode->concept })   ? 'event'
 
-        : ('coap' eq $tnode->nodetype
-           && $unode->concept !~ /-91$/)         ? 'keyword'
+            : ('coap' eq $tnode->nodetype
+               && $unode->concept !~ /-91$/)        ? 'keyword'
 
-                                                 : 'entity';
-    $unode->set_nodetype($nodetype);
-    return
+                                                    : 'entity';
+        $unode->set_nodetype($nodetype);
+        return
+    }
 }
 
 {   my %ASPECT_STATE;
