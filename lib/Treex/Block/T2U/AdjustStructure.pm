@@ -62,6 +62,7 @@ sub negate_sibling($self, $unode, $tnode) {
     $_->set_polarity for @siblings;
     log_warn("POLARITY $tnode->{id}") if @tsiblings != 1;
     log_warn("POLARITY_M $tnode->{id}") if @siblings > 1;
+    log_warn('Remove with children ' . $tnode->id) if $unode->children;
     $unode->remove;
     return
 }

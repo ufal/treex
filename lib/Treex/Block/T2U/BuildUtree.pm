@@ -34,6 +34,7 @@ sub build_subtree
     foreach my $tnode ($tparent->get_children({ordered => 1}))
     {
         if ('#Neg' eq $tnode->t_lemma && 'RHEM' eq $tnode->functor) {
+            log_warn("Skipping #Neg.RHEM children " . $tnode->id) if $tnode->children;
             $self->negate_parent($uparent);
         } else {
             my $unode = $uparent->create_child();

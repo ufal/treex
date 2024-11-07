@@ -82,6 +82,7 @@ after 'process_document' => sub {
             my ($uante) = $tante->get_referencing_nodes('t.rf');
 
             if ('INTF' eq $tante->functor) {
+                log_warn("Removing with children: $tante_id") if $uante->children;
                 $uante->remove;
                 if (my ($tante_ante)
                         = $self->_tcoref_graph->successors($tante_id)
@@ -166,7 +167,6 @@ sub _same_sentence_coref {
 # $tnode is "ktery", $up is a RSTR verb, $gp is a coref antecedent.
 sub _relative_coref {
     my ($self, $tnode, $unode, $uante_id, $tante_id, $doc) = @_;
-    my $remove;
     my $parent = $tnode->parent;
 
     my @eparents = $tnode->get_eparents;
@@ -192,6 +192,7 @@ sub _relative_coref {
 
     my $uparent = $unode->parent;
     $uparent->set_functor($unode->functor . '-of');
+    log_warn("Removing rel with children " . $tnode->id) if $unode->children;
     $unode->remove;
 }
 
