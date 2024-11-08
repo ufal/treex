@@ -83,14 +83,15 @@ sub adjust_coap($self, $unode, $tnode) {
    log_warn("No memebers $tnode->{id}"), return
         unless @u_members;
 
+    my $first_member = shift @u_members;
     for my $tcommon (@t_common) {
         my $ucommon = get_corresponding_unode($unode, $tcommon,
                                               $unode->root);
         log_debug("No unode for $tcommon->{id}", 1), next
             unless $ucommon;
 
-        $ucommon->set_parent($u_members[0]);
-        for my $other_member (@u_members[1 .. $#u_members]) {
+        $ucommon->set_parent($first_member);
+        for my $other_member (@u_members) {
             my $ref = $other_member->create_child;
             $ref->{ord} = 0;
             $ref->set_functor($ucommon->functor);
