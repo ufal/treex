@@ -4,7 +4,7 @@ package Treex::Block::T2U::ConvertCoreference;
 use Moose;
 use utf8;
 use Treex::Core::Common;
-use Treex::Tool::UMR::Common qw{ maybe_set get_corresponding_unode };
+use Treex::Tool::UMR::Common qw{ maybe_set };
 
 use Graph::Directed;
 use namespace::autoclean;
@@ -127,8 +127,8 @@ sub _same_sentence_coref {
         $self->_tcoref_graph->delete_edge($predecessor, $tnode->id);
         $self->_tcoref_graph->add_edge($predecessor, $tante_id);
 
-        my $upred = get_corresponding_unode(
-            $unode, $doc->get_node_by_id($predecessor));
+        my ($upred) = $doc->get_node_by_id($predecessor)
+                    ->get_referencing_nodes('t.rf');
         if (my $coref = $upred->{coref}) {
             my @target_indices = (
                 grep $coref->[$_]{'target_node.rf'} eq $unode->id,

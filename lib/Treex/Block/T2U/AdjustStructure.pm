@@ -4,8 +4,7 @@ package Treex::Block::T2U::AdjustStructure;
 use Moose;
 
 use Treex::Core::Common;
-use Treex::Tool::UMR::Common qw{ get_corresponding_unode
-                                 is_coord expand_coord };
+use Treex::Tool::UMR::Common qw{ is_coord expand_coord };
 
 use namespace::autoclean;
 use experimental qw( signatures );
@@ -28,9 +27,9 @@ sub process_unode($self, $unode, $) {
 }
 
 sub subordinate2coord($self, $unode, $tnode) {
-    my $t_parent = $tnode->get_parent;
-    my $u_parent = get_corresponding_unode($unode, $t_parent, $unode->root);
-    my $operator = $u_parent->parent->create_child;
+    my $t_parent   = $tnode->get_parent;
+    my ($u_parent) = $t_parent->get_referencing_nodes('t.rf');
+    my $operator   = $u_parent->parent->create_child;
     $operator->set_concept($unode->functor);
     $operator->set_functor($u_parent->functor);
     $u_parent->set_functor('ARG1');
@@ -57,8 +56,7 @@ sub negate_sibling($self, $unode, $tnode) {
     @tsiblings = ($tsiblings[0]);
     log_warn("0 siblings $tnode->{id}") if ! defined $tsiblings[0];
     @tsiblings = $tsiblings[0]->get_coap_members if $tsiblings[0]->is_coap_root;
-    my @siblings = map get_corresponding_unode($unode, $_, $unode->root),
-                   @tsiblings;
+    my @siblings = map $_->get_referencing_nodes('t.rf'), @tsiblings;
     $_->set_polarity for @siblings;
     log_warn("POLARITY $tnode->{id}") if @tsiblings != 1;
     log_warn("POLARITY_M $tnode->{id}") if @siblings > 1;
@@ -78,15 +76,14 @@ sub adjust_coap($self, $unode, $tnode) {
                         log_warn(join ' ', 'UNDEF', map $_->id, @t_members);
                         0
                     },
-                    map get_corresponding_unode($unode, $_, $unode->root),
+                    map $_->get_referencing_nodes('t.rf'),
                     @t_members;
    log_warn("No memebers $tnode->{id}"), return
         unless @u_members;
 
     my $first_member = shift @u_members;
     for my $tcommon (@t_common) {
-        my $ucommon = get_corresponding_unode($unode, $tcommon,
-                                              $unode->root);
+        my ($ucommon) = $tcommon->get_referencing_nodes('t.rf');
         log_debug("No unode for $tcommon->{id}", 1), next
             unless $ucommon;
 

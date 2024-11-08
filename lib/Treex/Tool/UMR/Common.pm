@@ -25,17 +25,7 @@ use warnings;
 use strict;
 
 use Exporter qw{ import };
-our @EXPORT_OK = qw{ get_corresponding_unode is_coord expand_coord maybe_set };
-
-sub get_corresponding_unode {
-    my ($any_unode, $tnode, $uroot) = @_;
-    my @uroots = $uroot
-        // map $_->get_tree($any_unode->language, 'u'),
-           $any_unode->get_document->get_bundles;
-    my ($u) = grep $tnode == ($_->get_tnode // 0),
-        map $_->descendants, @uroots;
-    return $u
-}
+our @EXPORT_OK = qw{ is_coord expand_coord maybe_set };
 
 sub is_coord {
     my ($unode) = @_;

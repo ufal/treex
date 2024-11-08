@@ -2,7 +2,7 @@
 package Treex::Block::T2U::BuildUtree;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::UMR::Common qw{ get_corresponding_unode maybe_set };
+use Treex::Tool::UMR::Common qw{ maybe_set };
 use namespace::autoclean;
 
 extends 'Treex::Core::Block';
@@ -185,7 +185,7 @@ sub translate_val_frame
 
         my $i = 1;
         for my $member (@members) {
-            my $umember = get_corresponding_unode($unode, $member, $unode->root);
+            my ($umember) = $member->get_referencing_nodes('t.rf');
             log_warn("ARG$i under " . $unode->concept)
                 if 'ARG' eq $prefix && $i > 2;
             $umember->set_functor($prefix . $i++);
