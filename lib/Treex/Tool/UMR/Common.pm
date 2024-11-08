@@ -25,7 +25,7 @@ use warnings;
 use strict;
 
 use Exporter qw{ import };
-our @EXPORT_OK = qw{ get_corresponding_unode is_coord expand_coord };
+our @EXPORT_OK = qw{ get_corresponding_unode is_coord expand_coord maybe_set };
 
 sub get_corresponding_unode {
     my ($any_unode, $tnode, $uroot) = @_;
@@ -54,6 +54,47 @@ sub expand_coord {
                     grep $_->functor =~ /$expansion_re/,
                     $unode->children;
     return @expansion
+}
+
+{   my %GRAM = (person => {
+                    1     => '1st',
+                    2     => '2nd',
+                    3     => '3rd',
+                    inher => 'Inher'},
+                number => {
+                    sg    => 'singular',
+                    S     => 'singular',
+                    pl    => 'plural',
+                    P     => 'plural',
+                    inher => 'inher'});
+    my %IMPLEMENTATION = (person => {gram => 'gram_person',
+                                     tag  => '^.{7}([123])',
+                                     attr => 'entity_refperson'},
+                          number => {gram => 'gram_number',
+                                     tag  => '^.{3}([SP])',
+                                     attr => 'entity_refnumber'});
+    sub maybe_set {
+        my ($gram, $unode, $orig_node) = @_;
+        my $get_attr = $IMPLEMENTATION{$gram}{attr};
+        return if $unode->$get_attr;
+
+        my $set_attr = "set_$IMPLEMENTATION{$gram}{attr}";
+        if ($orig_node->isa('Treex::Core::Node::T')) {
+
+            my $value = $orig_node->${ \$IMPLEMENTATION{$gram}{gram} };
+            if (! $value) {
+                if (my $anode = $orig_node->get_lex_anode) {
+                    ($value) = $anode->tag =~ $IMPLEMENTATION{$gram}{tag};
+                }
+            }
+            warn("$unode->{id} $gram $GRAM{$gram}{$value}"),
+            $unode->$set_attr($GRAM{$gram}{$value}) if $value;
+
+        } else {
+            $unode->$set_attr($orig_node->$get_attr);
+        }
+        return
+    }
 }
 
 __PACKAGE__

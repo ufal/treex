@@ -148,6 +148,11 @@ sub _get_sent_subtree($self, $unode) {
         $umr_str .= ':refer-number ' . $unode->entity_refnumber;
     }
 
+    if ($unode->entity_refperson) {
+        $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
+        $umr_str .= ':refer-person ' . $unode->entity_refperson;
+    }
+
     if ($unode->aspect) {
         $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
         $umr_str .= ':aspect ' . $unode->aspect;

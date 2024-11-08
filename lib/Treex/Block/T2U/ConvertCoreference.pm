@@ -4,7 +4,7 @@ package Treex::Block::T2U::ConvertCoreference;
 use Moose;
 use utf8;
 use Treex::Core::Common;
-use Treex::Tool::UMR::Common qw{ get_corresponding_unode };
+use Treex::Tool::UMR::Common qw{ maybe_set get_corresponding_unode };
 
 use Graph::Directed;
 use namespace::autoclean;
@@ -19,27 +19,11 @@ has '_tcoref_graph' => ( is => 'rw', isa => 'Graph::Directed' );
 sub process_tnode {
     my ($self, $tnode) = @_;
 
-    my @tantes = map $_->get_coap_members, $tnode->get_coref_nodes;
-    return unless @tantes;
-
-    if (@tantes > 1) {
-        log_warn("Tnode ".$tnode->id." has more than a single antecedent. Selecting the closer one.");
-        if ($tnode->root != $tantes[0]->root) {
-            @tantes = $tantes[-1];
-
-        } else {
-            my $closest = shift @tantes;
-            for my $tante (@tantes) {
-                $closest = $tante
-                    if _path_length($tnode, $tante)
-                       < _path_length($tnode, $closest);
-            }
-            @tantes = $closest;
-        }
-    }
-    my $tante = $tantes[0];
-    my $tcoref_graph = $self->_tcoref_graph;
-    $tcoref_graph->add_edge($tnode->id, $tante->id);
+    # my @tantes = map $_->get_coap_members, $tnode->get_coref_nodes;
+    # $self->_tcoref_graph->add_edge($tnode->id, $_->id) for @tantes;
+    $self->_tcoref_graph->add_edge($tnode->id, $_->id)
+        for $tnode->get_coref_nodes({appos_aware => 0});
+    return
 }
 
 before 'process_document' => sub {
@@ -70,63 +54,67 @@ after 'process_document' => sub {
         @tcoref_sorted = $tcoref_graph->topological_sort();
     };
 
-    foreach my $tnode_id (@tcoref_sorted) {
+  TNODE:
+    for my $tnode_id (@tcoref_sorted) {
         my $tnode = $doc->get_node_by_id($tnode_id);
         my ($unode) = $tnode->get_referencing_nodes('t.rf');
         next unless $unode;
 
-        my ($tante_id) = $tcoref_graph->successors($tnode_id);
+      TANTE:
+        for my $tante_id ($tcoref_graph->successors($tnode_id)) {
+            warn("NO TANTE $tnode->{id}"),
+            next unless defined $tante_id;
 
-        if (defined $tante_id) {
             my $tante = $doc->get_node_by_id($tante_id);
             my ($uante) = $tante->get_referencing_nodes('t.rf');
 
             if ('INTF' eq $tante->functor) {
-                log_warn("Removing with children: $tante_id") if $uante->children;
+                log_warn("Removing with children: $tante_id")
+                    if $uante->children;
                 $uante->remove;
-                if (my ($tante_ante)
-                        = $self->_tcoref_graph->successors($tante_id)
+                for my $tante_ante (
+                    $self->_tcoref_graph->successors($tante_id)
                 ) {
                     $self->_tcoref_graph->delete_edge($tnode_id, $tante_id);
                     $self->_tcoref_graph->add_edge($tnode_id, $tante_ante);
-                    redo
+                    redo TNODE
                 }
-                next
+                next TNODE
             }
 
+            next TANTE if grep $_->isa('Treex::Core::Node::Deleted'),
+                          $unode, $uante;
+
+            maybe_set($_, $unode, $tante) for qw( person number );
+
             # inter-sentential link
-            # - the link must be represented by the ":coref" attribute
-            # - the following intra-sentential links with underspecified anaphors
-            #   must be anchored in this node
             if ($unode->root != $uante->root) {
                 $unode->add_coref($uante, 'same-' . $uante->nodetype);
                 $unode->set_nodetype($uante->nodetype);
-                $self->_anchor_references($unode);
             }
             # intra-sentential links with underspecified anaphors
-            # - propagate such anaphors via the wild attribute `anaphs`
             elsif ($tnode->t_lemma
                        =~ /^(?:#(?:Q?Cor|PersPron)|$RELATIVE)$/
                    && ! $tnode->children
             ) {
+                log_warn("REL $tnode->{id}/$tnode->{t_lemma} $tante_id");
+                log_warn("REL_M $tnode->{id}/$tnode->{t_lemma}")
+                    if $tnode->is_member;
                 $self->_same_sentence_coref(
                     $tnode, $unode, $uante, $tante_id, $doc);
                 if ($tnode->t_lemma =~ /^$RELATIVE$/) {
                     $self->_relative_coref(
                         $tnode, $unode, $uante->id, $tante_id, $doc);
                 }
+
             } else {
-                $unode->add_coref($uante, 'same-' . $uante->nodetype);
+                $unode->add_coref($uante,
+                                  'same-' . ($uante->nodetype eq 'event'
+                                             ? 'event'
+                                             : 'entity'));
                 $unode->set_nodetype($uante->nodetype);
-                $self->_anchor_references($unode);
                 log_warn("Unsolved coref $tnode_id $tante_id");
             }
-        }
-        # non-anaphoric antecedent
-        # - the following intra-sentential links with underspecified anaphors
-        #   must be anchored in this node
-        else {
-            $self->_anchor_references($unode);
         }
     }
 };
@@ -142,12 +130,11 @@ sub _same_sentence_coref {
         my $upred = get_corresponding_unode(
             $unode, $doc->get_node_by_id($predecessor));
         if (my $coref = $upred->{coref}) {
-            my $i = (-1,
-                     grep $coref->[$_]{'target_node.rf'} eq $unode->id,
-                          0 .. $coref->count - 1)[-1];
-            if ($i >= 0) {
-                $coref->[$i]{'target_node.rf'} = $uante->id;
-            }
+            my @target_indices = (
+                grep $coref->[$_]{'target_node.rf'} eq $unode->id,
+                0 .. $coref->count - 1);
+            warn "TIDXS: @target_indices";
+            $coref->[$_]{'target_node.rf'} = $uante->id for @target_indices;
         } elsif ($upred->{'same_as.rf'}) {
             log_debug("SAME COREF $predecessor/$upred->{concept}, $tnode->{id}/$unode->{concept}", 1);
             $upred->make_referential($uante);
@@ -158,8 +145,16 @@ sub _same_sentence_coref {
     if ($unode->children) {
         log_warn(sprintf "Cannot turn %s (%s) into REF because of CHILDREN",
                  map $_->id, $unode, $tnode);
+    } elsif ('ref' eq $unode->{nodetype}) {
+        my $parent = $unode->parent;
+        my $ucopy = $parent->create_child;
+        $ucopy->set_tnode($tnode);
+        $ucopy->set_functor($unode->functor);
+        $ucopy->make_referential($uante);
+        warn "$tnode->{id} copied to reference $tante_id";
     } else {
         $unode->make_referential($uante);
+        warn "$tnode->{id} made referential to $tante_id";
     }
 }
 
@@ -194,54 +189,6 @@ sub _relative_coref {
     $uparent->set_functor($unode->functor . '-of');
     log_warn("Removing rel with children " . $tnode->id) if $unode->children;
     $unode->remove;
-}
-
-sub _anchor_references {
-    my ($self, $unode) = @_;
-
-    # make a reference to this node from all following non-nominal anaphors
-    my $unode_anaphs = delete $unode->wild->{'anaphs'} // [];
-    foreach my $uanaph (@$unode_anaphs) {
-        $uanaph->make_referential($unode);
-    }
-    my ($person, $number) = $self->_infere_entity_info($unode, @$unode_anaphs);
-    $unode->set_entity_refperson($person) if defined $person;
-    $unode->set_entity_refnumber($number) if defined $number;
-}
-
-my %T2U_PERSON = (
-    "1" => "1st",
-    "2" => "2nd",
-    "3" => "3rd",
-    "inher" => "Inher",
-);
-my %T2U_NUMBER = (
-    "sg" => "singular",
-    "pl" => "plural",
-    "inher" => "inher",
-);
-
-sub _infere_entity_info {
-    my ($self, $unode, @uanaphs) = @_;
-
-    my $tnode = $unode->get_tnode;
-
-    my $person;
-    my $number;
-    if (defined $tnode) {
-        $person = $tnode->gram_person ? $T2U_PERSON{$tnode->gram_person} : undef;
-        $number = $tnode->gram_number ? $T2U_NUMBER{$tnode->gram_number} : undef;
-    }
-    return ($person, $number);
-}
-
-sub _propagate_anaphors {
-    my ($self, $unode, $uante) = @_;
-    my $unode_anaphs = delete $unode->wild->{'anaphs'} // [];
-    push @$unode_anaphs, $unode;
-    my $uante_anaphs = $uante->wild->{'anaphs'} // [];
-    push @$uante_anaphs, @$unode_anaphs;
-    $uante->wild->{'anaphs'} = $uante_anaphs;
 }
 
 sub _rank {

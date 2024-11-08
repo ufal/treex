@@ -2,7 +2,7 @@
 package Treex::Block::T2U::BuildUtree;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::UMR::Common qw{ get_corresponding_unode };
+use Treex::Tool::UMR::Common qw{ get_corresponding_unode maybe_set };
 use namespace::autoclean;
 
 extends 'Treex::Core::Block';
@@ -311,6 +311,8 @@ sub add_tnode_to_unode
     $self->translate_non_valency_functor($tnode, $unode);
     $unode->copy_alignment($tnode) unless $tnode->is_generated;
     $self->set_nodetype($unode, $tnode);
+    maybe_set(person => $unode, $tnode);
+    maybe_set(number => $unode, $tnode);
     $unode->set_aspect($self->deduce_aspect($unode, $tnode))
         if 'event' eq $unode->nodetype;
     $unode->set_polarity
