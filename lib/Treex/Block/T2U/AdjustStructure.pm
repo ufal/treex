@@ -14,6 +14,7 @@ extends 'Treex::Core::Block';
 has '+language' => ( required => 1 );
 
 
+my $NEGATION = 'n(?:e|ikoliv?)';
 sub process_unode($self, $unode, $) {
     my $tnode = $unode->get_tnode;
     $self->subordinate2coord($unode, $tnode)
@@ -22,7 +23,8 @@ sub process_unode($self, $unode, $) {
     $self->remove_double_edge($unode, $1, $tnode)
         if $unode->functor =~ /^(.+)-of$/;
     $self->negate_sibling($unode, $tnode)
-        if '#Neg' eq $tnode->t_lemma && 'CM' eq $tnode->functor;
+        if 'RHEM' eq $tnode->functor && $tnode->t_lemma =~ /^$NEGATION$/
+        || 'CM' eq $tnode->functor && $tnode->t_lemma =~ /^(?:#Neg|$NEGATION)$/;
     return
 }
 
@@ -49,15 +51,27 @@ sub negate_sibling($self, $unode, $tnode) {
     my $tparent = $tnode->parent;
     my $is_left = $tnode->ord < $tparent->ord;
     my ($tord, $tpord) = map $_->ord, $tnode, $tparent;
-    my @tsiblings = sort { abs($a->ord - $tord) <=> abs($b->ord - $tord) }
-                    grep { ($_->ord <=> $tpord) == ($is_left ? -1 : 1) }
-                    grep $_->is_member,
-                    $tparent->children;
+    my @tsiblings
+        = ('CM' eq $tnode->functor)
+        ? sort { abs($a->ord - $tord) <=> abs($b->ord - $tord) }
+          grep { ($_->ord <=> $tpord) == ($is_left ? -1 : 1) }
+          grep $_->is_member,
+          $tparent->children
+        : $tnode->rbrother;
+
+    log_warn("0 siblings $tnode->{id}"),
+            return
+        if ! @tsiblings || ! defined $tsiblings[0];
+
     @tsiblings = ($tsiblings[0]);
-    log_warn("0 siblings $tnode->{id}") if ! defined $tsiblings[0];
     @tsiblings = $tsiblings[0]->get_coap_members if $tsiblings[0]->is_coap_root;
     my @siblings = map $_->get_referencing_nodes('t.rf'), @tsiblings;
-    $_->set_polarity for @siblings;
+    for my $sibling (@siblings) {
+        $sibling->set_polarity;
+        if (my $lex = $tnode->get_lex_anode) {
+            $sibling->add_to_alignment($lex);
+        }
+    }
     log_warn("POLARITY $tnode->{id}") if @tsiblings != 1;
     log_warn("POLARITY_M $tnode->{id}") if @siblings > 1;
     log_warn('Remove with children ' . $tnode->id) if $unode->children;
@@ -70,7 +84,10 @@ sub adjust_coap($self, $unode, $tnode) {
     my @t_common = grep {
         my $ch = $_;
         ! grep $ch == $_, @t_members
-    } grep ! $_->is_member && 'CM' ne $_->functor, $tnode->children;
+    } grep ! $_->is_member
+           && 'CM' ne $_->functor
+           && ! ('RHEM' eq $_->functor && $_->t_lemma =~ /^$NEGATION$/),
+    $tnode->children;
     my @u_members = grep 'ref' ne ($_->nodetype // ""),
                     grep defined || do {
                         log_warn(join ' ', 'UNDEF', map $_->id, @t_members);

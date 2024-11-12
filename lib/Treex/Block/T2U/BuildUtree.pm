@@ -28,21 +28,25 @@ sub process_zone
     return 1;
 }
 
-sub build_subtree
-{
+sub build_subtree {
     my ($self, $tparent, $uparent) = @_;
-    foreach my $tnode ($tparent->get_children({ordered => 1}))
-    {
+    for my $tnode ($tparent->get_children({ordered => 1})) {
         if ('#Neg' eq $tnode->t_lemma && 'RHEM' eq $tnode->functor) {
-            log_warn("Skipping #Neg.RHEM children " . $tnode->id) if $tnode->children;
+            log_warn("Skipping " . $tnode->t_lemma . " children "
+                     . $tnode->id)
+                if $tnode->children;
             $self->negate_parent($uparent);
+            if (my $lex = $tnode->get_lex_anode) {
+                $uparent->add_to_alignment($lex);
+            }
+
         } else {
             my $unode = $uparent->create_child();
             $unode = $self->add_tnode_to_unode($tnode, $unode);
             $self->build_subtree($tnode, $unode);
         }
     }
-    return;
+    return
 }
 
 sub negate_parent
