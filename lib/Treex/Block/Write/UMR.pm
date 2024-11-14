@@ -130,7 +130,9 @@ sub _get_sent_subtree($self, $unode) {
         return $self->_id_cache->{$ref} if $self->_id_cache->{$ref};
 
         my $refered = (grep $ref eq $_->id, $unode->root->descendants)[0];
-        die "No $ref from $unode->{id} ", $unode->concept unless $refered;
+        die "No $ref from $unode->{id} ", $unode->concept,
+                '.', $unode->parent->get_tnode->id
+            unless $refered;
 
         return $self->_id_cache->{$ref}
                = $self->_assign_variable($refered->concept)
