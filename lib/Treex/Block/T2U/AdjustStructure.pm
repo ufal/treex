@@ -49,16 +49,10 @@ sub subordinate2coord($self, $unode, $tnode) {
 
 sub negate_sibling($self, $unode, $tnode) {
     my $tparent = $tnode->parent;
-    my $is_left = $tnode->ord < $tparent->ord;
-    my ($tord, $tpord) = map $_->ord, $tnode, $tparent;
     my @tsiblings
-        = ('CM' eq $tnode->functor)
-        ? sort { abs($a->ord - $tord) <=> abs($b->ord - $tord) }
-          grep { ($_->ord <=> $tpord) == ($is_left ? -1 : 1) }
-          grep $_->is_member,
-          $tparent->children
-        : $tnode->rbrother;
-
+        = ('RHEM' eq $tnode->functor) ? $tnode->rbrother
+        : 'GRAD' eq $tparent->functor ? $self->_negate_grad($unode, $tnode)
+        :                               $self->_parent_side($tnode, $tparent);
     log_warn("0 siblings $tnode->{id}"),
             return
         if ! @tsiblings || ! defined $tsiblings[0];
@@ -77,6 +71,22 @@ sub negate_sibling($self, $unode, $tnode) {
     log_warn('Remove with children ' . $tnode->id) if $unode->children;
     $unode->remove;
     return
+}
+
+sub _negate_grad($self, $unode, $tnode) {
+    if (my $rbro = $tnode->rbrother) {
+        return $rbro if $rbro->t_lemma =~ /^(?:jen(?:om)?|pouze|výhradně)$/;
+    }
+    return
+}
+
+sub _parent_side($self, $tnode, $tparent) {
+    my $is_left = $tnode->ord < $tparent->ord;
+    my ($tord, $tpord) = map $_->ord, $tnode, $tparent;
+    return sort { abs($a->ord - $tord) <=> abs($b->ord - $tord) }
+           grep { ($_->ord <=> $tpord) == ($is_left ? -1 : 1) }
+           grep $_->is_member,
+           $tparent->children
 }
 
 sub adjust_coap($self, $unode, $tnode) {
