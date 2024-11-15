@@ -119,7 +119,7 @@ sub adjust_coap($self, $unode, $tnode) {
             my $ref = $other_member->create_child;
             $ref->{ord} = 0;
             $ref->set_functor($ucommon->functor);
-            $ref->make_referential(('ref' eq ($ucommon->{nodetype} // ""))
+            $ref->make_referential(('ref' eq ($ucommon->nodetype // ""))
                                    ? $self->_solve_ref($ucommon)
                                    : $ucommon);
         }
@@ -134,7 +134,7 @@ sub remove_double_edge($self, $unode, $functor, $tnode) {
     for my $uexp (map $_->children, @unodes) {
         warn "Try $uexp->{concept}";
         if ($uexp->functor eq $functor) {
-            if ('ref' eq $uexp->{nodetype}) {
+            if ('ref' eq $uexp->nodetype) {
                 $uexp->remove;
             } else {
                 warn "Double $functor $tnode->{id} $uexp->{concept}";
@@ -145,7 +145,7 @@ sub remove_double_edge($self, $unode, $functor, $tnode) {
 }
 
 sub _solve_ref($self, $unode) {
-    while ('ref' eq ($unode->{nodetype} // "")) {
+    while ('ref' eq ($unode->nodetype // "")) {
         $unode = $unode->get_document->get_node_by_id($unode->{'same_as.rf'});
     }
     return $unode
