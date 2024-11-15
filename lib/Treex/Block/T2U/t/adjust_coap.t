@@ -2,16 +2,25 @@
 use warnings;
 use strict;
 
-use Sub::Override;
 use Test2::V0;
-use Treex::Block::T2U::BuildUtree;
 
-my $builder;
-
-my $override = 'Sub::Override'->new(
-    'Treex::Block::T2U::BuildUtree::log_warn' => sub {
+# Mocking:
+use Sub::Override;
+my ($builder, $log_warn, $override);
+BEGIN {
+    $log_warn = sub  {
         push @{ $builder->{warnings} }, $_[0];
-    });
+    };
+}
+use Treex::Core::Log;
+BEGIN {
+    $override = Sub::Override->new('Treex::Core::Log::log_warn'
+                                   => sub { 'IGNORED' });
+}
+
+use Treex::Block::T2U::BuildUtree;
+# Sub::Override doesn't see the sub because of namespace::autoclean.
+BEGIN { *Treex::Block::T2U::BuildUtree::log_warn = $log_warn }
 
 my @TESTS = (
     {functors => [],
