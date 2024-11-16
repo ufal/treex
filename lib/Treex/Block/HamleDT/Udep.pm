@@ -85,6 +85,7 @@ sub process_atree
     # AuxP and Coord nodes). A noun can be a predicate and then it can have
     # a subject and oblique dependents. But it cannot have an object.
     $self->relabel_objects_under_nominals($root);
+    $self->distinguish_acl_from_amod($root);
     $self->change_case_to_mark_under_verb($root);
     $self->dissolve_chains_of_auxiliaries($root);
     ###!!! The following method removes symptoms but we may want to find and remove the cause.
@@ -853,6 +854,34 @@ sub relabel_objects_under_nominals
         {
             $deprel = 'nmod';
             $node->set_deprel($deprel);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Distinguishes adnominal clauses headed by adjectives from simple adjectival
+# modifiers. This involves in particular passive participles, which are tagged
+# ADJ in (Czech) UD, but also normal adjectives with copulas. In the generic
+# conversion, any adjective attached to a noun as Atr was converted to amod,
+# but we could not look at the adjective's children there; now we can.
+#------------------------------------------------------------------------------
+sub distinguish_acl_from_amod
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() =~ m/^amod(:|$)/)
+        {
+            # Any of the following among the children signals that the adjective heads
+            # a clause, hence its own incoming dependency should be acl rather than amod.
+            if(any {$_->deprel() =~ m/^([nc]subj|cop|aux)(:|$)/} ($node->children()))
+            {
+                $node->set_deprel('acl');
+            }
         }
     }
 }

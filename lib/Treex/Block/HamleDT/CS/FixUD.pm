@@ -30,7 +30,6 @@ sub process_atree
         $self->fix_constructions($node);
         $self->fix_jak_znamo($root);
         $self->fix_annotation_errors($node);
-        $self->distinguish_acl_from_amod($node);
         $self->identify_acl_relcl($node);
         $self->fix_copula_location($node);
     }
@@ -463,30 +462,6 @@ sub is_core_argument
           && !$caseiset->is_locative()
           && !$caseiset->is_ablative()
           && !$caseiset->is_instrumental();
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Distinguishes adnominal clauses headed by adjectives from simple adjectival
-# modifiers. This involves in particular passive participles, which are tagged
-# ADJ in UD, but also normal adjectives with copulas. In the generic conversion,
-# any adjective attached to a noun as Atr was converted to amod, but we could
-# not look at the adjective's children there; now we can.
-#------------------------------------------------------------------------------
-sub distinguish_acl_from_amod
-{
-    my $self = shift;
-    my $node = shift;
-    if($node->deprel() =~ m/^amod(:|$)/)
-    {
-        # Any of the following among the children signals that the adjective heads
-        # a clause, hence its own incoming dependency should be acl rather than amod.
-        if(any {$_->deprel() =~ m/^([nc]subj|cop|aux)(:|$)/} ($node->children()))
-        {
-            $node->set_deprel('acl');
-        }
     }
 }
 
