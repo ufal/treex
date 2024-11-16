@@ -481,6 +481,13 @@ sub convert_deprels
             {
                 $deprel = 'det';
             }
+            # Passive participles in Czech are tagged as adjectives (both the short form
+            # "udělán", which is used only predicatively, and the long form "udělaný",
+            # which can be used attributively as a normal adjective). When they head
+            # a clause, they should be acl (or acl:relcl) instead of amod. Ideally
+            # we should look at their children (is there nsubj, aux, cop?) but we
+            # cannot do it now when some deprels may still wait for conversion. Since
+            # it is language-specific, it should be resolved later in CS::FixUD.
             elsif($node->is_adjective())
             {
                 $deprel = 'amod';
