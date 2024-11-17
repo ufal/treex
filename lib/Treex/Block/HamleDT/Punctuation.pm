@@ -74,6 +74,8 @@ sub process_atree
     my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
+        # Skip nodes that we already processed as bracketed punctuation.
+        next if($node->wild()->{bracketed_punctuation});
         # Punctuation in Universal Dependencies has the tag PUNCT (that's what the
         # method is_punctuation() checks here), dependency relation punct, and is
         # always attached projectively, usually to the head of a neighboring subtree
@@ -143,6 +145,8 @@ sub process_atree
     # Now make sure that paired punctuation is attached to the root of the enclosed phrase, if possible.
     for(my $i = 0; $i <= $#nodes; $i++)
     {
+        # Skip nodes that we already processed as bracketed punctuation.
+        next if($nodes[$i]->wild()->{bracketed_punctuation});
         my $n0 = $nodes[$i];
         if(exists($pairs{$n0->form()}))
         {
@@ -216,6 +220,11 @@ sub process_atree
                 }
             }
         }
+    }
+    # Remove the temporary marking of bracketed punctuation.
+    foreach my $node (@nodes)
+    {
+        delete($node->wild()->{bracketed_punctuation});
     }
 }
 
@@ -312,6 +321,8 @@ sub process_punctuation_in_brackets
                             $nodes[$k]->set_parent($nodes[$i+1]);
                             $nodes[$k]->set_deprel('punct');
                         }
+                        # Protect the nodes just processed from later attempts at "fixing them".
+                        $nodes[$k]->wild()->{bracketed_punctuation} = 1;
                     }
                     # The above code took care of making the bracketed stuff one subtree.
                     # However, it did not guarantee that the whole constituent is not in
