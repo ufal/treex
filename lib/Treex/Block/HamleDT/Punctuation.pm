@@ -324,21 +324,14 @@ sub process_punctuation_in_brackets
                         # Protect the nodes just processed from later attempts at "fixing them".
                         $nodes[$k]->wild()->{bracketed_punctuation} = 1;
                     }
-                    # The above code took care of making the bracketed stuff one subtree.
-                    # However, it did not guarantee that the whole constituent is not in
-                    # a gap of a non-projective edge.
-                    if(0) ###!!! DEBUG
+                    # Now check for non-projectivity because the subsequent code will not do anything more here.
+                    if($nodes[$i+1]->is_nonprojective())
                     {
-                        log_info("The bracketed constituent is attached to node ord=".$parent->ord().", form=".$parent->form());
-                        my @gap = $nodes[$i+1]->get_gap();
-                        if(@gap)
+                        if($i > 0)
                         {
-                            my $n = scalar(@gap);
-                            log_warn("The bracketed punctuation lies in a non-projectivity gap of size $n.");
-                        }
-                        if($nodes[$i+1]->is_nonprojective())
-                        {
-                            log_warn("The bracketed punctuation is attached non-projectively.");
+                            $parent = $nodes[$i-1];
+                            $nodes[$i+1]->set_parent($parent);
+                            $nodes[$i+1]->set_deprel($parent->is_root() ? 'root' : 'punct');
                         }
                     }
                 }
