@@ -313,7 +313,7 @@ sub process_punctuation_in_brackets
                     ###!!! non-paired punctuation inside. But it will not work
                     ###!!! well with "{(!)}".
                     $nodes[$i+1]->set_parent($parent);
-                    $nodes[$i+1]->set_deprel('punct');
+                    $nodes[$i+1]->set_deprel($parent->is_root() ? 'root' : 'punct');
                     for(my $k = $i; $k <= $j; $k++)
                     {
                         unless($k == $i+1)
