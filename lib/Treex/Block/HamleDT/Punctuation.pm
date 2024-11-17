@@ -4,34 +4,73 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Core::Block';
 
+has '+language' => ( required => 1 );
+has 'paired'    => ( is       => 'rw', isa => 'Str', default => '()[]{}“”„“«»‹›»«›‹《》「」『』', documentation => 'paired punctuation characters in one string; for each opening character just one closing character can be registered' );
+has '_pairs'    => ( is       => 'rw', isa => 'HashRef' );
 
 
+
+#------------------------------------------------------------------------------
+# Will be called at the beginning, before looping over trees. Initializes the
+# list of paired punctuation symbols.
+#------------------------------------------------------------------------------
+sub BUILD
+{
+    my ($self) = @_;
+    if($self->paired())
+    {
+        my @paired_list = split(//, $self->paired());
+        my $l = scalar(@paired_list);
+        if($l % 2)
+        {
+            log_fatal("The 'paired' parameter contains $l characters, which is not an even number.");
+        }
+        my %pairs = @paired_list;
+        $self->_set_pairs(\%pairs);
+    }
+    else
+    {
+        ###!!! Note that the definition of paired punctuation is language-specific.
+        ###!!! Right now I need this block for German. But this should definitely be parameterized in the future!
+        ###!!! Also note that we cannot handle ASCII quotation marks, although heuristics could be used to tell opening/closing apart.
+        ###!!! Add ‘single’ quotes, but make sure these symbols are not used e.g. as apostrophes.
+        ###!!! We need to know the language, there are many other quotation styles,
+        ###!!! e.g. Finnish and Swedish uses the same symbol for opening and closing: ”X”.
+        ###!!! Danish uses the French quotes but swapped: »X«; the same appears in PADT (Arabic).
+        my %pairs = # opening symbol => closing symbol
+        (
+            '(' => ')',
+            '[' => ']',
+            '{' => '}',
+            '“' => '”', # quotation marks used in English,...
+            '„' => '“', # Czech, German, Russian,...
+            '«' => '»', # French, Russian, Spanish,...
+            '‹' => '›', # ditto
+            '»' => '«', # Danish, Arabic,...
+            '›' => '‹', # ditto
+            '《' => '》', # Korean, Chinese
+            '「' => '」', # Chinese, Japanese
+            '『' => '』'  # ditto
+        );
+        $self->_set_pairs(\%pairs);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines all punctuation nodes in a tree. If they are attached non-projecti-
+# vely or if they cause non-projectivity of other nodes, attempts to re-attach
+# them.
+#------------------------------------------------------------------------------
 sub process_atree
 {
     my $self = shift;
     my $root = shift;
-    ###!!! Note that the definition of paired punctuation is language-specific.
-    ###!!! Right now I need this block for German. But this should definitely be parameterized in the future!
-    ###!!! Also note that we cannot handle ASCII quotation marks, although heuristics could be used to tell opening/closing apart.
-    ###!!! Add ‘single’ quotes, but make sure these symbols are not used e.g. as apostrophes.
-    ###!!! We need to know the language, there are many other quotation styles,
-    ###!!! e.g. Finnish and Swedish uses the same symbol for opening and closing: ”X”.
-    ###!!! Danish uses the French quotes but swapped: »X«; the same appears in PADT (Arabic).
-    my %pairs = # opening symbol => closing symbol
-    (
-        '(' => ')',
-        '[' => ']',
-        '{' => '}',
-        '“' => '”', # quotation marks used in English,...
-        '„' => '“', # Czech, German, Russian,...
-        '«' => '»', # French, Russian, Spanish,...
-        '‹' => '›', # ditto
-        '»' => '«', # Danish, Arabic,...
-        '›' => '‹', # ditto
-        '《' => '》', # Korean, Chinese
-        '「' => '」', # Chinese, Japanese
-        '『' => '』'  # ditto
-    );
+    my %pairs = %{$self->_pairs()};
+    # Try to solve punctuation in brackets first. Hopefully the remainder of
+    # this function will then stay away from it.
+    $self->process_punctuation_in_brackets($root);
     my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
@@ -175,6 +214,124 @@ sub process_atree
                         last;
                     }
                 }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Looks for paired punctuation enclosing one or more punctuation symbols (and
+# no non-punctuation nodes). For example: "(!!)". Attaches them so that the
+# first non-paired symbol inside is the head, the others are its direct depen-
+# dents.
+#------------------------------------------------------------------------------
+sub process_punctuation_in_brackets
+{
+    my $self = shift;
+    my $root = shift;
+    my $pairs = $self->_pairs();
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    for(my $i = 0; $i <= $#nodes; $i++)
+    {
+        if($nodes[$i]->is_punctuation() && exists($pairs->{$nodes[$i]->form()}))
+        {
+            my $opening = $nodes[$i]->form();
+            my $closing = $pairs->{$opening};
+            # Now see if we find the closing bracket, if there is at least one
+            # node between the brackets and if all nodes between the brackets
+            # are punctuation.
+            my $found = 0;
+            my $j;
+            for($j = $i+1; $j <= $#nodes; $j++)
+            {
+                if(!$nodes[$j]->is_punctuation())
+                {
+                    # Not found. We do not support non-punctuation nodes here.
+                    last;
+                }
+                if($nodes[$j]->form() eq $closing)
+                {
+                    # Found; but we can use it only if there was anything inside.
+                    # That will be checked after the loop.
+                    $found = 1;
+                    last;
+                }
+            }
+            # If we did not find bracketed punctuation, we will try next time
+            # from the next node. If we found paired brackets but they were
+            # empty, we will try next time after the closing bracket. And if
+            # it was not empty, we will also take care of the attachment.
+            if($found)
+            {
+                if($j > $i+1)
+                {
+                    my $debug_string = '';
+                    # Nothing outside the brackets should depend on the bracketed
+                    # nodes. Check this and re-attach such nodes higher.
+                    my $iord = $nodes[$i]->ord();
+                    my $jord = $nodes[$j]->ord();
+                    for(my $k = $i; $k <= $j; $k++)
+                    {
+                        $debug_string .= $nodes[$k]->form();
+                        my @children = $nodes[$k]->children();
+                        foreach my $c (@children)
+                        {
+                            if($c->ord() < $iord || $c->ord() > $jord)
+                            {
+                                while($c->parent()->ord() >= $iord && $c->parent()->ord() <= $jord)
+                                {
+                                    $c->set_parent($c->parent()->parent());
+                                }
+                            }
+                        }
+                    }
+                    log_info("Found punctuation in brackets: $debug_string");
+                    # The first node that has now the parent outside the brackets
+                    # will provide the parent for the phrase we build.
+                    my $parent;
+                    for(my $k = $i; $k <= $j; $k++)
+                    {
+                        if($nodes[$k]->parent()->ord() < $iord || $nodes[$k]->parent()->ord() > $jord)
+                        {
+                            $parent = $nodes[$k]->parent();
+                        }
+                    }
+                    log_fatal("Could not find parent outside the brackets.") if(!defined($parent));
+                    ###!!! We will take the second node as the head. This will
+                    ###!!! work well if we have just one pair of brackets with
+                    ###!!! non-paired punctuation inside. But it will not work
+                    ###!!! well with "{(!)}".
+                    $nodes[$i+1]->set_parent($parent);
+                    $nodes[$i+1]->set_deprel('punct');
+                    for(my $k = $i; $k <= $j; $k++)
+                    {
+                        unless($k == $i+1)
+                        {
+                            $nodes[$k]->set_parent($nodes[$i+1]);
+                            $nodes[$k]->set_deprel('punct');
+                        }
+                    }
+                    # The above code took care of making the bracketed stuff one subtree.
+                    # However, it did not guarantee that the whole constituent is not in
+                    # a gap of a non-projective edge.
+                    if(0) ###!!! DEBUG
+                    {
+                        log_info("The bracketed constituent is attached to node ord=".$parent->ord().", form=".$parent->form());
+                        my @gap = $nodes[$i+1]->get_gap();
+                        if(@gap)
+                        {
+                            my $n = scalar(@gap);
+                            log_warn("The bracketed punctuation lies in a non-projectivity gap of size $n.");
+                        }
+                        if($nodes[$i+1]->is_nonprojective())
+                        {
+                            log_warn("The bracketed punctuation is attached non-projectively.");
+                        }
+                    }
+                }
+                $i = $j;
             }
         }
     }
@@ -508,7 +665,7 @@ Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2017 by Institute of Formal and Applied Linguistics,
+Copyright © 2017, 2024 by Institute of Formal and Applied Linguistics,
 Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it
