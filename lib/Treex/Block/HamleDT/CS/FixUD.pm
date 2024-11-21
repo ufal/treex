@@ -1318,6 +1318,8 @@ sub fix_constructions
 #------------------------------------------------------------------------------
 # Fix fixed multiword expressions.
 #------------------------------------------------------------------------------
+my @_fixed_expressions;
+my @fixed_expressions;
 BEGIN
 {
     @_fixed_expressions =
