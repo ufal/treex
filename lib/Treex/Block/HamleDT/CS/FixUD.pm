@@ -28,6 +28,7 @@ sub process_atree
     foreach my $node (@nodes)
     {
         $self->fix_constructions($node);
+        $self->fix_fixed_expressions($node);
         $self->fix_jak_znamo($root);
         $self->fix_annotation_errors($node);
         $self->identify_acl_relcl($node);
@@ -1309,6 +1310,99 @@ sub fix_constructions
     if($node->deprel() =~ m/^punct(:|$)/ && ($node->is_noun() || $node->is_foreign()))
     {
         $node->set_deprel('nmod');
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fix fixed multiword expressions.
+#------------------------------------------------------------------------------
+BEGIN
+{
+    @_fixed_expressions =
+    (
+        # lc(forms), UPOS tags, ExtPos, DEPREL
+        ['a priori', 'X X', 'ADV', 'advmod'],
+        ['co možná', 'ADV ADV', 'ADV', 'advmod'],
+        ['de facto', 'X X', 'ADV', 'advmod'],
+        ['stůj co stůj', 'VERB ADV VERB', 'ADV', 'advmod']
+    );
+    @fixed_expressions;
+    foreach my $e (@_fixed_expressions)
+    {
+        my @forms = split(/\s+/, $e->[0]);
+        my @upos = split(/\s+/, $e->[1]);
+        my $extpos = $e->[2];
+        my $deprel = $e->[3];
+        push(@fixed_expressions, {'forms' => \@forms, 'upos' => \@upos, 'extpos' => $extpos, 'deprel' => $deprel});
+    }
+}
+sub fix_fixed_expressions
+{
+    my $self = shift;
+    my $node = shift;
+    # Is the current node first word of a known fixed expression?
+    my $found_expression;
+    foreach my $e (@fixed_expressions)
+    {
+        my $found = 1;
+        my $current_node = $node;
+        foreach my $w (@{$e->{forms}})
+        {
+            if(!defined($current_node) || lc($current_node->form()) ne $w)
+            {
+                $found = 0;
+                last;
+            }
+            $current_node = $current_node->get_right_neighbor();
+        }
+        if($found)
+        {
+            $found_expression = $e;
+            last;
+        }
+    }
+    return unless(defined($found_expression));
+    # Now we know we have come across one of the known expressions.
+    # Find the parent node of the expression.
+    my @expression_nodes;
+    my @parent_nodes;
+    my $current_node = $node;
+    foreach my $w (@{$found_expression->{forms}})
+    {
+        push(@expression_nodes, $current_node);
+        push(@parent_nodes, $current_node->parent());
+        $current_node = $current_node->get_right_neighbor();
+    }
+    my $parent;
+    foreach my $n (@parent_nodes)
+    {
+        # The first parent node that lies outside the expression will become
+        # parent of the whole expression. (Just in case the nodes of the expression
+        # did not form a constituent. Normally we expect there is only one parent
+        # candidate.)
+        if(!any {$_ == $n} (@expression_nodes))
+        {
+            $parent = $n;
+            last;
+        }
+    }
+    log_fatal('Something is wrong. We should have found a parent.') if(!defined($parent));
+    # The first node should be attached to the parent. All other nodes should be
+    # attached to the first node.
+    $expression_nodes[0]->set_parent($parent);
+    $expression_nodes[0]->set_deprel($found_expression->{deprel});
+    ###!!! ExtPos=ADV do FEATS
+    ###!!! We first need Interset to support it.
+    for(my $i = 0; $i <= $#expression_nodes; $i++)
+    {
+        $expression_nodes[$i]->set_tag($found_expression->{upos}[$i]);
+        if($i > 0)
+        {
+            $expression_nodes[$i]->set_parent($expression_nodes[0]);
+            $expression_nodes[$i]->set_deprel('fixed');
+        }
     }
 }
 
