@@ -1325,19 +1325,20 @@ BEGIN
     @_fixed_expressions =
     (
         # lc(forms), UPOS tags, ExtPos, DEPREL
-        ['a priori', 'X X', 'ADV', 'advmod'],
-        ['co možná', 'ADV ADV', 'ADV', 'advmod'],
-        ['de facto', 'X X', 'ADV', 'advmod'],
+        ['a priori',     'X X',           'ADV', 'advmod'],
+        ['co možná',     'ADV ADV',       'ADV', 'advmod'],
+        ['de facto',     'X X',           'ADV', 'advmod'],
         ['stůj co stůj', 'VERB ADV VERB', 'ADV', 'advmod']
     );
     @fixed_expressions;
     foreach my $e (@_fixed_expressions)
     {
+        my $expression = $e->[0];
         my @forms = split(/\s+/, $e->[0]);
         my @upos = split(/\s+/, $e->[1]);
         my $extpos = $e->[2];
         my $deprel = $e->[3];
-        push(@fixed_expressions, {'forms' => \@forms, 'upos' => \@upos, 'extpos' => $extpos, 'deprel' => $deprel});
+        push(@fixed_expressions, {'expression' => $expression, 'forms' => \@forms, 'upos' => \@upos, 'extpos' => $extpos, 'deprel' => $deprel});
     }
 }
 sub fix_fixed_expressions
@@ -1366,6 +1367,7 @@ sub fix_fixed_expressions
         }
     }
     return unless(defined($found_expression));
+    log_info("Found fixed expression '$found_expression->{expression}'");
     # Now we know we have come across one of the known expressions.
     # Find the parent node of the expression.
     my @expression_nodes;
