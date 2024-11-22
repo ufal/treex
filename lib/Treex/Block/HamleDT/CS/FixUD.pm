@@ -1342,7 +1342,7 @@ BEGIN
         {
             my @fv = split(/\|/, $_f);
             my %fv;
-            foreach $fv (@fv)
+            foreach my $fv (@fv)
             {
                 my ($f, $v) = split(/=/, $fv);
                 $fv{$f} = $v;
