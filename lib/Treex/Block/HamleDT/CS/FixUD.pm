@@ -1299,32 +1299,47 @@ BEGIN
     # that may be considered fixed by some, but should not. For those that should
     # not be fixed we provide the prescribed tree structure; if the expression
     # should not be one constituent, all components will be attached to the same
-    # parent outside the expression.
+    # parent outside the expression; alternatively, those that already are attached
+    # outside can keep their attachment (this can be signaled by parent=-1 instead
+    # of 0; deprel should still be provided just in case the node has its parent
+    # inside and we have to change it).
     @_fixed_expressions =
     (
-        # lc(forms), UPOS tags, ExtPos, DEPREL
+        # lc(forms), UPOS tags, ExtPos, deps (parent:deprel)
+        #---------------------------------------------------
+        # Multiword adverbs.
         ['a priori',           'a priori',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
         ['co možná',           'co možná',           'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv',               '0:advmod 1:fixed'],
         ['de facto',           'de facto',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
         ###!!! Chyba! "M. J." můžou být něčí iniciály, v PDT se vyskytují nejméně dvakrát a tenhle řádek je zprasí!
         #['m . j .',            'mimo . jiný .',      'ADP PUNCT ADJ PUNCT', 'Q3------------- Z:------------- Q3------------- Z:-------------', 'pos=adp|abbr=yes|extpos=adv pos=punc pos=adj|abbr=yes|case=acc|degree=pos|gender=neut|number=sing|polarity=pos pos=punc', '0:advmod 1:punct 1:fixed 3:punct'],
         ['nejen že',           'nejen že',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
-        ['pokud možno',        'pokud možný',        'SCONJ ADJ',           'J,------------- ACNS------A----',                 'pos=conj|conjtype=sub pos=adj|polarity=pos|gender=neut|number=sing|degree=pos|variant=short', '2:mark 0:advcl'],
         # Expressions like "týden co týden": Since the "X co X" pattern is not productive,
         # we should treat it as a fixed expression with an adverbial meaning.
         # Somewhat different in meaning but identical in structure is "stůj co stůj", and it is also adverbial.
         ['stůj co stůj',       'stát co stát',       'VERB ADV VERB',       'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin|extpos=adv pos=adv pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin', '0:advmod 1:fixed 1:fixed'],
-        ['čtvrtek co čtvrtek', 'čtvrtek co čtvrtek', 'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv _ pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['den co den',         'den co den',         'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv _ pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['měsíc co měsíc',     'měsíc co měsíc',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv _ pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['neděli co neděli',   'neděle co neděle',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv _ pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['noc co noc',         'noc co noc',         'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv _ pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['pátek co pátek',     'pátek co pátek',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv _ pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['rok co rok',         'rok co rok',         'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv _ pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['sobotu co sobotu',   'sobota co sobota',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv _ pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['středu co středu',   'středa co středa',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv _ pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['týden co týden',     'týden co týden',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv _ pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['večer co večer',     'večer co večer',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv _ pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['čtvrtek co čtvrtek', 'čtvrtek co čtvrtek', 'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['den co den',         'den co den',         'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['měsíc co měsíc',     'měsíc co měsíc',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['neděli co neděli',   'neděle co neděle',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['noc co noc',         'noc co noc',         'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['pátek co pátek',     'pátek co pátek',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['rok co rok',         'rok co rok',         'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['sobotu co sobotu',   'sobota co sobota',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['středu co středu',   'středa co středa',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['týden co týden',     'týden co týden',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['večer co večer',     'večer co večer',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        # Multiword prepositions.
+        ['a la',               'a la',               'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adp foreign=yes', '0:case 1:fixed'],
+        ['à la',               'a la',               'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adp foreign=yes', '0:case 1:fixed'],
+        # Multiword coordinators.
+        ['a sice',             'a sice',             'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
+        # The following expressions should not be annotated as fixed.
+        ['a jestli',           'a jestli',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub', '0:cc 0:mark'],
+        ['a jestliže',         'a jestliže',         'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub', '-1:cc -1:mark'],
+        ['a pokud',            'a pokud',            'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub', '-1:cc -1:mark'],
+        ['alespoň pokud',      'alespoň pokud',      'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub', '0:advmod:emph 0:mark'],
+        ['pokud možno',        'pokud možný',        'SCONJ ADJ',           'J,------------- ACNS------A----',                 'pos=conj|conjtype=sub pos=adj|polarity=pos|gender=neut|number=sing|degree=pos|variant=short', '2:mark 0:advcl'],
     );
     foreach my $e (@_fixed_expressions)
     {
@@ -1343,6 +1358,7 @@ BEGIN
                 my %fv;
                 foreach my $fv (@fv)
                 {
+                    next if($fv eq '_');
                     my ($f, $v) = split(/=/, $fv);
                     $fv{$f} = $v;
                 }
@@ -1352,15 +1368,24 @@ BEGIN
         my @deps = split(/\s+/, $e->[5]);
         my @parents;
         my @deprels;
-        foreach my $d (@deps)
+        foreach my $dep (@deps)
         {
-            my @pd = split(/:/, $d);
-            if($pd[0] < 0 || $pd[0] > scalar(@deps))
+            my ($p, $d);
+            if($dep =~ m/^(-1|[0-9]+):(.+)$/)
+            {
+                $p = $1;
+                $d = $2;
+            }
+            else
+            {
+                log_fatal("Dependency not in form PARENTID:DEPREL");
+            }
+            if($p < -1 || $p > scalar(@deps))
             {
                 log_fatal("Parent index out of range")
             }
-            push(@parents, $pd[0]);
-            push(@deprels, $pd[1]);
+            push(@parents, $p);
+            push(@deprels, $d);
         }
         push(@fixed_expressions, {'expression' => $expression, 'forms' => \@forms, 'lemmas' => \@lemmas, 'upos' => \@upos, 'xpos' => \@xpos, 'feats' => \@feats, 'parents' => \@parents, 'deprels' => \@deprels});
     }
@@ -1432,12 +1457,18 @@ sub fix_fixed_expressions
         if($found_expression->{parents}[$i] > 0)
         {
             $expression_nodes[$i]->set_parent($expression_nodes[$found_expression->{parents}[$i]-1]);
+            $expression_nodes[$i]->set_deprel($found_expression->{deprels}[$i]);
+        }
+        elsif($found_expression->{parents}[$i] == -1 && !any {$_ == $parent_nodes[$i]} (@expression_nodes))
+        {
+            # Do nothing. Keep the current parent, which is already outside the
+            # examined expression.
         }
         else
         {
             $expression_nodes[$i]->set_parent($parent);
+            $expression_nodes[$i]->set_deprel($found_expression->{deprels}[$i]);
         }
-        $expression_nodes[$i]->set_deprel($found_expression->{deprels}[$i]);
     }
 }
 
