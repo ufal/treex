@@ -1325,10 +1325,10 @@ BEGIN
     @_fixed_expressions =
     (
         # lc(forms), UPOS tags, ExtPos, DEPREL
-        ['a priori',     'X X',           'F%------------- F%-------------',                 'ADV', 'advmod'],
-        ['co možná',     'ADV ADV',       'Db------------- Db-------------',                 'ADV', 'advmod'],
-        ['de facto',     'X X',           'F%------------- F%-------------',                 'ADV', 'advmod'],
-        ['stůj co stůj', 'VERB ADV VERB', 'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'ADV', 'advmod']
+        ['a priori',     'X X',           'F%------------- F%-------------',                 'foreign=yes foreign=yes', 'ADV', 'advmod'],
+        ['co možná',     'ADV ADV',       'Db------------- Db-------------',                 'pos=adv pos=adv', 'ADV', 'advmod'],
+        ['de facto',     'X X',           'F%------------- F%-------------',                 'foreign=yes foreign=yes', 'ADV', 'advmod'],
+        ['stůj co stůj', 'VERB ADV VERB', 'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin pos=adv pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin', 'ADV', 'advmod']
     );
     foreach my $e (@_fixed_expressions)
     {
@@ -1336,9 +1336,22 @@ BEGIN
         my @forms = split(/\s+/, $e->[0]);
         my @upos = split(/\s+/, $e->[1]);
         my @xpos = split(/\s+/, $e->[2]);
-        my $extpos = $e->[3];
-        my $deprel = $e->[4];
-        push(@fixed_expressions, {'expression' => $expression, 'forms' => \@forms, 'upos' => \@upos, 'xpos' => \@xpos, 'extpos' => $extpos, 'deprel' => $deprel});
+        my @_feats = split(/\s+/, $e->[3]);
+        my @feats;
+        foreach my $_f (@_feats)
+        {
+            my @fv = split(/\|/, $_f);
+            my %fv;
+            foreach $fv (@fv)
+            {
+                my ($f, $v) = split(/=/, $fv);
+                $fv{$f} = $v;
+            }
+            push(@feats, \%fv);
+        }
+        my $extpos = $e->[4];
+        my $deprel = $e->[5];
+        push(@fixed_expressions, {'expression' => $expression, 'forms' => \@forms, 'upos' => \@upos, 'xpos' => \@xpos, 'feats' => \@feats, 'extpos' => $extpos, 'deprel' => $deprel});
     }
 }
 sub fix_fixed_expressions
@@ -1403,6 +1416,7 @@ sub fix_fixed_expressions
     {
         $expression_nodes[$i]->set_tag($found_expression->{upos}[$i]);
         $expression_nodes[$i]->set_conll_pos($found_expression->{xpos}[$i]);
+        $expression_nodes[$i]->iset()->set_hash($found_expression->{feats}[$i]);
         if($i > 0)
         {
             $expression_nodes[$i]->set_parent($expression_nodes[0]);
