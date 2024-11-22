@@ -1325,10 +1325,10 @@ BEGIN
     @_fixed_expressions =
     (
         # lc(forms), UPOS tags, ExtPos, DEPREL
-        ['a priori',     'X X',           'F%------------- F%-------------',                 'foreign=yes foreign=yes', 'ADV', 'advmod'],
-        ['co možná',     'ADV ADV',       'Db------------- Db-------------',                 'pos=adv pos=adv', 'ADV', 'advmod'],
-        ['de facto',     'X X',           'F%------------- F%-------------',                 'foreign=yes foreign=yes', 'ADV', 'advmod'],
-        ['stůj co stůj', 'VERB ADV VERB', 'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin pos=adv pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin', 'ADV', 'advmod']
+        ['a priori',     'X X',           'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes', 'advmod'],
+        ['co možná',     'ADV ADV',       'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv', 'advmod'],
+        ['de facto',     'X X',           'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes', 'advmod'],
+        ['stůj co stůj', 'VERB ADV VERB', 'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin|extpos=adv pos=adv pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin', 'advmod']
     );
     foreach my $e (@_fixed_expressions)
     {
@@ -1349,9 +1349,8 @@ BEGIN
             }
             push(@feats, \%fv);
         }
-        my $extpos = $e->[4];
-        my $deprel = $e->[5];
-        push(@fixed_expressions, {'expression' => $expression, 'forms' => \@forms, 'upos' => \@upos, 'xpos' => \@xpos, 'feats' => \@feats, 'extpos' => $extpos, 'deprel' => $deprel});
+        my $deprel = $e->[4];
+        push(@fixed_expressions, {'expression' => $expression, 'forms' => \@forms, 'upos' => \@upos, 'xpos' => \@xpos, 'feats' => \@feats, 'deprel' => $deprel});
     }
 }
 sub fix_fixed_expressions
@@ -1410,8 +1409,6 @@ sub fix_fixed_expressions
     # attached to the first node.
     $expression_nodes[0]->set_parent($parent);
     $expression_nodes[0]->set_deprel($found_expression->{deprel});
-    ###!!! ExtPos=ADV do FEATS
-    ###!!! We first need Interset to support it.
     for(my $i = 0; $i <= $#expression_nodes; $i++)
     {
         $expression_nodes[$i]->set_tag($found_expression->{upos}[$i]);
