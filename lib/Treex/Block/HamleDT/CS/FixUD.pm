@@ -1325,18 +1325,19 @@ BEGIN
     @_fixed_expressions =
     (
         # lc(forms), UPOS tags, ExtPos, DEPREL
-        ['a priori',     'X X',           'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes', 'advmod'],
-        ['co možná',     'ADV ADV',       'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv', 'advmod'],
-        ['de facto',     'X X',           'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes', 'advmod'],
-        ['stůj co stůj', 'VERB ADV VERB', 'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin|extpos=adv pos=adv pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin', 'advmod']
+        ['a priori',     'a priori',     'X X',           'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes', 'advmod'],
+        ['co možná',     'co možná',     'ADV ADV',       'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv', 'advmod'],
+        ['de facto',     'de facto',     'X X',           'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes', 'advmod'],
+        ['stůj co stůj', 'stát co stát', 'VERB ADV VERB', 'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin|extpos=adv pos=adv pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin', 'advmod']
     );
     foreach my $e (@_fixed_expressions)
     {
         my $expression = $e->[0];
         my @forms = split(/\s+/, $e->[0]);
-        my @upos = split(/\s+/, $e->[1]);
-        my @xpos = split(/\s+/, $e->[2]);
-        my @_feats = split(/\s+/, $e->[3]);
+        my @lemmas = split(/\s+/, $e->[1]);
+        my @upos = split(/\s+/, $e->[2]);
+        my @xpos = split(/\s+/, $e->[3]);
+        my @_feats = split(/\s+/, $e->[4]);
         my @feats;
         foreach my $_f (@_feats)
         {
@@ -1349,8 +1350,8 @@ BEGIN
             }
             push(@feats, \%fv);
         }
-        my $deprel = $e->[4];
-        push(@fixed_expressions, {'expression' => $expression, 'forms' => \@forms, 'upos' => \@upos, 'xpos' => \@xpos, 'feats' => \@feats, 'deprel' => $deprel});
+        my $deprel = $e->[5];
+        push(@fixed_expressions, {'expression' => $expression, 'forms' => \@forms, 'lemmas' => \@lemmas, 'upos' => \@upos, 'xpos' => \@xpos, 'feats' => \@feats, 'deprel' => $deprel});
     }
 }
 sub fix_fixed_expressions
@@ -1411,6 +1412,7 @@ sub fix_fixed_expressions
     $expression_nodes[0]->set_deprel($found_expression->{deprel});
     for(my $i = 0; $i <= $#expression_nodes; $i++)
     {
+        $expression_nodes[$i]->set_lemma($found_expression->{lemmas}[$i]);
         $expression_nodes[$i]->set_tag($found_expression->{upos}[$i]);
         $expression_nodes[$i]->set_conll_pos($found_expression->{xpos}[$i]);
         $expression_nodes[$i]->iset()->set_hash($found_expression->{feats}[$i]);
