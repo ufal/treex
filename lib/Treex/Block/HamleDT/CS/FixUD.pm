@@ -1434,8 +1434,10 @@ sub fix_fixed_expressions
         # The first parent node that lies outside the expression will become
         # parent of the whole expression. (Just in case the nodes of the expression
         # did not form a constituent. Normally we expect there is only one parent
-        # candidate.)
-        if(!any {$_ == $n} (@expression_nodes))
+        # candidate.) Note that the future parent must not only lie outside the
+        # expression, it also must not be dominated by any member of the expression!
+        # Otherwise we would be creating a cycle.
+        if(!any {$_ == $n || $n->is_descendant_of($_)} (@expression_nodes))
         {
             $parent = $n;
             last;
