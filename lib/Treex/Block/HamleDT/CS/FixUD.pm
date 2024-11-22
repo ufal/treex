@@ -1330,15 +1330,16 @@ BEGIN
         ['týden co týden',     'týden co týden',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
         ['večer co večer',     'večer co večer',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
         # Multiword prepositions.
-        ['a la',               'a la',               'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adp foreign=yes', '0:case 1:fixed'],
+        # Psané bez francouzské diakritiky je to nejednoznačné, mohlo by to chytit i "letiště JFK a La Guardia". Potřebovali bychom se asi omezit na případy, kdy už to bylo značené jako fixed, a jen přidat ExtPos.
+        #['a la',               'a la',               'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adp foreign=yes', '0:case 1:fixed'],
         ['à la',               'a la',               'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adp foreign=yes', '0:case 1:fixed'],
         # Multiword coordinators.
         ['a sice',             'a sice',             'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
         # The following expressions should not be annotated as fixed.
-        ['a jestli',           'a jestli',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub', '0:cc 0:mark'],
+        ['a jestli',           'a jestli',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub', '-1:cc -1:mark'],
         ['a jestliže',         'a jestliže',         'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub', '-1:cc -1:mark'],
         ['a pokud',            'a pokud',            'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub', '-1:cc -1:mark'],
-        ['alespoň pokud',      'alespoň pokud',      'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub', '0:advmod:emph 0:mark'],
+        ['alespoň pokud',      'alespoň pokud',      'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                '0:advmod:emph 0:mark'],
         ['pokud možno',        'pokud možný',        'SCONJ ADJ',           'J,------------- ACNS------A----',                 'pos=conj|conjtype=sub pos=adj|polarity=pos|gender=neut|number=sing|degree=pos|variant=short', '2:mark 0:advcl'],
     );
     foreach my $e (@_fixed_expressions)
