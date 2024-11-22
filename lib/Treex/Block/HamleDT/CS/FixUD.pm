@@ -1354,12 +1354,12 @@ BEGIN
         foreach my $d (@deps)
         {
             my @pd = split(/:/, $d);
-            if($p < 0 || $p > scalar(@deps))
+            if($pd[0] < 0 || $pd[0] > scalar(@deps))
             {
                 log_fatal("Parent index out of range")
             }
-            push(@parents, $p);
-            push(@deprels, $d);
+            push(@parents, $pd[0]);
+            push(@deprels, $pd[1]);
         }
         push(@fixed_expressions, {'expression' => $expression, 'forms' => \@forms, 'lemmas' => \@lemmas, 'upos' => \@upos, 'xpos' => \@xpos, 'feats' => \@feats, 'parents' => \@parents, 'deprels' => \@deprels});
     }
