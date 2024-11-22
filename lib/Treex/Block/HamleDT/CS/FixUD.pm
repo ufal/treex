@@ -1449,7 +1449,9 @@ sub fix_fixed_expressions
     # node. However, if we are correcting a previously fixed annotation to something
     # non-fixed, there are more possibilities. Therefore we always require the
     # relative addresses of the parents (0 points to the one external parent we
-    # identified in the previous section).
+    # identified in the previous section, -1 allows to keep the external parent).
+    # Special care needed if the external parent is the artificial root.
+    my $subroot_node;
     for(my $i = 0; $i <= $#expression_nodes; $i++)
     {
         $expression_nodes[$i]->set_lemma($found_expression->{lemmas}[$i]) if defined($found_expression->{lemmas}[$i]);
@@ -1465,6 +1467,24 @@ sub fix_fixed_expressions
         {
             # Do nothing. Keep the current parent, which is already outside the
             # examined expression.
+            if($expression_nodes[$i]->parent()->is_root())
+            {
+                $subroot_node = $expression_nodes[$i];
+            }
+        }
+        elsif($parent->is_root())
+        {
+            if(defined($subroot_node))
+            {
+                $expression_nodes[$i]->set_parent($subroot_node);
+                $expression_nodes[$i]->set_deprel($found_expression->{deprels}[$i]);
+            }
+            else
+            {
+                $expression_nodes[$i]->set_parent($parent);
+                $expression_nodes[$i]->set_deprel('root');
+                $subroot_node = $expression_nodes[$i];
+            }
         }
         else
         {
