@@ -1349,7 +1349,6 @@ sub fix_fixed_expressions
     my $found_expression;
     foreach my $e (@fixed_expressions)
     {
-        log_info("Trying fixed expression '$e->{expression}'");
         my $found = 1;
         my $current_node = $node;
         foreach my $w (@{$e->{forms}})
@@ -1359,7 +1358,7 @@ sub fix_fixed_expressions
                 $found = 0;
                 last;
             }
-            $current_node = $current_node->get_right_neighbor();
+            $current_node = $current_node->get_next_node();
         }
         if($found)
         {
@@ -1378,7 +1377,7 @@ sub fix_fixed_expressions
     {
         push(@expression_nodes, $current_node);
         push(@parent_nodes, $current_node->parent());
-        $current_node = $current_node->get_right_neighbor();
+        $current_node = $current_node->get_next_node();
     }
     my $parent;
     foreach my $n (@parent_nodes)
