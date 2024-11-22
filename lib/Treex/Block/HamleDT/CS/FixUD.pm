@@ -1300,6 +1300,7 @@ BEGIN
         ['a priori',       'a priori',       'X X',               'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes', 'advmod'],
         ['co možná',       'co možná',       'ADV ADV',           'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv', 'advmod'],
         ['de facto',       'de facto',       'X X',               'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes', 'advmod'],
+        ['nejen že',       'nejen že',       'ADV SCONJ',         'Db------------- J,-------------',                 'pos=adv|extpos=adv pos=conj|conjtype=sub', 'advmod'],
         ['stůj co stůj',   'stát co stát',   'VERB ADV VERB',     'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin|extpos=adv pos=adv pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin', 'advmod']
     );
     # Expressions like "týden co týden": Since the "X co X" pattern is not productive,
