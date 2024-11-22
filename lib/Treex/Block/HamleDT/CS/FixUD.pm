@@ -675,34 +675,6 @@ sub fix_constructions
         $parent->set_deprel('flat');
         $parent = $grandparent;
     }
-    # Expressions like "týden co týden": the first word is not a 'cc'!
-    # Since the "X co X" pattern is not productive, we should treat it as a
-    # fixed expression with an adverbial meaning.
-    # Somewhat different in meaning but identical in structure is "stůj co stůj", and it is also adverbial.
-    elsif(lc($node->form()) =~ m/^(den|večer|noc|týden|pondělí|úterý|středu|čtvrtek|pátek|sobotu|neděli|měsíc|rok|stůj)$/ &&
-          $parent->ord() == $node->ord()+2 &&
-          lc($parent->form()) eq lc($node->form()) &&
-          defined($node->get_right_neighbor()) &&
-          $node->get_right_neighbor()->ord() == $node->ord()+1 &&
-          lc($node->get_right_neighbor()->form()) eq 'co')
-    {
-        my $co = $node->get_right_neighbor();
-        my $grandparent = $parent->parent();
-        $deprel = 'advmod';
-        $node->set_parent($grandparent);
-        $node->set_deprel($deprel);
-        $co->set_parent($node);
-        $co->set_deprel('fixed');
-        $parent->set_parent($node);
-        $parent->set_deprel('fixed');
-        # Any other children of the original parent (especially punctuation, which could now be nonprojective)
-        # will be reattached to the new head.
-        foreach my $child ($parent->children())
-        {
-            $child->set_parent($node);
-        }
-        $parent = $grandparent;
-    }
     # "většinou" ("mostly") is the noun "většina", almost grammaticalized to an adverb.
     elsif(lc($node->form()) eq 'většinou' && $node->is_noun() && $deprel =~ m/^advmod(:|$)/)
     {
@@ -1325,30 +1297,47 @@ BEGIN
     @_fixed_expressions =
     (
         # lc(forms), UPOS tags, ExtPos, DEPREL
-        ['a priori',     'a priori',     'X X',           'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes', 'advmod'],
-        ['co možná',     'co možná',     'ADV ADV',       'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv', 'advmod'],
-        ['de facto',     'de facto',     'X X',           'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes', 'advmod'],
-        ['stůj co stůj', 'stát co stát', 'VERB ADV VERB', 'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin|extpos=adv pos=adv pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin', 'advmod']
+        ['a priori',       'a priori',       'X X',               'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes', 'advmod'],
+        ['co možná',       'co možná',       'ADV ADV',           'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv', 'advmod'],
+        ['de facto',       'de facto',       'X X',               'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes', 'advmod'],
+        ['stůj co stůj',   'stát co stát',   'VERB ADV VERB',     'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin|extpos=adv pos=adv pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin', 'advmod']
     );
+    # Expressions like "týden co týden": Since the "X co X" pattern is not productive,
+    # we should treat it as a fixed expression with an adverbial meaning.
+    # Somewhat different in meaning but identical in structure is "stůj co stůj", and it is also adverbial.
+    foreach my $x ('den', 'večer', 'noc', 'týden', 'pondělí', 'úterý', 'středu', 'čtvrtek', 'pátek', 'sobotu', 'neděli', 'měsíc', 'rok')
+    {
+        my $l = $x;
+        push(@_fixed_expressions, [
+            "$x co $x",
+            undef, # do not define lemmas, XPOS, and features here (they differ for individual nouns); rely on the original annotation from PDT
+            'NOUN ADV NOUN',
+            undef, undef,
+            'advmod'
+        ]);
+    }
     foreach my $e (@_fixed_expressions)
     {
         my $expression = $e->[0];
         my @forms = split(/\s+/, $e->[0]);
-        my @lemmas = split(/\s+/, $e->[1]);
-        my @upos = split(/\s+/, $e->[2]);
-        my @xpos = split(/\s+/, $e->[3]);
-        my @_feats = split(/\s+/, $e->[4]);
-        my @feats;
-        foreach my $_f (@_feats)
+        my @lemmas = defined($e->[1]) ? split(/\s+/, $e->[1]) : ();
+        my @upos = defined($e->[2]) ? split(/\s+/, $e->[2]) : ();
+        my @xpos = defined($e->[3]) ? split(/\s+/, $e->[3]) : ();
+        my @feats = ();
+        if(defined($e->[4]))
         {
-            my @fv = split(/\|/, $_f);
-            my %fv;
-            foreach my $fv (@fv)
+            my @_feats = split(/\s+/, $e->[4]);
+            foreach my $_f (@_feats)
             {
-                my ($f, $v) = split(/=/, $fv);
-                $fv{$f} = $v;
+                my @fv = split(/\|/, $_f);
+                my %fv;
+                foreach my $fv (@fv)
+                {
+                    my ($f, $v) = split(/=/, $fv);
+                    $fv{$f} = $v;
+                }
+                push(@feats, \%fv);
             }
-            push(@feats, \%fv);
         }
         my $deprel = $e->[5];
         push(@fixed_expressions, {'expression' => $expression, 'forms' => \@forms, 'lemmas' => \@lemmas, 'upos' => \@upos, 'xpos' => \@xpos, 'feats' => \@feats, 'deprel' => $deprel});
@@ -1412,10 +1401,10 @@ sub fix_fixed_expressions
     $expression_nodes[0]->set_deprel($found_expression->{deprel});
     for(my $i = 0; $i <= $#expression_nodes; $i++)
     {
-        $expression_nodes[$i]->set_lemma($found_expression->{lemmas}[$i]);
-        $expression_nodes[$i]->set_tag($found_expression->{upos}[$i]);
-        $expression_nodes[$i]->set_conll_pos($found_expression->{xpos}[$i]);
-        $expression_nodes[$i]->iset()->set_hash($found_expression->{feats}[$i]);
+        $expression_nodes[$i]->set_lemma($found_expression->{lemmas}[$i]) if defined($found_expression->{lemmas}[$i]);
+        $expression_nodes[$i]->set_tag($found_expression->{upos}[$i]) if defined($found_expression->{upos}[$i]);
+        $expression_nodes[$i]->set_conll_pos($found_expression->{xpos}[$i]) if defined($found_expression->{xpos}[$i]);
+        $expression_nodes[$i]->iset()->set_hash($found_expression->{feats}[$i]) if defined($found_expression->{feats}[$i]);
         if($i > 0)
         {
             $expression_nodes[$i]->set_parent($expression_nodes[0]);
