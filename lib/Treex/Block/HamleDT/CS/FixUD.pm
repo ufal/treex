@@ -1349,6 +1349,7 @@ sub fix_fixed_expressions
     my $found_expression;
     foreach my $e (@fixed_expressions)
     {
+        log_info("Trying fixed expression '$e->{expression}'");
         my $found = 1;
         my $current_node = $node;
         foreach my $w (@{$e->{forms}})
