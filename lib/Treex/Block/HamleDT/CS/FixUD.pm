@@ -1294,29 +1294,37 @@ my @_fixed_expressions;
 my @fixed_expressions;
 BEGIN
 {
+    # This function processes multiword expressions that should be annotated
+    # as fixed (regardless what their annotation in PDT was), as well as those
+    # that may be considered fixed by some, but should not. For those that should
+    # not be fixed we provide the prescribed tree structure; if the expression
+    # should not be one constituent, all components will be attached to the same
+    # parent outside the expression.
     @_fixed_expressions =
     (
         # lc(forms), UPOS tags, ExtPos, DEPREL
-        ['a priori',       'a priori',       'X X',               'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes', 'advmod'],
-        ['co možná',       'co možná',       'ADV ADV',           'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv', 'advmod'],
-        ['de facto',       'de facto',       'X X',               'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes', 'advmod'],
-        ['nejen že',       'nejen že',       'ADV SCONJ',         'Db------------- J,-------------',                 'pos=adv|extpos=adv pos=conj|conjtype=sub', 'advmod'],
-        ['stůj co stůj',   'stát co stát',   'VERB ADV VERB',     'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin|extpos=adv pos=adv pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin', 'advmod']
+        ['a priori',           'a priori',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
+        ['co možná',           'co možná',           'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv',               '0:advmod 1:fixed'],
+        ['de facto',           'de facto',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
+        ['m . j .',            'mimo . jiný .',      'ADP PUNCT ADP PUNCT', 'Q3------------- Z:------------- Q3------------- Z:-------------', 'pos=adp|abbr=yes|extpos=adv pos=punc pos=adj|abbr=yes|case=acc|degree=pos|gender=neut|number=sing|polarity=pos pos=punc', '0:advmod 1:punct 1:fixed 3:punct'],
+        ['nejen že',           'nejen že',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
+        ['pokud možno',        'pokud možný',        'SCONJ ADJ',           'J,------------- ACNS------A----',                 'pos=conj|conjtype=sub pos=adj|polarity=pos|gender=neut|number=sing|degree=pos|variant=short', '2:mark 0:advcl'],
+        # Expressions like "týden co týden": Since the "X co X" pattern is not productive,
+        # we should treat it as a fixed expression with an adverbial meaning.
+        # Somewhat different in meaning but identical in structure is "stůj co stůj", and it is also adverbial.
+        ['stůj co stůj',       'stát co stát',       'VERB ADV VERB',       'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin|extpos=adv pos=adv pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin', '0:advmod 1:fixed 1:fixed'],
+        ['čtvrtek co čtvrtek', 'čtvrtek co čtvrtek', 'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv _ pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['den co den',         'den co den',         'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv _ pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['měsíc co měsíc',     'měsíc co měsíc',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv _ pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['neděli co neděli',   'neděle co neděle',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv _ pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['noc co noc',         'noc co noc',         'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv _ pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['pátek co pátek',     'pátek co pátek',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv _ pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['rok co rok',         'rok co rok',         'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv _ pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['sobotu co sobotu',   'sobota co sobota',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv _ pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['středu co středu',   'středa co středa',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv _ pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['týden co týden',     'týden co týden',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv _ pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['večer co večer',     'večer co večer',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv _ pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
     );
-    # Expressions like "týden co týden": Since the "X co X" pattern is not productive,
-    # we should treat it as a fixed expression with an adverbial meaning.
-    # Somewhat different in meaning but identical in structure is "stůj co stůj", and it is also adverbial.
-    foreach my $x ('den', 'večer', 'noc', 'týden', 'pondělí', 'úterý', 'středu', 'čtvrtek', 'pátek', 'sobotu', 'neděli', 'měsíc', 'rok')
-    {
-        my $l = $x;
-        push(@_fixed_expressions, [
-            "$x co $x",
-            undef, # do not define lemmas, XPOS, and features here (they differ for individual nouns); rely on the original annotation from PDT
-            'NOUN ADV NOUN',
-            undef, undef,
-            'advmod'
-        ]);
-    }
     foreach my $e (@_fixed_expressions)
     {
         my $expression = $e->[0];
@@ -1340,8 +1348,20 @@ BEGIN
                 push(@feats, \%fv);
             }
         }
-        my $deprel = $e->[5];
-        push(@fixed_expressions, {'expression' => $expression, 'forms' => \@forms, 'lemmas' => \@lemmas, 'upos' => \@upos, 'xpos' => \@xpos, 'feats' => \@feats, 'deprel' => $deprel});
+        my @deps = split(/\s+/, $e->[5]);
+        my @parents;
+        my @deprels;
+        foreach my $d (@deps)
+        {
+            my @pd = split(/:/, $d);
+            if($p < 0 || $p > scalar(@deps))
+            {
+                log_fatal("Parent index out of range")
+            }
+            push(@parents, $p);
+            push(@deprels, $d);
+        }
+        push(@fixed_expressions, {'expression' => $expression, 'forms' => \@forms, 'lemmas' => \@lemmas, 'upos' => \@upos, 'xpos' => \@xpos, 'feats' => \@feats, 'parents' => \@parents, 'deprels' => \@deprels});
     }
 }
 sub fix_fixed_expressions
@@ -1396,21 +1416,27 @@ sub fix_fixed_expressions
         }
     }
     log_fatal('Something is wrong. We should have found a parent.') if(!defined($parent));
-    # The first node should be attached to the parent. All other nodes should be
-    # attached to the first node.
-    $expression_nodes[0]->set_parent($parent);
-    $expression_nodes[0]->set_deprel($found_expression->{deprel});
+    # If the expression should indeed be fixed, then the first node should be
+    # attached to the parent and all other nodes should be attached to the first
+    # node. However, if we are correcting a previously fixed annotation to something
+    # non-fixed, there are more possibilities. Therefore we always require the
+    # relative addresses of the parents (0 points to the one external parent we
+    # identified in the previous section).
     for(my $i = 0; $i <= $#expression_nodes; $i++)
     {
         $expression_nodes[$i]->set_lemma($found_expression->{lemmas}[$i]) if defined($found_expression->{lemmas}[$i]);
         $expression_nodes[$i]->set_tag($found_expression->{upos}[$i]) if defined($found_expression->{upos}[$i]);
         $expression_nodes[$i]->set_conll_pos($found_expression->{xpos}[$i]) if defined($found_expression->{xpos}[$i]);
         $expression_nodes[$i]->iset()->set_hash($found_expression->{feats}[$i]) if defined($found_expression->{feats}[$i]);
-        if($i > 0)
+        if($found_expression->{parents}[$i] > 0)
         {
-            $expression_nodes[$i]->set_parent($expression_nodes[0]);
-            $expression_nodes[$i]->set_deprel('fixed');
+            $expression_nodes[$i]->set_parent($expression_nodes[$found_expression->{parents}[$i]-1]);
         }
+        else
+        {
+            $expression_nodes[$i]->set_parent($parent);
+        }
+        $expression_nodes[$i]->set_deprel($found_expression->{deprels}[$i]);
     }
 }
 
