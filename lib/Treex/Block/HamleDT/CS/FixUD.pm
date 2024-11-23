@@ -812,13 +812,6 @@ sub fix_constructions
         $deprel = 'fixed';
         $node->set_deprel($deprel);
     }
-    # The expression "a priori" functions as an adverb.
-    elsif(lc($node->form()) eq 'priori' && $parent->ord() == $node->ord()-1 &&
-          lc($parent->form()) eq 'a')
-    {
-        $deprel = 'fixed';
-        $node->set_deprel($deprel);
-    }
     # The expression "ex ante" functions as an adverb.
     elsif(lc($node->form()) eq 'ante' && $parent->ord() == $node->ord()-1 &&
           lc($parent->form()) eq 'ex')
@@ -915,15 +908,6 @@ sub fix_constructions
         $deprel = 'cc';
         $node->set_parent($parent);
         $node->set_deprel($deprel);
-    }
-    # Similar: "co možná"
-    elsif($node->form() =~ m/^co$/i && $deprel =~ m/^(cc|advmod|discourse)(:|$)/ &&
-          defined($node->get_right_neighbor()) &&
-          $node->get_right_neighbor()->form() =~ m/^možná$/i && $node->get_right_neighbor()->deprel() =~ m/^(cc|advmod|discourse)(:|$)/)
-    {
-        my $n2 = $node->get_right_neighbor();
-        $n2->set_parent($node);
-        $n2->set_deprel('fixed');
     }
     # "takové přání, jako je svatba" ("such a wish as (is) a wedding")
     elsif($node->lemma() eq 'být' && $deprel =~ m/^cc(:|$)/ &&
@@ -1879,23 +1863,6 @@ sub fix_annotation_errors
         $subtree[5]->set_deprel('flat');
         $subtree[6]->set_parent($subtree[4]);
         $subtree[6]->set_deprel('flat');
-    }
-    # "m.j." ("among others"): error: "j." is interpreted as "je" ("is") instead of "jiné" ("others")
-    elsif($spanstring eq 'm . j .')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $node->set_lemma('jiný');
-        $node->set_tag('ADJ');
-        $node->iset()->set_hash({'pos' => 'adj', 'gender' => 'neut', 'number' => 'sing', 'case' => 'acc', 'degree' => 'pos', 'polarity' => 'pos', 'abbr' => 'yes'});
-        my $parent = $node->parent();
-        $subtree[0]->set_parent($parent);
-        $subtree[0]->set_deprel('advmod');
-        $subtree[1]->set_parent($subtree[0]);
-        $subtree[1]->set_deprel('punct');
-        $subtree[2]->set_parent($subtree[0]);
-        $subtree[2]->set_deprel('fixed');
-        $subtree[3]->set_parent($subtree[2]);
-        $subtree[3]->set_deprel('punct');
     }
     # "hlavního lékaře", de facto ministra zdravotnictví, ... "de facto" is split.
     elsif($spanstring eq '" hlavního lékaře " , de facto ministra zdravotnictví ,')
