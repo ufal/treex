@@ -1293,50 +1293,51 @@ BEGIN
         # modes:
         # - always ... apply as soon as the lowercased forms match
         # - catena ... apply only if the nodes already form a catena in the tree (i.e. avoid accidental grabbing random collocations)
+        # - subtree .. apply only if the nodes already form a full subtree (all descendants included in the expression)
         # - fixed .... apply only if it is already annotated as fixed (i.e. just normalize morphology and add ExtPos)
         #---------------------------------------------------------
         # Multiword adverbs.
-        ['a priori',           'always', 'a priori',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
-        ['co možná',           'always', 'co možná',           'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv',               '0:advmod 1:fixed'],
-        ['de facto',           'always', 'de facto',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
-        # "M. J." can be somebody's initials (connected as flat), hence we can only apply the following line if it is already a fixed expression.
-        ['m . j .',            'catena', 'mimo . jiný .',      'ADP PUNCT ADJ PUNCT', 'Q3------------- Z:------------- Q3------------- Z:-------------', 'pos=adp|abbr=yes|extpos=adv pos=punc pos=adj|abbr=yes|case=acc|degree=pos|gender=neut|number=sing|polarity=pos pos=punc', '0:advmod 1:punct 1:fixed 3:punct'],
-        ['nejen že',           'always', 'nejen že',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
+        ['a priori',           'always',  'a priori',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
+        ['co možná',           'always',  'co možná',           'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv',               '0:advmod 1:fixed'],
+        ['de facto',           'always',  'de facto',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
+        # "M. J." can be somebody's initials (connected as flat, nmod, or even as siblings), and it is difficult to distinguish.
+        ['m . j .',            'subtree', 'mimo . jiný .',      'ADP PUNCT ADJ PUNCT', 'Q3------------- Z:------------- Q3------------- Z:-------------', 'pos=adp|abbr=yes|extpos=adv pos=punc pos=adj|abbr=yes|case=acc|degree=pos|gender=neut|number=sing|polarity=pos pos=punc', '0:advmod 1:punct 1:fixed 3:punct'],
+        ['nejen že',           'always',  'nejen že',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
         # Expressions like "týden co týden": Since the "X co X" pattern is not productive,
         # we should treat it as a fixed expression with an adverbial meaning.
         # Somewhat different in meaning but identical in structure is "stůj co stůj", and it is also adverbial.
-        ['stůj co stůj',       'always', 'stát co stát',       'VERB ADV VERB',       'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin|extpos=adv pos=adv pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin', '0:advmod 1:fixed 1:fixed'],
-        ['čtvrtek co čtvrtek', 'always', 'čtvrtek co čtvrtek', 'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['den co den',         'always', 'den co den',         'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['měsíc co měsíc',     'always', 'měsíc co měsíc',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['neděli co neděli',   'always', 'neděle co neděle',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['noc co noc',         'always', 'noc co noc',         'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['pátek co pátek',     'always', 'pátek co pátek',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['rok co rok',         'always', 'rok co rok',         'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['sobotu co sobotu',   'always', 'sobota co sobota',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['středu co středu',   'always', 'středa co středa',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['týden co týden',     'always', 'týden co týden',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
-        ['večer co večer',     'always', 'večer co večer',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['stůj co stůj',       'always',  'stát co stát',       'VERB ADV VERB',       'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin|extpos=adv pos=adv pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin', '0:advmod 1:fixed 1:fixed'],
+        ['čtvrtek co čtvrtek', 'always',  'čtvrtek co čtvrtek', 'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['den co den',         'always',  'den co den',         'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['měsíc co měsíc',     'always',  'měsíc co měsíc',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['neděli co neděli',   'always',  'neděle co neděle',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['noc co noc',         'always',  'noc co noc',         'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['pátek co pátek',     'always',  'pátek co pátek',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['rok co rok',         'always',  'rok co rok',         'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['sobotu co sobotu',   'always',  'sobota co sobota',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['středu co středu',   'always',  'středa co středa',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['týden co týden',     'always',  'týden co týden',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['večer co večer',     'always',  'večer co večer',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
         # Multiword prepositions.
         # Psané bez francouzské diakritiky je to nejednoznačné, mohlo by to chytit i "letiště JFK a La Guardia". Potřebovali bychom se asi omezit na případy, kdy už to bylo značené jako fixed, a jen přidat ExtPos.
         #['a la',               'a la',               'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adp foreign=yes', '0:case 1:fixed'],
-        ['à la',               'always', 'a la',               'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adp foreign=yes', '0:case 1:fixed'],
+        ['à la',               'always',  'a la',               'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adp foreign=yes', '0:case 1:fixed'],
         ###!!!['v průběhu',          'v průběh',           'ADP NOUN',            'RR--6---------- NNIS6-----A----',                 'pos=adp|adpostype=prep|case=loc|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc', '0:case 1:fixed'],
         ###!!!['v rámci',            'v rámec',            'ADP NOUN',            'RR--6---------- NNIS6-----A----',                 'pos=adp|adpostype=prep|case=loc|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc', '0:case 1:fixed'],
         # Multiword subordinators.
-        ['i když',             'always', 'i když',             'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub', '0:mark 1:fixed'],
+        ['i když',             'always',  'i když',             'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub', '0:mark 1:fixed'],
         # Multiword coordinators.
-        ['a sice',             'always', 'a sice',             'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
+        ['a sice',             'always',  'a sice',             'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
         # The following expressions should not be annotated as fixed.
-        ['a jestli',           'always', 'a jestli',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
-        ['a jestliže',         'always', 'a jestliže',         'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
-        ['a pokud',            'always', 'a pokud',            'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
-        ['a tak',              'always', 'a tak',              'CCONJ CCONJ',         'J^------------- J^-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=coor', '0:cc 0:cc'],
-        ['alespoň pokud',      'always', 'alespoň pokud',      'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
-        ['asi jako',           'always', 'asi jako',           'PART SCONJ',          'TT------------- J,-------------',                 'pos=part pos=conj|conjtype=sub',                '-1:advmod -1:mark'],
-        ['ať již',             'always', 'ať již',             'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
-        ['ať už',              'always', 'ať už',              'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
-        ['pokud možno',        'always', 'pokud možný',        'SCONJ ADJ',           'J,------------- ACNS------A----',                 'pos=conj|conjtype=sub pos=adj|polarity=pos|gender=neut|number=sing|degree=pos|variant=short', '2:mark 0:advcl'],
+        ['a jestli',           'always',  'a jestli',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
+        ['a jestliže',         'always',  'a jestliže',         'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
+        ['a pokud',            'always',  'a pokud',            'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
+        ['a tak',              'always',  'a tak',              'CCONJ CCONJ',         'J^------------- J^-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=coor', '0:cc 0:cc'],
+        ['alespoň pokud',      'always',  'alespoň pokud',      'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
+        ['asi jako',           'always',  'asi jako',           'PART SCONJ',          'TT------------- J,-------------',                 'pos=part pos=conj|conjtype=sub',                '-1:advmod -1:mark'],
+        ['ať již',             'always',  'ať již',             'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
+        ['ať už',              'always',  'ať už',              'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
+        ['pokud možno',        'always',  'pokud možný',        'SCONJ ADJ',           'J,------------- ACNS------A----',                 'pos=conj|conjtype=sub pos=adj|polarity=pos|gender=neut|number=sing|degree=pos|variant=short', '2:mark 0:advcl'],
     );
     foreach my $e (@_fixed_expressions)
     {
@@ -1426,10 +1427,11 @@ sub fix_fixed_expressions
         $current_node = $current_node->get_next_node();
     }
     # If we require for this expression that it already is a catena, check it now.
-    if($found_expression->{mode} =~ m/^(catena|fixed)$/)
+    if($found_expression->{mode} =~ m/^(catena|subtree|fixed)$/)
     {
         # There must be exactly one member node whose parent is not member.
         my $n_components = 0;
+        my $head;
         for(my $i = 0; $i <= $#expression_nodes; $i++)
         {
             my $en = $expression_nodes[$i];
@@ -1437,6 +1439,7 @@ sub fix_fixed_expressions
             if(!any {$_ == $pn} (@expression_nodes))
             {
                 $n_components++;
+                $head = $en;
             }
             else
             {
@@ -1450,6 +1453,7 @@ sub fix_fixed_expressions
             }
         }
         return if($n_components != 1);
+        return if($found_expression->{mode} eq 'subtree' && length($head->get_descendants({'add_self' => 1})) > length(@expression_nodes));
     }
     log_info("Found fixed expression '$found_expression->{expression}'");
     my $parent;
