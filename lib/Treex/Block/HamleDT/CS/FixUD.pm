@@ -1446,7 +1446,6 @@ sub fix_fixed_expressions
     {
         # There must be exactly one member node whose parent is not member.
         my $n_components = 0;
-        my $n_non_fixed_deprels = 0;
         for(my $i = 0; $i <= $#expression_nodes; $i++)
         {
             my $en = $expression_nodes[$i];
@@ -1458,14 +1457,15 @@ sub fix_fixed_expressions
             else
             {
                 # In fixed mode, all inner relations must be 'fixed' or 'punct'.
-                if($en->deprel() !~ m/^(fixed|punct)(:|$)/)
+                if($found_expression->{mode} eq 'fixed' && $en->deprel() !~ m/^(fixed|punct)(:|$)/)
                 {
-                    $n_non_fixed_deprels++;
+                    my $deprel = $en->deprel();
+                    log_warn("Expression '$found_expression->{expression}': Stepping back because of deprel '$deprel'");
+                    return;
                 }
             }
         }
         return if($n_components != 1);
-        return if($found_expression->{mode} eq 'fixed' && $n_non_fixed_deprels > 0);
     }
     log_info("Found fixed expression '$found_expression->{expression}'");
     my $parent;
