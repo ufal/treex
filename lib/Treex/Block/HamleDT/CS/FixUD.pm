@@ -1393,6 +1393,12 @@ sub fix_fixed_expressions
 {
     my $self = shift;
     my $node = shift;
+    ###!!! Hack: The most frequent type is multiword prepositions. There are thousands of them.
+    # For now, I am not listing all of them in the table above, but at least they should get ExtPos.
+    if($node->deprel() eq 'fixed' && $node->parent()->deprel() eq 'case')
+    {
+        $node->parent()->iset()->set('extpos', 'adp');
+    }
     # Is the current node first word of a known fixed expression?
     my $found_expression;
     foreach my $e (@fixed_expressions)
@@ -1453,7 +1459,7 @@ sub fix_fixed_expressions
             }
         }
         return if($n_components != 1);
-        return if($found_expression->{mode} eq 'subtree' && length($head->get_descendants({'add_self' => 1})) > length(@expression_nodes));
+        return if($found_expression->{mode} eq 'subtree' && scalar($head->get_descendants({'add_self' => 1})) > scalar(@expression_nodes));
     }
     log_info("Found fixed expression '$found_expression->{expression}'");
     my $parent;
