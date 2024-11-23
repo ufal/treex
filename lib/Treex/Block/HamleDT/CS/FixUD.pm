@@ -1460,7 +1460,7 @@ sub fix_fixed_expressions
                 if($found_expression->{mode} eq 'fixed' && $en->deprel() !~ m/^(fixed|punct)(:|$)/)
                 {
                     my $deprel = $en->deprel();
-                    log_warn("Expression '$found_expression->{expression}': Stepping back because of deprel '$deprel'");
+                    log_warn("Expression '$found_expression->{expression}': Stepping back because of deprel '$deprel', i=$i");
                     return;
                 }
             }
