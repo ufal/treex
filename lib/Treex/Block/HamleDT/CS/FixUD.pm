@@ -1300,7 +1300,7 @@ BEGIN
         ['co možná',           'always', 'co možná',           'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv',               '0:advmod 1:fixed'],
         ['de facto',           'always', 'de facto',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
         # "M. J." can be somebody's initials (connected as flat), hence we can only apply the following line if it is already a fixed expression.
-        ['m . j .',            'fixed',  'mimo . jiný .',      'ADP PUNCT ADJ PUNCT', 'Q3------------- Z:------------- Q3------------- Z:-------------', 'pos=adp|abbr=yes|extpos=adv pos=punc pos=adj|abbr=yes|case=acc|degree=pos|gender=neut|number=sing|polarity=pos pos=punc', '0:advmod 1:punct 1:fixed 3:punct'],
+        ['m . j .',            'catena', 'mimo . jiný .',      'ADP PUNCT ADJ PUNCT', 'Q3------------- Z:------------- Q3------------- Z:-------------', 'pos=adp|abbr=yes|extpos=adv pos=punc pos=adj|abbr=yes|case=acc|degree=pos|gender=neut|number=sing|polarity=pos pos=punc', '0:advmod 1:punct 1:fixed 3:punct'],
         ['nejen že',           'always', 'nejen že',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
         # Expressions like "týden co týden": Since the "X co X" pattern is not productive,
         # we should treat it as a fixed expression with an adverbial meaning.
