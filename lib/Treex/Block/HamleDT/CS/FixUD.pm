@@ -1430,7 +1430,6 @@ sub fix_fixed_expressions
         }
     }
     return unless(defined($found_expression));
-    log_info("Found fixed expression '$found_expression->{expression}'");
     # Now we know we have come across one of the known expressions.
     # Get the expression nodes and find a candidate for the external parent.
     my @expression_nodes;
@@ -1468,6 +1467,7 @@ sub fix_fixed_expressions
         return if($n_components != 1);
         return if($found_expression->{mode} eq 'fixed' && $n_non_fixed_deprels > 0);
     }
+    log_info("Found fixed expression '$found_expression->{expression}'");
     my $parent;
     foreach my $n (@parent_nodes)
     {
