@@ -1447,23 +1447,26 @@ sub fix_fixed_expressions
     {
         # There must be exactly one member node whose parent is not member.
         my $n_components = 0;
-        foreach my $pn (@parent_nodes)
+        my $n_non_fixed_deprels = 0;
+        for(my $i = 0; $i <= $#expression_nodes; $i++)
         {
+            my $en = $expression_nodes[$i];
+            my $pn = $parent_nodes[$i];
             if(!any {$_ == $pn} (@expression_nodes))
             {
                 $n_components++;
             }
+            else
+            {
+                # In fixed mode, all inner relations must be 'fixed' or 'punct'.
+                if($en->deprel() !~ m/^(fixed|punct)(:|$)/)
+                {
+                    $n_non_fixed_deprels++;
+                }
+            }
         }
         return if($n_components != 1);
-    }
-    # If we require for this expression that it is already annotated as fixed, check it now.
-    # This also implies that it must be a catena, which we checked above.
-    if($found_expression->{mode} eq 'fixed')
-    {
-        foreach my $en (@expression_nodes)
-        {
-            return if($en->deprel() !~ m/^(fixed|punct)(:|$)/);
-        }
+        return if($found_expression->{mode} eq 'fixed' && $n_non_fixed_deprels > 0);
     }
     my $parent;
     foreach my $n (@parent_nodes)
