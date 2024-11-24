@@ -970,18 +970,6 @@ sub fix_constructions
         $node->set_parent($parent);
         $node->set_deprel($deprel);
     }
-    # "ať již" ("be it") is a fixed expression and the first part of a paired coordinator.
-    # "přece jen" can also be understood as a multi-word conjunction ("avšak přece jen")
-    # If the two words are not adjacent, the expression is not fixed (example: "ať se již dohodnou jakkoli").
-    elsif(!$parent->is_root() &&
-          ($node->form() =~ m/^(již|už)$/i && lc($parent->form()) eq 'ať' ||
-           $node->form() =~ m/^jen(om)?$/i && lc($parent->form()) eq 'přece') &&
-          $parent->ord() == $node->ord()-1)
-    {
-        $deprel = 'fixed';
-        $node->set_deprel($deprel);
-        $parent->set_deprel('cc') unless($parent->parent()->is_root());
-    }
     # "jako kdyby", "i kdyby", "co kdyby" ... "kdyby" is decomposed to "když by",
     # first node should form a fixed expression with the first conjunction
     # while the second node is an auxiliary and should be attached higher.
@@ -1303,6 +1291,8 @@ BEGIN
         # "M. J." can be somebody's initials (connected as flat, nmod, or even as siblings), and it is difficult to distinguish.
         ['m . j .',            'subtree', 'mimo . jiný .',      'ADP PUNCT ADJ PUNCT', 'Q3------------- Z:------------- Q3------------- Z:-------------', 'pos=adp|abbr=yes|extpos=adv pos=punc pos=adj|abbr=yes|case=acc|degree=pos|gender=neut|number=sing|polarity=pos pos=punc', '0:advmod 1:punct 1:fixed 3:punct'],
         ['nejen že',           'always',  'nejen že',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
+        ['přece jen',          'always',  'přece jen',          'PART PART',           'TT------------- TT-------------',                 'pos=part|extpos=adv pos=part', '0:advmod 1:fixed'],
+        ['přece jenom',        'always',  'přece jenom',        'PART PART',           'TT------------- TT-------------',                 'pos=part|extpos=adv pos=part', '0:advmod 1:fixed'],
         # Expressions like "týden co týden": Since the "X co X" pattern is not productive,
         # we should treat it as a fixed expression with an adverbial meaning.
         # Somewhat different in meaning but identical in structure is "stůj co stůj", and it is also adverbial.
@@ -1327,7 +1317,12 @@ BEGIN
         # Multiword subordinators.
         ['i když',             'always',  'i když',             'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub', '0:mark 1:fixed'],
         # Multiword coordinators.
+        # There is a dedicated function fix_a_to() (called from fix_constructions() before coming here), which make sure that the right instances of "a sice" and "a to" are annotated as fixed expressions.
         ['a sice',             'always',  'a sice',             'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
+        ['a to',               'fixed',   'a to',               'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
+        # There is a dedicated function fix_to_jest() (called from fix_constructions() before coming here), which make sure that the right instances of "to je" and "to jest" are annotated as fixed expressions.
+        ['to je',              'fixed',   'ten být',            'DET AUX',             'PDNS1---------- VB-S---3P-AAI--',                 'pos=adj|prontype=dem|gender=neut|number=sing|case=nom|extpos=cconj pos=verb|verbtype=aux|polarity=pos|number=sing|person=3|verbform=fin|mood=ind|tense=pres|voice=act|aspect=imp', '0:cc 1:fixed'],
+        ['to jest',            'fixed',   'ten být',            'DET AUX',             'PDNS1---------- VB-S---3P-AAI-2',                 'pos=adj|prontype=dem|gender=neut|number=sing|case=nom|extpos=cconj pos=verb|verbtype=aux|polarity=pos|number=sing|person=3|verbform=fin|mood=ind|tense=pres|voice=act|aspect=imp', '0:cc 1:fixed'],
         # The following expressions should not be annotated as fixed.
         ['a jestli',           'always',  'a jestli',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
         ['a jestliže',         'always',  'a jestliže',         'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
