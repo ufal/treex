@@ -86,6 +86,7 @@ sub process_atree
     # a subject and oblique dependents. But it cannot have an object.
     $self->relabel_objects_under_nominals($root);
     $self->distinguish_acl_from_amod($root);
+    $self->relabel_demonstratives_with_clauses($root);
     $self->change_case_to_mark_under_verb($root);
     $self->dissolve_chains_of_auxiliaries($root);
     ###!!! The following method removes symptoms but we may want to find and remove the cause.
@@ -881,6 +882,33 @@ sub distinguish_acl_from_amod
             if(any {$_->deprel() =~ m/^([nc]subj|cop|aux)(:|$)/} ($node->children()))
             {
                 $node->set_deprel('acl');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# In some languages, demonstratives are used as linkers between subordinate
+# clauses and their governors to provide the required case (Czech "snaha *o to*,
+# aby... CLAUSE"). Demonstratives are typically tagged DET. If the governor is
+# a nominal, the previous functions may have guessed that the relation should
+# be 'det'. However, in this case it should be rather 'nmod'.
+#------------------------------------------------------------------------------
+sub relabel_demonstratives_with_clauses
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'det')
+        {
+            my @clauses = grep {$_->deprel() =~ m/^acl(:|$)/} ($node->children());
+            if(scalar(@clauses) > 0)
+            {
+                $node->set_deprel('nmod');
             }
         }
     }
