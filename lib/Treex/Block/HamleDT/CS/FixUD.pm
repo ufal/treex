@@ -33,7 +33,6 @@ sub process_atree
         $self->fix_annotation_errors($node);
         $self->identify_acl_relcl($node);
         $self->fix_copula_location($node);
-        log_info('PODRUHE'); $self->fix_fixed_expressions($node); ###!!! DEBUG: podruhe?
     }
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
