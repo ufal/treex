@@ -1454,7 +1454,7 @@ sub fix_fixed_expressions
                 last;
             }
         }
-        return unless(defined($found_expression));
+        next unless(defined($found_expression));
         # Now we know we have come across one of the known expressions.
         # Get the expression nodes and find a candidate for the external parent.
         my @expression_nodes;
@@ -1488,7 +1488,7 @@ sub fix_fixed_expressions
                     {
                         my $deprel = $en->deprel();
                         log_warn("Expression '$found_expression->{expression}': Stepping back because of deprel '$deprel', i=$i");
-                        return;
+                        next;
                     }
                 }
             }
@@ -1496,12 +1496,12 @@ sub fix_fixed_expressions
             {
                 my $pords = join(',', map {$_->ord()} (@parent_nodes));
                 log_warn("Expression '$found_expression->{expression}': Stepping back because of $n_components components; parent ords $pords");
-                return;
+                next;
             }
             if($found_expression->{mode} eq 'subtree' && scalar($head->get_descendants({'add_self' => 1})) > scalar(@expression_nodes))
             {
                 log_warn("Expression '$found_expression->{expression}': Stepping back because there are more descendants than the expression itself");
-                return;
+                next;
             }
         }
         log_info("Found fixed expression '$found_expression->{expression}'");
