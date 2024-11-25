@@ -33,6 +33,7 @@ sub process_atree
         $self->fix_annotation_errors($node);
         $self->identify_acl_relcl($node);
         $self->fix_copula_location($node);
+        log_info('PODRUHE'); $self->fix_fixed_expressions($node); ###!!! DEBUG: podruhe?
     }
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
@@ -1317,7 +1318,7 @@ BEGIN
         # Multiword subordinators.
         ['i když',             'always',  'i když',             'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub', '0:mark 1:fixed'],
         # Multiword coordinators.
-        # There is a dedicated function fix_a_to() (called from fix_constructions() before coming here), which make sure that the right instances of "a sice" and "a to" are annotated as fixed expressions.
+        # There is a dedicated function fix_a_to() (called from fix_constructions() before coming here), which makes sure that the right instances of "a sice" and "a to" are annotated as fixed expressions.
         ['a sice',             'always',  'a sice',             'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
         ['a to',               'fixed',   'a to',               'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
         # There is a dedicated function fix_to_jest() (called from fix_constructions() before coming here), which make sure that the right instances of "to je" and "to jest" are annotated as fixed expressions.
