@@ -1400,18 +1400,25 @@ sub fixed_expression_starts_at_node
     my $self = shift;
     my $expression = shift;
     my $node = shift;
-    my $found = 1;
     my $current_node = $node;
+    my @found_words; # for debugging only
     foreach my $w (@{$expression->{forms}})
     {
-        if(!defined($current_node) || lc($current_node->form()) ne $w)
+        return 0 if(!defined($current_node));
+        my $current_form = lc($current_node->form());
+        push(@found_words, $current_form);
+        if($current_form ne $w)
         {
-            $found = 0;
-            last;
+            if($expression->{expression} eq 'a to' && scalar(@found_words == 2))
+            {
+                my $found_words = join(' ', @found_words);
+                log_warn("$found_words != a to");
+                return 0;
+            }
         }
         $current_node = $current_node->get_next_node();
     }
-    return $found;
+    return 1;
 }
 sub fix_fixed_expressions
 {
