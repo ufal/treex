@@ -1459,7 +1459,8 @@ sub fix_fixed_expressions
         }
         if($n_components != 1)
         {
-            log_warn("Expression '$found_expression->{expression}': Stepping back because of $n_components components");
+            my $pords = join(',', map {$_->ord()} (@parent_nodes));
+            log_warn("Expression '$found_expression->{expression}': Stepping back because of $n_components components; parent ords $pords");
             return;
         }
         return if($found_expression->{mode} eq 'subtree' && scalar($head->get_descendants({'add_self' => 1})) > scalar(@expression_nodes));
