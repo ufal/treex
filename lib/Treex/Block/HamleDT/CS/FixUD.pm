@@ -1300,6 +1300,7 @@ BEGIN
         ['nejen že',           'always',  'nejen že',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
         ['přece jen',          'always',  'přece jen',          'PART PART',           'TT------------- TT-------------',                 'pos=part|extpos=adv pos=part', '0:advmod 1:fixed'],
         ['přece jenom',        'always',  'přece jenom',        'PART PART',           'TT------------- TT-------------',                 'pos=part|extpos=adv pos=part', '0:advmod 1:fixed'],
+        ['více než',           'fixed',   'více než',           'ADV SCONJ',           'Dg-------2A---- J,-------------',                 'pos=adv|polarity=pos|degree=cmp|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
         # Expressions like "týden co týden": Since the "X co X" pattern is not productive,
         # we should treat it as a fixed expression with an adverbial meaning.
         # Somewhat different in meaning but identical in structure is "stůj co stůj", and it is also adverbial.
@@ -1343,6 +1344,7 @@ BEGIN
         ['ať již',             'always',  'ať již',             'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
         ['ať už',              'always',  'ať už',              'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
         ['až na',              'fixed',   'až na',              'PART ADP',            'TT------------- RR--4----------',                 'pos=part pos=adp|adpostype=prep|case=acc',      '0:advmod:emph 0:case'],
+        ['jako když',          'always',  'jako když',          'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',   '0:mark 0:mark'],
         ['pokud možno',        'always',  'pokud možný',        'SCONJ ADJ',           'J,------------- ACNS------A----',                 'pos=conj|conjtype=sub pos=adj|polarity=pos|gender=neut|number=sing|degree=pos|variant=short', '2:mark 0:advcl'],
     );
     foreach my $e (@_fixed_expressions)
