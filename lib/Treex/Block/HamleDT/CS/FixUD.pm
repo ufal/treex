@@ -27,8 +27,8 @@ sub process_atree
     $self->relabel_oblique_objects($root);
     foreach my $node (@nodes)
     {
-        $self->fix_constructions($node);
-        $self->fix_fixed_expressions($node);
+        #$self->fix_constructions($node);
+        #$self->fix_fixed_expressions($node);
         #$self->fix_jak_znamo($root);
         #$self->fix_annotation_errors($node);
         #$self->identify_acl_relcl($node);
