@@ -1301,7 +1301,10 @@ BEGIN
         ['až na',              'fixed',   'až na',              'PART ADP',            'TT------------- RR--4----------',                 'pos=part pos=adp|adpostype=prep|case=acc',      '0:advmod:emph 0:case'],
         ['co když',            'always',  'co když',            'PART SCONJ',          'TT------------- J,-------------',                 'pos=part pos=conj|conjtype=sub',                '0:mark 0:mark'],
         ['jako když',          'always',  'jako když',          'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',   '0:mark 0:mark'],
+        ['jen když',           'always',  'jen když',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
+        ['jestliže tedy',      'always',  'jestliže tedy',      'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '0:mark 0:cc'],
         ['pokud možno',        'always',  'pokud možný',        'SCONJ ADJ',           'J,------------- ACNS------A----',                 'pos=conj|conjtype=sub pos=adj|polarity=pos|gender=neut|number=sing|degree=pos|variant=short', '2:mark 0:advcl'],
+        ['pokud totiž',        'always',  'pokud totiž',        'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '0:mark 0:cc'],
         ['totiž že',           'always',  'totiž že',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '0:cc 0:mark'],
         ['zkrátka když',       'always',  'zkrátka když',       'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
     );
@@ -1405,21 +1408,21 @@ sub check_fixed_expression_mode
                 # In fixed mode, all inner relations must be 'fixed' or 'punct'.
                 if($found_expression->{mode} eq 'fixed' && $en->deprel() !~ m/^(fixed|punct)(:|$)/)
                 {
-                    my $deprel = $en->deprel();
-                    log_warn("Expression '$found_expression->{expression}': Stepping back because of deprel '$deprel', i=$i");
+                    #my $deprel = $en->deprel();
+                    #log_info("Expression '$found_expression->{expression}': Stepping back because of deprel '$deprel', i=$i");
                     return 0;
                 }
             }
         }
         if($n_components != 1)
         {
-            my $pords = join(',', map {$_->ord()} (@{$parent_nodes}));
-            log_warn("Expression '$found_expression->{expression}': Stepping back because of $n_components components; parent ords $pords");
+            #my $pords = join(',', map {$_->ord()} (@{$parent_nodes}));
+            #log_info("Expression '$found_expression->{expression}': Stepping back because of $n_components components; parent ords $pords");
             return 0;
         }
         if($found_expression->{mode} eq 'subtree' && scalar($head->get_descendants({'add_self' => 1})) > scalar(@{$expression_nodes}))
         {
-            log_warn("Expression '$found_expression->{expression}': Stepping back because there are more descendants than the expression itself");
+            #log_info("Expression '$found_expression->{expression}': Stepping back because there are more descendants than the expression itself");
             return 0;
         }
     }

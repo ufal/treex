@@ -936,7 +936,10 @@ sub raise_dependents_of_quantifiers
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->deprel() =~ m/^(appos|acl|advcl|xcomp|dep)(:|$)/ && $node->parent()->deprel() eq 'det:numgov')
+        # We could restrict the parent's deprel to 'det:numgov' but there are
+        # other constructions where the determiner is not quantifier (but
+        # demonstrative, totalizer etc.) and they have a similar problem.
+        if($node->deprel() =~ m/^(appos|acl|advcl|xcomp|dep)(:|$)/ && $node->parent()->deprel() =~ m/^det(:|$)/)
         {
             $node->set_parent($node->parent()->parent());
         }
