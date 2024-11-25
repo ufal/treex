@@ -1395,6 +1395,8 @@ BEGIN
         push(@fixed_expressions, {'expression' => $expression, 'mode' => $mode, 'forms' => \@forms, 'lemmas' => \@lemmas, 'upos' => \@upos, 'xpos' => \@xpos, 'feats' => \@feats, 'parents' => \@parents, 'deprels' => \@deprels});
     }
 }
+
+#------------------------------------------------------------------------------
 sub fixed_expression_starts_at_node
 {
     my $self = shift;
@@ -1416,6 +1418,71 @@ sub fixed_expression_starts_at_node
     }
     return 1;
 }
+
+#------------------------------------------------------------------------------
+sub check_fixed_expression_mode
+{
+    my $self = shift;
+    my $found_expression = shift; # hash ref
+    my $expression_nodes = shift; # array ref
+    my $parent_nodes = shift; # array ref
+    if($found_expression->{mode} =~ m/^(catena|subtree|fixed)$/)
+    {
+        # There must be exactly one member node whose parent is not member.
+        my $n_components = 0;
+        my $head;
+        for(my $i = 0; $i <= $#{$expression_nodes}; $i++)
+        {
+            my $en = $expression_nodes->[$i];
+            my $pn = $parent_nodes->[$i];
+            if(!any {$_ == $pn} (@{$expression_nodes}))
+            {
+                $n_components++;
+                $head = $en;
+            }
+            else
+            {
+                # In fixed mode, all inner relations must be 'fixed' or 'punct'.
+                if($found_expression->{mode} eq 'fixed' && $en->deprel() !~ m/^(fixed|punct)(:|$)/)
+                {
+                    my $deprel = $en->deprel();
+                    log_warn("Expression '$found_expression->{expression}': Stepping back because of deprel '$deprel', i=$i");
+                    return 0;
+                }
+            }
+        }
+        if($n_components != 1)
+        {
+            my $pords = join(',', map {$_->ord()} (@{$parent_nodes}));
+            log_warn("Expression '$found_expression->{expression}': Stepping back because of $n_components components; parent ords $pords");
+            return 0;
+        }
+        if($found_expression->{mode} eq 'subtree' && scalar($head->get_descendants({'add_self' => 1})) > scalar(@{$expression_nodes}))
+        {
+            log_warn("Expression '$found_expression->{expression}': Stepping back because there are more descendants than the expression itself");
+            return 0;
+        }
+    }
+    return 1;
+}
+
+#------------------------------------------------------------------------------
+sub is_in_list
+{
+    my $self = shift;
+    my $node = shift;
+    my @list = @_;
+    return any {$_ == $node} (@list);
+}
+sub is_in_or_depends_on_list
+{
+    my $self = shift;
+    my $node = shift;
+    my @list = @_;
+    return any {$_ == $node || $node->is_descendant_of($_)} (@list);
+}
+
+#------------------------------------------------------------------------------
 sub fix_fixed_expressions
 {
     my $self = shift;
@@ -1455,42 +1522,9 @@ sub fix_fixed_expressions
             $current_node = $current_node->get_next_node();
         }
         # If we require for this expression that it already is a catena, check it now.
-        if($found_expression->{mode} =~ m/^(catena|subtree|fixed)$/)
+        if(!$self->check_fixed_expression_mode($found_expression, \@expression_nodes, \@parent_nodes))
         {
-            # There must be exactly one member node whose parent is not member.
-            my $n_components = 0;
-            my $head;
-            for(my $i = 0; $i <= $#expression_nodes; $i++)
-            {
-                my $en = $expression_nodes[$i];
-                my $pn = $parent_nodes[$i];
-                if(!any {$_ == $pn} (@expression_nodes))
-                {
-                    $n_components++;
-                    $head = $en;
-                }
-                else
-                {
-                    # In fixed mode, all inner relations must be 'fixed' or 'punct'.
-                    if($found_expression->{mode} eq 'fixed' && $en->deprel() !~ m/^(fixed|punct)(:|$)/)
-                    {
-                        my $deprel = $en->deprel();
-                        log_warn("Expression '$found_expression->{expression}': Stepping back because of deprel '$deprel', i=$i");
-                        next;
-                    }
-                }
-            }
-            if($n_components != 1)
-            {
-                my $pords = join(',', map {$_->ord()} (@parent_nodes));
-                log_warn("Expression '$found_expression->{expression}': Stepping back because of $n_components components; parent ords $pords");
-                next;
-            }
-            if($found_expression->{mode} eq 'subtree' && scalar($head->get_descendants({'add_self' => 1})) > scalar(@expression_nodes))
-            {
-                log_warn("Expression '$found_expression->{expression}': Stepping back because there are more descendants than the expression itself");
-                next;
-            }
+            next;
         }
         log_info("Found fixed expression '$found_expression->{expression}'");
         my $parent;
@@ -1502,58 +1536,74 @@ sub fix_fixed_expressions
             # candidate.) Note that the future parent must not only lie outside the
             # expression, it also must not be dominated by any member of the expression!
             # Otherwise we would be creating a cycle.
-            if(!any {$_ == $n || $n->is_descendant_of($_)} (@expression_nodes))
+            if(!$self->is_in_or_depends_on_list($n, @expression_nodes))
             {
                 $parent = $n;
                 last;
             }
         }
         log_fatal('Something is wrong. We should have found a parent.') if(!defined($parent));
-        # If the expression should indeed be fixed, then the first node should be
-        # attached to the parent and all other nodes should be attached to the first
-        # node. However, if we are correcting a previously fixed annotation to something
-        # non-fixed, there are more possibilities. Therefore we always require the
-        # relative addresses of the parents (0 points to the one external parent we
-        # identified in the previous section, -1 allows to keep the external parent).
-        # Special care needed if the external parent is the artificial root.
-        my $subroot_node;
+        # Normalize morphological annotation of the nodes in the fixed expression.
         for(my $i = 0; $i <= $#expression_nodes; $i++)
         {
             $expression_nodes[$i]->set_lemma($found_expression->{lemmas}[$i]) if defined($found_expression->{lemmas}[$i]);
             $expression_nodes[$i]->set_tag($found_expression->{upos}[$i]) if defined($found_expression->{upos}[$i]);
             $expression_nodes[$i]->set_conll_pos($found_expression->{xpos}[$i]) if defined($found_expression->{xpos}[$i]);
             $expression_nodes[$i]->iset()->set_hash($found_expression->{feats}[$i]) if defined($found_expression->{feats}[$i]);
-            if($found_expression->{parents}[$i] > 0)
+        }
+        # If the expression should indeed be fixed, then the first node should be
+        # attached to the parent and all other nodes should be attached to the first
+        # node. However, if we are correcting a previously fixed annotation to something
+        # non-fixed, there are more possibilities. Therefore we always require the
+        # relative addresses of the parents (0 points to the one external parent we
+        # identified in the previous section, -1 allows to keep the external parent).
+        # First attach the nodes whose new parent lies outside the expression.
+        # That way we prevent cycles that could arise when attaching other nodes
+        # to these nodes.
+        # Special care needed if the external parent is the artificial root.
+        my $subroot_node;
+        for(my $i = 0; $i <= $#expression_nodes; $i++)
+        {
+            my $parent_i = $found_expression->{parents}[$i];
+            if($parent_i <= 0)
             {
-                $expression_nodes[$i]->set_parent($expression_nodes[$found_expression->{parents}[$i]-1]);
-                $expression_nodes[$i]->set_deprel($found_expression->{deprels}[$i]);
-            }
-            elsif($found_expression->{parents}[$i] == -1 && !any {$_ == $parent_nodes[$i]} (@expression_nodes))
-            {
-                # Do nothing. Keep the current parent, which is already outside the
-                # examined expression.
-                if($expression_nodes[$i]->parent()->is_root())
+                if($parent_i == -1 && !$self->is_in_or_depends_on_list($parent_nodes[$i], @expression_nodes))
                 {
-                    $subroot_node = $expression_nodes[$i];
+                    # Keep the current parent, which is already outside the
+                    # examined expression.
+                    if($expression_nodes[$i]->parent()->is_root())
+                    {
+                        $subroot_node = $expression_nodes[$i];
+                    }
                 }
-            }
-            elsif($parent->is_root())
-            {
-                if(defined($subroot_node))
+                elsif($parent->is_root())
                 {
-                    $expression_nodes[$i]->set_parent($subroot_node);
-                    $expression_nodes[$i]->set_deprel($found_expression->{deprels}[$i]);
+                    if(defined($subroot_node))
+                    {
+                        $expression_nodes[$i]->set_parent($subroot_node);
+                        $expression_nodes[$i]->set_deprel($found_expression->{deprels}[$i]);
+                    }
+                    else
+                    {
+                        $expression_nodes[$i]->set_parent($parent);
+                        $expression_nodes[$i]->set_deprel('root');
+                        $subroot_node = $expression_nodes[$i];
+                    }
                 }
                 else
                 {
                     $expression_nodes[$i]->set_parent($parent);
-                    $expression_nodes[$i]->set_deprel('root');
-                    $subroot_node = $expression_nodes[$i];
+                    $expression_nodes[$i]->set_deprel($found_expression->{deprels}[$i]);
                 }
             }
-            else
+        }
+        # Now modify the attachments inside the expression.
+        for(my $i = 0; $i <= $#expression_nodes; $i++)
+        {
+            my $parent_i = $found_expression->{parents}[$i];
+            if($parent_i > 0)
             {
-                $expression_nodes[$i]->set_parent($parent);
+                $expression_nodes[$i]->set_parent($expression_nodes[$parent_i-1]);
                 $expression_nodes[$i]->set_deprel($found_expression->{deprels}[$i]);
             }
         }
