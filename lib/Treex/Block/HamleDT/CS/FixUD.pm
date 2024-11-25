@@ -1404,12 +1404,20 @@ sub fixed_expression_starts_at_node
     my @found_words; # for debugging only
     foreach my $w (@{$expression->{forms}})
     {
-        return 0 if(!defined($current_node));
+        if(!defined($current_node))
+        {
+            if($expression->{expression} eq 'a to')
+            {
+                my $found_words = join(' ', @found_words);
+                log_warn("'$found_words' != 'a to' (and there are no more nodes)");
+            }
+            return 0;
+        }
         my $current_form = lc($current_node->form());
         push(@found_words, $current_form);
         if($current_form ne $w)
         {
-            if($expression->{expression} eq 'a to' && scalar(@found_words == 2))
+            if($expression->{expression} eq 'a to')
             {
                 my $found_words = join(' ', @found_words);
                 log_warn("$found_words != a to");
