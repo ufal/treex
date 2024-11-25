@@ -29,10 +29,10 @@ sub process_atree
     {
         $self->fix_constructions($node);
         $self->fix_fixed_expressions($node);
-        $self->fix_jak_znamo($root);
-        $self->fix_annotation_errors($node);
-        $self->identify_acl_relcl($node);
-        $self->fix_copula_location($node);
+        #$self->fix_jak_znamo($root);
+        #$self->fix_annotation_errors($node);
+        #$self->identify_acl_relcl($node);
+        #$self->fix_copula_location($node);
     }
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
