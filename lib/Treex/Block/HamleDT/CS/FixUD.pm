@@ -1413,8 +1413,8 @@ sub fixed_expression_starts_at_node
             {
                 my $found_words = join(' ', @found_words);
                 log_warn("$found_words != a to");
-                return 0;
             }
+            return 0;
         }
         $current_node = $current_node->get_next_node();
     }
