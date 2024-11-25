@@ -775,56 +775,6 @@ sub fix_constructions
             $node->set_deprel($deprel);
             $parent->set_deprel('advmod') unless($parent->parent()->is_root());
         }
-        # The expression "všeho všudy" ("altogether") functions as an adverb.
-        elsif(lc($node->form()) eq 'všeho' && $parent->ord() == $node->ord()+1 &&
-              lc($parent->form()) eq 'všudy')
-        {
-            my $grandparent = $parent->parent();
-            $deprel = $parent->deprel();
-            $node->set_parent($grandparent);
-            $node->set_deprel($deprel);
-            $parent->set_parent($node);
-            $parent->set_deprel('fixed');
-            $parent = $grandparent;
-        }
-        # The expression "suma sumárum" ("to summarize") functions as an adverb.
-        elsif(lc($node->form()) eq 'suma' && $parent->ord() == $node->ord()+1 &&
-              lc($parent->form()) eq 'sumárum')
-        {
-            my $grandparent = $parent->parent();
-            $deprel = $parent->deprel();
-            $node->set_parent($grandparent);
-            $node->set_deprel($deprel);
-            $parent->set_parent($node);
-            $parent->set_deprel('fixed');
-            $parent = $grandparent;
-        }
-        # The expression "nota bene" functions as an adverb.
-        elsif(lc($node->form()) eq 'nota' && $parent->ord() == $node->ord()+1 &&
-              lc($parent->form()) eq 'bene')
-        {
-            my $grandparent = $parent->parent();
-            $deprel = $parent->deprel();
-            $node->set_parent($grandparent);
-            $node->set_deprel($deprel);
-            $parent->set_parent($node);
-            $parent->set_deprel('fixed');
-            $parent = $grandparent;
-        }
-        # The expression "in memoriam" functions as an adverb.
-        elsif(lc($node->form()) eq 'memoriam' && $parent->ord() == $node->ord()-1 &&
-              lc($parent->form()) eq 'in')
-        {
-            $deprel = 'fixed';
-            $node->set_deprel($deprel);
-        }
-        # The expression "ex ante" functions as an adverb.
-        elsif(lc($node->form()) eq 'ante' && $parent->ord() == $node->ord()-1 &&
-              lc($parent->form()) eq 'ex')
-        {
-            $deprel = 'fixed';
-            $node->set_deprel($deprel);
-        }
         # In PDT, "na úkor něčeho" ("at the expense of something") is analyzed as
         # a prepositional phrase with a compound preposition (fixed expression)
         # "na úkor". However, it is no longer fixed if a possessive pronoun is
@@ -1295,12 +1245,17 @@ BEGIN
         ['a priori',           'always',  'a priori',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
         ['co možná',           'always',  'co možná',           'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv',               '0:advmod 1:fixed'],
         ['de facto',           'always',  'de facto',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
+        ['ex ante',            'always',  'ex ante',            'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
+        ['in memoriam',        'always',  'in memoriam',        'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
         # "M. J." can be somebody's initials (connected as flat, nmod, or even as siblings), and it is difficult to distinguish.
         ['m . j .',            'subtree', 'mimo . jiný .',      'ADP PUNCT ADJ PUNCT', 'Q3------------- Z:------------- Q3------------- Z:-------------', 'pos=adp|abbr=yes|extpos=adv pos=punc pos=adj|abbr=yes|case=acc|degree=pos|gender=neut|number=sing|polarity=pos pos=punc', '0:advmod 1:punct 1:fixed 3:punct'],
         ['nejen že',           'always',  'nejen že',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
-        ['přece jen',          'always',  'přece jen',          'PART PART',           'TT------------- TT-------------',                 'pos=part|extpos=adv pos=part', '0:advmod 1:fixed'],
-        ['přece jenom',        'always',  'přece jenom',        'PART PART',           'TT------------- TT-------------',                 'pos=part|extpos=adv pos=part', '0:advmod 1:fixed'],
+        ['nota bene',          'always',  'nota bene',          'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
+        ['přece jen',          'always',  'přece jen',          'PART PART',           'TT------------- TT-------------',                 'pos=part|extpos=adv pos=part',             '0:advmod 1:fixed'],
+        ['přece jenom',        'always',  'přece jenom',        'PART PART',           'TT------------- TT-------------',                 'pos=part|extpos=adv pos=part',             '0:advmod 1:fixed'],
+        ['suma sumárum',       'always',  'suma sumárum',       'NOUN ADV',            'NNFS1-----A---- Db-------------',                 'pos=noun|nountype=com|gender=fem|number=sing|case=nom|extpos=adv pos=adv', '0:advmod 1:fixed'],
         ['více než',           'fixed',   'více než',           'ADV SCONJ',           'Dg-------2A---- J,-------------',                 'pos=adv|polarity=pos|degree=cmp|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
+        ['všeho všudy',        'always',  'všechen všudy',      'DET ADV',             'PLZS2---------- Db-------------',                 'pos=adj|prontype=tot|gender=neut|number=sing|case=gen|extpos=adv pos=adv|prontype=tot', '0:advmod 1:fixed'],
         # Expressions like "týden co týden": Since the "X co X" pattern is not productive,
         # we should treat it as a fixed expression with an adverbial meaning.
         # Somewhat different in meaning but identical in structure is "stůj co stůj", and it is also adverbial.
