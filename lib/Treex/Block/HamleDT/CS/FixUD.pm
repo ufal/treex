@@ -1299,8 +1299,11 @@ BEGIN
         ['ať již',             'always',  'ať již',             'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
         ['ať už',              'always',  'ať už',              'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
         ['až na',              'fixed',   'až na',              'PART ADP',            'TT------------- RR--4----------',                 'pos=part pos=adp|adpostype=prep|case=acc',      '0:advmod:emph 0:case'],
+        ['co když',            'always',  'co když',            'PART SCONJ',          'TT------------- J,-------------',                 'pos=part pos=conj|conjtype=sub',                '0:mark 0:mark'],
         ['jako když',          'always',  'jako když',          'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',   '0:mark 0:mark'],
         ['pokud možno',        'always',  'pokud možný',        'SCONJ ADJ',           'J,------------- ACNS------A----',                 'pos=conj|conjtype=sub pos=adj|polarity=pos|gender=neut|number=sing|degree=pos|variant=short', '2:mark 0:advcl'],
+        ['totiž že',           'always',  'totiž že',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '0:cc 0:mark'],
+        ['zkrátka když',       'always',  'zkrátka když',       'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
     );
     foreach my $e (@_fixed_expressions)
     {

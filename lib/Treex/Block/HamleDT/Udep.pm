@@ -906,7 +906,11 @@ sub relabel_demonstratives_with_clauses
     {
         if($node->deprel() eq 'det')
         {
-            my @clauses = grep {$_->deprel() =~ m/^acl(:|$)/} ($node->children());
+            # Include also 'amod' because of things like "ploch se vším možným"
+            # (det(ploch, vším); amod(vším, možným); the det should be nmod or
+            # it should be flipped, "možným" should be head but the whole thing
+            # should still depend on "plochy" as nmod).
+            my @clauses = grep {$_->deprel() =~ m/^(acl|amod)(:|$)/} ($node->children());
             if(scalar(@clauses) > 0)
             {
                 $node->set_deprel('nmod');
@@ -932,7 +936,7 @@ sub raise_dependents_of_quantifiers
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->deprel() =~ m/^(appos|advmod|xcomp)(:|$)/ && $node->parent()->deprel() eq 'det:numgov')
+        if($node->deprel() =~ m/^(appos|acl|advcl|xcomp|dep)(:|$)/ && $node->parent()->deprel() eq 'det:numgov')
         {
             $node->set_parent($node->parent()->parent());
         }
