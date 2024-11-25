@@ -1395,35 +1395,45 @@ BEGIN
         push(@fixed_expressions, {'expression' => $expression, 'mode' => $mode, 'forms' => \@forms, 'lemmas' => \@lemmas, 'upos' => \@upos, 'xpos' => \@xpos, 'feats' => \@feats, 'parents' => \@parents, 'deprels' => \@deprels});
     }
 }
+sub fixed_expression_starts_at_node
+{
+    my $self = shift;
+    my $expression = shift;
+    my $node = shift;
+    my $found = 1;
+    my $current_node = $node;
+    foreach my $w (@{$expression->{forms}})
+    {
+        if(!defined($current_node) || lc($current_node->form()) ne $w)
+        {
+            $found = 0;
+            last;
+        }
+        $current_node = $current_node->get_next_node();
+    }
+    return $found;
+}
 sub fix_fixed_expressions
 {
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants({'ordered' => 1});
+    ###!!! Hack: The most frequent type is multiword prepositions. There are thousands of them.
+    # For now, I am not listing all of them in the table above, but at least they should get ExtPos.
     foreach my $node (@nodes)
     {
-        ###!!! Hack: The most frequent type is multiword prepositions. There are thousands of them.
-        # For now, I am not listing all of them in the table above, but at least they should get ExtPos.
         if($node->deprel() eq 'fixed' && $node->parent()->deprel() eq 'case')
         {
             $node->parent()->iset()->set('extpos', 'adp');
         }
+    }
+    foreach my $node (@nodes)
+    {
         # Is the current node first word of a known fixed expression?
         my $found_expression;
         foreach my $e (@fixed_expressions)
         {
-            my $found = 1;
-            my $current_node = $node;
-            foreach my $w (@{$e->{forms}})
-            {
-                if(!defined($current_node) || lc($current_node->form()) ne $w)
-                {
-                    $found = 0;
-                    last;
-                }
-                $current_node = $current_node->get_next_node();
-            }
-            if($found)
+            if($self->fixed_expression_starts_at_node($e, $node))
             {
                 $found_expression = $e;
                 last;
@@ -1473,7 +1483,11 @@ sub fix_fixed_expressions
                 log_warn("Expression '$found_expression->{expression}': Stepping back because of $n_components components; parent ords $pords");
                 return;
             }
-            return if($found_expression->{mode} eq 'subtree' && scalar($head->get_descendants({'add_self' => 1})) > scalar(@expression_nodes));
+            if($found_expression->{mode} eq 'subtree' && scalar($head->get_descendants({'add_self' => 1})) > scalar(@expression_nodes))
+            {
+                log_warn("Expression '$found_expression->{expression}': Stepping back because there are more descendants than the expression itself");
+                return;
+            }
         }
         log_info("Found fixed expression '$found_expression->{expression}'");
         my $parent;
