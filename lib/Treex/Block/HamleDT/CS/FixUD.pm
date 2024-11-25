@@ -1457,7 +1457,11 @@ sub fix_fixed_expressions
                 }
             }
         }
-        return if($n_components != 1);
+        if($n_components != 1)
+        {
+            log_warn("Expression '$found_expression->{expression}': Stepping back because of $n_components components");
+            return;
+        }
         return if($found_expression->{mode} eq 'subtree' && scalar($head->get_descendants({'add_self' => 1})) > scalar(@expression_nodes));
     }
     log_info("Found fixed expression '$found_expression->{expression}'");
