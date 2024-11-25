@@ -87,6 +87,7 @@ sub process_atree
     $self->relabel_objects_under_nominals($root);
     $self->distinguish_acl_from_amod($root);
     $self->relabel_demonstratives_with_clauses($root);
+    $self->raise_dependents_of_quantifiers($root);
     $self->change_case_to_mark_under_verb($root);
     $self->dissolve_chains_of_auxiliaries($root);
     ###!!! The following method removes symptoms but we may want to find and remove the cause.
@@ -913,6 +914,31 @@ sub relabel_demonstratives_with_clauses
         }
     }
 }
+
+
+
+#------------------------------------------------------------------------------
+# In some languages, indefinite quantifiers morphologically govern the counted
+# noun (Czech "několik poslanců" = "several representatives"). In PDT, the
+# quantifier was the head, but in UD the relation was turned around and labeled
+# 'det:numgov'. There may still be dependents (apposition, "jako"-depictives),
+# which were originally attached to the quantifier. They should now be re-
+# attached to the new head, i.e., to the counted noun.
+#------------------------------------------------------------------------------
+sub raise_dependents_of_quantifiers
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() =~ m/^(appos|advmod|xcomp)(:|$)/ && $node->parent()->deprel() eq 'det:numgov')
+        {
+            $node->set_parent($node->parent()->parent());
+        }
+    }
+}
+
 
 
 
