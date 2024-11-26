@@ -901,7 +901,7 @@ sub relabel_demonstratives_with_clauses
 {
     my $self = shift;
     my $root = shift;
-    my @nodes = $root->get_descendants();
+    my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
         if($node->deprel() eq 'det')
@@ -939,7 +939,7 @@ sub raise_dependents_of_quantifiers
 {
     my $self = shift;
     my $root = shift;
-    my @nodes = $root->get_descendants();
+    my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
         # We could restrict the parent's deprel to 'det:numgov' but there are
