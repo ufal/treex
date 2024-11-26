@@ -1292,7 +1292,7 @@ BEGIN
         ['a jestli',           'always',  'a jestli',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
         ['a jestliže',         'always',  'a jestliže',         'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
         ['a pokud',            'always',  'a pokud',            'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
-        ['a tak',              'always',  'a tak',              'CCONJ CCONJ',         'J^------------- J^-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=coor', '0:cc 0:cc'],
+        ['a tak',              'fixed',   'a tak',              'CCONJ CCONJ',         'J^------------- J^-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=coor', '0:cc 0:cc'],
         ['a že',               'fixed',   'a že',               'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '0:cc 0:mark'],
         ['alespoň pokud',      'always',  'alespoň pokud',      'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
         ['asi jako',           'always',  'asi jako',           'PART SCONJ',          'TT------------- J,-------------',                 'pos=part pos=conj|conjtype=sub',                '-1:advmod -1:mark'],
@@ -1323,7 +1323,6 @@ BEGIN
         ['totiž že',           'always',  'totiž že',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '0:cc 0:mark'],
         ['totiž , že',         'always',  'totiž že',           'CCONJ PUNCT SCONJ',   'J^------------- Z:------------- J,-------------', 'pos=conj|conjtype=coor pos=punc pos=conj|conjtype=sub', '0:cc 0:punct 0:mark'],
         ['v duchu',            'always',  'v duch',             'ADP NOUN',            'RR--6---------- NNIS6-----A----',                 'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc', '2:case -1:obl'],
-        ['v případě , že',     'fixed',   'v případ , že',      'ADP NOUN PUNCT SCONJ', 'RR--6---------- NNIS6-----A---- Z:------------- J,-------------', 'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc pos=punc pos=conj|conjtype=sub', '2:case -1:obl -1:punct -1:mark'],
         ['zkrátka když',       'always',  'zkrátka když',       'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
         ['že totiž',           'always',  'že totiž',           'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '0:mark 0:cc'],
     );
@@ -1991,6 +1990,7 @@ sub fix_annotation_errors
         $subtree[5]->set_parent($subtree[4]);
         $subtree[5]->set_deprel('conj');
     }
+    # PDT train-ma: mf920901-088-p5s5
     # "podle § 209 tr. zák." ... "§" is strangely mis-coded as "|"
     elsif($spanstring eq 'podle | 209 tr . zák .')
     {
@@ -2004,8 +2004,27 @@ sub fix_annotation_errors
         $subtree[1]->set_deprel($deprel);
         $subtree[0]->set_parent($subtree[1]);
         $subtree[0]->set_deprel('case');
+        $subtree[2]->set_parent($subtree[1]);
+        $subtree[2]->set_deprel('nmod');
         $subtree[5]->set_parent($subtree[1]);
         # The rest seems to be annotated correctly.
+    }
+    # PDT train-ma: mf920924-126-p3s12A
+    # A i kdyby se mu podařilo k něčemu takovému přispět, pak jen zřejmě za cenu velkého znevážení prezidentského úřadu:
+    elsif($spanstring eq 'A i když by se mu podařilo k něčemu takovému přispět , pak jen zřejmě za cenu velkého znevážení prezidentského úřadu :')
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[16]->set_parent($node->get_root()); # cenu
+        $subtree[16]->set_deprel('root');
+        $subtree[0]->set_parent($subtree[16]);
+        $subtree[1]->set_parent($subtree[16]);
+        $subtree[1]->set_deprel('mark');
+        $subtree[6]->set_parent($subtree[16]); # podařilo
+        $subtree[6]->set_deprel('advcl');
+        $subtree[11]->set_parent($subtree[6]);
+        $subtree[12]->set_parent($subtree[16]); # pak
+        $subtree[12]->set_deprel('advmod');
+        $subtree[21]->set_parent($subtree[16]);
     }
     # MIROSLAV MACEK
     elsif($node->form() eq 'MIROSLAV' && $node->deprel() =~ m/^punct(:|$)/)
@@ -2080,13 +2099,17 @@ sub fix_annotation_errors
             $child->set_parent($subtree[0]);
         }
     }
-    elsif($spanstring =~ m/^, tj \. bude - li zákon odmítnut/i)
+    # PDT train-ct cmpr9410-036-p7s1
+    # "V případě" should not be fixed multiword preposition here.
+    elsif($spanstring =~ m/^v případě , že by společenská smlouva situaci neupravovala , je třeba/i)
     {
         my @subtree = $self->get_node_subtree($node);
-        $subtree[1]->set_deprel('cc');
-        $subtree[2]->set_parent($subtree[1]);
-        $subtree[5]->set_parent($subtree[7]);
-        $subtree[5]->set_deprel('mark');
+        $subtree[1]->set_parent($subtree[11]);
+        $subtree[1]->set_deprel('obl');
+        $subtree[0]->set_parent($subtree[1]);
+        $subtree[0]->set_deprel('case');
+        $subtree[8]->set_parent($subtree[1]);
+        $subtree[8]->set_deprel('acl');
     }
     elsif($spanstring =~ m/^, co je a co není rovný přístup ke vzdělání$/i)
     {
@@ -2117,6 +2140,7 @@ sub fix_annotation_errors
         $subtree[1]->set_parent($subtree[4]);
         $subtree[2]->set_parent($subtree[4]);
     }
+    # PDT dev: vesm9303-025-p5s1
     elsif($spanstring =~ m/^, je - li rho > rho _ c ,$/i)
     {
         my @subtree = $self->get_node_subtree($node);
@@ -2134,8 +2158,10 @@ sub fix_annotation_errors
         $subtree[2]->set_parent($subtree[5]);
         $subtree[3]->set_parent($subtree[5]);
         $subtree[4]->set_parent($subtree[5]);
+        $subtree[6]->set_parent($subtree[5]);
         $subtree[9]->set_parent($subtree[5]);
     }
+    # PDT dev: vesm9303-025-p5s1
     elsif($spanstring =~ m/^je - li rho < rho _ c ,$/i)
     {
         my @subtree = $self->get_node_subtree($node);
@@ -2152,6 +2178,7 @@ sub fix_annotation_errors
         $subtree[1]->set_parent($subtree[4]);
         $subtree[2]->set_parent($subtree[4]);
         $subtree[3]->set_parent($subtree[4]);
+        $subtree[5]->set_parent($subtree[4]);
         $subtree[8]->set_parent($subtree[4]);
     }
     elsif($spanstring =~ m/^(- (\d+|p|C)|< pc|\. (q|r))$/i)

@@ -910,7 +910,7 @@ sub relabel_demonstratives_with_clauses
             # (det(ploch, vším); amod(vším, možným); the det should be nmod or
             # it should be flipped, "možným" should be head but the whole thing
             # should still depend on "plochy" as nmod).
-            my @clauses = grep {$_->deprel() =~ m/^(acl|amod|ccomp)(:|$)/} ($node->children());
+            my @clauses = grep {$_->deprel() =~ m/^(acl|amod|nmod|ccomp|dep)(:|$)/} ($node->children());
             # "v koalici, ať již jakékoli/det"
             my @claudeps = grep {$_->deprel() =~ m/^(mark)(:|$)/} ($node->children());
             if(scalar(@clauses) > 0)
