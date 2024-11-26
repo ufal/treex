@@ -486,23 +486,12 @@ sub convert_deprels
             {
                 # Nathan Schneider wanted the UD validator to issue a warning if
                 # 'flat:foreign' is used and the two nodes connected are not just
-                # X Foreign=Yes with no other features. Therefore, if there are
-                # additional features (including pos), we will use 'flat' without
-                # the subtype.
-                my $pisethash = $parent->iset()->get_hash();
-                my $nisethash = $node->iset()->get_hash();
-                my @keys = (keys(%{$pisethash}), keys(%{$nisethash}));
-                log_info("Foreign rela = ".join(' ', ($parent->form(), $node->form())));
-                log_info("Foreign keys = ".join(' ', @keys));
-                my @non_foreign_keys = grep {$_ ne 'foreign'} (@keys);
-                if(scalar(@non_foreign_keys) > 0 || $parent->ord() > $node->ord())
-                {
-                    $deprel = 'flat';
-                }
-                else
-                {
-                    $deprel = 'flat:foreign';
-                }
+                # X Foreign=Yes with no other features. We cannot guarantee this
+                # in PDT (for example, there is foreign journal name "New England
+                # J. of Med.", where "J" is tagged as a domestic abbreviated NOUN,
+                # while the other words are foreign and tagged X). Therefore we
+                # will not distinguish flat:foreign from flat.
+                $deprel = 'flat';
             }
             elsif($node->is_determiner() && $self->agree($node, $parent, 'case'))
             {
