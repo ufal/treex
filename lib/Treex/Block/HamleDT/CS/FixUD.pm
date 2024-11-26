@@ -891,18 +891,6 @@ sub fix_constructions
             $deprel = 'parataxis';
             $node->set_deprel($deprel);
         }
-        # "chtě nechtě" (converbs of "chtít", "to want") is a fixed expression with adverbial meaning.
-        elsif($node->form() =~ m/^(chtě|chtíc)$/ && $parent->ord() == $node->ord()+1 &&
-              $parent->form() =~ m/^(nechtě|nechtíc)$/)
-        {
-            my $grandparent = $parent->parent();
-            $node->set_parent($grandparent);
-            $deprel = 'advcl';
-            $node->set_deprel($deprel);
-            $parent->set_parent($node);
-            $parent->set_deprel('fixed');
-            $parent = $grandparent;
-        }
         # "cestou necestou": both are NOUN, "cestou" is attached to "necestou" as 'cc'.
         elsif($node->is_noun() && $deprel =~ m/^cc(:|$)/)
         {
@@ -1241,11 +1229,20 @@ BEGIN
         # - subtree .. apply only if the nodes already form a full subtree (all descendants included in the expression)
         # - fixed .... apply only if it is already annotated as fixed (i.e. just normalize morphology and add ExtPos)
         #---------------------------------------------------------
+        # Multiword adjectives.
+        ###!!! We hard-code certain disambiguations (the expression is rare, in PDT there is just one occurrence of "ty tam", and we know it is masculine inanimate and not feminine).
+        ['ta tam',             'always',  'ten tam',            'DET ADV',             'PDFS1---------- Db-------------',                 'pos=adj|prontype=dem|gender=fem|number=sing|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
+        ['ten tam',            'always',  'ten tam',            'DET ADV',             'PDYS1---------- Db-------------',                 'pos=adj|prontype=dem|gender=masc|number=sing|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
+        ['ti tam',             'always',  'ten tam',            'DET ADV',             'PDMP1---------- Db-------------',                 'pos=adj|prontype=dem|gender=masc|animacy=anim|number=plur|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
+        ['to tam',             'always',  'ten tam',            'DET ADV',             'PDNS1---------- Db-------------',                 'pos=adj|prontype=dem|gender=neut|number=sing|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
+        ['ty tam',             'always',  'ten tam',            'DET ADV',             'PDIP1---------- Db-------------',                 'pos=adj|prontype=dem|gender=masc|animacy=inan|number=plur|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
         # Multiword adverbs.
         ['a priori',           'always',  'a priori',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
         ['co možná',           'always',  'co možná',           'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv',               '0:advmod 1:fixed'],
         ['de facto',           'always',  'de facto',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
         ['ex ante',            'always',  'ex ante',            'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
+        ['chtě nechtě',        'always',  'chtít chtít',        'VERB VERB',           'VeZS------A---- VeZS------N----',                 'pos=verb|polarity=pos|gender=masc|number=sing|verbform=conv|tense=pres|voice=act|aspect=imp|extpos=adv pos=verb|polarity=neg|gender=masc|number=sing|verbform=conv|tense=pres|voice=act|aspect=imp', '0:advmod 1:fixed'],
+        ['chtíc nechtíc',      'always',  'chtít chtít',        'VERB VERB',           'VeFS------A---- VeFS------N----',                 'pos=verb|polarity=pos|gender=fem|number=sing|verbform=conv|tense=pres|voice=act|aspect=imp|extpos=adv pos=verb|polarity=neg|gender=fem|number=sing|verbform=conv|tense=pres|voice=act|aspect=imp', '0:advmod 1:fixed'],
         ['in memoriam',        'always',  'in memoriam',        'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
         # "M. J." can be somebody's initials (connected as flat, nmod, or even as siblings), and it is difficult to distinguish.
         ['m . j .',            'subtree', 'mimo . jiný .',      'ADP PUNCT ADJ PUNCT', 'Q3------------- Z:------------- Q3------------- Z:-------------', 'pos=adp|abbr=yes|extpos=adv pos=punc pos=adj|abbr=yes|case=acc|degree=pos|gender=neut|number=sing|polarity=pos pos=punc', '0:advmod 1:punct 1:fixed 3:punct'],
@@ -1272,17 +1269,19 @@ BEGIN
         ['týden co týden',     'always',  'týden co týden',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
         ['večer co večer',     'always',  'večer co večer',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
         # Multiword prepositions.
-        # Psané bez francouzské diakritiky je to nejednoznačné, mohlo by to chytit i "letiště JFK a La Guardia". Potřebovali bychom se asi omezit na případy, kdy už to bylo značené jako fixed, a jen přidat ExtPos.
-        #['a la',               'a la',               'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adp foreign=yes', '0:case 1:fixed'],
+        # Psané bez francouzské diakritiky je to nejednoznačné, mohlo by to chytit i "letiště JFK a La Guardia". Musíme se omezit na případy, kdy už to bylo značené jako fixed, a jen přidat ExtPos.
+        ['a la',               'fixed',   'a la',               'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adp foreign=yes', '0:case 1:fixed'],
         ['à la',               'always',  'a la',               'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adp foreign=yes', '0:case 1:fixed'],
-        ###!!!['v průběhu',          'v průběh',           'ADP NOUN',            'RR--6---------- NNIS6-----A----',                 'pos=adp|adpostype=prep|case=loc|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc', '0:case 1:fixed'],
-        ###!!!['v rámci',            'v rámec',            'ADP NOUN',            'RR--6---------- NNIS6-----A----',                 'pos=adp|adpostype=prep|case=loc|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc', '0:case 1:fixed'],
         # Multiword subordinators.
         ['i když',             'always',  'i když',             'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub', '0:mark 1:fixed'],
+        ['jestli že',          'always',  'jestli že',          'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub|extpos=sconj pos=conj|conjtype=sub',  '0:mark 1:fixed'],
+        ['než - li',           'always',  'než - li',           'SCONJ PUNCT SCONJ',   'J,------------- Z:------------- J,-------------', 'pos=conj|conjtype=sub|extpos=sconj pos=punc pos=conj|conjtype=sub', '0:mark 3:punct 1:fixed'],
         # Multiword coordinators.
         # There is a dedicated function fix_a_to() (called from fix_constructions() before coming here), which makes sure that the right instances of "a sice" and "a to" are annotated as fixed expressions.
         ['a sice',             'always',  'a sice',             'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
         ['a to',               'fixed',   'a to',               'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
+        # MA says that 'neřku' has grammaticalized as an adverb, although historically it is 1st person singular present of 'říkat' (to say).
+        ['neřku - li',         'always',  'neřku - li',         'ADV PUNCT SCONJ',     'Db------------- Z:------------- J,-------------', 'pos=adv|extpos=cconj pos=punc pos=conj|conjtype=sub', '0:cc 3:punct 1:fixed'],
         # There is a dedicated function fix_to_jest() (called from fix_constructions() before coming here), which make sure that the right instances of "to je" and "to jest" are annotated as fixed expressions.
         ['to je',              'fixed',   'ten být',            'DET AUX',             'PDNS1---------- VB-S---3P-AAI--',                 'pos=adj|prontype=dem|gender=neut|number=sing|case=nom|extpos=cconj pos=verb|verbtype=aux|polarity=pos|number=sing|person=3|verbform=fin|mood=ind|tense=pres|voice=act|aspect=imp', '0:cc 1:fixed'],
         ['to jest',            'fixed',   'ten být',            'DET AUX',             'PDNS1---------- VB-S---3P-AAI-2',                 'pos=adj|prontype=dem|gender=neut|number=sing|case=nom|extpos=cconj pos=verb|verbtype=aux|polarity=pos|number=sing|person=3|verbform=fin|mood=ind|tense=pres|voice=act|aspect=imp', '0:cc 1:fixed'],
@@ -1294,18 +1293,35 @@ BEGIN
         ['a jestliže',         'always',  'a jestliže',         'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
         ['a pokud',            'always',  'a pokud',            'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
         ['a tak',              'always',  'a tak',              'CCONJ CCONJ',         'J^------------- J^-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=coor', '0:cc 0:cc'],
+        ['a že',               'fixed',   'a že',               'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '0:cc 0:mark'],
         ['alespoň pokud',      'always',  'alespoň pokud',      'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
         ['asi jako',           'always',  'asi jako',           'PART SCONJ',          'TT------------- J,-------------',                 'pos=part pos=conj|conjtype=sub',                '-1:advmod -1:mark'],
         ['ať již',             'always',  'ať již',             'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
         ['ať už',              'always',  'ať už',              'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
         ['až na',              'fixed',   'až na',              'PART ADP',            'TT------------- RR--4----------',                 'pos=part pos=adp|adpostype=prep|case=acc',      '0:advmod:emph 0:case'],
         ['co když',            'always',  'co když',            'PART SCONJ',          'TT------------- J,-------------',                 'pos=part pos=conj|conjtype=sub',                '0:mark 0:mark'],
+        ['hned co',            'always',  'hned co',            'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
         ['jako když',          'always',  'jako když',          'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',   '0:mark 0:mark'],
+        ['jako například , že', 'always', 'jako například , že', 'SCONJ ADV PUNCT SCONJ', 'J,------------- Db------------- Z:------------- J,-------------', 'pos=conj|conjtype=sub pos=adv pos=punc pos=conj|conjtype=sub', '0:mark 0:advmod 0:punct 0:mark'],
+        ['jako že',            'always',  'jako že',            'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',   '0:mark 0:mark'],
         ['jen když',           'always',  'jen když',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
+        ['jen pokud',          'always',  'jen pokud',          'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
         ['jestliže tedy',      'always',  'jestliže tedy',      'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '0:mark 0:cc'],
+        ['když už',            'fixed',   'když už',            'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
+        ['např . že',          'always',  'například . že',     'ADV PUNCT SCONJ',     'Db------------b Z:------------- J,-------------', 'pos=adv|abbr=yes pos=punc pos=conj|conjtype=sub', '0:advmod 1:punct 0:mark'],
         ['pokud možno',        'always',  'pokud možný',        'SCONJ ADJ',           'J,------------- ACNS------A----',                 'pos=conj|conjtype=sub pos=adj|polarity=pos|gender=neut|number=sing|degree=pos|variant=short', '2:mark 0:advcl'],
         ['pokud totiž',        'always',  'pokud totiž',        'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '0:mark 0:cc'],
+        ['pokud však',         'always',  'pokud však',         'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '-1:mark -1:cc'],
+        ['prostě že',          'always',  'prostě že',          'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
+        ['tedy až',            'always',  'tedy až',            'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '0:cc 0:mark'],
+        ['tedy jako',          'always',  'tedy jako',          'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '0:cc 0:mark'],
+        ['tj . zda',           'always',  'tj . zda',           'CCONJ PUNCT SCONJ',   'B^------------- Z:------------- J,-------------', 'pos=conj|conjtype=coor|abbr=yes pos=punc pos=conj|conjtype=sub', '0:cc 1:punct 0:mark'],
+        ['tj . že',            'always',  'tj . že',            'CCONJ PUNCT SCONJ',   'B^------------- Z:------------- J,-------------', 'pos=conj|conjtype=coor|abbr=yes pos=punc pos=conj|conjtype=sub', '0:cc 1:punct 0:mark'],
+        ['tzn . že',           'always',  'tzn . že',           'CCONJ PUNCT SCONJ',   'B^------------- Z:------------- J,-------------', 'pos=conj|conjtype=coor|abbr=yes pos=punc pos=conj|conjtype=sub', '0:cc 1:punct 0:mark'],
         ['totiž že',           'always',  'totiž že',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '0:cc 0:mark'],
+        ['totiž , že',         'always',  'totiž že',           'CCONJ PUNCT SCONJ',   'J^------------- Z:------------- J,-------------', 'pos=conj|conjtype=coor pos=punc pos=conj|conjtype=sub', '0:cc 0:punct 0:mark'],
+        ['v duchu',            'always',  'v duch',             'ADP NOUN',            'RR--6---------- NNIS6-----A----',                 'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc', '2:case -1:obl'],
+        ['v případě , že',     'always',  'v případ , že',      'ADP NOUN PUNCT SCONJ', 'RR--6---------- NNIS6-----A---- Z:------------- J,-------------', 'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc pos=punc pos=conj|conjtype=sub', '2:case -1:obl -1:punct -1:mark'],
         ['zkrátka když',       'always',  'zkrátka když',       'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
     );
     foreach my $e (@_fixed_expressions)
@@ -1455,7 +1471,7 @@ sub fix_fixed_expressions
     # For now, I am not listing all of them in the table above, but at least they should get ExtPos.
     foreach my $node (@nodes)
     {
-        if($node->deprel() eq 'fixed' && $node->parent()->deprel() eq 'case')
+        if($node->deprel() eq 'fixed' && $node->parent()->deprel() eq 'case' && lc($node->parent()->form()) ne 'jako')
         {
             $node->parent()->iset()->set('extpos', 'adp');
         }

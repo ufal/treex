@@ -939,7 +939,7 @@ sub raise_dependents_of_quantifiers
         # We could restrict the parent's deprel to 'det:numgov' but there are
         # other constructions where the determiner is not quantifier (but
         # demonstrative, totalizer etc.) and they have a similar problem.
-        if($node->deprel() =~ m/^(appos|acl|advcl|xcomp|dep)(:|$)/ && $node->parent()->deprel() =~ m/^det(:|$)/)
+        if($node->deprel() =~ m/^(nmod|appos|acl|advcl|xcomp|dep)(:|$)/ && $node->parent()->deprel() =~ m/^det(:|$)/)
         {
             $node->set_parent($node->parent()->parent());
         }
