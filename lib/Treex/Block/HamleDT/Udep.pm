@@ -484,7 +484,22 @@ sub convert_deprels
                   ###!!! van Gogh, de Gaulle in Czech text; but it means we will have to reverse the relation left-to-right!
                   ###!!! Another solution would be to label the relation "case". But foreign prepositions do not have this function in Czech.
             {
-                $deprel = 'flat:foreign';
+                # Nathan Schneider wanted the UD validator to issue a warning if
+                # 'flat:foreign' is used and the two nodes connected are not just
+                # X Foreign=Yes with no other features. Therefore, if there are
+                # additional features (including pos), we will use 'flat' without
+                # the subtype.
+                my $pisethash = $parent->iset()->get_hash();
+                my $nisethash = $node->iset()->get_hash();
+                my @non_foreign_keys = grep {$_ ne 'foreign'} (keys(%{$pisethash}), keys(%{$nisethash}));
+                if(scalar(@non_foreign_keys) > 0)
+                {
+                    $deprel = 'flat';
+                }
+                else
+                {
+                    $deprel = 'flat:foreign';
+                }
             }
             elsif($node->is_determiner() && $self->agree($node, $parent, 'case'))
             {
