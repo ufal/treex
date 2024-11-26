@@ -445,7 +445,12 @@ sub convert_deprels
         {
             # Czech-specific: Postponed genitive modifiers should be 'nmod'
             # even if they are headed by an adjective or a determiner ("každého z nich").
-            if($node->iset()->is_genitive() && $parent->ord() < $node->ord())
+            # Similarly, postponed modifiers with their own preposition are
+            # 'nmod' ("nálepka pro ty nahoře"). Unfortunately that is something
+            # we cannot check now because the tree structure has not been
+            # transformed yet. But we can check that the case of the modifier
+            # differs from the case of the parent.
+            if($parent->ord() < $node->ord() && ($node->iset()->is_genitive() || $node->iset()->case() ne $parent->iset()->case()))
             {
                 $deprel = 'nmod';
             }
