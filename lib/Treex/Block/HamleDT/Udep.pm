@@ -491,7 +491,10 @@ sub convert_deprels
                 # the subtype.
                 my $pisethash = $parent->iset()->get_hash();
                 my $nisethash = $node->iset()->get_hash();
-                my @non_foreign_keys = grep {$_ ne 'foreign'} (keys(%{$pisethash}), keys(%{$nisethash}));
+                my @keys = (keys(%{$pisethash}), keys(%{$nisethash}));
+                log_info("Foreign rela = ".join(' ', ($parent->form(), $node->form())));
+                log_info("Foreign keys = ".join(' ', @keys));
+                my @non_foreign_keys = grep {$_ ne 'foreign'} (@keys);
                 if(scalar(@non_foreign_keys) > 0)
                 {
                     $deprel = 'flat';
