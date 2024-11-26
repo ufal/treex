@@ -906,6 +906,10 @@ sub relabel_demonstratives_with_clauses
     {
         if($node->deprel() eq 'det')
         {
+            if($node->form() eq 'každého')
+            {
+                log_info('kazdeho relabel');
+            }
             # Include also 'amod' because of things like "ploch se vším možným"
             # (det(ploch, vším); amod(vším, možným); the det should be nmod or
             # it should be flipped, "možným" should be head but the whole thing
@@ -942,6 +946,10 @@ sub raise_dependents_of_quantifiers
     my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
+        if($node->form() eq 'každého')
+        {
+            log_info('kazdeho raise');
+        }
         # We could restrict the parent's deprel to 'det:numgov' but there are
         # other constructions where the determiner is not quantifier (but
         # demonstrative, totalizer etc.) and they have a similar problem.
