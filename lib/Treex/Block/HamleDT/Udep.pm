@@ -443,10 +443,16 @@ sub convert_deprels
         # Attribute of a noun: amod, nummod, nmod, acl
         elsif($deprel eq 'Atr')
         {
+            # Czech-specific: Postponed genitive modifiers should be 'nmod'
+            # even if they are headed by an adjective or a determiner ("každého z nich").
+            if($node->iset()->is_genitive() && $parent->ord() < $node->ord())
+            {
+                $deprel = 'nmod';
+            }
             # Cardinal number is nummod, ordinal number is amod. It should not be a problem because Interset should categorize ordinals as special types of adjectives.
             # But we cannot use the is_numeral() method because it returns true if pos=num or if numtype is not empty.
             # We also want to exclude pronominal numerals (kolik, tolik, mnoho, málo). These should be det.
-            if($node->iset()->pos() eq 'num')
+            elsif($node->iset()->pos() eq 'num')
             {
                 if($node->iset()->prontype() eq '')
                 {
