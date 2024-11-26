@@ -495,7 +495,7 @@ sub convert_deprels
                 log_info("Foreign rela = ".join(' ', ($parent->form(), $node->form())));
                 log_info("Foreign keys = ".join(' ', @keys));
                 my @non_foreign_keys = grep {$_ ne 'foreign'} (@keys);
-                if(scalar(@non_foreign_keys) > 0)
+                if(scalar(@non_foreign_keys) > 0 || $parent->ord() > $node->ord())
                 {
                     $deprel = 'flat';
                 }
