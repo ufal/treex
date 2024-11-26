@@ -1304,11 +1304,13 @@ BEGIN
         ['jako když',          'always',  'jako když',          'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',   '0:mark 0:mark'],
         ['jako například , že', 'always', 'jako například , že', 'SCONJ ADV PUNCT SCONJ', 'J,------------- Db------------- Z:------------- J,-------------', 'pos=conj|conjtype=sub pos=adv pos=punc pos=conj|conjtype=sub', '0:mark 0:advmod 0:punct 0:mark'],
         ['jako že',            'always',  'jako že',            'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',   '0:mark 0:mark'],
+        ['jen , když',         'always',  'jen , když',         'ADV PUNCT SCONJ',     'Db------------- Z:------------- J,-------------', 'pos=adv pos=punc pos=conj|conjtype=sub',        '0:advmod:emph 0:punct 0:mark'],
         ['jen když',           'always',  'jen když',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
         ['jen pokud',          'always',  'jen pokud',          'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
         ['jestliže tedy',      'always',  'jestliže tedy',      'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '0:mark 0:cc'],
         ['když už',            'fixed',   'když už',            'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
-        ['např . že',          'always',  'například . že',     'ADV PUNCT SCONJ',     'Db------------b Z:------------- J,-------------', 'pos=adv|abbr=yes pos=punc pos=conj|conjtype=sub', '0:advmod 1:punct 0:mark'],
+        ['např . že',          'always',  'například . že',     'ADV PUNCT SCONJ',     'Db------------b Z:------------- J,-------------', 'pos=adv|abbr=yes pos=punc pos=conj|conjtype=sub', '0:advmod:emph 1:punct 0:mark'],
+        ['například když',     'always',  'například když',     'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
         ['pokud možno',        'always',  'pokud možný',        'SCONJ ADJ',           'J,------------- ACNS------A----',                 'pos=conj|conjtype=sub pos=adj|polarity=pos|gender=neut|number=sing|degree=pos|variant=short', '2:mark 0:advcl'],
         ['pokud totiž',        'always',  'pokud totiž',        'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '0:mark 0:cc'],
         ['pokud však',         'always',  'pokud však',         'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '-1:mark -1:cc'],
@@ -1323,6 +1325,7 @@ BEGIN
         ['v duchu',            'always',  'v duch',             'ADP NOUN',            'RR--6---------- NNIS6-----A----',                 'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc', '2:case -1:obl'],
         ['v případě , že',     'fixed',   'v případ , že',      'ADP NOUN PUNCT SCONJ', 'RR--6---------- NNIS6-----A---- Z:------------- J,-------------', 'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc pos=punc pos=conj|conjtype=sub', '2:case -1:obl -1:punct -1:mark'],
         ['zkrátka když',       'always',  'zkrátka když',       'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
+        ['že totiž',           'always',  'že totiž',           'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '0:mark 0:cc'],
     );
     foreach my $e (@_fixed_expressions)
     {

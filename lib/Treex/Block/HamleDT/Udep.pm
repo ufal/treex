@@ -910,9 +910,9 @@ sub relabel_demonstratives_with_clauses
             # (det(ploch, vším); amod(vším, možným); the det should be nmod or
             # it should be flipped, "možným" should be head but the whole thing
             # should still depend on "plochy" as nmod).
-            my @clauses = grep {$_->deprel() =~ m/^(acl|amod)(:|$)/} ($node->children());
+            my @clauses = grep {$_->deprel() =~ m/^(acl|amod|ccomp)(:|$)/} ($node->children());
             # "v koalici, ať již jakékoli/det"
-            my @claudeps = grep {$_->deprel() =~ m/^(mark|advmod)(:|$)/} ($node->children());
+            my @claudeps = grep {$_->deprel() =~ m/^(mark)(:|$)/} ($node->children());
             if(scalar(@clauses) > 0)
             {
                 $node->set_deprel('nmod');
@@ -945,7 +945,7 @@ sub raise_dependents_of_quantifiers
         # We could restrict the parent's deprel to 'det:numgov' but there are
         # other constructions where the determiner is not quantifier (but
         # demonstrative, totalizer etc.) and they have a similar problem.
-        if($node->deprel() =~ m/^(nmod|appos|acl|advcl|xcomp|dep)(:|$)/ && $node->parent()->deprel() =~ m/^det(:|$)/)
+        if($node->deprel() =~ m/^(amod|nummod|nmod|appos|acl|advcl|xcomp|dep)(:|$)/ && $node->parent()->deprel() =~ m/^det(:|$)/)
         {
             $node->set_parent($node->parent()->parent());
         }
