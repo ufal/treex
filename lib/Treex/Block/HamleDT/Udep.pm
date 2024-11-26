@@ -911,9 +911,15 @@ sub relabel_demonstratives_with_clauses
             # it should be flipped, "možným" should be head but the whole thing
             # should still depend on "plochy" as nmod).
             my @clauses = grep {$_->deprel() =~ m/^(acl|amod)(:|$)/} ($node->children());
+            # "v koalici, ať již jakékoli/det"
+            my @claudeps = grep {$_->deprel() =~ m/^(mark|advmod)(:|$)/} ($node->children());
             if(scalar(@clauses) > 0)
             {
                 $node->set_deprel('nmod');
+            }
+            elsif(scalar(@claudeps) > 0)
+            {
+                $node->set_deprel('acl');
             }
         }
     }

@@ -1321,7 +1321,7 @@ BEGIN
         ['totiž že',           'always',  'totiž že',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '0:cc 0:mark'],
         ['totiž , že',         'always',  'totiž že',           'CCONJ PUNCT SCONJ',   'J^------------- Z:------------- J,-------------', 'pos=conj|conjtype=coor pos=punc pos=conj|conjtype=sub', '0:cc 0:punct 0:mark'],
         ['v duchu',            'always',  'v duch',             'ADP NOUN',            'RR--6---------- NNIS6-----A----',                 'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc', '2:case -1:obl'],
-        ['v případě , že',     'always',  'v případ , že',      'ADP NOUN PUNCT SCONJ', 'RR--6---------- NNIS6-----A---- Z:------------- J,-------------', 'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc pos=punc pos=conj|conjtype=sub', '2:case -1:obl -1:punct -1:mark'],
+        ['v případě , že',     'fixed',   'v případ , že',      'ADP NOUN PUNCT SCONJ', 'RR--6---------- NNIS6-----A---- Z:------------- J,-------------', 'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc pos=punc pos=conj|conjtype=sub', '2:case -1:obl -1:punct -1:mark'],
         ['zkrátka když',       'always',  'zkrátka když',       'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
     );
     foreach my $e (@_fixed_expressions)
