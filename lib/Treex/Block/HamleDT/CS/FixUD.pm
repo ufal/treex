@@ -2666,6 +2666,20 @@ sub fix_annotation_errors
         $subtree[7]->set_parent($subtree[5]);
         $subtree[7]->set_deprel('fixed');
     }
+    # CAC train n27w-s25
+    elsif($spanstring =~ m/^o tom , jak až mistr teprve objevil/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[2]->set_parent($subtree[7]);
+        $subtree[3]->set_parent($subtree[7]);
+        $subtree[3]->set_deprel('mark');
+    }
+    # CAC train n52w-s51
+    elsif($spanstring =~ m/^kolik bylo takových setkání s přáteli/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[1]->set_parent($subtree[3]);
+    }
     # Make sure that no node has more than one subject. This is to prevent
     # validation errors in UD. However, instead of randomly picking a subject
     # and re-labeling it as dep, we should investigate and fix the error
