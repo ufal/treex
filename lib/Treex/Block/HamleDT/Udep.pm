@@ -87,6 +87,7 @@ sub process_atree
     $self->relabel_objects_under_nominals($root);
     $self->distinguish_acl_from_amod($root);
     $self->relabel_demonstratives_with_clauses($root);
+    $self->relabel_postmodifying_determiners($root);
     $self->raise_dependents_of_quantifiers($root);
     $self->change_case_to_mark_under_verb($root);
     $self->dissolve_chains_of_auxiliaries($root);
@@ -504,7 +505,11 @@ sub convert_deprels
             # we should look at their children (is there nsubj, aux, cop?) but we
             # cannot do it now when some deprels may still wait for conversion. Since
             # it is language-specific, it should be resolved later in CS::FixUD.
-            elsif($node->is_adjective() && $self->agree($node, $parent, 'case'))
+            # We cannot require case agreement for adjectives. Not only because
+            # it is specific to Slavic languages, but also because occasional
+            # errors in case annotation would lead to much more serious errors
+            # in syntactic annotation.
+            elsif($node->is_adjective())
             {
                 $deprel = 'amod';
             }
@@ -934,6 +939,30 @@ sub relabel_demonstratives_with_clauses
             {
                 $node->set_deprel('acl');
             }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# A generalization of relabel_demonstratives_with_clauses(): Determiners in the
+# languages that we process here (mostly Czech) always precede the noun they
+# modify. If a word tagged DET follows its parent, the relation should not be
+# 'det'. But the first conversion step may have suggested det if the parent is
+# a noun. We could not fix it then because the structure had not been conver-
+# ted; now we can.
+#------------------------------------------------------------------------------
+sub relabel_postmodifying_determiners
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() =~ m/^det(:|$)/ && $node->ord() > $node->parent()->ord())
+        {
+            $node->set_deprel('nmod');
         }
     }
 }
