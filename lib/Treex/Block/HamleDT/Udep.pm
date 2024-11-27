@@ -444,9 +444,14 @@ sub convert_deprels
         # Attribute of a noun: amod, nummod, nmod, acl
         elsif($deprel eq 'Atr')
         {
-            # Czech-specific: Postponed genitive modifiers should be 'nmod'
-            # even if they are headed by an adjective or a determiner ("každého z nich").
-            if($parent->ord() < $node->ord() && $node->iset()->is_genitive())
+            # Czech-specific: Postponed genitive modifiers should usually be
+            # 'nmod' even if they are headed by an adjective or a determiner
+            # ("svědomí každého z nich"). However, there are counterexamples.
+            # Agreeing adjectives can follow the modified noun instead of
+            # preceding it, although it is rarer; if the whole nominal is in
+            # genitive, the adjective will be in genitive, too, but it should
+            # be still 'amod' and not 'nmod' ("molekula kyseliny uhličité").
+            if($parent->ord() < $node->ord() && $node->iset()->is_genitive() && !$parent->iset()->is_genitive())
             {
                 $deprel = 'nmod';
             }
@@ -865,7 +870,7 @@ sub relabel_objects_under_nominals
 {
     my $self = shift;
     my $root = shift;
-    my @nodes = $root->get_descendants();
+    my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
         my $parent = $node->parent();
@@ -891,7 +896,7 @@ sub distinguish_acl_from_amod
 {
     my $self = shift;
     my $root = shift;
-    my @nodes = $root->get_descendants();
+    my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
         if($node->deprel() =~ m/^amod(:|$)/)
