@@ -1300,12 +1300,18 @@ BEGIN
         ['ať už',              'always',  'ať už',              'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
         ['až do',              'fixed',   'až do',              'PART ADP',            'TT------------- RR--2----------',                 'pos=part pos=adp|adpostype=prep|case=gen',      '0:advmod:emph 0:case'],
         ['až k',               'fixed',   'až k',               'PART ADP',            'TT------------- RR--3----------',                 'pos=part pos=adp|adpostype=prep|case=dat',      '0:advmod:emph 0:case'],
+        ###!!! We should disambiguate between "až na"+Case=Loc and "až na"+Case=Acc!
         ['až na',              'fixed',   'až na',              'PART ADP',            'TT------------- RR--4----------',                 'pos=part pos=adp|adpostype=prep|case=acc',      '0:advmod:emph 0:case'],
+        ###!!! We should disambiguate between "až o"+Case=Loc and "až o"+Case=Acc!
+        ['až o',               'fixed',   'až o',               'PART ADP',            'TT------------- RR--4----------',                 'pos=part pos=adp|adpostype=prep|case=acc',      '0:advmod:emph 0:case'],
         ###!!! We should disambiguate between "až po"+Case=Loc and "až po"+Case=Acc!
         ['až po',              'fixed',   'až po',              'PART ADP',            'TT------------- RR--6----------',                 'pos=part pos=adp|adpostype=prep|case=loc',      '0:advmod:emph 0:case'],
         ['až počátkem',        'fixed',   'až počátek',         'PART NOUN',           'TT------------- NNIS7-----A----',                 'pos=part pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=ins', '0:advmod:emph 0:case'],
         ['až u',               'fixed',   'až u',               'PART ADP',            'TT------------- RR--2----------',                 'pos=part pos=adp|adpostype=prep|case=gen',      '0:advmod:emph 0:case'],
-        ['až ve',              'fixed',   'až v',               'PART ADP',            'TT------------- RR--6----------',                 'pos=part pos=adp|adpostype=prep|case=loc',      '0:advmod:emph 0:case'],
+        ###!!! We should disambiguate between "až v/ve"+Case=Loc and "až v/ve"+Case=Acc!
+        ['až v',               'fixed',   'až v',               'PART ADP',            'TT------------- RR--6----------',                 'pos=part pos=adp|adpostype=prep|case=loc',      '0:advmod:emph 0:case'],
+        ['až ve',              'fixed',   'až v',               'PART ADP',            'TT------------- RV--6----------',                 'pos=part pos=adp|adpostype=voc|case=loc',       '0:advmod:emph 0:case'],
+        ['až z',               'fixed',   'až z',               'PART ADP',            'TT------------- RR--2----------',                 'pos=part pos=adp|adpostype=prep|case=gen',      '0:advmod:emph 0:case'],
         ['co když',            'always',  'co když',            'PART SCONJ',          'TT------------- J,-------------',                 'pos=part pos=conj|conjtype=sub',                '0:mark 0:mark'],
         ['hned co',            'always',  'hned co',            'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
         ['jako když',          'always',  'jako když',          'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',   '0:mark 0:mark'],
@@ -1481,7 +1487,7 @@ sub fix_fixed_expressions
     # For now, I am not listing all of them in the table above, but at least they should get ExtPos.
     foreach my $node (@nodes)
     {
-        if($node->deprel() eq 'fixed' && $node->parent()->deprel() eq 'case' && lc($node->parent()->form()) ne 'jako')
+        if($node->deprel() eq 'fixed' && $node->parent()->deprel() eq 'case' && lc($node->parent()->form()) !~ m/^(až|jako)$/)
         {
             $node->parent()->iset()->set('extpos', 'adp');
         }
