@@ -67,6 +67,8 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
+    # First make sure that if UPOS=PUNCT, then DEPREL=punct (or root).
+    $self->punct_tag_implies_punct_deprel($root);
     my %pairs = %{$self->_pairs()};
     # Try to solve punctuation in brackets first. Hopefully the remainder of
     # this function will then stay away from it.
@@ -225,6 +227,43 @@ sub process_atree
     foreach my $node (@nodes)
     {
         delete($node->wild()->{bracketed_punctuation});
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# A node tagged PUNCT (iset()->is_punctuation()) must be attached as 'punct' in
+# UD. If it needs a different relation, it should be tagged SYM and not PUNCT.
+# The only exception is that the sentence consists of punctuation only and one
+# of the nodes must take the 'root' deprel.
+#------------------------------------------------------------------------------
+sub punct_tag_implies_punct_deprel
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    foreach my $node (@nodes)
+    {
+        # If its tag (UPOS) is PUNCT, its iset should say it is punctuation.
+        my $isetpunct = $node->iset()->is_punctuation();
+        my $upospunct = $node->tag() eq 'PUNCT';
+        if($isetpunct && !$upospunct)
+        {
+            $node->set_tag('PUNCT');
+            $upospunct = 1;
+        }
+        if($upospunct && !$isetpunct)
+        {
+            $node->iset()->set('pos', 'punc');
+            $isetpunct = 1;
+        }
+        # Both $isetpunct and $upospunct now say the same. Make sure that
+        # the deprel follows suit.
+        if($isetpunct && $node->deprel() !~ m/^(punct|root)(:|$)/)
+        {
+            $node->set_deprel('punct');
+        }
     }
 }
 
