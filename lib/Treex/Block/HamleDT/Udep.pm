@@ -962,11 +962,6 @@ sub relabel_postmodifying_determiners
     {
         if($node->deprel() =~ m/^det(:|$)/ && $node->ord() > $node->parent()->ord())
         {
-            ###!!! DEBUG
-            my $pform = $node->parent()->form();
-            my $dform = $node->form();
-            log_info("Relabeling '$pform' ---> '$dform' from 'det' to 'nmod'");
-            ###!!!
             $node->set_deprel('nmod');
         }
     }
