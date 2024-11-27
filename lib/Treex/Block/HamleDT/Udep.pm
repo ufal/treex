@@ -960,10 +960,26 @@ sub relabel_postmodifying_determiners
     my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
-        if($node->deprel() =~ m/^det(:|$)/ && $node->ord() > $node->parent()->ord())
-        {
-            $node->set_deprel('nmod');
-        }
+        # Do not relabel det:numgov. They can postmodify ("v každém městě jich
+        # najdeme několik" – "několik" depends on "jich"). Also, we want to keep
+        # their label including the subtype so we can find all quantifiers.
+        next if($node->deprel() ne 'det');
+        # Premodifying determiners are OK (in the languages we are interested in).
+        next if($node->ord() < $node->parent()->ord());
+        # Although rare in modern standard Czech, poetic and old texts can contain
+        # agreeing determiners after the noun. Some determiners are more likely
+        # than others to occur in such positions:
+        # - "v Německu samém" ("samém" is det and it agrees with "Německu")
+        # - "v Silvě jeho" ("jeho" = "his" is possessive and it would be treated
+        #   as det if before the noun ("v jeho Silvě"), although it cannot inflect
+        #   to show agreement)
+        # - "smlouva tato" (postponed agreeing demonstrative)
+        next if($self->agree($node, $node->parent(), 'case') && scalar($node->children()) == 0);
+        # Now we probably have a demonstrative or total that heads a nominal and
+        # just incidentally depends on a previous noun. Or pronoun. It includes
+        # examples like "něco takového", where a partitive-genitive depends on
+        # another pronoun or even determiner.
+        $node->set_deprel('nmod');
     }
 }
 
