@@ -1252,6 +1252,7 @@ BEGIN
         ['přece jenom',        'always',  'přece jenom',        'PART PART',           'TT------------- TT-------------',                 'pos=part|extpos=adv pos=part',             '0:advmod 1:fixed'],
         ['stejně jako',        'fixed',   'stejně jako',        'ADV SCONJ',           'Dg-------1A---- J,-------------',                 'pos=adv|polarity=pos|degree=pos|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
         ['suma sumárum',       'always',  'suma sumárum',       'NOUN ADV',            'NNFS1-----A---- Db-------------',                 'pos=noun|nountype=com|gender=fem|number=sing|case=nom|extpos=adv pos=adv', '0:advmod 1:fixed'],
+        ['víc než',            'fixed',   'více než',           'ADV SCONJ',           'Dg-------2A---1 J,-------------',                 'pos=adv|polarity=pos|degree=cmp|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
         ['více než',           'fixed',   'více než',           'ADV SCONJ',           'Dg-------2A---- J,-------------',                 'pos=adv|polarity=pos|degree=cmp|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
         ['všeho všudy',        'always',  'všechen všudy',      'DET ADV',             'PLZS2---------- Db-------------',                 'pos=adj|prontype=tot|gender=neut|number=sing|case=gen|extpos=adv pos=adv|prontype=tot', '0:advmod 1:fixed'],
         # Expressions like "týden co týden": Since the "X co X" pattern is not productive,
