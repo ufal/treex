@@ -651,7 +651,7 @@ sub set_b_e_dependency
         log_warn("Attempting synchronous basic+enhanced modification while previous dependencies did not match");
     }
     @edeps = grep {my @x = split(/:/, $_); $x[0] != $opord} (@edeps);
-    $wild->{enhanced} = [@edeps];
+    $self->wild()->{enhanced} = [@edeps];
     $self->add_enhanced_dependency($new_parent, $new_deprel);
 }
 
