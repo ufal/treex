@@ -607,6 +607,57 @@ sub collect_sentence_text
 
 
 #------------------------------------------------------------------------------
+# Returns 1 if the node is part of the enhanced UD graph, i.e., it has at least
+# one incoming enhanced dependency. Outgoing enhanced dependencies are not
+# checked. This method is useful if a block modifies the basic UD structure and
+# it wants to know whether there is enhanced UD structure that needs a similar
+# modification. Unlike get_enhanced_deps(), this method will not create an
+# empty list of enhanced dependencies if it did not exist before.
+#------------------------------------------------------------------------------
+sub has_enhanced_deps
+{
+    my $self = shift;
+    my $wild = $self->wild();
+    return exists($wild->{enhanced}) && defined($wild->{enhanced}) && ref($wild->{enhanced}) eq 'ARRAY' && scalar(@{$wild->{enhanced}}) > 0;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sets a new parent + deprel in the basic UD tree and if there is the enhanced
+# structure, performs an analogous change there as well.
+#------------------------------------------------------------------------------
+sub set_b_e_dependency
+{
+    my $self = shift;
+    my $new_parent = shift;
+    my $new_deprel = shift;
+    my $old_parent = $self->parent();
+    my $old_deprel = $self->deprel();
+    $self->set_parent($new_parent);
+    $self->set_deprel($new_deprel);
+    # If there are no enhanced dependencies, we do not need to do anything more.
+    return unless($self->has_enhanced_deps());
+    my @edeps = $self->get_enhanced_deps();
+    # The relation to the old parent should be removed from edeps.
+    ###!!! This method should be used in simple cases where the enhanced structure
+    ###!!! closely follows the basic one. It is not clear what should be done
+    ###!!! if there is no enhanced relation to the old parent, multiple such
+    ###!!! relations, or a relation with a radically different type.
+    my $opord = $old_parent->get_conllu_id();
+    my @opedeps = grep {my @x = split(/:/, $_); $x[0] == $opord} (@edeps);
+    if(scalar(@opedeps) != 1)
+    {
+        log_warn("Attempting synchronous basic+enhanced modification while previous dependencies did not match");
+    }
+    @edeps = grep {my @x = split(/:/, $_); $x[0] != $opord} (@edeps);
+    $wild->{enhanced} = [@edeps];
+    $self->add_enhanced_dependency($new_parent, $new_deprel);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the list of incoming enhanced edges for a node. Each element of the
 # list is a pair: 1. ord of the parent node; 2. relation label.
 #------------------------------------------------------------------------------

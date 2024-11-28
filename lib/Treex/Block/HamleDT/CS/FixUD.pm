@@ -1603,20 +1603,17 @@ sub fix_fixed_expressions
                 {
                     if(defined($subroot_node))
                     {
-                        $expression_nodes[$i]->set_parent($subroot_node);
-                        $expression_nodes[$i]->set_deprel($found_expression->{deprels}[$i]);
+                        $expression_nodes[$i]->set_b_e_dependency($subroot_node, $found_expression->{deprels}[$i]);
                     }
                     else
                     {
-                        $expression_nodes[$i]->set_parent($parent);
-                        $expression_nodes[$i]->set_deprel('root');
+                        $expression_nodes[$i]->set_b_e_dependency($parent, 'root');
                         $subroot_node = $expression_nodes[$i];
                     }
                 }
                 else
                 {
-                    $expression_nodes[$i]->set_parent($parent);
-                    $expression_nodes[$i]->set_deprel($found_expression->{deprels}[$i]);
+                    $expression_nodes[$i]->set_b_e_dependency($parent, $found_expression->{deprels}[$i]);
                 }
             }
         }
@@ -1626,8 +1623,7 @@ sub fix_fixed_expressions
             my $parent_i = $found_expression->{parents}[$i];
             if($parent_i > 0)
             {
-                $expression_nodes[$i]->set_parent($expression_nodes[$parent_i-1]);
-                $expression_nodes[$i]->set_deprel($found_expression->{deprels}[$i]);
+                $expression_nodes[$i]->set_b_e_dependency($expression_nodes[$parent_i-1], $found_expression->{deprels}[$i]);
             }
         }
     }
