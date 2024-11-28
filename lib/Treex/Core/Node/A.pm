@@ -645,13 +645,13 @@ sub set_b_e_dependency
     ###!!! if there is no enhanced relation to the old parent, multiple such
     ###!!! relations, or a relation with a radically different type.
     my $opord = $old_parent->get_conllu_id();
-    my @opedeps = grep {my @x = split(/:/, $_); $x[0] == $opord} (@edeps);
+    my @opedeps = grep {$_->[0] == $opord} (@edeps);
     my $nopedeps = scalar(@opedeps);
     if($nopedeps != 1)
     {
         log_warn("Attempting synchronous basic+enhanced modification while $nopedeps edeps go to the old parent id $opord");
     }
-    @edeps = grep {my @x = split(/:/, $_); $x[0] != $opord} (@edeps);
+    @edeps = grep {$_->[0] != $opord} (@edeps);
     $self->wild()->{enhanced} = [@edeps];
     $self->add_enhanced_dependency($new_parent, $new_deprel);
 }
