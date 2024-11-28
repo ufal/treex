@@ -646,9 +646,10 @@ sub set_b_e_dependency
     ###!!! relations, or a relation with a radically different type.
     my $opord = $old_parent->get_conllu_id();
     my @opedeps = grep {my @x = split(/:/, $_); $x[0] == $opord} (@edeps);
-    if(scalar(@opedeps) != 1)
+    my $nopedeps = scalar(@opedeps);
+    if($nopedeps != 1)
     {
-        log_warn("Attempting synchronous basic+enhanced modification while previous dependencies did not match");
+        log_warn("Attempting synchronous basic+enhanced modification while $nopedeps edeps go to the old parent id $opord");
     }
     @edeps = grep {my @x = split(/:/, $_); $x[0] != $opord} (@edeps);
     $self->wild()->{enhanced} = [@edeps];
