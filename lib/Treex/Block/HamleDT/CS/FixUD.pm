@@ -1620,6 +1620,12 @@ sub fix_fixed_expressions
                     $expression_nodes[$i]->set_b_e_dependency($parent, $found_expression->{deprels}[$i]);
                 }
             }
+            # To prevent temporary cycles when changing the internal structure
+            # of the expression, first reattach all nodes to the parent, too.
+            else
+            {
+                $expression_nodes[$i]->set_b_e_dependency($parent, 'dep:temporary');
+            }
         }
         # Now modify the attachments inside the expression.
         for(my $i = 0; $i <= $#expression_nodes; $i++)
