@@ -570,13 +570,6 @@ BEGIN
         # - subtree .. apply only if the nodes already form a full subtree (all descendants included in the expression)
         # - fixed .... apply only if it is already annotated as fixed (i.e. just normalize morphology and add ExtPos)
         #---------------------------------------------------------
-        # Multiword adjectives.
-        ###!!! We hard-code certain disambiguations (the expression is rare, in PDT there is just one occurrence of "ty tam", and we know it is masculine inanimate and not feminine).
-        ['ta tam',             'always',  'ten tam',            'DET ADV',             'PDFS1---------- Db-------------',                 'pos=adj|prontype=dem|gender=fem|number=sing|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
-        ['ten tam',            'always',  'ten tam',            'DET ADV',             'PDYS1---------- Db-------------',                 'pos=adj|prontype=dem|gender=masc|number=sing|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
-        ['ti tam',             'always',  'ten tam',            'DET ADV',             'PDMP1---------- Db-------------',                 'pos=adj|prontype=dem|gender=masc|animacy=anim|number=plur|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
-        ['to tam',             'always',  'ten tam',            'DET ADV',             'PDNS1---------- Db-------------',                 'pos=adj|prontype=dem|gender=neut|number=sing|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
-        ['ty tam',             'always',  'ten tam',            'DET ADV',             'PDIP1---------- Db-------------',                 'pos=adj|prontype=dem|gender=masc|animacy=inan|number=plur|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
         # Multiword adverbs.
         ['a priori',           'always',  'a priori',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
         ['co možná',           'always',  'co možná',           'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv',               '0:advmod 1:fixed'],
@@ -627,8 +620,7 @@ BEGIN
         ['zda - li',           'always',  'zda - li',           'SCONJ PUNCT SCONJ',   'J,------------- Z:------------- J,-------------', 'pos=conj|conjtype=sub|extpos=sconj pos=punc pos=conj|conjtype=sub', '0:mark 3:punct 1:fixed'],
         # Multiword coordinators.
         # There is a dedicated function fix_a_to() (called from fix_constructions() before coming here), which makes sure that the right instances of "a sice" and "a to" are annotated as fixed expressions.
-        ['a sice',             'always',  'a sice',             'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
-        ['a to',               'fixed',   'a to',               'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
+        ['a to',               'fixed',   'a to',               'CCONJ PART',          'O PFns1',                                         'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
         # MA says that 'neřku' has grammaticalized as an adverb, although historically it is 1st person singular present of 'říkat' (to say).
         ['neřku - li',         'always',  'neřku - li',         'ADV PUNCT SCONJ',     'Db------------- Z:------------- J,-------------', 'pos=adv|extpos=cconj pos=punc pos=conj|conjtype=sub', '0:cc 3:punct 1:fixed'],
         # There is a dedicated function fix_to_jest() (called from fix_constructions() before coming here), which make sure that the right instances of "to je" and "to jest" are annotated as fixed expressions.
@@ -705,7 +697,7 @@ BEGIN
         ['tzn . že',           'always',  'tzn . že',           'CCONJ PUNCT SCONJ',   'B^------------- Z:------------- J,-------------', 'pos=conj|conjtype=coor|abbr=yes pos=punc pos=conj|conjtype=sub', '0:cc 1:punct 0:mark'],
         ['totiž že',           'always',  'totiž že',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '0:cc 0:mark'],
         ['totiž , že',         'always',  'totiž že',           'CCONJ PUNCT SCONJ',   'J^------------- Z:------------- J,-------------', 'pos=conj|conjtype=coor pos=punc pos=conj|conjtype=sub', '0:cc 0:punct 0:mark'],
-        ['v duchu',            'always',  'v duch',             'ADP NOUN',            'RR--6---------- NNIS6-----A----',                 'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc', '2:case -1:obl'],
+        ['v duchu',            'always',  'v duch',             'ADP NOUN',            'Eu6 SSis6',                                       'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc', '2:case -1:obl'],
         ['zejména když',       'always',  'zejména když',       'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
         ['zejména pokud',      'always',  'zejména pokud',      'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
         ['zkrátka když',       'always',  'zkrátka když',       'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
