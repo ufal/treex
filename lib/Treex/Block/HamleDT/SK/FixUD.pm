@@ -571,25 +571,26 @@ BEGIN
         # - fixed .... apply only if it is already annotated as fixed (i.e. just normalize morphology and add ExtPos)
         #---------------------------------------------------------
         # Multiword prepositions.
-        ['s cieľom',           'fixed',   's cieľ',             'ADP NOUN',            'Eu7 SSis7',           'pos=adp|adpostype=prep|case=ins|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=ins',       '0:case 1:fixed'],
+        ['s cieľom',           'fixed',   's cieľ',             'ADP NOUN',            'Eu7 SSis7',       'pos=adp|adpostype=prep|case=ins|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=ins', '0:case 1:fixed'],
         # Multiword subordinators.
-        ['aj keď',             'always',  'aj keď',             'CCONJ SCONJ',         'O O',                 'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub', '0:mark 1:fixed'],
-        ['i keď',              'always',  'i keď',              'CCONJ SCONJ',         'O O',                 'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub', '0:mark 1:fixed'],
-        ['zatiaľ čo',          'always',  'zatiaľ čo',          'SCONJ SCONJ',         'O O',                 'pos=adv|extpos=sconj pos=adv',                              '0:mark 1:fixed'],
+        ['aj keby',            'always',  'aj keby',            'CCONJ SCONJ',         'O OY',            'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub|mood=cnd', '0:mark 1:fixed'],
+        ['aj keď',             'always',  'aj keď',             'CCONJ SCONJ',         'O O',             'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub',          '0:mark 1:fixed'],
+        ['i keď',              'always',  'i keď',              'CCONJ SCONJ',         'O O',             'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub',          '0:mark 1:fixed'],
+        ['zatiaľ čo',          'always',  'zatiaľ čo',          'SCONJ SCONJ',         'O O',             'pos=adv|extpos=sconj pos=adv',                                       '0:mark 1:fixed'],
         # Multiword coordinators.
         # There is a dedicated function fix_a_to() (called from fix_constructions() before coming here), which makes sure that the right instances of "a sice" and "a to" are annotated as fixed expressions.
-        ['a to',               'fixed',   'a to',               'CCONJ PART',          'O PFns1',             'pos=conj|conjtype=coor|extpos=cconj pos=part',              '0:cc 1:fixed'],
+        ['a to',               'fixed',   'a to',               'CCONJ PART',          'O PFns1',         'pos=conj|conjtype=coor|extpos=cconj pos=part',              '0:cc 1:fixed'],
         # The following expressions should not be annotated as fixed.
-        ['a hoci',             'always',  'a hoci',             'CCONJ SCONJ',         'O O',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',              '0:cc 0:mark'],
-        ['ako keby',           'always',  'ako keby',           'SCONJ SCONJ',         'O OY',                'pos=conj|conjtype=sub pos=conj|conjtype=sub|mood=cnd',      '0:mark 0:mark'],
-        ['ako keď',            'always',  'ako keď',            'SCONJ SCONJ',         'O O',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',               '0:mark 0:mark'],
-        ['ani keby',           'always',  'ani keby',           'CCONJ SCONJ',         'O OY',                'pos=conj|conjtype=coor pos=conj|conjtype=sub|mood=cnd',     '0:cc 0:mark'],
-        ['až keď',             'fixed',   'až keď',             'PART SCONJ',          'T O',                 'pos=part pos=conj|conjtype=sub',                            '0:advmod:emph 0:mark'],
-        ['až kým',             'fixed',   'až kým',             'PART SCONJ',          'T O',                 'pos=part pos=conj|conjtype=sub',                            '0:advmod:emph 0:mark'],
-        ['len aby',            'always',  'len aby',            'CCONJ SCONJ',         'O OY',                'pos=conj|conjtype=coor pos=conj|conjtype=sub|mood=cnd',     '0:cc 0:mark'],
-        ['len čo',             'always',  'len čo',             'CCONJ SCONJ',         'O O',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',              '0:advmod 0:mark'],
-        ['prv ako',            'always',  'prv ako',            'CCONJ SCONJ',         'O O',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',              '0:cc 0:mark'],
-        ['v duchu',            'always',  'v duch',             'ADP NOUN',            'Eu6 SSis6',           'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc', '2:case -1:obl'],
+        ['a hoci',             'always',  'a hoci',             'CCONJ SCONJ',         'O O',             'pos=conj|conjtype=coor pos=conj|conjtype=sub',              '0:cc 0:mark'],
+        ['ako keby',           'always',  'ako keby',           'SCONJ SCONJ',         'O OY',            'pos=conj|conjtype=sub pos=conj|conjtype=sub|mood=cnd',      '0:mark 0:mark'],
+        ['ako keď',            'always',  'ako keď',            'SCONJ SCONJ',         'O O',             'pos=conj|conjtype=sub pos=conj|conjtype=sub',               '0:mark 0:mark'],
+        ['ani keby',           'always',  'ani keby',           'CCONJ SCONJ',         'O OY',            'pos=conj|conjtype=coor pos=conj|conjtype=sub|mood=cnd',     '0:cc 0:mark'],
+        ['až keď',             'fixed',   'až keď',             'PART SCONJ',          'T O',             'pos=part pos=conj|conjtype=sub',                            '0:advmod:emph 0:mark'],
+        ['až kým',             'fixed',   'až kým',             'PART SCONJ',          'T O',             'pos=part pos=conj|conjtype=sub',                            '0:advmod:emph 0:mark'],
+        ['len aby',            'always',  'len aby',            'CCONJ SCONJ',         'O OY',            'pos=conj|conjtype=coor pos=conj|conjtype=sub|mood=cnd',     '0:cc 0:mark'],
+        ['len čo',             'always',  'len čo',             'CCONJ SCONJ',         'O O',             'pos=conj|conjtype=coor pos=conj|conjtype=sub',              '0:advmod 0:mark'],
+        ['prv ako',            'always',  'prv ako',            'CCONJ SCONJ',         'O O',             'pos=conj|conjtype=coor pos=conj|conjtype=sub',              '0:cc 0:mark'],
+        ['v duchu',            'always',  'v duch',             'ADP NOUN',            'Eu6 SSis6',       'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc', '2:case -1:obl'],
     );
     foreach my $e (@_fixed_expressions)
     {
