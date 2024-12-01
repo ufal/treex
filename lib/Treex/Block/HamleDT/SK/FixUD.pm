@@ -19,9 +19,10 @@ sub process_atree
     # Do not call syntactic fixes from the previous loop. First make sure that
     # all nodes have correct morphology, then do syntax (so that you can rely
     # on the morphology you see at the parent node).
+    $self->fix_constructions($root);
+    $self->fix_fixed_expressions($root);
     foreach my $node (@nodes)
     {
-        $self->fix_constructions($node);
         $self->fix_annotation_errors($node);
         $self->identify_acl_relcl($node);
     }
@@ -235,305 +236,746 @@ sub identify_acl_relcl
 sub fix_constructions
 {
     my $self = shift;
-    my $node = shift;
-    my $parent = $node->parent();
-    my $deprel = $node->deprel();
-    # There are a few right-to-left appositions that resulted from transforming
-    # copula-like constructions with punctuation (":") instead of the copula.
-    # Each of them would probably deserve a different analysis but at present
-    # we do not care too much and make them 'parataxis' (they occur in nonverbal
-    # sentences or segments).
-    if($deprel =~ m/^appos(:|$)/ && $node->ord() < $parent->ord())
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    foreach my $node (@nodes)
     {
-        $deprel = 'parataxis';
-        $node->set_deprel($deprel);
-    }
-    # The abbreviation "tzv" ("takzvaný" = "so called") is an adjective.
-    # However, it is sometimes confused with "tzn" (see below) and attached as
-    # 'cc'.
-    elsif(lc($node->form()) eq 'tzv' && $node->is_adjective() && $parent->ord() > $node->ord())
-    {
-        $deprel = 'amod';
-        $node->set_deprel($deprel);
-    }
-    # Reflexive "sa" should not be attached as 'mark' or 'aux'.
-    elsif($node->form() =~ m/^(sa)$/i && $node->is_pronoun() && $deprel =~ m/^(mark|aux)(:|$)/)
-    {
-        $deprel = 'expl:pv';
-        $node->set_deprel($deprel);
-    }
-    # An adverb should not depend on a copula but on the nominal part of the
-    # predicate. Example: "Také vakovlk je, respektive před vyhubením byl, ..."
-    elsif($node->is_adverb() && $node->deprel() =~ m/^advmod(:|$)/ &&
-          $parent->deprel() =~ m/^cop(:|$)/)
-    {
-        $parent = $parent->parent();
-        $node->set_parent($parent);
-    }
-    # Slovak "a to" ("viz.") is a multi-word conjunction. In the original
-    # treebank, multiple attachment options occur:
-    # 1. "a" is attached to "to" as 'cc'.
-    # 2. both words are attached as siblings (relations 'cc').
-    elsif(lc($node->form()) eq 'a' && $deprel =~ m/^cc(:|$)/ &&
-          $parent->form() =~ m/^(to|sice)$/i && $parent->deprel() =~ m/^(cc|advmod|discourse)(:|$)/ && $parent->ord() > $node->ord())
-    {
-        my $grandparent = $parent->parent();
-        $node->set_parent($grandparent);
-        $deprel = 'cc';
-        $node->set_deprel($deprel);
-        $parent->set_parent($node);
-        $parent->set_deprel('fixed');
-        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
-        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
-        $parent->set_lemma('to');
-        $parent->set_tag('PART');
-        $parent->iset()->set_hash({'pos' => 'part'});
-        $parent = $grandparent;
-    }
-    elsif(lc($node->form()) =~ m/^(a)$/ && $deprel =~ m/^cc(:|$)/ &&
-          defined($node->get_right_neighbor()) &&
-          lc($node->get_right_neighbor()->form()) =~ m/^(to)$/ && $node->get_right_neighbor()->deprel() =~ m/^(cc|advmod|discourse)(:|$)/)
-    {
-        my $to = $node->get_right_neighbor();
-        $to->set_parent($node);
-        $to->set_deprel('fixed');
-        # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
-        # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
-        $to->set_lemma('to');
-        $to->set_tag('PART');
-        $to->iset()->set_hash({'pos' => 'part'});
-    }
-    # The expression "více než" ("more than") functions as an adverb.
-    elsif(lc($node->form()) eq 'než' && $parent->ord() == $node->ord()-1 &&
-          lc($parent->form()) eq 'více')
-    {
-        $deprel = 'fixed';
-        $node->set_deprel($deprel);
-        $parent->set_deprel('advmod');
-    }
-    # "rozuměj" (imperative of "understand") is a verb but attached as 'cc'.
-    # We will not keep the parallelism to "to jest" here. We will make it a parataxis.
-    # Similar: "míněno" (ADJ, passive participle of "mínit")
-    elsif($node->form() =~ m/^(rozuměj|dejme|míněno|počínaje|řekněme|říkajíc|srov(nej)?|víte|event)$/i && $deprel =~ m/^(cc|advmod|mark)(:|$)/)
-    {
-        $deprel = 'parataxis';
-        $node->set_deprel($deprel);
-    }
-    # Interjections showing the attitude to the speaker towards the event should
-    # be attached as 'discourse', not as 'advmod'.
-    elsif($node->is_interjection() && $deprel =~ m/^advmod(:|$)/)
-    {
-        $deprel = 'discourse';
-        $node->set_deprel($deprel);
-    }
-    # Sometimes a sequence of punctuation symbols (e.g., "***"), tokenized as
-    # one token per symbol, is analyzed as a constituent headed by one of the
-    # symbols. In UD, this should not happen unless the dependent symbols are
-    # brackets or quotation marks and the head symbol is enclosed by them.
-    elsif($node->is_punctuation() && $parent->is_punctuation())
-    {
-        unless($node->form() =~ m/^[\{\[\("']$/ && $parent->ord() == $node->ord()+1 ||
-               $node->form() =~ m/^['"\)\]\}]$/ && $parent->ord() == $node->ord()-1)
+        my $parent = $node->parent();
+        my $deprel = $node->deprel();
+        # There are a few right-to-left appositions that resulted from transforming
+        # copula-like constructions with punctuation (":") instead of the copula.
+        # Each of them would probably deserve a different analysis but at present
+        # we do not care too much and make them 'parataxis' (they occur in nonverbal
+        # sentences or segments).
+        if($deprel =~ m/^appos(:|$)/ && $node->ord() < $parent->ord())
         {
-            # Find the first ancestor that is not punctuation.
-            my $ancestor = $parent;
-            # We should never get to the root because we should first find an
-            # ancestor whose deprel is 'root'. But let's not rely on the data
-            # too much.
-            while(!$ancestor->is_root() && $ancestor->deprel() =~ m/^punct(:|$)/)
-            {
-                $ancestor = $ancestor->parent();
-            }
-            if(defined($ancestor) && !$ancestor->is_root() && $ancestor->deprel() !~ m/^punct(:|$)/)
-            {
-                $node->set_parent($ancestor);
-                $node->set_deprel('punct');
-            }
+            $deprel = 'parataxis';
+            $node->set_deprel($deprel);
         }
-    }
-    # The colon between two numbers is probably a division symbol, not punctuation.
-    elsif($node->form() =~ m/^[+\-:]$/ && !$parent->is_root() && $parent->form() =~ m/^\d+(\.\d+)?$/ &&
-          $node->ord() > $parent->ord() &&
-          scalar($node->children()) > 0 &&
-          (any {$_->form() =~ m/^\d+(\.\d+)?$/} ($node->children())))
-    {
-        # The node is currently probably tagged as punctuation but it should be a symbol.
-        $node->set_tag('SYM');
-        $node->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
-        # The punct relation should no longer be used.
-        # We could treat the operator as a predicate and make it a head, with
-        # its arguments attached as dependents. However, it is not clear what
-        # their relation should be in linguistic terms. Therefore we simply resort
-        # to a flat structure.
-        $node->set_deprel('flat');
-        foreach my $child ($node->children())
+        # The abbreviation "tzv" ("takzvaný" = "so called") is an adjective.
+        # However, it is sometimes confused with "tzn" (see below) and attached as
+        # 'cc'.
+        elsif(lc($node->form()) eq 'tzv' && $node->is_adjective() && $parent->ord() > $node->ord())
         {
-            if($child->ord() > $parent->ord())
-            {
-                $child->set_parent($parent);
-                $child->set_deprel($child->is_punctuation() ? 'punct' : 'flat');
-            }
+            $deprel = 'amod';
+            $node->set_deprel($deprel);
         }
-    }
-    # A star followed by a year is not punctuation. It is a symbol meaning "born in".
-    # Especially if enclosed in parentheses.
-    elsif($node->form() eq '*' &&
-          (defined($node->get_right_neighbor()) && $node->get_right_neighbor()->ord() == $node->ord()+1 && $node->get_right_neighbor()->form() =~ m/^[12]?\d\d\d$/ ||
-           scalar($node->children())==1 && ($node->children())[0]->ord() == $node->ord()+1 && ($node->children())[0]->form() =~ m/^[12]?\d\d\d$/ ||
-           !$parent->is_root() && $parent->ord() == $node->ord()+1 && $parent->form() =~ m/^[12]?\d\d\d$/))
-    {
-        $node->set_tag('SYM');
-        $node->iset()->set_hash({'pos' => 'sym'});
-        $deprel = 'parataxis' unless($deprel =~ m/^root(:|$)/);
-        $node->set_deprel($deprel);
-        my $year = $node->get_right_neighbor();
-        if(defined($year) && $year->form() =~ m/^[12]?\d\d\d$/)
+        # Reflexive "sa" should not be attached as 'mark' or 'aux'.
+        elsif($node->form() =~ m/^(sa)$/i && $node->is_pronoun() && $deprel =~ m/^(mark|aux)(:|$)/)
         {
-            $year->set_parent($node);
+            $deprel = 'expl:pv';
+            $node->set_deprel($deprel);
         }
-        elsif(!$parent->is_root() && $parent->form() =~ m/^[12]?\d\d\d$/)
+        # An adverb should not depend on a copula but on the nominal part of the
+        # predicate. Example: "Také vakovlk je, respektive před vyhubením byl, ..."
+        elsif($node->is_adverb() && $node->deprel() =~ m/^advmod(:|$)/ &&
+              $parent->deprel() =~ m/^cop(:|$)/)
         {
-            $year = $parent;
-            $parent = $year->parent();
+            $parent = $parent->parent();
             $node->set_parent($parent);
-            if($year->deprel() =~ m/^root(:|$)/)
+        }
+        # Slovak "a to" ("viz.") is a multi-word conjunction. In the original
+        # treebank, multiple attachment options occur:
+        # 1. "a" is attached to "to" as 'cc'.
+        # 2. both words are attached as siblings (relations 'cc').
+        elsif(lc($node->form()) eq 'a' && $deprel =~ m/^cc(:|$)/ &&
+              $parent->form() =~ m/^(to|sice)$/i && $parent->deprel() =~ m/^(cc|advmod|discourse)(:|$)/ && $parent->ord() > $node->ord())
+        {
+            my $grandparent = $parent->parent();
+            $node->set_parent($grandparent);
+            $deprel = 'cc';
+            $node->set_deprel($deprel);
+            $parent->set_parent($node);
+            $parent->set_deprel('fixed');
+            # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
+            # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
+            $parent->set_lemma('to');
+            $parent->set_tag('PART');
+            $parent->iset()->set_hash({'pos' => 'part'});
+            $parent = $grandparent;
+        }
+        elsif(lc($node->form()) =~ m/^(a)$/ && $deprel =~ m/^cc(:|$)/ &&
+              defined($node->get_right_neighbor()) &&
+              lc($node->get_right_neighbor()->form()) =~ m/^(to)$/ && $node->get_right_neighbor()->deprel() =~ m/^(cc|advmod|discourse)(:|$)/)
+        {
+            my $to = $node->get_right_neighbor();
+            $to->set_parent($node);
+            $to->set_deprel('fixed');
+            # These occurrences of "to" should be lemmatized as "to" and tagged 'PART'.
+            # However, sometimes they are lemmatized as "ten" and tagged 'DET'.
+            $to->set_lemma('to');
+            $to->set_tag('PART');
+            $to->iset()->set_hash({'pos' => 'part'});
+        }
+        # The expression "více než" ("more than") functions as an adverb.
+        elsif(lc($node->form()) eq 'než' && $parent->ord() == $node->ord()-1 &&
+              lc($parent->form()) eq 'více')
+        {
+            $deprel = 'fixed';
+            $node->set_deprel($deprel);
+            $parent->set_deprel('advmod');
+        }
+        # "rozuměj" (imperative of "understand") is a verb but attached as 'cc'.
+        # We will not keep the parallelism to "to jest" here. We will make it a parataxis.
+        # Similar: "míněno" (ADJ, passive participle of "mínit")
+        elsif($node->form() =~ m/^(rozuměj|dejme|míněno|počínaje|řekněme|říkajíc|srov(nej)?|víte|event)$/i && $deprel =~ m/^(cc|advmod|mark)(:|$)/)
+        {
+            $deprel = 'parataxis';
+            $node->set_deprel($deprel);
+        }
+        # Interjections showing the attitude to the speaker towards the event should
+        # be attached as 'discourse', not as 'advmod'.
+        elsif($node->is_interjection() && $deprel =~ m/^advmod(:|$)/)
+        {
+            $deprel = 'discourse';
+            $node->set_deprel($deprel);
+        }
+        # Sometimes a sequence of punctuation symbols (e.g., "***"), tokenized as
+        # one token per symbol, is analyzed as a constituent headed by one of the
+        # symbols. In UD, this should not happen unless the dependent symbols are
+        # brackets or quotation marks and the head symbol is enclosed by them.
+        elsif($node->is_punctuation() && $parent->is_punctuation())
+        {
+            unless($node->form() =~ m/^[\{\[\("']$/ && $parent->ord() == $node->ord()+1 ||
+                   $node->form() =~ m/^['"\)\]\}]$/ && $parent->ord() == $node->ord()-1)
             {
-                $deprel = $year->deprel();
+                # Find the first ancestor that is not punctuation.
+                my $ancestor = $parent;
+                # We should never get to the root because we should first find an
+                # ancestor whose deprel is 'root'. But let's not rely on the data
+                # too much.
+                while(!$ancestor->is_root() && $ancestor->deprel() =~ m/^punct(:|$)/)
+                {
+                    $ancestor = $ancestor->parent();
+                }
+                if(defined($ancestor) && !$ancestor->is_root() && $ancestor->deprel() !~ m/^punct(:|$)/)
+                {
+                    $node->set_parent($ancestor);
+                    $node->set_deprel('punct');
+                }
+            }
+        }
+        # The colon between two numbers is probably a division symbol, not punctuation.
+        elsif($node->form() =~ m/^[+\-:]$/ && !$parent->is_root() && $parent->form() =~ m/^\d+(\.\d+)?$/ &&
+              $node->ord() > $parent->ord() &&
+              scalar($node->children()) > 0 &&
+              (any {$_->form() =~ m/^\d+(\.\d+)?$/} ($node->children())))
+        {
+            # The node is currently probably tagged as punctuation but it should be a symbol.
+            $node->set_tag('SYM');
+            $node->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
+            # The punct relation should no longer be used.
+            # We could treat the operator as a predicate and make it a head, with
+            # its arguments attached as dependents. However, it is not clear what
+            # their relation should be in linguistic terms. Therefore we simply resort
+            # to a flat structure.
+            $node->set_deprel('flat');
+            foreach my $child ($node->children())
+            {
+                if($child->ord() > $parent->ord())
+                {
+                    $child->set_parent($parent);
+                    $child->set_deprel($child->is_punctuation() ? 'punct' : 'flat');
+                }
+            }
+        }
+        # A star followed by a year is not punctuation. It is a symbol meaning "born in".
+        # Especially if enclosed in parentheses.
+        elsif($node->form() eq '*' &&
+              (defined($node->get_right_neighbor()) && $node->get_right_neighbor()->ord() == $node->ord()+1 && $node->get_right_neighbor()->form() =~ m/^[12]?\d\d\d$/ ||
+               scalar($node->children())==1 && ($node->children())[0]->ord() == $node->ord()+1 && ($node->children())[0]->form() =~ m/^[12]?\d\d\d$/ ||
+               !$parent->is_root() && $parent->ord() == $node->ord()+1 && $parent->form() =~ m/^[12]?\d\d\d$/))
+        {
+            $node->set_tag('SYM');
+            $node->iset()->set_hash({'pos' => 'sym'});
+            $deprel = 'parataxis' unless($deprel =~ m/^root(:|$)/);
+            $node->set_deprel($deprel);
+            my $year = $node->get_right_neighbor();
+            if(defined($year) && $year->form() =~ m/^[12]?\d\d\d$/)
+            {
+                $year->set_parent($node);
+            }
+            elsif(!$parent->is_root() && $parent->form() =~ m/^[12]?\d\d\d$/)
+            {
+                $year = $parent;
+                $parent = $year->parent();
+                $node->set_parent($parent);
+                if($year->deprel() =~ m/^root(:|$)/)
+                {
+                    $deprel = $year->deprel();
+                    $node->set_deprel($deprel);
+                }
+                $year->set_parent($node);
+                $year->set_deprel('obl');
+                # There may be parentheses attached to the year. Reattach them to me.
+                foreach my $child ($year->children())
+                {
+                    $child->set_parent($node);
+                }
+            }
+            my @children = grep {$_->form() =~ m/^[12]?\d\d\d$/} ($node->children());
+            if(scalar(@children)>0)
+            {
+                $year = $children[0];
+                $year->set_deprel('obl');
+            }
+            # If there are parentheses, make sure they are attached to the star as well.
+            my $l = $node->get_left_neighbor();
+            my $r = $node->get_right_neighbor();
+            if(defined($l) && defined($r) && $l->form() eq '(' && $r->form() eq ')')
+            {
+                $l->set_parent($node);
+                $r->set_parent($node);
+            }
+        }
+        # "..." is sometimes attached as the last conjunct in coordination.
+        # (It is three tokens, each period separate.)
+        # Comma is sometimes attached as a conjunct. It is a result of ExD_Co in
+        # the original treebank.
+        elsif($node->is_punctuation() && $deprel =~ m/^conj(:|$)/ &&
+              $node->is_leaf())
+        {
+            $deprel = 'punct';
+            $node->set_deprel($deprel);
+        }
+        # Hyphen is sometimes used as a predicate similar to a copula, but not with
+        # Pnom. Rather its children are subject and object. Sometimes there is
+        # ellipsis and one of the children comes out as 'dep'.
+        # "celková škoda - 1000 korun"
+        # "týden pro dospělého - 1400 korun, pro dítě do deseti let - 700 korun"
+        # We do not know what to do if there fewer than 2 children. However, there
+        # can be more if the entire expression is enclosed in parentheses.
+        elsif($node->form() =~ m/^[-:]$/ && scalar($node->children()) >= 2)
+        {
+            my @children = $node->get_children({'ordered' => 1});
+            my @punctchildren = grep {$_->deprel() =~ m/^punct(:|$)/} (@children);
+            my @argchildren = grep {$_->deprel() !~ m/^punct(:|$)/} (@children);
+            if(scalar(@argchildren) == 0)
+            {
+                # There are 2 or more children and all are punctuation.
+                # Silently exit this branch. This will be solved elsewhere.
+            }
+            elsif(scalar(@argchildren) == 2)
+            {
+                # Assume that the hyphen is acting like a copula. If we are lucky,
+                # one of the children is labeled as a subject. The other will be
+                # object or oblique and that is the one we will treat as predicate.
+                # If we are unlucky (e.g. because of ellipsis), no child is labeled
+                # as subject. Then we take the first one.
+                my $s = $argchildren[0];
+                my $p = $argchildren[1];
+                if($p->deprel() =~ m/subj/ && $s->deprel() !~ m/subj/)
+                {
+                    $s = $argchildren[1];
+                    $p = $argchildren[0];
+                }
+                $p->set_parent($parent);
+                $deprel = 'parataxis' if($deprel =~ m/^punct(:|$)/);
+                $p->set_deprel($deprel);
+                $s->set_parent($p);
+                foreach my $punct (@punctchildren)
+                {
+                    $punct->set_parent($p);
+                }
+                $parent = $p;
+                $deprel = 'punct';
+                $node->set_parent($parent);
                 $node->set_deprel($deprel);
             }
-            $year->set_parent($node);
-            $year->set_deprel('obl');
-            # There may be parentheses attached to the year. Reattach them to me.
-            foreach my $child ($year->children())
+            else # more than two non-punctuation children
             {
-                $child->set_parent($node);
+                # Examples (head words of children in parentheses):
+                # 'Náměstek ministra podnikatelům - daňové nedoplatky dosahují miliard' (Náměstek podnikatelům dosahují)
+                # 'Týden pro dospělého - 1400 korun , pro dítě do deseti let - 700 korun .' (Týden korun -)
+                # 'V " supertermínech " jako je Silvestr - 20 německých marek za osobu , jinak 12 marek , případně v přepočtu na koruny .' (supertermínech marek osobu jinak)
+                # 'Dnes v listě Neobyčejně obyčejné příběhy - portrét režiséra Karla Kachyni' (Dnes listě portrét)
+                # 'Brankáři s nulou : Hlinka ( Vítkovice ) a Novotný ( Jihlava ) - oba ve 2 . kole .' (Brankáři oba kole)
+                # '25 . 2 . 1994 - hebronský masakr ( židovský osadník Baruch Goldstein postřílel při modlitbě tři desítky Arabů ) ;' (2 masakr postřílel)
+                ###!!! It is not clear what we should do. For the moment, we just pick the first child as the head.
+                my $p = shift(@argchildren);
+                $p->set_parent($parent);
+                $deprel = 'parataxis' if($deprel =~ m/^punct(:|$)/);
+                $p->set_deprel($deprel);
+                foreach my $arg (@argchildren)
+                {
+                    $arg->set_parent($p);
+                }
+                foreach my $punct (@punctchildren)
+                {
+                    $punct->set_parent($p);
+                }
+                $parent = $p;
+                $deprel = 'punct';
+                $node->set_parent($parent);
+                $node->set_deprel($deprel);
             }
         }
-        my @children = grep {$_->form() =~ m/^[12]?\d\d\d$/} ($node->children());
-        if(scalar(@children)>0)
+        # If we changed tag of a symbol from PUNCT to SYM above, we must also change
+        # its dependency relation.
+        elsif($node->is_symbol() && $deprel =~ m/^punct(:|$)/ &&
+              $node->ord() > $parent->ord())
         {
-            $year = $children[0];
-            $year->set_deprel('obl');
-        }
-        # If there are parentheses, make sure they are attached to the star as well.
-        my $l = $node->get_left_neighbor();
-        my $r = $node->get_right_neighbor();
-        if(defined($l) && defined($r) && $l->form() eq '(' && $r->form() eq ')')
-        {
-            $l->set_parent($node);
-            $r->set_parent($node);
-        }
-    }
-    # "..." is sometimes attached as the last conjunct in coordination.
-    # (It is three tokens, each period separate.)
-    # Comma is sometimes attached as a conjunct. It is a result of ExD_Co in
-    # the original treebank.
-    elsif($node->is_punctuation() && $deprel =~ m/^conj(:|$)/ &&
-          $node->is_leaf())
-    {
-        $deprel = 'punct';
-        $node->set_deprel($deprel);
-    }
-    # Hyphen is sometimes used as a predicate similar to a copula, but not with
-    # Pnom. Rather its children are subject and object. Sometimes there is
-    # ellipsis and one of the children comes out as 'dep'.
-    # "celková škoda - 1000 korun"
-    # "týden pro dospělého - 1400 korun, pro dítě do deseti let - 700 korun"
-    # We do not know what to do if there fewer than 2 children. However, there
-    # can be more if the entire expression is enclosed in parentheses.
-    elsif($node->form() =~ m/^[-:]$/ && scalar($node->children()) >= 2)
-    {
-        my @children = $node->get_children({'ordered' => 1});
-        my @punctchildren = grep {$_->deprel() =~ m/^punct(:|$)/} (@children);
-        my @argchildren = grep {$_->deprel() !~ m/^punct(:|$)/} (@children);
-        if(scalar(@argchildren) == 0)
-        {
-            # There are 2 or more children and all are punctuation.
-            # Silently exit this branch. This will be solved elsewhere.
-        }
-        elsif(scalar(@argchildren) == 2)
-        {
-            # Assume that the hyphen is acting like a copula. If we are lucky,
-            # one of the children is labeled as a subject. The other will be
-            # object or oblique and that is the one we will treat as predicate.
-            # If we are unlucky (e.g. because of ellipsis), no child is labeled
-            # as subject. Then we take the first one.
-            my $s = $argchildren[0];
-            my $p = $argchildren[1];
-            if($p->deprel() =~ m/subj/ && $s->deprel() !~ m/subj/)
-            {
-                $s = $argchildren[1];
-                $p = $argchildren[0];
-            }
-            $p->set_parent($parent);
-            $deprel = 'parataxis' if($deprel =~ m/^punct(:|$)/);
-            $p->set_deprel($deprel);
-            $s->set_parent($p);
-            foreach my $punct (@punctchildren)
-            {
-                $punct->set_parent($p);
-            }
-            $parent = $p;
-            $deprel = 'punct';
-            $node->set_parent($parent);
+            $deprel = 'flat';
             $node->set_deprel($deprel);
         }
-        else # more than two non-punctuation children
+        $self->fix_auxiliary_verb($node);
+        # Functional nodes normally do not have modifiers of their own, with a few
+        # exceptions, such as coordination. Most modifiers should be attached
+        # directly to the content word.
+        if($node->deprel() =~ m/^(aux|cop)(:|$)/)
         {
-            # Examples (head words of children in parentheses):
-            # 'Náměstek ministra podnikatelům - daňové nedoplatky dosahují miliard' (Náměstek podnikatelům dosahují)
-            # 'Týden pro dospělého - 1400 korun , pro dítě do deseti let - 700 korun .' (Týden korun -)
-            # 'V " supertermínech " jako je Silvestr - 20 německých marek za osobu , jinak 12 marek , případně v přepočtu na koruny .' (supertermínech marek osobu jinak)
-            # 'Dnes v listě Neobyčejně obyčejné příběhy - portrét režiséra Karla Kachyni' (Dnes listě portrét)
-            # 'Brankáři s nulou : Hlinka ( Vítkovice ) a Novotný ( Jihlava ) - oba ve 2 . kole .' (Brankáři oba kole)
-            # '25 . 2 . 1994 - hebronský masakr ( židovský osadník Baruch Goldstein postřílel při modlitbě tři desítky Arabů ) ;' (2 masakr postřílel)
-            ###!!! It is not clear what we should do. For the moment, we just pick the first child as the head.
-            my $p = shift(@argchildren);
-            $p->set_parent($parent);
-            $deprel = 'parataxis' if($deprel =~ m/^punct(:|$)/);
-            $p->set_deprel($deprel);
-            foreach my $arg (@argchildren)
+            my @children = grep {$_->deprel() =~ m/^(nsubj|csubj|obj|iobj|expl|ccomp|xcomp|obl|advmod|advcl|vocative|dislocated|dep)(:|$)/} ($node->children());
+            my $parent = $node->parent();
+            foreach my $child (@children)
             {
-                $arg->set_parent($p);
+                $child->set_parent($parent);
             }
-            foreach my $punct (@punctchildren)
+        }
+        elsif($node->deprel() =~ m/^(case|mark|cc|punct)(:|$)/)
+        {
+            my @children = grep {$_->deprel() !~ m/^(conj|fixed|goeswith|punct)(:|$)/} ($node->children());
+            my $parent = $node->parent();
+            foreach my $child (@children)
             {
-                $punct->set_parent($p);
+                $child->set_parent($parent);
             }
-            $parent = $p;
-            $deprel = 'punct';
-            $node->set_parent($parent);
-            $node->set_deprel($deprel);
         }
     }
-    # If we changed tag of a symbol from PUNCT to SYM above, we must also change
-    # its dependency relation.
-    elsif($node->is_symbol() && $deprel =~ m/^punct(:|$)/ &&
-          $node->ord() > $parent->ord())
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fix fixed multiword expressions.
+#------------------------------------------------------------------------------
+my @_fixed_expressions;
+my @fixed_expressions;
+BEGIN
+{
+    # This function processes multiword expressions that should be annotated
+    # as fixed (regardless what their annotation in PDT was), as well as those
+    # that may be considered fixed by some, but should not. For those that should
+    # not be fixed we provide the prescribed tree structure; if the expression
+    # should not be one constituent, all components will be attached to the same
+    # parent outside the expression; alternatively, those that already are attached
+    # outside can keep their attachment (this can be signaled by parent=-1 instead
+    # of 0; deprel should still be provided just in case the node has its parent
+    # inside and we have to change it).
+    @_fixed_expressions =
+    (
+        # lc(forms), mode, UPOS tags, ExtPos, deps (parent:deprel)
+        # modes:
+        # - always ... apply as soon as the lowercased forms match
+        # - catena ... apply only if the nodes already form a catena in the tree (i.e. avoid accidental grabbing random collocations)
+        # - subtree .. apply only if the nodes already form a full subtree (all descendants included in the expression)
+        # - fixed .... apply only if it is already annotated as fixed (i.e. just normalize morphology and add ExtPos)
+        #---------------------------------------------------------
+        # Multiword adjectives.
+        ###!!! We hard-code certain disambiguations (the expression is rare, in PDT there is just one occurrence of "ty tam", and we know it is masculine inanimate and not feminine).
+        ['ta tam',             'always',  'ten tam',            'DET ADV',             'PDFS1---------- Db-------------',                 'pos=adj|prontype=dem|gender=fem|number=sing|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
+        ['ten tam',            'always',  'ten tam',            'DET ADV',             'PDYS1---------- Db-------------',                 'pos=adj|prontype=dem|gender=masc|number=sing|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
+        ['ti tam',             'always',  'ten tam',            'DET ADV',             'PDMP1---------- Db-------------',                 'pos=adj|prontype=dem|gender=masc|animacy=anim|number=plur|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
+        ['to tam',             'always',  'ten tam',            'DET ADV',             'PDNS1---------- Db-------------',                 'pos=adj|prontype=dem|gender=neut|number=sing|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
+        ['ty tam',             'always',  'ten tam',            'DET ADV',             'PDIP1---------- Db-------------',                 'pos=adj|prontype=dem|gender=masc|animacy=inan|number=plur|case=nom|extpos=adj pos=adv|prontype=dem', '-1:dep 1:fixed'],
+        # Multiword adverbs.
+        ['a priori',           'always',  'a priori',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
+        ['co možná',           'always',  'co možná',           'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=adv pos=adv',               '0:advmod 1:fixed'],
+        ['de facto',           'always',  'de facto',           'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
+        ['ex ante',            'always',  'ex ante',            'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
+        ['chtě nechtě',        'always',  'chtít chtít',        'VERB VERB',           'VeZS------A---- VeZS------N----',                 'pos=verb|polarity=pos|gender=masc|number=sing|verbform=conv|tense=pres|voice=act|aspect=imp|extpos=adv pos=verb|polarity=neg|gender=masc|number=sing|verbform=conv|tense=pres|voice=act|aspect=imp', '0:advmod 1:fixed'],
+        ['chtíc nechtíc',      'always',  'chtít chtít',        'VERB VERB',           'VeFS------A---- VeFS------N----',                 'pos=verb|polarity=pos|gender=fem|number=sing|verbform=conv|tense=pres|voice=act|aspect=imp|extpos=adv pos=verb|polarity=neg|gender=fem|number=sing|verbform=conv|tense=pres|voice=act|aspect=imp', '0:advmod 1:fixed'],
+        ['in memoriam',        'always',  'in memoriam',        'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
+        # "M. J." can be somebody's initials (connected as flat, nmod, or even as siblings), and it is difficult to distinguish.
+        ['m . j .',            'subtree', 'mimo . jiný .',      'ADP PUNCT ADJ PUNCT', 'Q3------------- Z:------------- Q3------------- Z:-------------', 'pos=adp|abbr=yes|extpos=adv pos=punc pos=adj|abbr=yes|case=acc|degree=pos|gender=neut|number=sing|polarity=pos pos=punc', '0:advmod 1:punct 1:fixed 3:punct'],
+        ['mimo jiné',          'fixed',   'mimo jiný',          'ADP ADJ',             'RR--4---------- AANS4----1A----',                 'pos=adp|adpostype=prep|case=acc|extpos=adv pos=adj|case=acc|degree=pos|gender=neut|number=sing|polarity=pos', '0:advmod 1:fixed'],
+        ['nejen že',           'always',  'nejen že',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
+        ['nota bene',          'always',  'nota bene',          'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adv foreign=yes',       '0:advmod 1:fixed'],
+        ['přece jen',          'always',  'přece jen',          'PART PART',           'TT------------- TT-------------',                 'pos=part|extpos=adv pos=part',             '0:advmod 1:fixed'],
+        ['přece jenom',        'always',  'přece jenom',        'PART PART',           'TT------------- TT-------------',                 'pos=part|extpos=adv pos=part',             '0:advmod 1:fixed'],
+        ['stejně jako',        'fixed',   'stejně jako',        'ADV SCONJ',           'Dg-------1A---- J,-------------',                 'pos=adv|polarity=pos|degree=pos|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
+        ['suma sumárum',       'always',  'suma sumárum',       'NOUN ADV',            'NNFS1-----A---- Db-------------',                 'pos=noun|nountype=com|gender=fem|number=sing|case=nom|extpos=adv pos=adv', '0:advmod 1:fixed'],
+        ['víc než',            'fixed',   'více než',           'ADV SCONJ',           'Dg-------2A---1 J,-------------',                 'pos=adv|polarity=pos|degree=cmp|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
+        ['více než',           'fixed',   'více než',           'ADV SCONJ',           'Dg-------2A---- J,-------------',                 'pos=adv|polarity=pos|degree=cmp|extpos=adv pos=conj|conjtype=sub', '0:advmod 1:fixed'],
+        ['všeho všudy',        'always',  'všechen všudy',      'DET ADV',             'PLZS2---------- Db-------------',                 'pos=adj|prontype=tot|gender=neut|number=sing|case=gen|extpos=adv pos=adv|prontype=tot', '0:advmod 1:fixed'],
+        # Expressions like "týden co týden": Since the "X co X" pattern is not productive,
+        # we should treat it as a fixed expression with an adverbial meaning.
+        # Somewhat different in meaning but identical in structure is "stůj co stůj", and it is also adverbial.
+        ['stůj co stůj',       'always',  'stát co stát',       'VERB ADV VERB',       'Vi-S---2--A-I-- Db------------- Vi-S---2--A-I--', 'pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin|extpos=adv pos=adv pos=verb|aspect=imp|mood=imp|number=sing|person=2|polarity=pos|verbform=fin', '0:advmod 1:fixed 1:fixed'],
+        ['čtvrtek co čtvrtek', 'always',  'čtvrtek co čtvrtek', 'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                     '0:advmod 1:fixed 1:fixed'],
+        ['den co den',         'always',  'den co den',         'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                     '0:advmod 1:fixed 1:fixed'],
+        ['měsíc co měsíc',     'always',  'měsíc co měsíc',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                     '0:advmod 1:fixed 1:fixed'],
+        ['neděli co neděli',   'always',  'neděle co neděle',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['noc co noc',         'always',  'noc co noc',         'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['pátek co pátek',     'always',  'pátek co pátek',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                     '0:advmod 1:fixed 1:fixed'],
+        ['rok co rok',         'always',  'rok co rok',         'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                     '0:advmod 1:fixed 1:fixed'],
+        ['sobotu co sobotu',   'always',  'sobota co sobota',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['středu co středu',   'always',  'středa co středa',   'NOUN ADV NOUN',       'NNFS4-----A---- Db------------- NNFS4-----A----', 'pos=noun|case=acc|gender=fem|number=sing|extpos=adv pos=adv pos=noun|case=acc|gender=fem|number=sing',                                                 '0:advmod 1:fixed 1:fixed'],
+        ['týden co týden',     'always',  'týden co týden',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                     '0:advmod 1:fixed 1:fixed'],
+        ['večer co večer',     'always',  'večer co večer',     'NOUN ADV NOUN',       'NNIS4-----A---- Db------------- NNIS4-----A----', 'pos=noun|animacy=inan|case=acc|gender=masc|number=sing|extpos=adv pos=adv pos=noun|animacy=inan|case=acc|gender=masc|number=sing',                     '0:advmod 1:fixed 1:fixed'],
+        # Multiword prepositions.
+        # Psané bez francouzské diakritiky je to nejednoznačné, mohlo by to chytit i "letiště JFK a La Guardia". Musíme se omezit na případy, kdy už to bylo značené jako fixed, a jen přidat ExtPos.
+        ['a la',               'fixed',   'a la',               'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adp foreign=yes',                                                                                                                   '0:case 1:fixed'],
+        ['à la',               'always',  'a la',               'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adp foreign=yes',                                                                                                                   '0:case 1:fixed'],
+        ['na způsob',          'fixed',   'na způsob',          'ADP NOUN',            'RR--4---------- NNIS4-----A----',                 'pos=adp|adpostype=prep|case=acc|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=acc',                                       '0:case 1:fixed'],
+        ['s ohledem na',       'always',  's ohled na',         'ADP NOUN ADP',        'RR--7---------- NNIS7-----A---- RR--4----------', 'pos=adp|adpostype=prep|case=ins|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=ins pos=adp|adpostype=prep|case=acc',       '0:case 1:fixed 1:fixed'],
+        # Multiword subordinators.
+        ['i když',             'always',  'i když',             'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub', '0:mark 1:fixed'],
+        ['i pokud',            'always',  'i pokud',            'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub', '0:mark 1:fixed'],
+        ['jestli že',          'always',  'jestli že',          'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub|extpos=sconj pos=conj|conjtype=sub',  '0:mark 1:fixed'],
+        ['než - li',           'always',  'než - li',           'SCONJ PUNCT SCONJ',   'J,------------- Z:------------- J,-------------', 'pos=conj|conjtype=sub|extpos=sconj pos=punc pos=conj|conjtype=sub', '0:mark 3:punct 1:fixed'],
+        ['zatím co',           'always',  'zatím co',           'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=sconj pos=adv',                              '0:mark 1:fixed'],
+        ['zda - li',           'always',  'zda - li',           'SCONJ PUNCT SCONJ',   'J,------------- Z:------------- J,-------------', 'pos=conj|conjtype=sub|extpos=sconj pos=punc pos=conj|conjtype=sub', '0:mark 3:punct 1:fixed'],
+        # Multiword coordinators.
+        # There is a dedicated function fix_a_to() (called from fix_constructions() before coming here), which makes sure that the right instances of "a sice" and "a to" are annotated as fixed expressions.
+        ['a sice',             'always',  'a sice',             'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
+        ['a to',               'fixed',   'a to',               'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
+        # MA says that 'neřku' has grammaticalized as an adverb, although historically it is 1st person singular present of 'říkat' (to say).
+        ['neřku - li',         'always',  'neřku - li',         'ADV PUNCT SCONJ',     'Db------------- Z:------------- J,-------------', 'pos=adv|extpos=cconj pos=punc pos=conj|conjtype=sub', '0:cc 3:punct 1:fixed'],
+        # There is a dedicated function fix_to_jest() (called from fix_constructions() before coming here), which make sure that the right instances of "to je" and "to jest" are annotated as fixed expressions.
+        ['to je',              'fixed',   'ten být',            'DET AUX',             'PDNS1---------- VB-S---3P-AAI--',                 'pos=adj|prontype=dem|gender=neut|number=sing|case=nom|extpos=cconj pos=verb|verbtype=aux|polarity=pos|number=sing|person=3|verbform=fin|mood=ind|tense=pres|voice=act|aspect=imp', '0:cc 1:fixed'],
+        ['to jest',            'fixed',   'ten být',            'DET AUX',             'PDNS1---------- VB-S---3P-AAI-2',                 'pos=adj|prontype=dem|gender=neut|number=sing|case=nom|extpos=cconj pos=verb|verbtype=aux|polarity=pos|number=sing|person=3|verbform=fin|mood=ind|tense=pres|voice=act|aspect=imp', '0:cc 1:fixed'],
+        ['to znamená , aniž',  'always',  'ten znamenat , aniž', 'DET VERB PUNCT SCONJ', 'PDNS1---------- VB-S---3P-AAI-- Z:------------- J,-------------', 'pos=adj|prontype=dem|gender=neut|number=sing|case=nom|extpos=cconj pos=verb|polarity=pos|number=sing|person=3|verbform=fin|mood=ind|tense=pres|voice=act|aspect=imp pos=punc pos=conj|conjtype=sub', '0:cc 1:fixed 0:punct 0:mark'],
+        ['to znamená , až',    'always',  'ten znamenat , až',  'DET VERB PUNCT SCONJ', 'PDNS1---------- VB-S---3P-AAI-- Z:------------- J,-------------', 'pos=adj|prontype=dem|gender=neut|number=sing|case=nom|extpos=cconj pos=verb|polarity=pos|number=sing|person=3|verbform=fin|mood=ind|tense=pres|voice=act|aspect=imp pos=punc pos=conj|conjtype=sub', '0:cc 1:fixed 0:punct 0:mark'],
+        ['to znamená',         'fixed',   'ten znamenat',       'DET VERB',            'PDNS1---------- VB-S---3P-AAI--',                 'pos=adj|prontype=dem|gender=neut|number=sing|case=nom|extpos=cconj pos=verb|polarity=pos|number=sing|person=3|verbform=fin|mood=ind|tense=pres|voice=act|aspect=imp',              '0:cc 1:fixed'],
+        # The following expressions should not be annotated as fixed.
+        ['a jestli',           'always',  'a jestli',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
+        ['a jestliže',         'always',  'a jestliže',         'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
+        ['a pokud',            'always',  'a pokud',            'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '-1:cc -1:mark'],
+        ['a tak',              'fixed',   'a tak',              'CCONJ CCONJ',         'J^------------- J^-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=coor', '0:cc 0:cc'],
+        ['a tedy , že',        'always',  'a tedy , že',        'CCONJ CCONJ PUNCT SCONJ', 'J^------------- J^------------- Z:------------- J,-------------', 'pos=conj|conjtype=coor pos=conj|conjtype=coor pos=punc pos=conj|conjtype=sub', '0:cc 0:cc 0:punct 0:mark'],
+        ['a že',               'fixed',   'a že',               'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '0:cc 0:mark'],
+        ['alespoň pokud',      'always',  'alespoň pokud',      'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
+        ['asi jako',           'always',  'asi jako',           'PART SCONJ',          'TT------------- J,-------------',                 'pos=part pos=conj|conjtype=sub',                '-1:advmod -1:mark'],
+        ['ať již',             'always',  'ať již',             'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
+        ['ať už',              'always',  'ať už',              'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
+        ['až do',              'fixed',   'až do',              'PART ADP',            'TT------------- RR--2----------',                 'pos=part pos=adp|adpostype=prep|case=gen',      '0:advmod:emph 0:case'],
+        ['až k',               'fixed',   'až k',               'PART ADP',            'TT------------- RR--3----------',                 'pos=part pos=adp|adpostype=prep|case=dat',      '0:advmod:emph 0:case'],
+        ['až když',            'fixed',   'až když',            'PART SCONJ',          'TT------------- J,-------------',                 'pos=part pos=conj|conjtype=sub',                '0:advmod:emph 0:mark'],
+        ###!!! We should disambiguate between "až na"+Case=Loc and "až na"+Case=Acc!
+        ['až na',              'fixed',   'až na',              'PART ADP',            'TT------------- RR--4----------',                 'pos=part pos=adp|adpostype=prep|case=acc',      '0:advmod:emph 0:case'],
+        ###!!! We should disambiguate between "až o"+Case=Loc and "až o"+Case=Acc!
+        ['až o',               'fixed',   'až o',               'PART ADP',            'TT------------- RR--4----------',                 'pos=part pos=adp|adpostype=prep|case=acc',      '0:advmod:emph 0:case'],
+        ###!!! We should disambiguate between "až po"+Case=Loc and "až po"+Case=Acc!
+        ['až po',              'fixed',   'až po',              'PART ADP',            'TT------------- RR--6----------',                 'pos=part pos=adp|adpostype=prep|case=loc',      '0:advmod:emph 0:case'],
+        ['až počátkem',        'fixed',   'až počátek',         'PART NOUN',           'TT------------- NNIS7-----A----',                 'pos=part pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=ins', '0:advmod:emph 0:case'],
+        ['až u',               'fixed',   'až u',               'PART ADP',            'TT------------- RR--2----------',                 'pos=part pos=adp|adpostype=prep|case=gen',      '0:advmod:emph 0:case'],
+        ###!!! We should disambiguate between "až v/ve"+Case=Loc and "až v/ve"+Case=Acc!
+        ['až v',               'fixed',   'až v',               'PART ADP',            'TT------------- RR--6----------',                 'pos=part pos=adp|adpostype=prep|case=loc',      '0:advmod:emph 0:case'],
+        ['až ve',              'fixed',   'až v',               'PART ADP',            'TT------------- RV--6----------',                 'pos=part pos=adp|adpostype=voc|case=loc',       '0:advmod:emph 0:case'],
+        ['až z',               'fixed',   'až z',               'PART ADP',            'TT------------- RR--2----------',                 'pos=part pos=adp|adpostype=prep|case=gen',      '0:advmod:emph 0:case'],
+        ['co když',            'always',  'co když',            'PART SCONJ',          'TT------------- J,-------------',                 'pos=part pos=conj|conjtype=sub',                '0:mark 0:mark'],
+        ['čím dál tím',        'always',  'co daleko ten',      'PRON ADV DET',        'PQ--7---------- Dg-------2A---- PDZS7----------', 'pos=noun|prontype=rel|animacy=inan|case=ins pos=adv|polarity=pos|degree=cmp pos=adj|prontype=dem|gender=neut|number=sing|case=ins', '2:obl 3:advmod 0:obl'],
+        ['dříve než',          'fixed',   'dříve než',          'ADV SCONJ',           'Dg-------2A---- J,-------------',                 'pos=adv|polarity=pos|degree=cmp pos=conj|conjtype=sub', '0:advmod 0:mark'],
+        ['hlavně když',        'fixed',   'hlavně když',        'ADV SCONJ',           'Dg-------1A---- J,-------------',                 'pos=adv|polarity=pos|degree=pos pos=conj|conjtype=sub', '0:advmod 0:mark'],
+        ['hlavně pokud',       'fixed',   'hlavně pokud',       'ADV SCONJ',           'Dg-------1A---- J,-------------',                 'pos=adv|polarity=pos|degree=pos pos=conj|conjtype=sub', '0:advmod 0:mark'],
+        ['hned co',            'always',  'hned co',            'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
+        ['hned jak',           'always',  'hned jak',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '-1:advmod -1:mark'],
+        ['jako když',          'always',  'jako když',          'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',   '0:mark 0:mark'],
+        ['jako kupříkladu',    'always',  'jako kupříkladu',    'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
+        ['jako na',            'fixed',   'jako na',            'SCONJ ADP',           'J,------------- RR--4----------',                 'pos=conj|conjtype=sub pos=adp|adpostype=prep|case=acc', '0:mark 0:case'],
+        ['jako například , že', 'always', 'jako například , že', 'SCONJ ADV PUNCT SCONJ', 'J,------------- Db------------- Z:------------- J,-------------', 'pos=conj|conjtype=sub pos=adv pos=punc pos=conj|conjtype=sub', '0:mark 0:advmod 0:punct 0:mark'],
+        ['jako například',     'always',  'jako například',     'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
+        ['jako o',             'fixed',   'jako o',             'SCONJ ADP',           'J,------------- RV--4----------',                 'pos=conj|conjtype=sub pos=adp|adpostype=prep|case=acc', '0:mark 0:case'],
+        ['jako u',             'fixed',   'jako u',             'SCONJ ADP',           'J,------------- RV--2----------',                 'pos=conj|conjtype=sub pos=adp|adpostype=prep|case=gen', '0:mark 0:case'],
+        ['jako ve',            'fixed',   'jako v',             'SCONJ ADP',           'J,------------- RV--6----------',                 'pos=conj|conjtype=sub pos=adp|adpostype=voc|case=loc', '0:mark 0:case'],
+        ['jako že',            'always',  'jako že',            'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',   '0:mark 0:mark'],
+        ['jen co',             'always',  'jen co',             'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
+        ['jen jestliže',       'always',  'jen jestliže',       'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
+        ['jen , když',         'always',  'jen , když',         'ADV PUNCT SCONJ',     'Db------------- Z:------------- J,-------------', 'pos=adv pos=punc pos=conj|conjtype=sub',        '0:advmod:emph 0:punct 0:mark'],
+        ['jen když',           'always',  'jen když',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
+        ['jen pokud',          'always',  'jen pokud',          'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
+        ['jestliže tedy',      'always',  'jestliže tedy',      'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '0:mark 0:cc'],
+        ['když už',            'fixed',   'když už',            'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
+        ['např . že',          'always',  'například . že',     'ADV PUNCT SCONJ',     'Db------------b Z:------------- J,-------------', 'pos=adv|abbr=yes pos=punc pos=conj|conjtype=sub', '0:advmod:emph 1:punct 0:mark'],
+        ['například když',     'always',  'například když',     'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
+        ['ovšem teprve když',  'always',  'ovšem teprve když',  'PART ADV SCONJ',      'TT------------- Db------------- J,-------------', 'pos=part pos=adv pos=conj|conjtype=sub',        '0:advmod 0:advmod:emph 0:mark'],
+        ['pokud možno',        'always',  'pokud možný',        'SCONJ ADJ',           'J,------------- ACNS------A----',                 'pos=conj|conjtype=sub pos=adj|polarity=pos|gender=neut|number=sing|degree=pos|variant=short', '2:mark 0:advcl'],
+        ['pokud totiž',        'always',  'pokud totiž',        'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '0:mark 0:cc'],
+        ['pokud však',         'always',  'pokud však',         'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '-1:mark -1:cc'],
+        ['pro nic za nic',     'always',  'pro nic za nic',     'ADP PRON ADP PRON',   'RR--4---------- PY--4---------- RR--4---------- PY--4----------', 'pos=adp|adpostype=prep|case=acc pos=noun|prontype=neg|case=acc pos=adp|adpostype=prep|case=acc pos=noun|prontype=neg|case=acc', '2:case 0:obl 4:case 2:conj'],
+        ['prostě že',          'always',  'prostě že',          'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
+        ['protože ale',        'always',  'protože ale',        'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '0:mark 0:cc'],
+        ['tedy až',            'always',  'tedy až',            'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor pos=part',               '0:cc 0:mark'],
+        ['tedy jako',          'always',  'tedy jako',          'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '0:cc 0:mark'],
+        ['teprve až',          'always',  'teprve až',          'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
+        ['teprve když',        'always',  'teprve když',        'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
+        ['tj . bude - li',     'always',  'tj . být - li',      'CCONJ PUNCT AUX PUNCT SCONJ', 'B^------------- Z:------------- VB-S---3F-AAI-- Z:------------- J,-------------', 'pos=conj|conjtype=coor|abbr=yes pos=punc pos=verb|verbtype=aux|polarity=pos|number=sing|person=3|verbform=fin|mood=ind|tense=fut|voice=act|aspect=imp pos=punc pos=conj|conjtype=sub', '0:cc 1:punct 0:aux 5:punct 0:mark'],
+        ['tj . zda',           'always',  'tj . zda',           'CCONJ PUNCT SCONJ',   'B^------------- Z:------------- J,-------------', 'pos=conj|conjtype=coor|abbr=yes pos=punc pos=conj|conjtype=sub', '0:cc 1:punct 0:mark'],
+        ['tj . že',            'always',  'tj . že',            'CCONJ PUNCT SCONJ',   'B^------------- Z:------------- J,-------------', 'pos=conj|conjtype=coor|abbr=yes pos=punc pos=conj|conjtype=sub', '0:cc 1:punct 0:mark'],
+        ['tzn . že',           'always',  'tzn . že',           'CCONJ PUNCT SCONJ',   'B^------------- Z:------------- J,-------------', 'pos=conj|conjtype=coor|abbr=yes pos=punc pos=conj|conjtype=sub', '0:cc 1:punct 0:mark'],
+        ['totiž že',           'always',  'totiž že',           'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor pos=conj|conjtype=sub',  '0:cc 0:mark'],
+        ['totiž , že',         'always',  'totiž že',           'CCONJ PUNCT SCONJ',   'J^------------- Z:------------- J,-------------', 'pos=conj|conjtype=coor pos=punc pos=conj|conjtype=sub', '0:cc 0:punct 0:mark'],
+        ['v duchu',            'always',  'v duch',             'ADP NOUN',            'RR--6---------- NNIS6-----A----',                 'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc', '2:case -1:obl'],
+        ['zejména když',       'always',  'zejména když',       'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
+        ['zejména pokud',      'always',  'zejména pokud',      'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod:emph 0:mark'],
+        ['zkrátka když',       'always',  'zkrátka když',       'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
+        ['zvláště když',       'always',  'zvláště když',       'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
+        ['že tedy',            'always',  'že tedy',            'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '0:mark 0:cc'],
+        ['že totiž',           'always',  'že totiž',           'SCONJ CCONJ',         'J,------------- J^-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=coor',  '0:mark 0:cc'],
+    );
+    foreach my $e (@_fixed_expressions)
     {
-        $deprel = 'flat';
-        $node->set_deprel($deprel);
-    }
-    $self->fix_auxiliary_verb($node);
-    # Functional nodes normally do not have modifiers of their own, with a few
-    # exceptions, such as coordination. Most modifiers should be attached
-    # directly to the content word.
-    if($node->deprel() =~ m/^(aux|cop)(:|$)/)
-    {
-        my @children = grep {$_->deprel() =~ m/^(nsubj|csubj|obj|iobj|expl|ccomp|xcomp|obl|advmod|advcl|vocative|dislocated|dep)(:|$)/} ($node->children());
-        my $parent = $node->parent();
-        foreach my $child (@children)
+        my $expression = $e->[0];
+        my @forms = split(/\s+/, $e->[0]);
+        my $mode = $e->[1];
+        my @lemmas = defined($e->[2]) ? split(/\s+/, $e->[2]) : ();
+        my @upos = defined($e->[3]) ? split(/\s+/, $e->[3]) : ();
+        my @xpos = defined($e->[4]) ? split(/\s+/, $e->[4]) : ();
+        my @feats = ();
+        if(defined($e->[5]))
         {
-            $child->set_parent($parent);
+            my @_feats = split(/\s+/, $e->[5]);
+            foreach my $_f (@_feats)
+            {
+                my @fv = split(/\|/, $_f);
+                my %fv;
+                foreach my $fv (@fv)
+                {
+                    next if($fv eq '_');
+                    my ($f, $v) = split(/=/, $fv);
+                    $fv{$f} = $v;
+                }
+                push(@feats, \%fv);
+            }
+        }
+        my @deps = split(/\s+/, $e->[6]);
+        my @parents;
+        my @deprels;
+        foreach my $dep (@deps)
+        {
+            my ($p, $d);
+            if($dep =~ m/^(-1|[0-9]+):(.+)$/)
+            {
+                $p = $1;
+                $d = $2;
+            }
+            else
+            {
+                log_fatal("Dependency not in form PARENTID:DEPREL");
+            }
+            if($p < -1 || $p > scalar(@deps))
+            {
+                log_fatal("Parent index out of range")
+            }
+            push(@parents, $p);
+            push(@deprels, $d);
+        }
+        push(@fixed_expressions, {'expression' => $expression, 'mode' => $mode, 'forms' => \@forms, 'lemmas' => \@lemmas, 'upos' => \@upos, 'xpos' => \@xpos, 'feats' => \@feats, 'parents' => \@parents, 'deprels' => \@deprels});
+    }
+}
+
+#------------------------------------------------------------------------------
+sub fixed_expression_starts_at_node
+{
+    my $self = shift;
+    my $expression = shift;
+    my $node = shift;
+    my $current_node = $node;
+    foreach my $w (@{$expression->{forms}})
+    {
+        if(!defined($current_node))
+        {
+            return 0;
+        }
+        my $current_form = lc($current_node->form());
+        if($current_form ne $w)
+        {
+            return 0;
+        }
+        $current_node = $current_node->get_next_node();
+    }
+    return 1;
+}
+
+#------------------------------------------------------------------------------
+sub check_fixed_expression_mode
+{
+    my $self = shift;
+    my $found_expression = shift; # hash ref
+    my $expression_nodes = shift; # array ref
+    my $parent_nodes = shift; # array ref
+    if($found_expression->{mode} =~ m/^(catena|subtree|fixed)$/)
+    {
+        # There must be exactly one member node whose parent is not member.
+        my $n_components = 0;
+        my $head;
+        for(my $i = 0; $i <= $#{$expression_nodes}; $i++)
+        {
+            my $en = $expression_nodes->[$i];
+            my $pn = $parent_nodes->[$i];
+            if(!any {$_ == $pn} (@{$expression_nodes}))
+            {
+                $n_components++;
+                $head = $en;
+            }
+            else
+            {
+                # In fixed mode, all inner relations must be 'fixed' or 'punct'.
+                if($found_expression->{mode} eq 'fixed' && $en->deprel() !~ m/^(fixed|punct)(:|$)/)
+                {
+                    #my $deprel = $en->deprel();
+                    #log_info("Expression '$found_expression->{expression}': Stepping back because of deprel '$deprel', i=$i");
+                    return 0;
+                }
+            }
+        }
+        if($n_components != 1)
+        {
+            #my $pords = join(',', map {$_->ord()} (@{$parent_nodes}));
+            #log_info("Expression '$found_expression->{expression}': Stepping back because of $n_components components; parent ords $pords");
+            return 0;
+        }
+        if($found_expression->{mode} eq 'subtree' && scalar($head->get_descendants({'add_self' => 1})) > scalar(@{$expression_nodes}))
+        {
+            #log_info("Expression '$found_expression->{expression}': Stepping back because there are more descendants than the expression itself");
+            return 0;
         }
     }
-    elsif($node->deprel() =~ m/^(case|mark|cc|punct)(:|$)/)
+    return 1;
+}
+
+#------------------------------------------------------------------------------
+sub is_in_list
+{
+    my $self = shift;
+    my $node = shift;
+    my @list = @_;
+    return any {$_ == $node} (@list);
+}
+sub is_in_or_depends_on_list
+{
+    my $self = shift;
+    my $node = shift;
+    my @list = @_;
+    return any {$_ == $node || $node->is_descendant_of($_)} (@list);
+}
+
+#------------------------------------------------------------------------------
+sub fix_fixed_expressions
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    ###!!! Hack: The most frequent type is multiword prepositions. There are thousands of them.
+    # For now, I am not listing all of them in the table above, but at least they should get ExtPos.
+    foreach my $node (@nodes)
     {
-        my @children = grep {$_->deprel() !~ m/^(conj|fixed|goeswith|punct)(:|$)/} ($node->children());
-        my $parent = $node->parent();
-        foreach my $child (@children)
+        if($node->deprel() eq 'fixed' && $node->parent()->deprel() eq 'case' && lc($node->parent()->form()) !~ m/^(až|jako)$/)
         {
-            $child->set_parent($parent);
+            $node->parent()->iset()->set('extpos', 'adp');
+        }
+    }
+    foreach my $node (@nodes)
+    {
+        # Is the current node first word of a known fixed expression?
+        my $found_expression;
+        foreach my $e (@fixed_expressions)
+        {
+            if($self->fixed_expression_starts_at_node($e, $node))
+            {
+                $found_expression = $e;
+                last;
+            }
+        }
+        next unless(defined($found_expression));
+        # Now we know we have come across one of the known expressions.
+        # Get the expression nodes and find a candidate for the external parent.
+        my @expression_nodes;
+        my @parent_nodes;
+        my $current_node = $node;
+        foreach my $w (@{$found_expression->{forms}})
+        {
+            push(@expression_nodes, $current_node);
+            push(@parent_nodes, $current_node->parent());
+            $current_node = $current_node->get_next_node();
+        }
+        # If we require for this expression that it already is a catena, check it now.
+        if(!$self->check_fixed_expression_mode($found_expression, \@expression_nodes, \@parent_nodes))
+        {
+            next;
+        }
+        log_info("Found fixed expression '$found_expression->{expression}'");
+        my $parent;
+        foreach my $n (@parent_nodes)
+        {
+            # The first parent node that lies outside the expression will become
+            # parent of the whole expression. (Just in case the nodes of the expression
+            # did not form a constituent. Normally we expect there is only one parent
+            # candidate.) Note that the future parent must not only lie outside the
+            # expression, it also must not be dominated by any member of the expression!
+            # Otherwise we would be creating a cycle.
+            if(!$self->is_in_or_depends_on_list($n, @expression_nodes))
+            {
+                $parent = $n;
+                last;
+            }
+        }
+        log_fatal('Something is wrong. We should have found a parent.') if(!defined($parent));
+        # Normalize morphological annotation of the nodes in the fixed expression.
+        for(my $i = 0; $i <= $#expression_nodes; $i++)
+        {
+            $expression_nodes[$i]->set_lemma($found_expression->{lemmas}[$i]) if defined($found_expression->{lemmas}[$i]);
+            $expression_nodes[$i]->set_tag($found_expression->{upos}[$i]) if defined($found_expression->{upos}[$i]);
+            $expression_nodes[$i]->set_conll_pos($found_expression->{xpos}[$i]) if defined($found_expression->{xpos}[$i]);
+            $expression_nodes[$i]->iset()->set_hash($found_expression->{feats}[$i]) if defined($found_expression->{feats}[$i]);
+        }
+        # If the expression should indeed be fixed, then the first node should be
+        # attached to the parent and all other nodes should be attached to the first
+        # node. However, if we are correcting a previously fixed annotation to something
+        # non-fixed, there are more possibilities. Therefore we always require the
+        # relative addresses of the parents (0 points to the one external parent we
+        # identified in the previous section, -1 allows to keep the external parent).
+        # First attach the nodes whose new parent lies outside the expression.
+        # That way we prevent cycles that could arise when attaching other nodes
+        # to these nodes.
+        # Special care needed if the external parent is the artificial root.
+        my $subroot_node;
+        for(my $i = 0; $i <= $#expression_nodes; $i++)
+        {
+            my $parent_i = $found_expression->{parents}[$i];
+            if($parent_i <= 0)
+            {
+                if($parent_i == -1 && !$self->is_in_or_depends_on_list($parent_nodes[$i], @expression_nodes))
+                {
+                    # Keep the current parent, which is already outside the
+                    # examined expression.
+                    if($expression_nodes[$i]->parent()->is_root())
+                    {
+                        $subroot_node = $expression_nodes[$i];
+                    }
+                }
+                elsif($parent->is_root())
+                {
+                    if(defined($subroot_node))
+                    {
+                        $expression_nodes[$i]->set_b_e_dependency($subroot_node, $found_expression->{deprels}[$i]);
+                    }
+                    else
+                    {
+                        $expression_nodes[$i]->set_b_e_dependency($parent, 'root');
+                        $subroot_node = $expression_nodes[$i];
+                    }
+                }
+                else
+                {
+                    $expression_nodes[$i]->set_b_e_dependency($parent, $found_expression->{deprels}[$i]);
+                }
+            }
+            # To prevent temporary cycles when changing the internal structure
+            # of the expression, first reattach all nodes to the parent, too.
+            else
+            {
+                $expression_nodes[$i]->set_b_e_dependency($parent, 'dep:temporary');
+            }
+        }
+        # Now modify the attachments inside the expression.
+        for(my $i = 0; $i <= $#expression_nodes; $i++)
+        {
+            my $parent_i = $found_expression->{parents}[$i];
+            if($parent_i > 0)
+            {
+                $expression_nodes[$i]->set_b_e_dependency($expression_nodes[$parent_i-1], $found_expression->{deprels}[$i]);
+            }
         }
     }
 }
