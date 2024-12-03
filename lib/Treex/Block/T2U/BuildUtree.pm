@@ -91,6 +91,13 @@ sub translate_val_frame
 }
 
 {   my %FUNCTOR_MAPPING = (
+    ##### ROOT NODES ###########################
+    # Only applies when not in the root position
+        'PAR' => 'parenthesis',
+        'PARTL' => 'interjection',
+        'VOCAT' => 'vocative',
+
+    ##### ACTANTS ##############################
         'ACT'   => 'ARG0',
         'PAT'   => 'ARG1',
         'ADDR'  => 'ARG2',
