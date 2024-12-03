@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<pml_schema xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/"  version="1.1">
+  <revision>1.0.0</revision>
+  <description>U-layer schema</description>
+  <!-- Treex PML schema  -->
+
+  <type name="u-root.type">
+    <structure role="#NODE" name="u-root">
+      <member as_attribute="1" name="id" role="#ID" required="1">
+        <cdata format="ID"/>
+      </member>
+      <member name="language" as_attribute="1" ><cdata format="any"/></member>
+      <member name="direction" as_attribute="1"><cdata format="any"/></member>
+
+      <member name="ttree.rf">
+        <cdata format="PMLREF"/>
+      </member>
+      <member name="nodetype">
+        <constant>root</constant>
+      </member>
+      <!-- DZ: Not sure if we have use for UMR-specific ord. Keeping it here for the moment. -->
+      <member name="ord" role="#ORDER" required="0">
+	    <cdata format="nonNegativeInteger"/>
+      </member>
+      <member name="children" role="#CHILDNODES">
+        <list ordered="1" type="u-node.type"/>
+      </member>
+      <member name="wild_dump"><cdata format="any"/></member>
+    </structure>
+  </type>
+
+  <type name="u-node.type">
+    <structure role="#NODE" name="u-node">
+      <member name="children" role="#CHILDNODES"><list ordered="1" type="u-node.type"/></member>
+      <member name="id" as_attribute="1" role="#ID" required="1"><cdata format="ID"/></member>
+      <member name="nodetype" type="u-nodetype.type"/>
+      <member name="ord" role="#ORDER" required="0"><cdata format="nonNegativeInteger"/></member>
+
+      <member name="entity" type="u-entity.type"/>
+
+      <member name="coref" required="0">
+        <list ordered="0" type="u-coref-link.type"/>
+      </member>
+
+      <member name="concept"><cdata format="any"/></member>
+      <member name="functor"><alt type="func.type"/></member>
+      <member name="aspect"><cdata format="any"/></member> <!-- valules? -->
+      <member name="polarity" type="u-polarity.type"/>
+      <member name="modal-strength"><cdata format="any"/></member> <!-- valules? -->
+
+      <!--  References -->
+      <member name="t.rf"><cdata format="PMLREF"/></member>
+      <member name="same_as.rf"><cdata format="PMLREF"/></member>
+      <member name="alignment.rf">
+        <list ordered="0"><cdata format="PMLREF"/></list>
+      </member>
+
+      <member name="wild_dump"><cdata format="any"/></member>
+    </structure>
+  </type>
+
+<!-- *************** Types of u-layer attributes *******************  -->
+
+  <type name="u-nodetype.type">
+    <choice>
+      <value>entity</value>
+      <value>event</value>
+      <value>ref</value>
+      <value>keyword</value>
+      <!-- !!! cloned from t-layer's t-nodetype.type; needs to be revisited! -->
+      <value>atom</value>
+      <value>coap</value>
+      <value>complex</value>
+      <value>dphr</value>
+      <value>fphr</value>
+      <value>list</value>
+      <value>qcomplex</value>
+    </choice>
+  </type>
+
+  <type name="func.type">
+    <choice>
+  <!-- ProbBank style -->
+      <value>ARG0</value>
+      <value>ARG1</value>
+      <value>ARG2</value>
+      <value>ARG3</value>
+
+  <!-- DZ: Initially copying functor values from the t-layer. We will see
+       whether we want to keep (a subset of) them -->
+      <value>ACT</value>
+      <value>AUTH</value>
+      <value>PAT</value>
+      <value>ADDR</value>
+      <value>EFF</value>
+      <value>ORIG</value>
+      <value>ACMP</value>
+      <value>ADVS</value>
+      <value>AIM</value>
+      <value>APP</value>
+      <value>APPS</value>
+      <value>ATT</value>
+      <value>BEN</value>
+      <value>CAUS</value>
+      <value>CNCS</value>
+      <value>CM</value>
+      <value>COMPL</value>
+      <value>CONJ</value>
+      <value>COND</value>
+      <value>CONFR</value>
+      <value>CONTRA</value>
+      <value>CONTRD</value>
+      <value>CPHR</value>
+      <value>CPR</value>
+      <value>CRIT</value>
+      <value>CSQ</value>
+      <value>DENOM</value>
+      <value>DIFF</value>
+      <value>DIR1</value>
+      <value>DIR2</value>
+      <value>DIR3</value>
+      <value>DISJ</value>
+      <value>DPHR</value>
+      <value>EXT</value>
+      <value>FPHR</value>
+      <value>GRAD</value>
+      <value>HER</value>
+      <value>ID</value>
+      <value>INTF</value>
+      <value>INTT</value>
+      <value>LOC</value>
+      <value>MANN</value>
+      <value>MAT</value>
+      <value>MEANS</value>
+      <value>MOD</value>
+      <value>NE</value>
+      <value>OPER</value>
+      <value>PAR</value>
+      <value>PARTL</value>
+      <value>PREC</value>
+      <value>PRED</value>
+      <value>REAS</value>
+      <value>REG</value>
+      <value>RESL</value>
+      <value>RESTR</value>
+      <value>RHEM</value>
+      <value>RSTR</value>
+      <value>SM</value>
+      <value>SUBS</value>
+      <value>TFHL</value>
+      <value>TFRWH</value>
+      <value>THL</value>
+      <value>THO</value>
+      <value>TOWH</value>
+      <value>TPAR</value>
+      <value>TSIN</value>
+      <value>TTILL</value>
+      <value>TWHEN</value>
+      <value>VOCAT</value>
+      <value>DESCR</value>
+      <value>???</value>
+    </choice>
+  </type>
+
+  <type name="u-entity.type">
+    <structure>
+      <member name="ref-person"  type="u-refperson.type"/>
+      <member name="ref-number" type="u-refnumber.type"/>
+    </structure>
+  </type>
+
+  <type name="u-refperson.type">
+    <choice>
+      <value>1st</value>
+      <value>2nd</value>
+      <value>3rd</value>
+    </choice>
+  </type>
+
+  <type name="u-refnumber.type">
+    <choice>
+      <value>singular</value>
+      <value>plural</value>
+    </choice>
+  </type>
+
+  <type name="u-coref-link.type">
+    <structure>
+      <member name="target_node.rf" required="1">
+        <cdata format="PMLREF"/></member>
+      <member name="type" required="0">
+        <choice>
+          <value>same-entity</value>
+          <value>same-event</value>
+          <value>subset-of</value>
+        </choice>
+      </member>
+    </structure>
+  </type>
+
+  <type name="u-polarity.type">
+    <choice>
+      <value>-</value>
+    </choice>
+  </type>
+
+</pml_schema>

@@ -17,11 +17,11 @@ subtype 'Treex::Type::Selector'
 
 subtype 'Treex::Type::Layer'
     => as 'Str'
-    => where {m/^[ptan]$/i}
-=> message {"Layer must be one of: [P]hrase structure, [T]ectogrammatical, [A]nalytical, [N]amed entities, you've provided $_"};
+    => where {m/^[putan]$/i}
+=> message {"Layer must be one of: [P]hrase structure, [U]niform Meaning Representation, [T]ectogrammatical, [A]nalytical, [N]amed entities, you've provided $_"};
 
 sub layers {
-    return qw(A T P N);
+    return qw(A T U P N);
 }
 
 subtype 'Treex::Type::Message'                                          #nonempty string
@@ -33,7 +33,6 @@ subtype 'Treex::Type::Message'                                          #nonempt
 subtype 'Treex::Type::Id'
     => as 'Str';
 
-# TODO: Should this be named ZoneCode or ZoneLabel?
 subtype 'Treex::Type::ZoneCode'
     => as 'Str'
     => where { my ( $l, $s ) = split /_/, $_; is_lang_code($l) && ( !defined $s || $s =~ /^[a-z\d]*$/i ) }
@@ -232,7 +231,7 @@ Treex::Core::Types - types used in Treex framework
 
 =item Treex::Type::Layer
 
-one of: P, T, A, N
+one of: P, U, T, A, N
 case insensitive
 
 =item Treex::Type::Selector
@@ -271,7 +270,7 @@ Checks whether given argument is valid LangCode
 
 =item layers
 
-Returns array of layers available in Treex, now (A, T, P, N)
+Returns array of layers available in Treex, now (A, T, U, P, N)
 
 =back
 
@@ -281,6 +280,6 @@ Tomáš Kraut <kraut@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011, 2023 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

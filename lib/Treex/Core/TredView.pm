@@ -343,7 +343,13 @@ sub value_line_doubleclick_hook {
     return 'stop';
 }
 
-# --------------- PRECOMPUTING VISUALIZATION (node labels, styles, coreference links, groups...) ---
+
+
+#==============================================================================
+# PRECOMPUTING VISUALIZATION (node labels, styles, coreference links, groups)
+#==============================================================================
+
+
 
 my @layers = map {lc} Treex::Core::Types::layers();
 
@@ -364,7 +370,6 @@ sub precompute_tree_depths {
                     $child->{_depth} = $cur_depth + 1 if $child->get_layer eq 'p';
                 }
             }
-
             $tree->{_tree_depth} = $max_depth;
         }
     }
@@ -375,20 +380,15 @@ sub node_release_hook {
     my ($self, $node, $target, $mod) = @_;
     my @roots = map { $_->get_root } $node, $target;
     my @zones = map { $_->get_zone } $node, $target;
-
     if ($self->show_alignment
         and
         $roots[0] != $roots[1] and $zones[0] != $zones[1]) {
-
         if ($node->is_directed_aligned_to($target, {rel_types => ['alignment']})) {
             $node->delete_aligned_node($target, 'alignment');
         } else {
             $node->add_aligned_node($target, 'alignment');
         }
-
-        # TODO: Is there more treexy way to do it?
         TredMacro::Redraw();
-
         return 'stop';
     }
 }
@@ -396,16 +396,13 @@ sub node_release_hook {
 # Has to be run whenever the tree layout changes.
 sub precompute_tree_shifts {
     my ( $self, $bundle ) = @_;
-
     my $layout = $self->tree_layout->get_layout($bundle);
     my %forest = ();
-
     foreach my $zone ( $bundle->get_all_zones ) {
         foreach my $tree ( ref($zone) eq 'Treex::Core::BundleZone' ? $zone->get_all_trees : () ) {
             $forest{ $self->tree_layout->get_tree_label($tree) } = $tree;
         }
     }
-
     my @trees     = ('foo');
     my $row       = 0;
     my $cur_shift = 0;
@@ -421,7 +418,6 @@ sub precompute_tree_shifts {
                 $forest{$label}{'_shift_right'} = $col;
             }
         }
-
         for my $label (@trees) {
             $forest{$label}{'_shift_down'} = $cur_shift;
         }
@@ -433,29 +429,23 @@ sub precompute_tree_shifts {
 
 sub precompute_visualization {
     my ( $self, $bundle ) = @_;
-
     $bundle->{_precomputed_node_style} = '#{Node-hide:1}';
-
     foreach my $zone ( $bundle->get_all_zones ) {
         foreach my $layer (@layers) {
             if ( ref($zone) eq 'Treex::Core::BundleZone' && $zone->has_tree($layer) ) {
                 my $root   = $zone->get_tree($layer);
                 my $limits = $self->labels->get_limits($layer);
-
                 $root->{_precomputed_labels}     = $self->labels->root_labels($root);
                 $root->{_precomputed_node_style} = $self->_styles->node_style($root);
                 $root->{_precomputed_hint}       = '';
-
                 if ( $root->get_zone->sentence ) {
                     $root->{_precomputed_hint} = 'sentence: ' . $root->get_zone->sentence;
                 }
-
                 foreach my $node ( $root->get_descendants ) {
                     $node->{_precomputed_node_style} = $self->_styles->node_style($node);
                     $node->{_precomputed_hint}       = $self->node_hint( $node, $layer );
                     $node->{_precomputed_buffer}     = $self->labels->node_labels( $node, $layer );
                     $self->labels->set_labels($node);
-
                     if ( !$limits ) {
                         for ( my $i = 0; $i < 3; $i++ ) {
                             $self->labels->set_limit( $layer, $i, scalar( @{ $node->{_precomputed_buffer}[$i] } ) - 1 );
@@ -473,7 +463,7 @@ sub get_clickable_sentence_for_a_zone {
     my ( $self, $zone, $alignment ) = @_;
     return if !$zone->has_atree();
     my %refs = ();
-
+    # T-tree.
     if ( $zone->has_ttree() ) {
         for my $tnode ( $zone->get_ttree->get_descendants ) {
             for my $aux ( TredMacro::ListV( $tnode->attr('a/aux.rf') ) ) {
@@ -490,7 +480,7 @@ sub get_clickable_sentence_for_a_zone {
             }
         }
     }
-
+    # A-tree.
     my @anodes = $zone->get_atree->get_descendants( { ordered => 1 } );
     for my $anode (@anodes) {
         my $id = $anode->id;
@@ -507,7 +497,7 @@ sub get_clickable_sentence_for_a_zone {
             }
         }
     }
-
+    # Compose the output.
     my @out;
     for my $anode (@anodes) {
         push @out, [ $anode->form, @{ $refs{ $anode->id } || [] } ];
@@ -519,16 +509,13 @@ sub get_clickable_sentence_for_a_zone {
             push @out, [ ' ', 'space' ];
         }
     }
-
     push @out, [ "\n", 'newline' ];
     return \@out;
 }
 
 sub precompute_value_line {
     my ( $self, $bundle ) = @_;
-
     my %alignment = ();
-
     foreach my $zone ( $bundle->get_all_zones() ) {
         foreach my $layer (@layers) {
             if ( $zone->has_tree($layer) ) {
@@ -545,7 +532,6 @@ sub precompute_value_line {
             }
         }
     }
-
     my @out = ();
     foreach my $zone ( $bundle->get_all_zones() ) {
         push @out, ( [ '[' . $zone->get_label . ']', 'label' ], [ ' ', 'space' ] );
@@ -559,113 +545,127 @@ sub precompute_value_line {
             push @out, [ "\n", 'newline' ]
         }
     }
-
     $bundle->{_precomputed_value_line} = \@out;
     return;
 }
 
-# ---- info displayed when mouse stops over a node - "hint" (should return a string, that may contain newlines) ---
-
-sub node_hint {    # silly code just to avoid the need for eval
+#------------------------------------------------------------------------------
+# Information to be displayed when the mouse stops over a node ("hint"). It
+# should return a string, possibly containing newlines.
+#------------------------------------------------------------------------------
+sub node_hint
+{
     my $layer = pop @_;
     my %subs;
+    $subs{u} = \&unode_hint;
     $subs{t} = \&tnode_hint;
     $subs{a} = \&anode_hint;
     $subs{n} = \&nnode_hint;
     $subs{p} = \&pnode_hint;
-
-    if ( defined $subs{$layer} ) {
+    if ( defined $subs{$layer} )
+    {
         return &{ $subs{$layer} }(@_);
     }
-    else {
+    else
+    {
         log_fatal "Undefined or unknown layer: $layer";
     }
-
     return;
 }
 
-sub anode_hint {
+sub anode_hint
+{
     my ( $self, $node ) = @_;
     my @lines = ();
-
     push @lines, "Parenthesis root" if $node->{is_parenthesis_root};
-    if ( $node->language eq 'cs' ) {
+    if ( $node->language eq 'cs' )
+    {
         push @lines, "Full lemma: " . ( $node->{lemma} ? $node->{lemma} : '' );
         push @lines, "Full tag: " . ( $node->{tag} ? $node->{tag} : '' );
     }
-
     # List all non-empty Interset features.
-    if ( $node->does('Treex::Core::Node::Interset') ) {
+    if ( $node->does('Treex::Core::Node::Interset') )
+    {
         my @ifeat = $node->iset()->get_nonempty_features();
-        foreach my $f ( @ifeat ) {
+        foreach my $f ( @ifeat )
+        {
             my $v = $node->iset()->get_joined($f);
             push(@lines, "$f: $v");
         }
     }
-
     return join "\n", @lines;
 }
 
-sub tnode_hint {
+sub tnode_hint
+{
     my ( $self, $node ) = @_;
     my @lines = ();
-
-    if ( ref $node->get_attr('gram') ) {
-        foreach my $gram ( keys %{ $node->get_attr('gram') } ) {
+    if ( ref $node->get_attr('gram') )
+    {
+        foreach my $gram ( keys %{ $node->get_attr('gram') } )
+        {
             push @lines, "gram/$gram : " . ( $node->get_attr( 'gram/' . $gram ) || '' );
         }
     }
-
     push @lines, "Direct speech root" if $node->get_attr('is_dsp_root');
     push @lines, "Parenthesis"        if $node->get_attr('is_parenthesis');
     push @lines, "Name of person"     if $node->get_attr('is_name_of_person');
     push @lines, "Name"               if $node->get_attr('is_name');
     push @lines, "State"              if $node->get_attr('is_state');
     push @lines, "Quotation : " . join ", ", map { $_->{type} } TredMacro::ListV( $node->get_attr('quot') ) if $node->get_attr('quot');
-
     return join "\n", @lines;
 }
 
-sub nnode_hint {
+sub unode_hint
+{
     my ( $self, $node ) = @_;
     return;
 }
 
-sub pnode_hint {
+sub nnode_hint
+{
+    my ( $self, $node ) = @_;
+    return;
+}
+
+sub pnode_hint
+{
     my ( $self, $node ) = @_;
     my @lines = ();
-
-    if ( $node->is_terminal ) {
+    if ( $node->is_terminal )
+    {
         push @lines, map { "$_: " . ( defined $node->{$_} ? $node->{$_} : '' ) } qw(lemma tag form);
     }
-    else {
+    else
+    {
         push @lines, "phrase: " . $node->{phrase};
         push @lines, "functions: " . join( ', ', TredMacro::ListV( $node->{functions} ) );
     }
-
     return join "\n", @lines;
 }
 
-# --- arrows ----
-
-# copied from TectoMT_TredMacros.mak
-sub node_style_hook {
+#------------------------------------------------------------------------------
+# Arrows.
+#------------------------------------------------------------------------------
+sub node_style_hook
+{
     my ( $self, $node, $styles ) = @_;
-
     return if ref($node) eq 'Treex::Core::Bundle';
-
     my %line = TredMacro::GetStyles( $styles, 'Line' );
     my @target_ids;
     my @arrow_types;
-
-    foreach my $ref_attr ( 'coref_gram', 'coref_text', 'compl', 'bridging' ) {
-        if ( defined $node->attr( $ref_attr . '.rf' ) ) {
-            foreach my $target_id ( @{ $node->attr( $ref_attr . '.rf' ) } ) {
+    foreach my $ref_attr ( 'coref_gram', 'coref_text', 'compl', 'bridging' )
+    {
+        if ( defined $node->attr( $ref_attr . '.rf' ) )
+        {
+            foreach my $target_id ( @{ $node->attr( $ref_attr . '.rf' ) } )
+            {
                 push @target_ids,  $target_id;
                 push @arrow_types, $ref_attr;
             }
         }
-        elsif ( defined $node->attr( $ref_attr ) ) {
+        elsif ( defined $node->attr( $ref_attr ) )
+        {
             my $links = $node->attr( $ref_attr );
             foreach my $link (@$links) {
                 push @target_ids, $link->{'target_node.rf'};
@@ -673,68 +673,67 @@ sub node_style_hook {
             }
         }
     }
-
-
-    # P-layer indexes and coindexes
-    if ( $node->get_layer eq 'p' ) {
+    # P-layer indexes and coindexes.
+    if ( $node->get_layer eq 'p' )
+    {
         my $coindex;
-        if ( $node->attr('form') and $node->attr('form') =~ m/-(\d+)$/ ) {
+        if ( $node->attr('form') and $node->attr('form') =~ m/-(\d+)$/ )
+        {
             $coindex = $1;
         }
-        elsif ( $node->attr('coindex') ) {
+        elsif ( $node->attr('coindex') )
+        {
             $coindex = $node->attr('coindex');
         }
-
-        if ($coindex) {
+        if ($coindex)
+        {
             my $target_node;
-            if ( exists $self->{'_ptb_index_map'}->{$coindex} ) {
+            if ( exists $self->{'_ptb_index_map'}->{$coindex} )
+            {
                 $target_node = $self->{'_ptb_index_map'}->{$coindex};
             }
-            elsif ( $node->is_terminal and exists $self->{'_ptb_coindex_map'}->{$coindex} ) {
+            elsif ( $node->is_terminal and exists $self->{'_ptb_coindex_map'}->{$coindex} )
+            {
                 $target_node = $self->{'_ptb_coindex_map'}->{$coindex};
             }
-
-            if ($target_node) {
+            if ($target_node)
+            {
                 push @target_ids,  $target_node->{'id'};
                 push @arrow_types, 'coindex';
             }
         }
     }
-
-    # alignment
-    if ( $self->show_alignment and my $links = $node->attr('alignment') ) {
-        foreach my $link (@$links) {
+    # Alignment.
+    if ( $self->show_alignment and my $links = $node->attr('alignment') )
+    {
+        foreach my $link (@$links)
+        {
             push @target_ids, $link->{'counterpart.rf'};
             push @arrow_types, $link->{'type'};
         }
     }
-
+    # Draw the arrows collected in the previous steps.
     $self->_styles->draw_arrows( $node, $styles, \%line, \@target_ids, \@arrow_types, );
-
     # TODO: Would it be possible to move this code to the "_precomputed_node_style" attr?
     my %n = TredMacro::GetStyles( $styles, 'Node' );
     TredMacro::AddStyle( $styles, 'Node', -tag => ( $n{-tag} || '' ) . '#' . $node->{id} );
-
     my $xadj = $node->root->{'_shift_right'} * 50;
-    if (ref($node)
-        =~ m/^Treex::Core::Node/
+    if (ref($node) =~ m/^Treex::Core::Node/
         and $node->get_layer eq 'p'
         and not $node->is_root and scalar $node->parent->children == 1
-        )
+       )
     {
         $xadj += 15;
     }
     TredMacro::AddStyle( $styles, 'Node', -xadj => $xadj ) if $xadj;
-
     return;
 }
 
-sub root_style_hook {
+sub root_style_hook
+{
     my ( $self, $bundle, $styles ) = @_;
-
     # Sometimes TrEd calls this on e.g. t-nodes (after node_click_hook)
     return if !$bundle->isa('Treex::Core::Bundle');
-
     return if $bundle->{_precomputed};
     $self->precompute_tree_depths($bundle);
     $self->precompute_tree_shifts($bundle);
@@ -782,21 +781,17 @@ sub toggle_clause_collapsing {
     $self->clause_collapsing( not $self->clause_collapsing );
     $bundle->{_is_collapsed} = $self->clause_collapsing;
     print "Toggle: " . $self->clause_collapsing . "\n";
-
     # fold clauses - display word from the clause instead of node labels
-
     foreach my $zone ( $bundle->get_all_zones ) {
         if ( $zone->has_tree('a') ) {
             my $aroot = $zone->get_atree;
             foreach my $anode ( $aroot->get_descendants ) {
-
                 # fold clauses - display word from the clause instead of node labels
                 if ( $self->clause_collapsing ) {
                     $anode->{_parent_backup}             = $anode->get_parent;
                     $anode->{_precomputed_labels_backup} = $anode->{_precomputed_labels};
                     $anode->{_precomputed_labels}        = $self->_divide_clause_string($anode);
                 }
-
                 # unfold clauses - return to full attribute labes
                 else {
                     $anode->{_precomputed_labels} = $anode->{_precomputed_labels_backup};
@@ -889,7 +884,7 @@ Treex::Core::TredView - visualization of Treex files in TrEd
 
 =head1 DESCRIPTION
 
-This module is used only in an extension of the Tree editor TrEd
+This module is used only in the extension of the Tree editor TrEd
 developed for displaying .treex files. The TrEd extension is contained
 in the same distribution as this module. The extension itself
 is very thin. It only creates an instance of C<Treex::Core::TredView>

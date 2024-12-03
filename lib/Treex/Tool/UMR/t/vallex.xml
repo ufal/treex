@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<valency_lexicon owner="v-u_nobody">
+  <head>
+    <list_of_users>
+      <user annotator="YES" can_edit="NO" id="v-u_nobody" name="nobody" reviewer="NO"/>
+    </list_of_users>
+  </head>
+  <body>
+    <word POS="V" id="v-w10" lemma="absorbovat">
+      <valency_frames>
+        <frame hereditary_used="4" id="v-w10f1" pcedt_hereditary_used="3" pcedt_used="3" pdt_hereditary_used="4" pdt_used="4" status="reviewed" used="4">
+          <example>houba absorbuje vodu</example>
+          <note>pohlcovat</note>
+          <frame_elements>
+            <element functor="ACT" type="oblig">
+              <form>
+                <node afun="unspecified" agreement="0" case="1" inherits="1" neg="unspecified"/>
+              </form>
+            </element>
+            <element functor="PAT" type="oblig">
+              <form>
+                <node afun="unspecified" agreement="0" case="4" inherits="1" neg="unspecified"/>
+              </form>
+            </element>
+          </frame_elements>
+        </frame>
+      </valency_frames>
+    </word>
+    <word POS="V" id="v-w11" lemma="běhat">
+      <valency_frames>
+        <frame hereditary_used="4" id="v-w11f1" pcedt_hereditary_used="3" pcedt_used="3" pdt_hereditary_used="4" pdt_used="4" status="reviewed" used="4">
+          <example>běhá jako šílený</example>
+          <note>rychle se pohybovat</note>
+          <frame_elements>
+            <element functor="ACT" type="oblig">
+              <form>
+                <node afun="unspecified" agreement="0" case="1" inherits="1" neg="unspecified"/>
+              </form>
+            </element>
+            <element functor="PAT" type="oblig">
+              <form>
+                <node afun="unspecified" agreement="0" case="4" inherits="1" neg="unspecified"/>
+              </form>
+            </element>
+          </frame_elements>
+        </frame>
+      </valency_frames>
+    </word>
+  </body>
+</valency_lexicon>
