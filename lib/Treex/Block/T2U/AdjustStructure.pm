@@ -5,6 +5,7 @@ use Moose;
 
 use Treex::Core::Common;
 use Treex::Tool::UMR::Common qw{ is_coord expand_coord };
+use List::Util qw{ max };
 
 use namespace::autoclean;
 use experimental qw( signatures );
@@ -17,6 +18,8 @@ has '+language' => ( required => 1 );
 my $NEGATION = 'n(?:e|ikoliv?)';
 sub process_unode($self, $unode, $) {
     my $tnode = $unode->get_tnode;
+    $self->translate_compl($unode, $tnode)
+        if 'COMPL' eq $tnode->functor;
     $self->subordinate2coord($unode, $tnode)
         if $tnode->functor =~ /^(?:CONTRD|CNCS)$/;
     $self->adjust_coap($unode, $tnode) if 'coap' eq $tnode->nodetype;
@@ -26,6 +29,51 @@ sub process_unode($self, $unode, $) {
         if 'RHEM' eq $tnode->functor && $tnode->t_lemma =~ /^$NEGATION$/
         || 'CM' eq $tnode->functor && $tnode->t_lemma =~ /^(?:#Neg|$NEGATION)$/;
     return
+}
+
+{   my %SEMPOS2REL = (v => 'manner',
+                      a => 'manner',
+                      n => 'mod');
+    sub translate_compl($self, $unode, $tnode) {
+        my (@compl_targets) = $tnode->get_compl_nodes;
+        my $arrow_src = $unode;
+        if ($tnode->is_member) {
+            $tnode = $tnode->_get_transitive_coap_root;
+            ($unode) = $tnode->get_referencing_nodes('t.rf');
+        }
+
+        my @parent_sempos = map substr($_, 0, 1),
+                            map $_ ->gram_sempos || 'v',
+                            $tnode->get_eparents;
+        my %sempos_freq;
+        ++$sempos_freq{$_} for @SEMPOS2REL{@parent_sempos};
+        my $relation;
+        if (1 < keys %sempos_freq) {
+            my $max_freq = max(values %sempos_freq);
+            my @most_common = grep $max_freq == $sempos_freq{$_},
+                              keys %sempos_freq;
+            log_warn("COMPL eparent sempos $tnode->{id}: @most_common");
+            $relation = $most_common[0];
+        } else {
+            $relation = (keys %sempos_freq)[0];
+        }
+
+        $unode->set_functor($relation);
+
+        my (@u_targets) = map $_->get_referencing_nodes('t.rf'), @compl_targets;
+        for my $u_target (@u_targets) {
+            if ($u_target->root == $unode->root) {
+                my $ref = $arrow_src->create_child;
+                $ref->{ord} = 0;
+                $ref->set_functor('mod-of');
+                $ref->make_referential(('ref' eq ($u_target->nodetype // ""))
+                                   ? $self->_solve_ref($u_target)
+                                   : $u_target);
+            } else {
+                log_warn("$tnode->{id}: COMPL target in other tree.");
+            }
+        }
+    }
 }
 
 sub subordinate2coord($self, $unode, $tnode) {

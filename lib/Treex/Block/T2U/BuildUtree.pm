@@ -142,6 +142,7 @@ sub translate_val_frame
         'HER'   => 'source',
         'SUBS' => 'substitute',
     ##### NOMINAL ###########################
+        # COMPL done in AdjustStructure
         'APP'   => 'possessor',  # ?? or 'part' ??
         'AUTH' => 'source',
         'ID' => 'name', # ??
