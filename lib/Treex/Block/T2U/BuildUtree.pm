@@ -328,11 +328,27 @@ sub add_tnode_to_unode
     $unode->set_aspect($self->deduce_aspect($unode, $tnode))
         if 'event' eq $unode->nodetype;
     $unode->set_polarity
-        if 'neg1' eq ($tnode->get_attr('gram/negation') // "")
-        || 'negat' eq ($tnode->get_attr('gram/indeftype') // "");
+        if 'neg1' eq ($tnode->gram_negation // "")
+        || 'negat' eq ($tnode->gram_indeftype // "")
+        || $self->negated_with_missing_gram($tnode);
 
     return $unode
 }
+
+sub negated_with_missing_gram {
+    my ($self, $tnode) = @_;
+    my %gram = keys %{ $tnode->get_attr('gram') // {} };
+    delete $gram{sempos};
+    return if keys %gram;
+
+    my $alex = $tnode->get_lex_anode or return;
+
+    log_debug("POLARITY guess on morph $tnode->{id}"),
+            return 1
+        if 'N' eq substr $alex->tag, 10, 1;
+    return
+}
+
 
 1;
 __END__
