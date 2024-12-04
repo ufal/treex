@@ -43,7 +43,13 @@ sub process_unode($self, $unode, $) {
         }
 
         my @parent_sempos = map substr($_, 0, 1),
-                            map $_ ->gram_sempos || 'v',
+                            map {
+                                $_ ->gram_sempos || do {
+                                    log_warn("COMPL $_->{id} no sempos")
+                                        unless '#EmpVerb' eq $_->t_lemma;
+                                    'v'
+                                }
+                            }
                             $tnode->get_eparents;
         my %sempos_freq;
         ++$sempos_freq{$_} for @SEMPOS2REL{@parent_sempos};
