@@ -158,7 +158,7 @@ sub translate_val_frame
         'ADVS' => 'but-91',        # keyword
         'CONFR' => 'contrast-91',  # event
         'CONJ' => 'and',
-        'CONTRA' => 'contra',       # NOT in UMR
+        'CONTRA' => 'contra-entity',       # NOT in UMR
         'CSQ' => 'have-result-91',
         'DISJ' => 'or', # exclusive-disjunctive
         'GRAD' => 'gradation',
