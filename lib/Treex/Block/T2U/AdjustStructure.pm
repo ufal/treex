@@ -35,6 +35,7 @@ sub process_unode($self, $unode, $) {
                       a => 'manner',
                       n => 'mod');
     sub translate_compl($self, $unode, $tnode) {
+        my $orig_tnode = $tnode;
         my (@compl_targets) = $tnode->get_compl_nodes;
         my $arrow_src = $unode;
         if ($tnode->is_member) {
@@ -45,12 +46,13 @@ sub process_unode($self, $unode, $) {
         my @parent_sempos = map substr($_, 0, 1),
                             map {
                                 $_ ->gram_sempos || do {
-                                    log_warn("COMPL $_->{id} no sempos")
+                                    log_warn("COMPL $tnode->{id}: "
+                                             . "$_->{id} no sempos")
                                         unless '#EmpVerb' eq $_->t_lemma;
                                     'v'
                                 }
                             }
-                            $tnode->get_eparents;
+                            $orig_tnode->get_eparents;
         my %sempos_freq;
         ++$sempos_freq{$_} for @SEMPOS2REL{@parent_sempos};
         my $relation;
