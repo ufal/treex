@@ -337,7 +337,8 @@ sub add_tnode_to_unode
 
 sub negated_with_missing_gram {
     my ($self, $tnode) = @_;
-    my %gram = keys %{ $tnode->get_attr('gram') // {} };
+    my %gram ;
+    @gram{ keys %{ $tnode->get_attr('gram') // {} } } = ();
     delete $gram{sempos};
     return if keys %gram;
 
