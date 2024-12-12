@@ -183,24 +183,37 @@ sub translate_val_frame
     sub adjust_coap
     {
         my ($self, $unode, $tnode) = @_;
-        my @members = $tnode->get_coap_members({direct_only => 1});
-
         # To find the functor, we need all members, not just the direct ones.
         my @functors = $self->most_frequent_functor(map $_->{functor},
                                                     $tnode->get_coap_members);
-        my $relation = $FUNCTOR_MAPPING{ $functors[0] } // $functors[0];
-        $unode->set_concept($unode->functor);
-        $unode->set_functor($relation // 'EMPTY');
-        my $prefix = $unode->concept =~ /-91/ ? 'ARG' : 'op';
-        @members = reverse @members if 'ARG' eq $prefix
-                                    && $self->should_reverse($tnode, @members);
 
-        my $i = 1;
-        for my $member (@members) {
-            my ($umember) = $member->get_referencing_nodes('t.rf');
-            log_warn("ARG$i under " . $unode->concept)
-                if 'ARG' eq $prefix && $i > 2;
-            $umember->set_functor($prefix . $i++);
+        my @members = $tnode->get_coap_members({direct_only => 1});
+        if (1 == @functors) {
+            my $relation = $FUNCTOR_MAPPING{ $functors[0] } // $functors[0];
+            $unode->set_concept($unode->functor);
+            $unode->set_functor($relation // 'EMPTY');
+            my $prefix = $unode->concept =~ /-91/ ? 'ARG' : 'op';
+            @members = reverse @members
+                if 'ARG' eq $prefix
+                && $self->should_reverse($tnode, @members);
+
+            my $i = 1;
+            for my $member (@members) {
+                my ($umember) = $member->get_referencing_nodes('t.rf');
+                log_warn("ARG$i under " . $unode->concept)
+                    if 'ARG' eq $prefix && $i > 2;
+                $umember->set_functor($prefix . $i++);
+            }
+        } else {
+            # If different functors are coordinated, move all the members as
+            # coordination brothers and remove it.
+            for my $member (@members) {
+                my ($umember) = $member->get_referencing_nodes('t.rf');
+                $umember->set_parent($unode->parent);
+                $umember->set_functor($FUNCTOR_MAPPING{ $member->functor }
+                                      // $member->functor);
+            }
+            $unode->remove;
         }
     }
 }
