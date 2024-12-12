@@ -184,18 +184,12 @@ sub translate_val_frame
     {
         my ($self, $unode, $tnode) = @_;
         # To find the functor, we need all members, not just the direct ones.
-        my @functors = $self->most_frequent_functor(
-            map $FUNCTOR_MAPPING{ $_->{functor} } // $_->{functor},
-            $tnode->get_coap_members);
-
-        if (grep /^(?:PRED|DENOM|PAR(?:TL)?|VOCAT)$/, @functors) {
-            my $top = ($tnode->_get_transitive_coap_root // $tnode)->parent;
-            @functors = qw( root ) if $top == $tnode->root;
-        }
+        my @functors = $self->most_frequent_functor(map $_->{functor},
+                                                    $tnode->get_coap_members);
 
         my @members = $tnode->get_coap_members({direct_only => 1});
         if (1 == @functors) {
-            my $relation = $functors[0];
+            my $relation = $FUNCTOR_MAPPING{ $functors[0] } // $functors[0];
             $unode->set_concept($unode->functor);
             $unode->set_functor($relation // 'EMPTY');
             my $prefix = $unode->concept =~ /-91/ ? 'ARG' : 'op';
@@ -213,7 +207,6 @@ sub translate_val_frame
         } else {
             # If different functors are coordinated, move all the members as
             # coordination brothers and remove it.
-            log_debug('Cancelling coap ' . $tnode->id);
             for my $member (@members) {
                 my ($umember) = $member->get_referencing_nodes('t.rf');
                 $umember->set_parent($unode->parent);
