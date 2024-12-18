@@ -13,6 +13,8 @@ has _curr_sentord => ( isa => 'Int', is => 'rw' );
 has _used_variables => ( isa => 'ArrayRef[Int]', is => 'rw' );
 has _id_cache => ( isa => 'HashRef[Str]', is => 'ro', default => sub { {} } );
 has _buffer => ( isa => 'Str', is => 'rw', default => "" );
+has _cataphora => ( isa => 'HashRef[HashRef[Str]]', is => 'rw',
+                    default => sub { {} });
 
 sub _clear_variables($self) {
     $self->_set_used_variables([(0) x (ord("z") - ord("a") + 1)]);
@@ -40,8 +42,11 @@ sub process_utree($self, $utree, $sentord) {
     $self->_add_to_buffer($self->_get_sent_footer);
 }
 
+before process_document => sub ($self, @) {
+    $self->_set_cataphora({});
+};
+
 after process_document => sub ($self, @) {
-    $self->_resolve_cataphoras;
     print { $self->_file_handle } $self->_buffer;
     # use Data::Dumper; warn Dumper $self->_id_cache;
 };
@@ -232,13 +237,24 @@ sub _get_doc_annot($self, $utree) {
 sub _coref($self, $utree) {
     my @coref;
     for my $unode ($utree->descendants) {
+        if (exists $self->_cataphora->{ $unode->id }) {
+            for my $id2 (keys %{ $self->_cataphora->{ $unode->id } }) {
+                push @coref, '(' . $self->_id_cache->{ $unode->id }
+                             . ' :' . $self->_cataphora->{ $unode->id }{$id2}
+                             . ' ' . $self->_id_cache->{$id2} . ')';
+            }
+        }
+
         if (my @node_coref = $unode->get_coref) {
             for my $node_coref (@node_coref) {
                 my $id = $self->_id_cache->{ $node_coref->[0]->id };
-                push @coref, '(' . $self->_id_cache->{ $unode->id }
-                             . ' :' . $node_coref->[1] . ' '
-                             . ($id // $self->_cataphora($node_coref->[0]->id))
-                             . ')';
+                if (! defined $id) {
+                    $self->add_cataphora($unode->id, $node_coref);
+                } else {
+                    push @coref, '(' . $self->_id_cache->{ $unode->id }
+                                 . ' :' . $node_coref->[1] . ' '
+                                 . $id . ')';
+                }
             }
         }
     }
@@ -246,11 +262,12 @@ sub _coref($self, $utree) {
     return ""
 }
 
-sub _cataphora($self, $id) { sprintf "\x00%s\x01", $id }
-
-sub _resolve_cataphoras($self) {
-    $self->_set_buffer(
-        $self->_buffer =~ s/\x00([^\x01]+)\x01/$self->_id_cache->{$1}/reg);
+sub add_cataphora($self, $id, $coref) {
+    my $id2 = $coref->[0]->id;
+    die "Duplicate cataphora $id2 $id."
+        if exists $self->_cataphora->{$id2}
+        && exists $self->_cataphora->{$id2}{$id};
+    $self->_cataphora->{$id2}{$id} = $coref->[1];
     return
 }
 
