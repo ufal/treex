@@ -89,7 +89,10 @@ after 'process_document' => sub {
 
             # inter-sentential link
             if ($unode->root != $uante->root) {
-                $unode->add_coref($uante, 'same-' . $uante->nodetype);
+                $unode->add_coref($uante,
+                                  'same-' . ('event' eq $uante->nodetype
+                                             ? 'event'
+                                             : 'entity'));
                 $unode->set_nodetype($uante->nodetype);
             }
             # intra-sentential links with underspecified anaphors
