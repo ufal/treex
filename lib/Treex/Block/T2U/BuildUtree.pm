@@ -183,18 +183,28 @@ sub translate_val_frame
     sub adjust_coap
     {
         my ($self, $unode, $tnode) = @_;
-        my @members = $tnode->get_coap_members({direct_only => 1});
 
         # To find the functor, we need all members, not just the direct ones.
-        my @functors = $self->most_frequent_functor(map $_->{functor},
-                                                    $tnode->get_coap_members);
-        my $relation = $FUNCTOR_MAPPING{ $functors[0] } // $functors[0];
+        my @functors = map {
+            ($_->functor =~ /^(?:PRED|DENOM|PAR(?:TL)?|VOCAT)$/
+             && $tnode->root
+                == ($tnode->_get_transitive_coap_root // $tnode)->parent)
+            ? '*ROOT*'  # Will be ignored in root position, anyway.
+            : $_->functor
+        } $tnode->get_coap_members;
+        my @relations = $self->most_frequent_relation(
+            map $FUNCTOR_MAPPING{$_} // $_, @functors);
+
+        log_warn("Coordination of different relations: @relations")
+            if @relations > 1;
+        my $relation = $relations[0];
         $unode->set_concept($unode->functor);
         $unode->set_functor($relation // 'EMPTY');
         my $prefix = $unode->concept =~ /-91/ ? 'ARG' : 'op';
+
+        my @members = $tnode->get_coap_members({direct_only => 1});
         @members = reverse @members if 'ARG' eq $prefix
                                     && $self->should_reverse($tnode, @members);
-
         my $i = 1;
         for my $member (@members) {
             my ($umember) = $member->get_referencing_nodes('t.rf');
@@ -217,19 +227,22 @@ sub should_reverse {
         -1 => sub {},
          0 => sub { push @{ $_[0] }, $_[1] },
          1 => sub { @{ $_[0] } = ($_[1]) });
-    sub most_frequent_functor
+    sub most_frequent_relation
     {
-        my ($self, @functors) = @_;
-        my %functor_tally;
-        ++$functor_tally{$_} for @functors;
-        my @maxfunctors = (each %functor_tally)[0];
-        while (my ($f, $t) = each %functor_tally) {
-            $DISPATCH{ $t <=> $functor_tally{ $maxfunctors[0] } }
-                ->(\@maxfunctors, $f);
+        my ($self, @relations) = @_;
+        my %relation_tally;
+        ++$relation_tally{$_} for @relations;
+        log_warn('Coordination of different relations: '
+                 . join ' ', keys %relation_tally)
+            if 1 < keys %relation_tally;
+        my @maxrelations = (each %relation_tally)[0];
+        while (my ($f, $t) = each %relation_tally) {
+            $DISPATCH{ $t <=> $relation_tally{ $maxrelations[0] } }
+                ->(\@maxrelations, $f);
         }
-        log_warn("More than 1 most frequent functor: @maxfunctors")
-            if @maxfunctors > 1;
-        return @maxfunctors
+        log_warn("More than 1 most frequent relation: @maxrelations")
+            if @maxrelations > 1;
+        return @maxrelations
     }
 }
 
