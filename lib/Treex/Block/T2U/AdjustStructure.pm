@@ -14,6 +14,8 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );
 
+has _coord_members_already_sub2coorded => (is => 'ro', isa => 'HashRef',
+                                           default => sub { +{} });
 
 my $NEGATION = 'n(?:e|ikoliv?)';
 sub process_unode($self, $unode, $) {
@@ -85,6 +87,17 @@ sub process_unode($self, $unode, $) {
 }
 
 sub subordinate2coord($self, $unode, $tnode) {
+    if ($tnode->is_member) {
+        $tnode = $tnode->_get_transitive_coap_root;
+        ($unode) = $tnode->get_referencing_nodes('t.rf');
+        if (! $unode) {
+            log_warn($tnode->{id} . ' has no unode for subordinate2coord');
+            return
+        }
+        log_info('Skipping 2nd run'), return
+            if $self->_coord_members_already_sub2coorded->{ $unode->id }++;
+    }
+
     my $t_parent   = $tnode->get_parent;
     my ($u_parent) = $t_parent->get_referencing_nodes('t.rf');
     my $operator   = $u_parent->parent->create_child;
