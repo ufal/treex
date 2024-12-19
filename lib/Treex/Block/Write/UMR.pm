@@ -48,7 +48,9 @@ before process_document => sub ($self, @) {
 
 after process_document => sub ($self, @) {
     print { $self->_file_handle } $self->_buffer;
-    # use Data::Dumper; warn Dumper $self->_id_cache;
+    for my $k (keys %{ $self->_id_cache }) {
+        warn "ID translation: $k ", $self->_id_cache->{$k}, "\n";
+    }
 };
 
 sub _add_to_buffer($self, $string) {
