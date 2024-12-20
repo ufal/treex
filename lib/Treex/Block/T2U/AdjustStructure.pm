@@ -233,9 +233,39 @@ Treex::Block::T2U::AdjustStructure
 Do some structure adjustments after converting a t-layer tree to a u-layer
 tree.
 
+=over
+
+=item translate_compl
+
+Translates the complement COMPL into a C<manner> or C<mod> based on the sempos
+of the parent. The second dependency is translated into a C<mod_of> arrow.
+
+=item subordinate2coord
+
+C<CONTRD> and C<CNCS> are treated as subordinate on t-layer, but they are
+translated as C<but-1> in UMR which is coordinate. The structure must be
+therefore changed: a new node is created to represent the coordination and
+both the C<CONTRD/CNCS> and its parent are rehung to it.
+
+=item adjust_coap
+
+Common dependents in a coordination are rehung to the first coordination
+member. Arrows are created from all other members to the common dependents to
+express their relation.
+
+=item remove_double_edge
+
+When a C<*-of> relation is created from a coordination, the node sometimes still have arrows with the inverted relation, too. Remove this surplus arrows.
+
+=item negate_sibling
+
+Non-C<#Neg> negative C<RHEM> and all negative C<CM>'s are translated into the C<polarity> feature. Special care is needed in C<GRAD> coordinations where the negation depends on the position of the negation relative to the coordination head.
+
+=back
+
 =head1 PARAMETERS
 
-Required:
+=head2 Required:
 
 =over
 
@@ -243,7 +273,7 @@ Required:
 
 =back
 
-Optional:
+=head2 Optional:
 
 Currently none.
 
