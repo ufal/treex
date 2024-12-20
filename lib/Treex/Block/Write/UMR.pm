@@ -10,6 +10,7 @@ extends 'Treex::Block::Write::BaseTextWriter';
 has '+extension' => ( default => '.umr' );
 
 has _curr_sentord => ( isa => 'Int', is => 'rw' );
+has _skipped_sent_tally => ( isa => 'Int', is => 'rw', default => 0 );
 has _used_variables => ( isa => 'ArrayRef[Int]', is => 'rw' );
 has _id_cache => ( isa => 'HashRef[Str]', is => 'ro', default => sub { {} } );
 has _buffer => ( isa => 'Str', is => 'rw', default => "" );
@@ -32,7 +33,12 @@ sub _assign_variable($self, $concept) {
 }
 
 sub process_utree($self, $utree, $sentord) {
-    $self->_set_curr_sentord($sentord);
+    unless ($utree->children) {
+        $self->_set_skipped_sent_tally(1 + $self->_skipped_sent_tally);
+        return
+    }
+
+    $self->_set_curr_sentord($sentord - $self->_skipped_sent_tally);
     $self->_clear_variables();
 
     $self->_add_to_buffer($self->_get_sent_header($utree));
