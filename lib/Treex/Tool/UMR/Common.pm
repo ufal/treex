@@ -49,14 +49,12 @@ sub expand_coord {
 {   my %GRAM = (person => {
                     1     => '1st',
                     2     => '2nd',
-                    3     => '3rd',
-                    inher => 'Inher'},
+                    3     => '3rd'},
                 number => {
                     sg    => 'singular',
                     S     => 'singular',
                     pl    => 'plural',
-                    P     => 'plural',
-                    inher => 'inher'});
+                    P     => 'plural'});
     my %IMPLEMENTATION = (person => {gram => 'gram_person',
                                      tag  => '^.{7}([123])',
                                      attr => 'entity_refperson'},
