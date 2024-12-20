@@ -255,11 +255,15 @@ express their relation.
 
 =item remove_double_edge
 
-When a C<*-of> relation is created from a coordination, the node sometimes still have arrows with the inverted relation, too. Remove this surplus arrows.
+When a C<*-of> relation is created from a coordination, the node sometimes
+still have arrows with the inverted relation, too. Remove this surplus arrows.
 
 =item negate_sibling
 
-Non-C<#Neg> negative C<RHEM> and all negative C<CM>'s are translated into the C<polarity> feature. Special care is needed in C<GRAD> coordinations where the negation depends on the position of the negation relative to the coordination head.
+Non-C<#Neg> negative C<RHEM> and all negative C<CM>'s are translated into the
+C<polarity> feature. Special care is needed in C<GRAD> coordinations where the
+negation depends on the position of the negation relative to the coordination
+head.
 
 =back
 
