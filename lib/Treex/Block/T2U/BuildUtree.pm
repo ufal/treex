@@ -192,7 +192,8 @@ sub translate_val_frame
             ? '*ROOT*'  # Will be ignored in root position, anyway.
             : $_->functor
         } $tnode->get_coap_members;
-        my @relations = $self->most_frequent_relation(
+        # Sorting just for deterministic output.
+        my @relations = sort $self->most_frequent_relation(
             map $FUNCTOR_MAPPING{$_} // $_, @functors);
 
         log_warn("Coordination of different relations: @relations")
