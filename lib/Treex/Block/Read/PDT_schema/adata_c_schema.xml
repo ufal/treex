@@ -65,11 +65,13 @@
       <member name="afun" type="a-afun.type" required="1"/>
       <member name="is_member" type="bool.type"/>
       <member name="is_parenthesis_root" type="bool.type"/>
+      <member name="is_extra_dependency" type="bool.type"/>
       <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>
       <member name="clause_number"><cdata format="nonNegativeInteger"/></member>
       <member name="children" role="#CHILDNODES">
         <list type="a-node.type" ordered="1"/>
       </member>
+      <member name="comments" type="a-comments.type"/>
     </structure>
   </type>
   
@@ -93,6 +95,9 @@
       <value>AuxP</value>
       <value>Apos</value>
       <value>ExD</value>
+      <value>Denom</value>
+      <value>Vocat</value>
+      <value>Partl</value>
       <value>AuxC</value>
       <value>Atv</value>
       <value>AtvV</value>
@@ -102,6 +107,26 @@
       <value>AuxG</value>
       <value>AuxK</value>
       <value>AuxX</value>
+    </choice>
+  </type>
+
+  <type name="a-comments.type">
+    <list type="a-comment.type"/>
+  </type>
+
+  <type name="a-comment.type">
+    <structure>
+      <member name="type" required="1" type="a-comment-type.type"
+              as_attribute="1"/>
+      <member name="text"><cdata format="any"/></member>
+    </structure>
+  </type>
+
+  <type name="a-comment-type.type">
+    <choice>
+      <value>T-layer</value>
+      <value>M-layer</value>
+      <value>Other</value>
     </choice>
   </type>
 
