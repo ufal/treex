@@ -67,6 +67,9 @@
       <member name="ord" role="#ORDER" required="0"><cdata format="nonNegativeInteger"/></member> <!-- ptacek: adding ordering attr for pmltq queries using order-follows relations; PML implementation allows for only one attr with #ORDER role -->
 
       <member name="t_lemma"><cdata format="any"/></member>
+      <member name="proto_lemma" required="0">
+        <cdata format="any"/>
+      </member>
       <member name="functor"><alt type="func.type"/></member>
       <member name="subfunctor" type="t-subfunctor.type"/>
       <member name="is_member" type="bool.type"/>
@@ -105,6 +108,9 @@
       <member name="is_optimizable" type="bool.type"/>
       <member name="discourse_special" type="t-discourse-special.type" required="0"/>
 
+      <member name="discourse_feature" type="t-discourse-feature.type" required="0"/>
+      <member name="secondary_NP_type" type="t-discourse-type.type" required="0"/> <!-- a provisional attribute for annotating disc. type of secondary connectives connecting a non-verbal argument -->
+      <member name="secondary_NP_negated" type="bool.type" required="0"/> <!-- a provisional attribute for marking a negated NP secondary connectives connecting a non-verbal argument -->
       <!--  References -->
       <member name="compl.rf"><list ordered="0"><cdata format="PMLREF"/></list></member>
       <member name="bridging" required="0">
@@ -374,6 +380,16 @@
       <value>metatext</value>
     </choice>
   </type>
+  <type name="t-discourse-feature.type">
+    <choice>
+      <value>caption</value>
+      <value>heading</value>
+      <value>metatext</value>
+      <value>question</value>
+      <value>author</value>
+      <value>location</value>
+    </choice>
+  </type>
 
   <type name="t-discourse-groups.type">
     <structure>
@@ -408,6 +424,11 @@
       <member name="target_range" required="0">
         <cdata format="any"/>
       </member>
+      <member name="sense_PDTB3"  type="semclass-pdtb3.type" required="0"/>
+      <member name="sense1B_PDTB3"  type="semclass-pdtb3.type" required="0"/>
+      <member name="sense_PDTB3_manual"  type="semclass-pdtb3.type" required="0"/>
+      <member name="sense1B_PDTB3_manual"  type="semclass-pdtb3.type" required="0"/>
+
       <member name="discourse_type"  type="t-discourse-type.type" required="0"/>
       <member name="is_negated" type="bool.type" required="0"/>
       <member name="comment" required="0">
@@ -484,6 +505,48 @@
       <value>other</value>
       <value>question-answer</value> <!-- in order to correspond to tdata_evald_discourse_schema.xml -->
       <value>empty_relation</value> <!-- in order to correspond to tdata_evald_discourse_schema.xml -->
+    </choice>
+  </type>
+
+  <type name="semclass-pdtb3.type">
+    <choice>
+      <value>Comparison.Concession.Arg1-as-denier</value>
+      <value>Comparison.Concession.Arg2-as-denier</value>
+      <value>Comparison.Concession+SpeechAct.Arg2-as-denier+SpeechAct</value>
+      <value>Comparison.Contrast</value>
+      <value>Comparison.Similarity</value>
+      <value>Contingency.Cause.Reason</value>
+      <value>Contingency.Cause.Result</value>
+      <value>Contingency.Cause+Belief.Reason+Belief</value>
+      <value>Contingency.Cause+Belief.Result+Belief</value>
+      <value>Contingency.Cause+SpeechAct.Reason+SpeechAct</value>
+      <value>Contingency.Cause+SpeechAct.Result+SpeechAct</value>
+      <value>Contingency.Negative-cause.NegResult</value>
+      <value>Contingency.Condition.Arg1-as-cond</value>
+      <value>Contingency.Condition.Arg2-as-cond</value>
+      <value>Contingency.Condition+SpeechAct</value>
+      <value>Contingency.Negative-condition.Arg1-as-negCond</value>
+      <value>Contingency.Negative-condition.Arg2-as-negCond</value>
+      <value>Contingency.Negative-condition+SpeechAct</value>
+      <value>Contingency.Purpose.Arg1-as-goal</value>
+      <value>Contingency.Purpose.Arg2-as-goal</value>
+      <value>Expansion.Conjunction</value>
+      <value>Expansion.Disjunction</value>
+      <value>Expansion.Equivalence</value>
+      <value>Expansion.Exception.Arg1-as-excpt</value>
+      <value>Expansion.Exception.Arg2-as-excpt</value>
+      <value>Expansion.Instantiation.Arg1-as-instance</value>
+      <value>Expansion.Instantiation.Arg2-as-instance</value>
+      <value>Expansion.Level-of-detail.Arg1-as-detail</value>
+      <value>Expansion.Level-of-detail.Arg2-as-detail</value>
+      <value>Expansion.Manner.Arg1-as-manner</value>
+      <value>Expansion.Manner.Arg2-as-manner</value>
+      <value>Expansion.Substitution.Arg1-as-subst</value>
+      <value>Expansion.Substitution.Arg2-as-subst</value>
+      <value>Temporal.Asynchronous.Precedence</value>
+      <value>Temporal.Asynchronous.Succession</value>
+      <value>Temporal.Synchronous</value>
+      <value>IGNORE</value>
     </choice>
   </type>
 

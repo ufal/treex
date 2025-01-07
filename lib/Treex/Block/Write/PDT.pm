@@ -239,12 +239,12 @@ sub print_tsubtree {
     print {$t_fh} "\n<LM id='$id'><deepord>$ord</deepord>";
 
     # boolean attrs
-    foreach my $attr (qw(is_dsp_root is_generated is_member is_name_of_person is_parenthesis is_state)){
+    foreach my $attr (qw(is_dsp_root is_generated is_member is_name_of_person is_parenthesis is_state secondary_NP_negated)){
         print {$t_fh} "\n<$attr>1</$attr>" if $tnode->get_attr($attr);
     }
 
     # simple attrs
-    foreach my $attr (qw(coref_special discourse_special functor nodetype sentmod subfunctor t_lemma tfa val_frame.rf)){
+    foreach my $attr (qw(coref_special discourse_special discourse_feature secondary_NP_type functor nodetype sentmod subfunctor sense_PDTB3 sense1B_PDTB3 sense_PDTB3_manual sense1B_PDTB3_manual proto_lemma t_lemma tfa val_frame.rf)){
         my $val = $self->escape_xml($tnode->get_attr($attr));
         $val = 'RSTR' if $attr eq 'functor' and (!$val or $val eq '???'); #TODO functor is required in PDT
         if ($attr eq 'val_frame.rf' and defined $val) {

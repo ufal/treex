@@ -68,9 +68,9 @@ sub _convert_ttree
     else
     {
         my @scalar_attribs = (
-            't_lemma', 'functor', 'id', 'nodetype', 'is_generated', 'subfunctor', 'is_member', 'is_name',
+            't_lemma', 'proto_lemma', 'functor', 'id', 'nodetype', 'is_generated', 'subfunctor', 'is_member', 'is_name',
             'is_name_of_person', 'is_dsp_root', 'sentmod', 'tfa', 'is_parenthesis', 'is_state',
-            'coref_special', 'discourse_special', 'formeme', 'bbn_tag', 'nombank_data', 'is_name',
+            'coref_special', 'discourse_feature', 'discourse_special', 'formeme', 'bbn_tag', 'nombank_data', 'is_name', 'secondary_NP_type', 'secondary_NP_negated', 'sense_PDTB3', 'sense1B_PDTB3', 'sense_PDTB3_manual', 'sense1B_PDTB3_manual'
         );
         my @gram_attribs = (
             'sempos', 'gender', 'number', 'degcmp', 'verbmod', 'deontmod', 'factmod', 'tense', 'aspect', 'resultative',
