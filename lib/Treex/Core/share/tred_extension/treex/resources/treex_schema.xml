@@ -37,6 +37,7 @@
     <structure>
 
        <member name="description"><cdata format="any"/></member>
+       <member name="genre" type="t-genre.type"/>
 
        <member name="zones">
          <sequence>
@@ -47,6 +48,32 @@
        <member name="wild_dump"><cdata format="any"/></member>
 
     </structure>
+  </type>
+
+
+  <type name="t-genre.type">
+    <choice>
+      <value>review</value>
+      <value>invitation</value>
+      <value>letter</value>
+      <value>advice</value>
+      <value>program</value>
+      <value>plot</value>
+      <value>sport</value>
+      <value>comment</value>
+      <value>news</value>
+      <value>essay</value>
+      <value>overview</value>
+      <value>description</value>
+      <value>weather</value>
+      <value>survey</value>
+      <value>topic_interv</value>
+      <value>person_interv</value>
+      <value>collection</value>
+      <value>caption</value>
+      <value>metatext</value>
+      <value>other</value>
+    </choice>
   </type>
 
 

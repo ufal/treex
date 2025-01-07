@@ -107,7 +107,7 @@ override '_convert_all_trees' => sub {
     if ($pmldoc->{t}){
         my $metadata = $pmldoc->{t}->metaData('pml_root')->{meta};
         if ($metadata && $metadata->{genre}) {
-            $document->wild->{genre} = $metadata->{genre};
+            $document->set_genre($metadata->{genre});
         }
     }
 

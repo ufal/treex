@@ -116,6 +116,21 @@ sub description {
     return Treex::PML::Node::attr( $self->metaData('pml_root')->{meta}, 'description' );
 }
 
+sub set_genre {
+    my ( $self, $attr_value ) = @_;
+
+    return Treex::PML::Node::set_attr(
+        $self->metaData('pml_root')->{meta},
+        'genre', $attr_value
+    );
+}
+
+sub genre {
+    my $self = shift;
+    return Treex::PML::Node::attr( $self->metaData('pml_root')->{meta}, 'genre' );
+}
+
+
 sub build_file_number {
     return sprintf "%03d", $highest_file_number++;
 }
