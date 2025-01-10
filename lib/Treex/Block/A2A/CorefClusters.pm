@@ -312,24 +312,45 @@ sub mark_bridging
     {
         log_warn("Unknown bridging relation type '$btype'.");
     }
-    # Does the source node already have other bridging relations?
-    my $bridging = $srcnode->get_misc_attr('Bridging');
-    my @bridging = ();
-    @bridging = split(/,/, $bridging) if(defined($bridging));
-    # Does the source node already have a cluster id?
-    # We need it even if the cluster will be a singleton because bridging is
-    # defined as a relation between clusters.
+    # Do the source and the target node already have cluster ids?
     my $current_source_cluster_id = $srcnode->get_misc_attr('ClusterId');
+    my $current_target_cluster_id = $tgtnode->get_misc_attr('ClusterId');
+    # If the target cluster already exists, it must not contain the source node
+    # (identity coreference excludes bridging). This happens at least once in
+    # PDT-C 2.0 and from our perspective it is an error (https://github.com/ufal/PDT-C/issues/7).
+    # We must catch it now, otherwise it will be a fatal error later on.
+    if(defined($current_target_cluster_id))
+    {
+        my $current_target_members = $tgtnode->wild()->{cluster_members};
+        if(defined($current_target_members) && ref($current_target_members) eq 'ARRAY')
+        {
+            if(any {$_ eq $srcnode->id()} (@{$current_target_members}))
+            {
+                # The source node of bridging is already member of the target
+                # cluster. We cannot accept such a bridging relation.
+                my $srcid = $srcnode->id();
+                my $srcform = $srcnode->form() // '';
+                my $tgtids = join(', ', @{$current_target_members});
+                log_warn("Ignoring '$btype' bridging where the source node ($srcid '$srcform') is already member of the target cluster ($tgtids).");
+                return;
+            }
+        }
+    }
+    # We need a cluster id for the source node even if the cluster will be
+    # a singleton because bridging is defined as a relation between clusters.
     if(!defined($current_source_cluster_id))
     {
         $current_source_cluster_id = Treex::Tool::Coreference::Cluster::create_cluster($self->get_new_cluster_id($srcnode), undef, $srcnode);
     }
-    # Does the target node already have a cluster id?
-    my $current_target_cluster_id = $tgtnode->get_misc_attr('ClusterId');
+    # Similarly, if the target node is not yet in a cluster, we must create it.
     if(!defined($current_target_cluster_id))
     {
         $current_target_cluster_id = Treex::Tool::Coreference::Cluster::create_cluster($self->get_new_cluster_id($tgtnode), undef, $tgtnode);
     }
+    # Does the source node already have other bridging relations?
+    my $bridging = $srcnode->get_misc_attr('Bridging');
+    my @bridging = ();
+    @bridging = split(/,/, $bridging) if(defined($bridging));
     push(@bridging, "$current_target_cluster_id:$btype");
     if(scalar(@bridging) > 0)
     {
