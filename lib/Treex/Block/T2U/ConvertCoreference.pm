@@ -194,31 +194,6 @@ sub _relative_coref {
     $unode->remove;
 }
 
-sub _rank {
-    my ($node) = @_;
-    my $rank = 0;
-    $node = $node->parent, ++$rank while $node->parent;
-    return $rank
-}
-
-sub _path_length {
-    my ($node1, $node2) = @_;
-    my @ranks = map _rank($_), $node1, $node2;
-    my ($n1, $n2) = ($node1, $node2);
-    my $cmp = $ranks[0] <=> $ranks[1];
-    my $length = abs($ranks[0] - $ranks[1]);
-    warn "LENGTH: $n1->{id} $n2->{id} = $length";
-    if ($cmp) {
-        my $move_up = {-1 => \$n2, 1 => \$n1}->{$cmp};
-        $$move_up = $$move_up->parent for 1 .. $length;
-    }
-    while ($n1 != $n2) {
-        $length += 2;
-        $_ = $_->parent for $n1, $n2;
-    }
-    return $length
-}
-
 1;
 
 =encoding utf-8
@@ -238,7 +213,8 @@ Three kinds of representation of tecto-like coreference are distinguished:
 
 =head1 AUTHOR
 
-Michal Novák <mnovak@ufal.mff.cuni.cz>
+ Michal Novák <mnovak@ufal.mff.cuni.cz>
+ Jan Štěpánek <stepanek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
