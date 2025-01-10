@@ -2398,14 +2398,6 @@ sub fix_annotation_errors
         $node->set_parent($node->parent()->parent());
         $node->set_deprel('mark');
     }
-    elsif($spanstring eq 'více než epizodou')
-    {
-        my @subtree = $self->get_node_subtree($node);
-        $subtree[2]->set_parent($subtree[0]);
-        $subtree[2]->set_deprel('obl');
-        $subtree[1]->set_parent($subtree[2]);
-        $subtree[1]->set_deprel('case');
-    }
     elsif($spanstring eq 'pro > ty nahoře')
     {
         my @subtree = $self->get_node_subtree($node);
