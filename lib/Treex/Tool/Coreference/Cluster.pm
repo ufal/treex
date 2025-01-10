@@ -193,8 +193,9 @@ sub add_bridging_to_cluster
         if(any {$_ eq $srcnode->id()} (@{$current_members}))
         {
             my $srcid = $srcnode->id();
-            my $srctlemma = $srcnode->t_lemma() // '';
-            log_fatal("The source node of bridging ($srcid '$srctlemma') must not be a member of the target cluster.");
+            my $srcform = $srcnode->form() // '';
+            my $tgtids = join(', ', @{$current_members});
+            log_fatal("The source node of bridging ($srcid '$srcform') must not be a member of the target cluster ($tgtids).");
         }
     }
     # Get the current bridging references, if any.
