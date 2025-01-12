@@ -242,6 +242,31 @@ sub fix_tokenization
 
 
 #------------------------------------------------------------------------------
+# Adds Interset features that cannot be decoded from the PDT tags but they can
+# be inferred from lemmas and word forms. This method is called from
+# SUPER->process_zone().
+#------------------------------------------------------------------------------
+sub fix_morphology
+{
+    my $self = shift;
+    my $root = shift;
+    $self->SUPER::fix_morphology($root);
+    # In addition to the steps common for Czech Prague-style treebanks, there
+    # are some that we have to do for data from ÚFAL but not for FicTree. Do
+    # them here.
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # Present converbs have one common form (-c/-i) for singular feminines and neuters.
+        # Try to disambiguate them based on the tree structure. The method is defined
+        # in the SUPER class but it is not called there by default.
+        $self->guess_converb_gender($node);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Convert dependency relation labels.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------

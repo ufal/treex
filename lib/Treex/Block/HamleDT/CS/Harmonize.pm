@@ -61,6 +61,14 @@ sub fix_morphology
         # Fix Interset features of pronominal words.
         if($node->is_pronominal())
         {
+            # In one case in FicTree, "si" is mistakenly lemmatized as "být"
+            # (i.e., colloquial form of "jsi"), but it is still tagged correctly
+            # as a reflexive pronoun.
+            if($form eq 'si' && $lemma eq 'být')
+            {
+                $lemma = 'se';
+                $node->set_lemma($lemma);
+            }
             # In the Prague treebanks until PDT 3.5, plural personal pronouns had a singular lemma,
             # not only in the third person but also in the first and second ('my' --> 'já'). In PDT-C
             # this was changed but it would create an inconsistency with other Czech treebanks, so
@@ -263,46 +271,67 @@ sub fix_morphology
             $form .= 'ý';
             $node->set_lemma($form);
         }
-        # Present converbs have one common form (-c/-i) for singular feminines and neuters.
-        # Try to disambiguate them based on the tree structure. There are very few
-        # such converbs and only a fraction of them are neuters.
-        if($node->is_verb() && $node->is_converb() && $node->form() =~ m/[ci]$/i)
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Guesses gender and number of converbs. This is not needed in data from the
+# Czech National Corpus (e.g., FicTree) where this has been disambiguated
+# manually. However, data from ÚFAL use ambiguous tags and we have to
+# disambiguate them heuristically here to make the annotations converge. We can
+# use the tree structure and look for the subject.
+#
+# This method should be called at the end of fix_morphology() but it is not
+# called by default. Derived blocks that need it should redefine fix_morphology(),
+# call its default (SUPER) version first and then call guess_converb_gender().
+#------------------------------------------------------------------------------
+sub guess_converb_gender
+{
+    my $self = shift;
+    my $node = shift;
+    # Converbs have one common form (-c/-i) for singular feminines and neuters
+    # (this holds in Modern Czech; in Old Czech, neuters used the masculine
+    # form instead): "dělajíc", "udělavši".
+    # Try to disambiguate them based on the tree structure. There are very few
+    # such converbs and only a fraction of them are neuters.
+    if($node->is_verb() && $node->is_converb() && $node->form() =~ m/[ci]$/i)
+    {
+        my $neuter = 0;
+        # The fixed expression 'tak říkajíc' has no actor; set it to neuter by default.
+        if($node->form() =~ m/^říkajíc$/i && any {$_->form() =~ m/^tak$/i} ($node->children()))
         {
-            my $neuter = 0;
-            # The fixed expression 'tak říkajíc' has no actor; set it to neuter by default.
-            if($node->form() =~ m/^říkajíc$/i && any {$_->form() =~ m/^tak$/i} ($node->children()))
+            $neuter = 1;
+        }
+        else
+        {
+            my $parent = $node->parent();
+            if($parent->is_neuter() && !$parent->is_feminine())
             {
                 $neuter = 1;
             }
             else
             {
-                my $parent = $node->parent();
-                if($parent->is_neuter() && !$parent->is_feminine())
+                my @siblings = $parent->get_echildren();
+                if(any {my $d = $_->deprel() // $_->afun(); defined($d) && $d =~ m/^Sb/ && $_->is_neuter() && !$_->is_feminine() && $_ != $node} (@siblings))
                 {
                     $neuter = 1;
                 }
-                else
-                {
-                    my @siblings = $parent->get_echildren();
-                    if(any {my $d = $_->deprel() // $_->afun(); defined($d) && $d =~ m/^Sb/ && $_->is_neuter() && !$_->is_feminine() && $_ != $node} (@siblings))
-                    {
-                        $neuter = 1;
-                    }
-                }
             }
-            if($neuter)
-            {
-                $node->iset()->set('number', 'sing');
-                $node->iset()->set('gender', 'neut');
-            }
-            else
-            {
-                $node->iset()->set('number', 'sing');
-                $node->iset()->set('gender', 'fem');
-            }
-            $self->set_pdt_tag($node);
-            $node->set_conll_pos($node->tag());
         }
+        if($neuter)
+        {
+            $node->iset()->set('number', 'sing');
+            $node->iset()->set('gender', 'neut');
+        }
+        else
+        {
+            $node->iset()->set('number', 'sing');
+            $node->iset()->set('gender', 'fem');
+        }
+        $self->set_pdt_tag($node);
+        $node->set_conll_pos($node->tag());
     }
 }
 
