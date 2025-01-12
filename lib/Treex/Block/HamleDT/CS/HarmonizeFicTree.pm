@@ -2,7 +2,7 @@ package Treex::Block::HamleDT::CS::HarmonizeFicTree;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::HamleDT::HarmonizePDT';
+extends 'Treex::Block::HamleDT::CS::Harmonize';
 
 has iset_driver =>
 (
@@ -25,23 +25,6 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
     $self->detect_proper_nouns($root);
-}
-
-
-
-#------------------------------------------------------------------------------
-# Different source treebanks may use different attributes to store information
-# needed by Interset drivers to decode the Interset feature values. By default,
-# the CoNLL 2006 fields CPOS, POS and FEAT are concatenated and used as the
-# input tag. If the morphosyntactic information is stored elsewhere (e.g. in
-# the tag attribute), the Harmonize block of the respective treebank should
-# redefine this method. Note that even CoNLL 2009 differs from CoNLL 2006.
-#------------------------------------------------------------------------------
-sub get_input_tag_for_interset
-{
-    my $self   = shift;
-    my $node   = shift;
-    return $node->tag();
 }
 
 
@@ -550,6 +533,6 @@ Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2017, 2022 by Institute of Formal and Applied Linguistics, Charles University, Prague
+Copyright © 2017, 2022, 2025 by Institute of Formal and Applied Linguistics, Charles University, Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

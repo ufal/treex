@@ -38,6 +38,7 @@ sub process_zone
 
     # Convert CoNLL POS tags and features to Interset and PDT if possible.
     $self->convert_tags($root);
+    $self->fix_tokenization($root);
     $self->fix_morphology($root);
     foreach my $node (@nodes)
     {
@@ -175,6 +176,23 @@ sub set_upos_tag
     log_fatal("Undefined interset feature structure") if(!defined($f));
     my $upos = $f->get_upos();
     $node->set_tag($upos);
+}
+
+
+
+#------------------------------------------------------------------------------
+# A method to target known divergences in tokenization. This could include
+# annotation errors as well as differences by design. This method is called
+# before fix_morphology() and before converting the dependency relation labels
+# (but after decoding the original tags into Interset features). This ancestor
+# implementation is empty; the real errors must be defined for each harmonized
+# treebank separately.
+#------------------------------------------------------------------------------
+sub fix_tokenization
+{
+    my $self = shift;
+    my $root = shift;
+    return 1;
 }
 
 
