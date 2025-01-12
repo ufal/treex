@@ -45,7 +45,7 @@ sub process_zone
             $bundle->set_id($sentence_id);
         }
     }
-    return;
+    return $root;
 }
 
 

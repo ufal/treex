@@ -25,6 +25,7 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
     $self->detect_proper_nouns($root);
+    return $root;
 }
 
 
