@@ -72,6 +72,9 @@ sub fix_morphology
 #------------------------------------------------------------------------------
 # Convert dependency relation labels.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
+# (The above documentation is outdated because the a-layer has changed in PDT-C
+# 2.0. New documentation should appear at https://ufal.mff.cuni.cz/pdt-c but
+# it is not there yet.)
 #------------------------------------------------------------------------------
 sub convert_deprels
 {
@@ -90,16 +93,6 @@ sub convert_deprels
         if ( $deprel =~ s/_M$// )
         {
             $node->set_is_member(1);
-        }
-        # combined deprels (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
-        if ( $deprel =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
-        {
-            $deprel = 'Atr';
-        }
-        # Annotation error (one occurrence in PDT 3.0): Coord must not be leaf.
-        if($deprel eq 'Coord' && $node->is_leaf() && $node->parent()->is_root())
-        {
-            $deprel = 'ExD';
         }
         $node->set_deprel($deprel);
     }
