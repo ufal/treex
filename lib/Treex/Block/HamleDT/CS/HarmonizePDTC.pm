@@ -39,6 +39,7 @@ sub process_zone
             $bundle->set_id($sentence_id);
         }
     }
+    $self->revert_multiword_preps_to_auxp($root);
     return $root;
 }
 
@@ -100,6 +101,28 @@ sub convert_deprels
     # In PDT, is_member is set at the node that bears the real deprel. It is not set at the AuxP/AuxC node.
     # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
     $self->pdt_to_treex_is_member_conversion($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Converts the new way of annotating multiword prepositions (AuxY+ AuxP) to the
+# old way (AuxP+ AuxP) so that conversion to UD continues to work correctly.
+#
+# https://github.com/UniversalDependencies/UD_Czech-PDT/issues/10
+#------------------------------------------------------------------------------
+sub revert_multiword_preps_to_auxp
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'AuxY' && $node->parent()->deprel() eq 'AuxP' && $node->parent()->ord() > $node->ord())
+        {
+            $node->set_deprel('AuxP');
+        }
+    }
 }
 
 
