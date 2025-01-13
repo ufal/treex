@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::CS::HarmonizePDT;
+package Treex::Block::HamleDT::CS::HarmonizePDTC;
 use Moose;
 use Treex::Core::Common;
 use utf8;
