@@ -13,8 +13,8 @@ has iset_driver =>
     # PDT (now taken from the newest version, PDT-C) uses cs::pdtc.
     # CAC, CLTT, FicTree and PUD still use cs::pdt.
     # The safe solution: In the HamleDT Makefile of each treebank, specify the harmonize block together with the iset_driver parameter.
-    # PDT:     HARMONIZE=Harmonize iset_driver=cs::pdtc
-    # CAC:     HARMONIZE=Harmonize iset_driver=cs::pdt
+    # PDT:     HARMONIZE=HarmonizePDTC iset_driver=cs::pdtc
+    # CAC:     HARMONIZE=HarmonizePDT iset_driver=cs::pdt
     # FicTree: HARMONIZE=HarmonizeFicTree
     default       => 'cs::pdt',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.

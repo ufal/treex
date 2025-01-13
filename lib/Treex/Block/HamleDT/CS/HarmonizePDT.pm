@@ -317,9 +317,6 @@ sub fix_annotation_errors
 {
     my $self  = shift;
     my $root  = shift;
-    # CLTT: document_01_009 # sentence 1 is brutally messed up. The tree seems more or less OK
-    # but the ords of the words are wrong and the sentence appears interlaced.
-    # We need to fix the order before we obtain the ordered list of nodes and do anything else.
     my @nodes = $root->get_descendants({'ordered' => 1});
     for(my $i = 0; $i<=$#nodes; $i++)
     {
@@ -1542,39 +1539,6 @@ sub fix_annotation_errors
         elsif(defined($node->lemma()) && $node->lemma() eq 'titulus')
         {
             $node->set_lemma('titul');
-        }
-        # PDT-C dev cmpr9417-044-p7s1: wrong case
-        elsif($spanstring =~ m/^na vrcholový a střední management a podnikatele$/)
-        {
-            my @subtree = $self->get_node_subtree($node);
-            $subtree[4]->set_tag('NNIS4-----A----');
-            $subtree[4]->set_conll_pos('NNIS4-----A----');
-            $subtree[4]->iset()->set_case('acc');
-        }
-        # PDT-C dev vesm9211-029-p13s1: wrong case
-        elsif($spanstring =~ m/^za socialismu$/)
-        {
-            my @subtree = $self->get_node_subtree($node);
-            $subtree[1]->set_tag('NNIS2-----A----');
-            $subtree[1]->set_conll_pos('NNIS2-----A----');
-            $subtree[1]->iset()->set_case('gen');
-        }
-        # PDT-C train-c cmpr9417-032-p12s4: wrong case
-        # Teď je tam case=loc. Není to tak jednoznačné. Předložka sice vyžaduje case=ins, ale je-li to gender=neut, mělo by to slovo končit na "-m". Možná to spíš mělo být jedno slovo, "podpaždí".
-        elsif($spanstring =~ m/^pod paždí$/)
-        {
-            my @subtree = $self->get_node_subtree($node);
-            $subtree[1]->set_tag('NNNS7-----A----');
-            $subtree[1]->set_conll_pos('NNNS7-----A----');
-            $subtree[1]->iset()->set_case('ins');
-        }
-        # PDT-C test lnd91303-019-p4s3: vernacular "nésó" = "nejsou" (they are not)
-        elsif(defined($node->lemma()) && $node->lemma() eq 'nésó')
-        {
-            $node->set_lemma('být');
-            $node->set_tag('VB-P---3P-NAI--');
-            $node->set_conll_pos('VB-P---3P-NAI--');
-            $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'aspect' => 'imp', 'mood' => 'ind', 'number' => 'plur', 'person' => '3', 'polarity' => 'neg', 'tense' => 'pres', 'verbform' => 'fin', 'voice' => 'act', 'style' => 'vrnc'});
         }
     }
 }
