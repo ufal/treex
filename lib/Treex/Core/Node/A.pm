@@ -211,7 +211,7 @@ sub copy_attributes
     foreach my $attribute (
         'form', 'lemma', 'tag', 'no_space_after', 'translit', 'ltranslit', 'gloss',
         'fused_with_next', 'fused_form', 'fused_misc',
-        'ord', 'deprel', 'afun', 'is_member', 'is_parenthesis_root',
+        'ord', 'deprel', 'afun', 'is_member', 'is_parenthesis_root', 'is_extra_dependency',
         'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat', 'is_shared_modifier', 'morphcat',
         'clause_number', 'is_clause_head',
         )
