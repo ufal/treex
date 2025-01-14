@@ -11,7 +11,7 @@
   <type name="a-root.type">
     <structure role="#NODE" name="a-root">
       <member name="id" role="#ID" as_attribute="1"  required="1"><cdata format="ID"/></member>
-      
+
       <member name="giza_scores">
         <structure>
            <member name="counterpart.rf">
@@ -86,10 +86,12 @@
 
       <!-- ??? -->
       <member name="is_parenthesis_root" type="bool.type" />
+      <!-- new in PDT-C 2.0: instead of the ExD afun, the node gets the afun as if no ellipsis occurred, and is_extra_dependency is set to 1 -->
+      <member name="is_extra_dependency" type="bool.type" />
 
       <!-- clause segmentation -->
       <member name="clause_number"><cdata format="any"/></member>
-      <member name="is_clause_head" type="bool.type"/> <!-- We mean finite clause head, but that's the same as with is_clause_head on t-layer!!! --> 
+      <member name="is_clause_head" type="bool.type"/> <!-- We mean finite clause head, but that's the same as with is_clause_head on t-layer!!! -->
 
       <!--**************  NOT YET COVERED BY TREEX API METHODS ************-->
       <member name="morphcat" type="czech_morphcat.type"/> <!-- This should be in Treex API, i.e. not redundant with tag -->
@@ -103,13 +105,13 @@
       <member name="alignment">
           <list ordered="0" type="align-links.type"/>
       </member>
-      
+
       <!-- align_coref stuff for PCEDT-R (mnovak 23.10.2016) -->
       <member name="is_align_coref" type="bool.type"/>
 
       <!-- tentative -->
       <member name="chunks"><list ordered="0"><cdata format="any"/></list>
-      </member>  
+      </member>
 
       <member name="wild_dump"><cdata format="any"/></member>
       <member name="iset_dump"><cdata format="any"/></member>
@@ -125,7 +127,7 @@
       <member name="feat"><cdata format="any"/></member>   <!--various other features separated by |-->
     </structure>
   </type>
-      
+
 
 
   <type name="a_coreference.type"> <!-- analytická koreference pro Jirku Mírovského -->
@@ -195,7 +197,7 @@
       <!-- In PDT, apposition is treated as a paratactic structure (similarly to coordinations) governed by a comma with afun=Apos.
            In HamleDT, the first member of apposition governs the second member which has afun=Apposition and governs the (optional) comma.
            We cannot reuse afun=Apos for HamleDT because it would break several tests and assumptions. Martin Popel 11.10.2012 -->
-      <value>Apposition</value> 
+      <value>Apposition</value>
       <!-- The following values are needed for non-Prague coordination styles, non-Prague PPs (no AuxP, afun of the whole PP labeled there) etc. -->
       <value>CoordArg</value><!-- conjunct, not the first one -->
       <value>PrepArg</value><!-- argument of preposition, if preposition has afun of the whole PP, instead of AuxP -->

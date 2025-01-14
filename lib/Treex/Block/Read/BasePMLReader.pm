@@ -145,7 +145,7 @@ sub _convert_atree
         {
             $treex_node->set_attr( 'lemma', $pml_node->attr('m/tag/lemma') );
         }
-        foreach my $attr_name (qw(is_member is_parenthesis_root clause_number))
+        foreach my $attr_name (qw(is_member is_parenthesis_root is_extra_dependency clause_number))
         {
             $self->_copy_attr( $pml_node, $treex_node, "$attr_name", $attr_name );
         }
