@@ -49,58 +49,35 @@ This module is free software; you can redistribute it and/or modify it under the
 
 __DATA__
 
-abbot accountant actor administrator admirer adviser advisor advocate agency
-agent agreement aide alderman amateur ambassador amendment analyst apprentice
-archbishop architect artist assistant associate astronomer attorney auditor
-aunt auntie author baba baby baker band bank banker bankers baron barrister
-bass bassist being benefactor billionaire biologist biology bishop blacksmith
-board book boss boxer boy boyfriend brigadier broadcaster broker brother
-brother-in-law buddy builder bursar business businessman butcher cabinetmaker
-cameraman campaigner candidate capt captain cardinal cardiologist celebrity
-cellist ceo chair chairman chairperson challenger champion chancellor change
-chap character chef chemist chief child churchwarden citizen classic cleaning
-clerk climber coach co-author co-founder col collaborator colleague collector
-colonel columnist comedian comic commandant commander commentator commissionaire
-commissioner commons companion company competition composer comrade conductor
-congressman conservationist constable consultant contender contractor controller
-convict cook coordinator co-ordinator cop correspondent council councillor
-counsel counsellor couple cousin couturier criminal critic crooner curator
-custodian cyclist dad dancer daughter deal dealer dear decision defender
-delegate deputy designer detective diplomat director director-general disciple
-doctor dr driver drummer duke duo economist editor educationalist electrician
-emissary emperor employee engineer entrepreneur envoy executive exhibition
-exile expert family fan farmer father father-in-law fighter figure finalist
-fisherman footballer foreman forerunner founder freedom friend gardener gen
-general genius gentleman geologist girl goalie goalkeeper governor governors
-graduate grandfather grandmaster grandson granny group guard guardsman guest
-guide guitarist gunman gunner guy gynaecologist hall head headmaster
-headmistress heir hero historian holder husband idol illustrator inspector
-instructor inventor investor joiner journalist judge judges justice keeper
-keyboardist kid king kinsman knights lad lady lamb landlord landowner landscape
-laureate lawyer leader lecturer librarian lieutenant liquidator listener
-locksmith lodger lord lover lt magician magistrate maid major maker mama man
-manager manufacturer marksman marshal marshall martyr master mate mathematician
-mayor mechanic medic member members merchant millionaire mind minister ministers
-miss mister mistress mother mp mps mr mrs ms mum murder musician nanny
-naturalist navigator negotiator neighbour neighbor nephew newcomer news newsman
-niece novelist nurse office officer official operator opponent organiser owner
-owners pa painter pair pal papa partner partners passenger pastor pensioner
-people person personality philosopher photographer physician physicist pianist
-pilot pioneer playboy player playwright poet police policeman policy politician
-pope porter practitioner preacher predecessor premier premiere presentation
-presenter president press priest prince princess principal prisoner pro producer
-prof professor proprietor prosecutor psychiatrist psychologist publican
-publicist publisher queen radical raider railwayman rebellion rector ref referee
-replacement reporter representative republican researcher retailer retiree
-returnee rider riders rival runner runner-up sailor salesman scholar schoolmate
-scientist scout screenwriter sculptor seaman secretaries secretary
-secretary-general sen senator sergeant servant sgt shepherd sheriff shipowner
-singer sir sister skipper smith sociologist soldier solicitor soloist son song
-speaker specialist spokesman spokesperson spokeswoman squire staff star stars
-stockbroker stonemason store strategy striker student stylist successor
-superintendent superstar supervisor supplier supporter surgeon surveyor teacher
-team teammate technician technology tenant theologian theorist thief title
-tracks trainee trainer traveller treasurer trooper troops trumpeter trustee
-tsar tutor umpire uncle understudy unionist veteran vice-chairman vice-president
-victim victor violinist virgin vocalist vp waiter warden weatherman widow wife
-winner witness woman worker writer young youngster zoologist 
+abbot accountant actor administrator admirer adviser advisor advocate agent aide alderman amateur
+ambassador analyst apprentice archbishop architect artist assistant associate astronomer attorney
+auditor author baker bandit banker baron barrister bass bassist benefactor biologist bishop blacksmith
+boss boxer boyfriend brigadier broadcaster broker brother brother-in-law builder bursar businessman
+butcher cabinetmaker cameraman campaigner candidate captain cardinal cardiologist celebrity cellist
+ceo chair chairman chairperson challenger champion chancellor chap chef chemist chief child citizen
+clerk climber coach co-author co-founder collaborator colleague collector colonel columnist comedian
+comic commandant commander commentator commissionaire commissioner companion composer comrade conductor
+congressman conservationist constable consultant contender contractor controller convict cook coordinator
+co-ordinator cop correspondent council councillor counsel counsellor cousin criminal critic curator
+custodian cyclist dad dancer daughter dealer defender delegate deputy designer detective diplomat director
+director-general disciple doctor driver drummer duke economist editor educationalist electrician emissary
+emperor employee engineer entrepreneur envoy executive exile expert farmer father father-in-law fighter
+finalist fisherman footballer foreman founder friend gardener general geologist girl goalie goalkeeper
+governor graduate grandfather grandmaster grandson guard guardsman guest guide guitarist gunner gynaecologist
+head headmaster headmistress historian husband illustrator inspector instructor inventor investor joiner
+journalist judge justice keeper keyboardist kid king kinsman knight lady landlord landowner laureate lawyer
+leader lecturer librarian lieutenant liquidator listener locksmith lodger lord lover magician magistrate maid
+major maker man manager manufacturer marksman marshal marshall martyr master mathematician mayor mechanic
+medic member merchant millionaire minister miss mister mistress mother musician nanny naturalist navigator
+negotiator neighbour nephew niece novelist nurse officer official operator opponent organiser owner painter
+pal partner passenger pastor pensioner photographer physician physicist pianist pilot pioneer player playwright
+poet police policeman politician pope porter practitioner preacher president priest prince princess principal
+prisoner producer professor proprietor prosecutor psychiatrist psychologist publican publicist publisher queen
+radical raider rector referee reporter representative republican researcher retailer retiree rider rival runner
+sailor salesman scholar schoolmate scientist scout screenwriter sculptor seaman secretary senator sergeant
+servant shepherd sheriff singer sister skipper smith sociologist soldier solicitor soloist son speaker specialist
+spokesman spokesperson spokeswoman squire staff star stockbroker stonemason student stylist successor
+superintendent superstar supervisor supplier supporter surgeon surveyor teacher teammate technician tenant
+theologian theorist thief trainee trainer traveller treasurer trooper trumpeter trustee tsar tutor umpire uncle
+understudy unionist veteran vice-chairman vice-president victim victor violinist vocalist waiter warden widow
+wife winner witness worker writer youngster zoologist
