@@ -1,0 +1,34 @@
+name: CI
+
+on:
+    push:
+        branches: '*'
+    pull_request:
+        branches: '*'
+
+jobs:
+  matrix-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        perl-version:
+            - "5.26.0"
+            - "5.34.0"
+            - "5.40.1"
+    name: Perl ${{ matrix.perl-version }}
+    steps:
+      - uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl-version }}
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          cpanm --installdeps --notest Treex::Core
+          cpanm --notest URI::Find::Schemeless PerlIO::gzip Text::Iconv AI::MaxEntropy Cache::Memcached Email::Find XML::Twig String::Util String::Diff List::Pairwise MooseX::Role::AttributeOverride YAML::Tiny Graph Tree::Trie Text::Brew App::whichpm
+          cpanm Lingua::Interset
+
+      - name: Tests
+        run: |
+          prove -lr lib/Treex/Core
