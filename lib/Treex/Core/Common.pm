@@ -77,6 +77,7 @@ my ( $import, $unimport, $init_meta ) =
     );
 
 sub import {
+    require feature;
     feature->import(':5.10');
     utf8::import();
     goto &$import;
