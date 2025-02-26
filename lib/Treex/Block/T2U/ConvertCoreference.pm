@@ -32,7 +32,9 @@ before 'process_document' => sub {
     $self->_set_tcoref_graph($tcoref_graph);
 };
 
-my $RELATIVE = '(?:který|jenž|jaký|co|kd[ye]|odkud|kudy|kam)';
+my %RELATIVE = (cs => '(?:který|jenž|jaký|co|kd[ye]|odkud|kudy|kam)',
+                la => '(?:qu[aio]|u(?:bi|nde))(?:cumque)?'.
+                      '|qu(?:omodo|isquis|alis|antus)');
 
 after 'process_document' => sub {
     my ($self, $doc) = @_;
@@ -57,6 +59,7 @@ after 'process_document' => sub {
   TNODE:
     for my $tnode_id (@tcoref_sorted) {
         my $tnode = $doc->get_node_by_id($tnode_id);
+        my $relative = $RELATIVE{ $tnode->language };
         my ($unode) = $tnode->get_referencing_nodes('t.rf');
         next unless $unode;
 
@@ -97,7 +100,7 @@ after 'process_document' => sub {
             }
             # intra-sentential links with underspecified anaphors
             elsif ($tnode->t_lemma
-                       =~ /^(?:#(?:Q?Cor|PersPron)|$RELATIVE)$/
+                       =~ /^(?:#(?:Q?Cor|PersPron)|$relative)$/
                    && ! $tnode->children
             ) {
                 log_warn("REL $tnode->{id}/$tnode->{t_lemma} $tante_id");
@@ -105,7 +108,7 @@ after 'process_document' => sub {
                     if $tnode->is_member;
                 $self->_same_sentence_coref(
                     $tnode, $unode, $uante, $tante_id, $doc);
-                if ($tnode->t_lemma =~ /^$RELATIVE$/) {
+                if ($tnode->t_lemma =~ /^$relative$/) {
                     $self->_relative_coref(
                         $tnode, $unode, $uante->id, $tante_id, $doc);
                 }
