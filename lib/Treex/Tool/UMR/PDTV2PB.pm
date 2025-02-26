@@ -16,7 +16,8 @@ use namespace::clean;
 has vallex  => (is => 'ro', isa => Str, init_arg => undef, writer => '_set_vallex');
 has csv     => (is => 'ro', isa => Str, init_arg => undef, writer => '_set_csv');
 has mapping => (is => 'ro', lazy => 1, isa => HashRef[HashRef[Str]],
-                init_arg => undef, builder => '_build_mapping');
+                init_arg => undef, builder => '_build_mapping',
+                writer => '_set_mapping');
 has _csv    => (is => 'ro', lazy => 1, isa => FileHandle,
                 init_arg => undef, builder => '_build__csv');
 has _vdom   => (is => 'ro', lazy => 1,
@@ -28,8 +29,12 @@ has _by_id  => (is => 'ro', lazy => 1,
 
 around BUILD => sub {
     my ($build, $self, $args) = @_;
-    $self->_set_vallex($args->{vallex});
-    $self->_set_csv($args->{csv});
+    if (exists $args->{mapping}) {
+        $self->_set_mapping($self->_parse_mapping($args->{mapping}));
+    } else {
+        $self->_set_vallex($args->{vallex});
+        $self->_set_csv($args->{csv});
+    }
     $self->$build($args);
 };
 
@@ -84,6 +89,47 @@ sub _build_mapping($self) {
         }
     }
     close $self->_csv;
+    return \%mapping
+}
+
+sub _parse_mapping($self, $file) {
+    my %mapping;
+    my @pairs;
+    open my $in, '<', $file or die $!;
+    my ($umr_id);
+    while (my $line = <$in>) {
+        if ($line =~ /^ : id: ([-\w]+)/) {
+            $umr_id = $1;
+
+        } elsif ($line =~ /^ \+ (.*)/) {
+            push @pairs, split /, /, $1;
+
+        } elsif ($line =~ /^\s*-Vallex1_id: (.*)/) {
+            my @frames = split /; /, $1;
+            for my $frame (@frames) {
+                $frame =~ s/^v#//;
+                $mapping{$frame}{umr_id} = $umr_id;
+                log_warn("Already exists $umr_id")
+                    if exists $mapping{$frame}
+                    && $mapping{$frame}{umr_id} ne $umr_id;
+
+                for my $pair (@pairs) {
+                    my ($functor, $relation) = $pair =~ /(\w+) \[(\w+)\]/
+                        or next;
+
+                    next if 'NA' eq $relation;
+
+                    log_warn("Ambiguous mapping $frame $functor:"
+                             . " $relation/$mapping{$frame}{$functor}")
+                        if exists $mapping{$frame}{$functor}
+                        && $mapping{$frame}{$functor} ne $relation;
+                    $mapping{$frame}{$functor} = $relation;
+                }
+            }
+            @pairs = ();
+        }
+
+    }
     return \%mapping
 }
 
