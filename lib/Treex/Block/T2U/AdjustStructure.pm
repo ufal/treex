@@ -144,7 +144,8 @@ sub negate_sibling($self, $unode, $tnode) {
 
 sub _negate_grad($self, $unode, $tnode) {
     if (my $rbro = $tnode->rbrother) {
-        return $rbro if $rbro->t_lemma =~ /^(?:jen(?:om)?|pouze|výhradně)$/;
+        return $rbro if 'cs' eq $rbro->language
+                     && $rbro->t_lemma =~ /^(?:jen(?:om)?|pouze|výhradně)$/;
     }
     return
 }
