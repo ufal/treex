@@ -32,10 +32,6 @@ before 'process_document' => sub {
     $self->_set_tcoref_graph($tcoref_graph);
 };
 
-my %RELATIVE = (cs => '(?:který|jenž|jaký|co|kd[ye]|odkud|kudy|kam)',
-                la => '(?:qu[aio]|u(?:bi|nde))(?:cumque)?'.
-                      '|qu(?:omodo|isquis|alis|antus)');
-
 after 'process_document' => sub {
     my ($self, $doc) = @_;
 
@@ -59,7 +55,7 @@ after 'process_document' => sub {
   TNODE:
     for my $tnode_id (@tcoref_sorted) {
         my $tnode = $doc->get_node_by_id($tnode_id);
-        my $relative = $RELATIVE{ $tnode->language };
+        my $relative = $self->relative;
         my ($unode) = $tnode->get_referencing_nodes('t.rf');
         next unless $unode;
 
@@ -163,6 +159,8 @@ sub _same_sentence_coref {
         warn "$tnode->{id} made referential to $tante_id";
     }
 }
+
+sub relative { die 'Not implemented, language specific' }
 
 # TODO: Coordinated verbs only if all of them share the "ktery" (see wsj2454.cz)
 # $tnode is "ktery", $up is a RSTR verb, $gp is a coref antecedent.

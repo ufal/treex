@@ -300,43 +300,6 @@ sub should_reverse {
     }
 }
 
-{   my %ASPECT_STATE;
-    @{ $ASPECT_STATE{cs} }{qw{ muset musit mít chtít hodlat moci moct dát_se smět
-                               dovést umět lze milovat nenávidět prefereovat přát_si
-                               myslet myslit znát vědět souhlasit věřit pochybovat
-                               hádat představovat_si znamenat pamatovat_si podezřívat
-                               rozumět porozumět vonět zdát_se vidět slyšet znít
-                               vlastnit patřit }} = ();
-    sub deduce_aspect {
-        my ($self, $unode, $tnode) = @_;
-
-        return 'state' if exists $ASPECT_STATE{ $tnode->language }{ $tnode->t_lemma };
-
-        my $a_node = $tnode->get_lex_anode or return 'state';
-
-        if ('cs' eq $tnode->language) {
-            my $tag = $a_node->tag;
-            my $m_aspect = substr $tag, -3, 1;
-            return 'performance' if 'P' eq $m_aspect;
-
-            my $m_lemma = $a_node->lemma;
-            return 'habitual' if 'I' eq $m_aspect && $m_lemma =~ /_\^\(\*4[ai]t\)/;
-            return 'activity' if 'I' eq $m_aspect;
-            return 'process'  if 'B' eq $m_aspect;
-            return 'state'
-
-        } elsif ('la' eq $tnode->language) {
-            my $tag = $a_node->tag;
-            if ($tag =~ /^[vt]..(.)/) {
-                my $tense = $1;
-                return 'performance' if $tense =~ /^[rlt]$/;
-                return 'activity'    if $tense =~ /^[pif]$/;
-                return 'state'
-            }
-        }
-    }
-}
-
 sub add_tnode_to_unode
 {
     my ($self, $tnode, $unode) = @_;
@@ -350,7 +313,7 @@ sub add_tnode_to_unode
     $self->set_nodetype($unode, $tnode);
     maybe_set(person => $unode, $tnode);
     maybe_set(number => $unode, $tnode);
-    $unode->set_aspect($self->deduce_aspect($unode, $tnode))
+    $unode->set_aspect($self->deduce_aspect($tnode))
         if 'event' eq $unode->nodetype;
     $unode->set_polarity
         if 'neg1' eq ($tnode->gram_negation // "")
@@ -359,6 +322,8 @@ sub add_tnode_to_unode
 
     return $unode
 }
+
+sub deduce_aspect { die 'Not implemented, language dependent!' }
 
 sub negated_with_missing_gram {
     my ($self, $tnode) = @_;

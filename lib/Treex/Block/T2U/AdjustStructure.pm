@@ -17,8 +17,8 @@ has '+language' => ( required => 1 );
 has _coord_members_already_sub2coorded => (is => 'ro', isa => 'HashRef',
                                            default => sub { +{} });
 
-my $NEGATION = 'n(?:e|ikoliv?)';
 sub process_unode($self, $unode, $) {
+    my $negation = $self->negation;
     my $tnode = $unode->get_tnode;
     $self->translate_compl($unode, $tnode)
         if 'COMPL' eq $tnode->functor;
@@ -28,8 +28,8 @@ sub process_unode($self, $unode, $) {
     $self->remove_double_edge($unode, $1, $tnode)
         if $unode->functor =~ /^(.+)-of$/;
     $self->negate_sibling($unode, $tnode)
-        if 'RHEM' eq $tnode->functor && $tnode->t_lemma =~ /^$NEGATION$/
-        || 'CM' eq $tnode->functor && $tnode->t_lemma =~ /^(?:#Neg|$NEGATION)$/;
+        if 'RHEM' eq $tnode->functor && $tnode->t_lemma =~ /^$negation$/
+        || 'CM' eq $tnode->functor && $tnode->t_lemma =~ /^(?:#Neg|$negation)$/;
     return
 }
 
@@ -144,8 +144,7 @@ sub negate_sibling($self, $unode, $tnode) {
 
 sub _negate_grad($self, $unode, $tnode) {
     if (my $rbro = $tnode->rbrother) {
-        return $rbro if 'cs' eq $rbro->language
-                     && $rbro->t_lemma =~ /^(?:jen(?:om)?|pouze|výhradně)$/;
+        return $rbro if $self->is_exclusive($rbro->t_lemma);
     }
     return
 }
@@ -160,13 +159,14 @@ sub _parent_side($self, $tnode, $tparent) {
 }
 
 sub adjust_coap($self, $unode, $tnode) {
+    my $negation = $self->negation;
     my @t_members = $tnode->get_coap_members;
     my @t_common = grep {
         my $ch = $_;
         ! grep $ch == $_, @t_members
     } grep ! $_->is_member
            && $_->functor !~ /^C(?:M|ONTRD|NCS)$/
-           && ! ('RHEM' eq $_->functor && $_->t_lemma =~ /^$NEGATION$/),
+           && ! ('RHEM' eq $_->functor && $_->t_lemma =~ /^$negation$/),
     $tnode->children;
     my @u_members = grep 'ref' ne ($_->nodetype // ""),
                     grep defined || do {
