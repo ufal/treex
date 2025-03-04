@@ -13,7 +13,12 @@ This module implements actions depending on the lemmas and tags.
 =cut
 
 {   my %ASPECT_STATE;
-    @ASPECT_STATE{qw{  }} = ();
+    @ASPECT_STATE{qw{ amo arbitror audio aueo aveo cognosco confido credo
+                      cupio debeo desidero dubito existimo exopto exspecto
+                      fido foeteo habeo intueor invideo licet malo memini nolo
+                      nosco oboleo odi oleo opinor opto possum praesumo puteo
+                      puto recordor reminiscor reor sapio scio sentio spero
+                      suspicor ualeo uideo valeo video volo^velle }} = ();
     sub deduce_aspect {
         my ($self, $tnode) = @_;
 
