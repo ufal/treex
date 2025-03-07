@@ -19,6 +19,15 @@ has _coord_members_already_sub2coorded => (is => 'ro', isa => 'HashRef',
 
 sub process_unode($self, $unode, $) {
     my $negation = $self->negation;
+
+    # Not yet removed INTF (not part of coreference).
+    if ($unode->functor =~ /^(?:!!)?INTF$/) {
+        log_warn("Remove INTF with children ", $unode->id) if $unode->children;
+        log_debug("Removed INTF " . $unode->id);
+        $unode->remove;
+        return
+    }
+
     my $tnode = $unode->get_tnode;
     $self->translate_compl($unode, $tnode)
         if 'COMPL' eq $tnode->functor;
@@ -165,7 +174,7 @@ sub adjust_coap($self, $unode, $tnode) {
         my $ch = $_;
         ! grep $ch == $_, @t_members
     } grep ! $_->is_member
-           && $_->functor !~ /^C(?:M|ONTRD|NCS)$/
+           && $_->functor !~ /^(?:C(?:M|ONTRD|NCS)|INTF)$/
            && ! ('RHEM' eq $_->functor && $_->t_lemma =~ /^$negation$/),
     $tnode->children;
     my @u_members = grep 'ref' ne ($_->nodetype // ""),
