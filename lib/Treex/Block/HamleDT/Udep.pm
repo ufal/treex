@@ -731,6 +731,15 @@ sub convert_deprels
         {
             $deprel = 'vocative';
         }
+        # A noun phrase that is added at the level of a separate clause, weakly
+        # linked as an addition to something said in the sentence. It could be
+        # in parentheses, or after a comma (such as "tel." + number after a name).
+        # Since PDT-C 2.0 it has its own relation Denom, which should become
+        # parataxis in UD.
+        elsif($deprel eq 'Denom')
+        {
+            $deprel = 'parataxis';
+        }
         # Set up a fallback so that $deprel is always defined.
         else
         {
