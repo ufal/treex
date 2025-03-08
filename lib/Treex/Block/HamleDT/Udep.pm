@@ -711,7 +711,7 @@ sub convert_deprels
         ###!!! TODO: ExD with chains of orphans should be stanfordized!
         elsif($deprel eq 'ExD')
         {
-            # Some ExD are vocatives.
+            # Some ExD are vocatives. (In older treebanks; in PDT-C 2.0, there is a new relation Vocat.)
             if($node->iset()->case() eq 'voc')
             {
                 $deprel = 'vocative';
@@ -726,6 +726,10 @@ sub convert_deprels
             {
                 $deprel = 'dep';
             }
+        }
+        elsif($deprel eq 'Vocat')
+        {
+            $deprel = 'vocative';
         }
         # Set up a fallback so that $deprel is always defined.
         else
