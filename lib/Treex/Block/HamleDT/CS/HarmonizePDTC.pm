@@ -102,7 +102,7 @@ sub convert_deprels
         # We need ExD back for the conversion to UD to work as before.
         ###!!! In the future we may want to take advantage of the other relation
         ###!!! label in the enhanced graph.
-        if ( $node->is_extra_dependency() )
+        if ( $node->is_extra_dependency() && $deprel !~ m/^(AuxP|AuxC)$/ )
         {
             $node->set_deprel('ExD');
         }
