@@ -96,6 +96,16 @@ sub convert_deprels
             $node->set_is_member(1);
         }
         $node->set_deprel($deprel);
+        # New in PDT-C 2.0: The ExD relation is no longer used. Instead, the
+        # dependent node gets the flag is_extra_dependency and the relation
+        # label that it would have if its logical parent were not elided.
+        # We need ExD back for the conversion to UD to work as before.
+        ###!!! In the future we may want to take advantage of the other relation
+        ###!!! label in the enhanced graph.
+        if ( $node->is_extra_dependency() )
+        {
+            $node->set_deprel('ExD');
+        }
     }
     # Coordination of prepositional phrases or subordinate clauses:
     # In PDT, is_member is set at the node that bears the real deprel. It is not set at the AuxP/AuxC node.
