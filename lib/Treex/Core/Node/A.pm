@@ -13,7 +13,7 @@ with 'Treex::Core::Node::Interset' => { interset_attribute => 'iset' };
 has [qw(form lemma tag no_space_after fused_with_next fused_form fused_misc)] => ( is => 'rw' );
 
 has [
-    qw(deprel afun is_parenthesis_root edge_to_collapse is_auxiliary translit ltranslit gloss)
+    qw(deprel afun is_parenthesis_root is_extra_dependency edge_to_collapse is_auxiliary translit ltranslit gloss)
 ] => ( is => 'rw' );
 
 sub get_pml_type_name {
