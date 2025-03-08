@@ -740,6 +740,12 @@ sub convert_deprels
         {
             $deprel = 'parataxis';
         }
+        # An interjection that is inserted at the clausal level. Since PDT-C 2.0
+        # it has its own relation Partl, which should become discourse in UD.
+        elsif($deprel eq 'Partl')
+        {
+            $deprel = 'discourse';
+        }
         # Set up a fallback so that $deprel is always defined.
         else
         {
