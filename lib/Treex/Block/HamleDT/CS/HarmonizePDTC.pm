@@ -96,14 +96,19 @@ sub convert_deprels
             $node->set_is_member(1);
         }
         $node->set_deprel($deprel);
-        # New in PDT-C 2.0: The ExD relation is no longer used but we still
-        # need it for the conversion to UD.
-        ###!!! In the future we may want to take advantage of the other relation
-        ###!!! label in the enhanced graph.
+    }
+    # New in PDT-C 2.0: The ExD relation is no longer used but we still
+    # need it for the conversion to UD. We cannot do this before we have
+    # completed the first round of afun-deprel conversion because we may
+    # do recursion here, and we must be sure that all deprels have been
+    # converted already.
+    ###!!! In the future we may want to take advantage of the other relation
+    ###!!! label in the enhanced graph.
+    foreach my $node (@nodes)
+    {
         if ( $node->is_extra_dependency() )
         {
             $self->restore_exd($node);
-            $deprel = $node->deprel();
         }
     }
     # Coordination of prepositional phrases or subordinate clauses:
