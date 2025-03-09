@@ -96,21 +96,59 @@ sub convert_deprels
             $node->set_is_member(1);
         }
         $node->set_deprel($deprel);
-        # New in PDT-C 2.0: The ExD relation is no longer used. Instead, the
-        # dependent node gets the flag is_extra_dependency and the relation
-        # label that it would have if its logical parent were not elided.
-        # We need ExD back for the conversion to UD to work as before.
+        # New in PDT-C 2.0: The ExD relation is no longer used but we still
+        # need it for the conversion to UD.
         ###!!! In the future we may want to take advantage of the other relation
         ###!!! label in the enhanced graph.
-        if ( $node->is_extra_dependency() && $deprel !~ m/^(AuxP|AuxC|Coord|Apos)$/ )
+        if ( $node->is_extra_dependency() )
         {
-            $node->set_deprel('ExD');
+            $self->restore_exd($node);
+            $deprel = $node->deprel();
         }
     }
     # Coordination of prepositional phrases or subordinate clauses:
     # In PDT, is_member is set at the node that bears the real deprel. It is not set at the AuxP/AuxC node.
     # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
     $self->pdt_to_treex_is_member_conversion($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Restores ExD relations. This afun is no longer used in PDT-C 2.0; instead,
+# the dependent node gets the flag is_extra_dependency and the relation label
+# that it would have if its logical parent were not elided. We need ExD back
+# for the conversion to UD to work as before. The task is not always as
+# straightforward as projecting is_extra_dependency to the deprel. For certain
+# constructions, the real deprel to be replaced is further down the tree. For
+# example, if a node has afun = Coord and is_extra_dependency, then the node
+# should keep the Coord deprel but the members of the coordination should take
+# ExD. This method takes care of recursion where needed.
+#------------------------------------------------------------------------------
+sub restore_exd
+{
+    my $self = shift;
+    my $node = shift;
+    if ( $node->deprel() =~ m/^(Coord|Apos)$/ )
+    {
+        my @members = grep {$_->is_member()} ($node->children());
+        foreach my $member (@members)
+        {
+            $self->restore_exd($member);
+        }
+    }
+    elsif ( $node->deprel() =~ m/^(AuxC|AuxP)$/ )
+    {
+        my @arguments = grep {$_->deprel() !~ m/^Aux/} ($node->children());
+        foreach my $argument (@arguments)
+        {
+            $self->restore_exd($argument);
+        }
+    }
+    elsif ( $node->deprel() !~ m/^Aux/ )
+    {
+        $node->set_deprel('ExD');
+    }
 }
 
 
