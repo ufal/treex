@@ -656,6 +656,12 @@ sub convert_deprels
             {
                 $deprel = 'advmod';
             }
+            # New in PDT-C 2.0 (see also https://github.com/UniversalDependencies/UD_Czech-PDT/issues/15):
+            # Numeric part of "5 x", attached to the "krát" part.
+            elsif($node->is_numeral())
+            {
+                $deprel = 'compound';
+            }
             # Non-head conjunction in coordination is probably the most common usage.
             # Index Thomisticus examples: et (and), enim (indeed), vel (or), igitur (therefore), neque (neither).
             else
