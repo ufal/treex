@@ -147,6 +147,10 @@ sub negate_sibling($self, $unode, $tnode) {
     return
 }
 
+sub is_exclusive { die 'Not implemented, language specific' }
+
+sub negation { die 'Not implemented, language specific' }
+
 sub _negate_grad($self, $unode, $tnode) {
     if (my $rbro = $tnode->rbrother) {
         return $rbro if $self->is_exclusive($rbro->t_lemma);
