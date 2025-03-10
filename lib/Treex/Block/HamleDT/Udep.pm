@@ -606,6 +606,11 @@ sub convert_deprels
             {
                 $deprel = 'dep';
             }
+            # PDT-C 2.0: "prosím tě"
+            elsif($node->is_verb())
+            {
+                $deprel = 'advcl';
+            }
             # AuxZ is an emphasizing word (“especially on Monday”).
             # It also occurs with numbers (“jen čtyři firmy”, “jen několik procent”).
             # The word "jen" ("only") is not necessarily a restriction. It rather emphasizes that the number is a restriction.
