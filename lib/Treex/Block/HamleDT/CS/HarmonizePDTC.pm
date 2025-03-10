@@ -171,13 +171,17 @@ sub revert_multiword_preps_to_auxp
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        # Not all AuxY that precede an AuxP and are attached to it should be
-        # considered part of a multiword preposition. Counterexamples:
-        # tj. na 700 sedadel "i.e. about 700 seats"
-        # tj. bez ohledu na politickou příslušnost "i.e. regardless of political affiliation"
-        if($node->deprel() eq 'AuxY' && $node->form() !~ m/^(tj)$/i && $node->parent()->deprel() eq 'AuxP' && $node->parent()->ord() > $node->ord())
+        if($node->deprel() eq 'AuxY' && $node->parent()->deprel() eq 'AuxP' && $node->parent()->ord() > $node->ord())
         {
-            $node->set_deprel('AuxP');
+            # Not all AuxY that precede an AuxP and are attached to it should be
+            # considered part of a multiword preposition. Counterexamples:
+            # tj. na 700 sedadel "i.e. about 700 seats"
+            # tj. bez ohledu na politickou příslušnost "i.e. regardless of political affiliation"
+            # a to právě v Québeku "and that's right in Quebec"
+            unless($node->form() =~ m/^(tj|a|to)$/i)
+            {
+                $node->set_deprel('AuxP');
+            }
         }
     }
 }
