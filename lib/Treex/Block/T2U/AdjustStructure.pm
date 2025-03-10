@@ -125,7 +125,7 @@ sub negate_sibling($self, $unode, $tnode) {
     my $tparent = $tnode->parent;
     my @tsiblings
         = ('RHEM' eq $tnode->functor) ? $tnode->rbrother
-        : 'GRAD' eq $tparent->functor ? $self->_negate_grad($unode, $tnode)
+        : 'GRAD' eq $tparent->functor ? $self->_negate_grad($tnode)
         :                               $self->_parent_side($tnode, $tparent);
     log_warn("0 siblings $tnode->{id}"),
             return
@@ -147,11 +147,15 @@ sub negate_sibling($self, $unode, $tnode) {
     return
 }
 
-sub _negate_grad($self, $unode, $tnode) {
+sub is_exclusive { die 'Not implemented, language specific' }
+
+sub negation { die 'Not implemented, language specific' }
+
+sub _negate_grad($self, $tnode) {
     if (my $rbro = $tnode->rbrother) {
         return $rbro if $self->is_exclusive($rbro->t_lemma);
     }
-    return
+    return $self->_parent_side($tnode, $tnode->parent)
 }
 
 sub _parent_side($self, $tnode, $tparent) {
