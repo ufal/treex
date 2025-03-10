@@ -19,6 +19,15 @@ has _coord_members_already_sub2coorded => (is => 'ro', isa => 'HashRef',
 
 sub process_unode($self, $unode, $) {
     my $negation = $self->negation;
+
+    # Not yet removed INTF (not part of coreference).
+    if ($unode->functor =~ /^(?:!!)?INTF$/) {
+        log_warn("Remove INTF with children ", $unode->id) if $unode->children;
+        log_debug("Removed INTF " . $unode->id);
+        $unode->remove;
+        return
+    }
+
     my $tnode = $unode->get_tnode;
     $self->translate_compl($unode, $tnode)
         if 'COMPL' eq $tnode->functor;
@@ -33,56 +42,52 @@ sub process_unode($self, $unode, $) {
     return
 }
 
+sub translate_compl($self, $unode, $tnode) {
+    my $orig_tnode = $tnode;
+    my (@compl_targets) = $tnode->get_compl_nodes;
+    my $arrow_src = $unode;
+    if ($tnode->is_member) {
+        $tnode = $tnode->_get_transitive_coap_root;
+        ($unode) = $tnode->get_referencing_nodes('t.rf');
+    }
+
+    my $relation = $self->sempos2relation($orig_tnode->parent);
+    warn "COMPL ", $orig_tnode->parent->t_lemma // '?', ' ', $relation;
+    $unode->set_functor($relation);
+
+    # COMPL as a common dependent.
+    for my $u ($unode->root->descendants) {
+        next if ($u->{'same_as.rf'} // "") ne $unode->id
+             || ($u->functor // "") !~ /^(?:!!)?COMPL$/;
+        $u->set_functor($self->sempos2relation($u->parent->get_tnode));
+    }
+
+    my (@u_targets) = map $_->get_referencing_nodes('t.rf'), @compl_targets;
+    for my $u_target (@u_targets) {
+        if ($u_target->root == $unode->root) {
+            my $ref = $arrow_src->create_child;
+            $ref->{ord} = 0;
+            $ref->set_functor('mod-of');
+            $ref->make_referential(('ref' eq ($u_target->nodetype // ""))
+                               ? $self->_solve_ref($u_target)
+                               : $u_target);
+        } else {
+            log_warn("$tnode->{id}: COMPL target in other tree.");
+        }
+    }
+}
+
 {   my %SEMPOS2REL = (v => 'manner',
                       a => 'manner',
                       n => 'mod');
-    sub translate_compl($self, $unode, $tnode) {
-        my $orig_tnode = $tnode;
-        my (@compl_targets) = $tnode->get_compl_nodes;
-        my $arrow_src = $unode;
-        if ($tnode->is_member) {
-            $tnode = $tnode->_get_transitive_coap_root;
-            ($unode) = $tnode->get_referencing_nodes('t.rf');
-        }
-
-        my @parent_sempos = map substr($_, 0, 1),
-                            map {
-                                $_ ->gram_sempos || do {
-                                    log_warn("COMPL $tnode->{id}: "
-                                             . "$_->{id} no sempos")
-                                        unless '#EmpVerb' eq $_->t_lemma;
-                                    'v'
-                                }
-                            }
-                            $orig_tnode->get_eparents;
-        my %sempos_freq;
-        ++$sempos_freq{$_} for @SEMPOS2REL{@parent_sempos};
-        my $relation;
-        if (1 < keys %sempos_freq) {
-            my $max_freq = max(values %sempos_freq);
-            my @most_common = grep $max_freq == $sempos_freq{$_},
-                              keys %sempos_freq;
-            log_warn("COMPL eparent sempos $tnode->{id}: @most_common");
-            $relation = $most_common[0];
-        } else {
-            $relation = (keys %sempos_freq)[0];
-        }
-
-        $unode->set_functor($relation);
-
-        my (@u_targets) = map $_->get_referencing_nodes('t.rf'), @compl_targets;
-        for my $u_target (@u_targets) {
-            if ($u_target->root == $unode->root) {
-                my $ref = $arrow_src->create_child;
-                $ref->{ord} = 0;
-                $ref->set_functor('mod-of');
-                $ref->make_referential(('ref' eq ($u_target->nodetype // ""))
-                                   ? $self->_solve_ref($u_target)
-                                   : $u_target);
-            } else {
-                log_warn("$tnode->{id}: COMPL target in other tree.");
-            }
-        }
+    sub sempos2relation($self, $tnode) {
+        my $sempos = substr $tnode->gram_sempos || do {
+                log_warn("COMPL $tnode->{id}: "
+                         . "$_->{id} no sempos")
+                    unless '#EmpVerb' eq $tnode->t_lemma;
+                    'v'
+        }, 0, 1;
+        return $SEMPOS2REL{$sempos}
     }
 }
 
@@ -165,7 +170,7 @@ sub adjust_coap($self, $unode, $tnode) {
         my $ch = $_;
         ! grep $ch == $_, @t_members
     } grep ! $_->is_member
-           && $_->functor !~ /^C(?:M|ONTRD|NCS)$/
+           && $_->functor !~ /^(?:C(?:M|ONTRD|NCS)|INTF)$/
            && ! ('RHEM' eq $_->functor && $_->t_lemma =~ /^$negation$/),
     $tnode->children;
     my @u_members = grep 'ref' ne ($_->nodetype // ""),
@@ -175,7 +180,7 @@ sub adjust_coap($self, $unode, $tnode) {
                     },
                     map $_->get_referencing_nodes('t.rf'),
                     @t_members;
-   log_warn("No memebers $tnode->{id}"), return
+    log_warn("No memebers $tnode->{id}"), return
         unless @u_members;
 
     my $first_member = shift @u_members;

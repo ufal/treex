@@ -140,7 +140,8 @@ sub _get_sent_subtree($self, $unode) {
 
     if ('ref' eq ($unode->{nodetype} // "")) {
         my $ref = $unode->{'same_as.rf'};
-        return $self->_id_cache->{$ref} if $self->_id_cache->{$ref};
+        return $self->_id_cache->{$ref} if ! defined $ref
+                                        || $self->_id_cache->{$ref};
 
         my $refered = (grep $ref eq $_->id, $unode->root->descendants)[0];
         die "No $ref from $unode->{id} ", $unode->concept,
