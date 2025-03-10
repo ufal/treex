@@ -177,8 +177,9 @@ sub revert_multiword_preps_to_auxp
             # considered part of a multiword preposition. Counterexamples:
             # tj. na 700 sedadel "i.e. about 700 seats"
             # tj. bez ohledu na politickou příslušnost "i.e. regardless of political affiliation"
+            # to je(st) = tj. = to znamená
             # a to právě v Québeku "and that's right in Quebec"
-            unless($node->form() =~ m/^(tj|a|to)$/i)
+            unless($node->form() =~ m/^(tj|a|to|tím|je(st)?|znamená|jak|la)$/i)
             {
                 $node->set_deprel('AuxP');
             }
