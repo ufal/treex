@@ -775,6 +775,21 @@ sub fix_constructions
             $node->set_deprel($deprel);
             $parent->set_deprel('advmod') unless($parent->parent()->is_root());
         }
+        elsif(lc($node->form()) eq 'více' && $parent->ord() == $node->ord()+1 &&
+              lc($parent->form()) eq 'než')
+        {
+            my $nez = $parent;
+            $parent = $nez->parent();
+            $deprel = $nez->deprel();
+            $node->set_parent($parent);
+            $node->set_deprel($deprel);
+            $nez->set_parent($node);
+            $nez->set_deprel('fixed');
+            foreach my $child ($nez->children)
+            {
+                $child->set_parent($node);
+            }
+        }
         # In PDT, "na úkor něčeho" ("at the expense of something") is analyzed as
         # a prepositional phrase with a compound preposition (fixed expression)
         # "na úkor". However, it is no longer fixed if a possessive pronoun is
