@@ -606,11 +606,6 @@ sub convert_deprels
             {
                 $deprel = 'dep';
             }
-            # PDT-C 2.0: "prosím tě"
-            elsif($node->is_verb())
-            {
-                $deprel = 'advcl';
-            }
             # AuxZ is an emphasizing word (“especially on Monday”).
             # It also occurs with numbers (“jen čtyři firmy”, “jen několik procent”).
             # The word "jen" ("only") is not necessarily a restriction. It rather emphasizes that the number is a restriction.
@@ -666,11 +661,6 @@ sub convert_deprels
             elsif($node->is_numeral())
             {
                 $deprel = 'compound';
-            }
-            # "jako" + "by" = "jakoby"?
-            elsif($node->iset()->is_auxiliary())
-            {
-                $deprel = 'aux';
             }
             # Non-head conjunction in coordination is probably the most common usage.
             # Index Thomisticus examples: et (and), enim (indeed), vel (or), igitur (therefore), neque (neither).
