@@ -667,6 +667,11 @@ sub convert_deprels
             {
                 $deprel = 'compound';
             }
+            # "jako" + "by" = "jakoby"?
+            elsif($node->iset()->is_auxiliary())
+            {
+                $deprel = 'aux';
+            }
             # Non-head conjunction in coordination is probably the most common usage.
             # Index Thomisticus examples: et (and), enim (indeed), vel (or), igitur (therefore), neque (neither).
             else
