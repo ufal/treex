@@ -769,13 +769,13 @@ sub fix_constructions
         }
         # The expression "více než" ("more than") functions as an adverb.
         elsif(lc($node->form()) eq 'než' && $parent->ord() == $node->ord()-1 &&
-              lc($parent->form()) eq 'více')
+              $node->lemma() =~ m/^(více|méně)$/)
         {
             $deprel = 'fixed';
             $node->set_deprel($deprel);
             $parent->set_deprel('advmod') unless($parent->parent()->is_root());
         }
-        elsif(lc($node->form()) eq 'více' && $parent->ord() == $node->ord()+1 &&
+        elsif($node->lemma() =~ m/^(více|méně)$/ && $parent->ord() == $node->ord()+1 &&
               lc($parent->form()) eq 'než')
         {
             my $nez = $parent;
