@@ -163,7 +163,7 @@ sub translate_val_frame
         'DISJ' => 'or', # exclusive-disjunctive
         'GRAD' => 'gradation',
         'REAS' => 'have-cause-91',  # event
-        'OPER' => 'math',
+        'OPER' => 'math-entity',
         'APPS' => 'identity-91', # ??
 
         'CM' => 'clausal-marker',
