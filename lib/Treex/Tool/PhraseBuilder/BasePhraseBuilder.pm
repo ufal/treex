@@ -1101,8 +1101,10 @@ sub classify_prague_pp_subphrases
     # Classify dependents of the preposition.
     foreach my $d (@dependents)
     {
-        # AuxP attached to AuxP (or AuxC to AuxC, or even AuxC to AuxP or AuxP to AuxC) means a multi-word preposition (conjunction).
-        if($self->is_deprel($d->deprel(), 'auxpc'))
+        # Originally: AuxP attached to AuxP (or AuxC to AuxC, or even AuxC to AuxP or AuxP to AuxC) means a multi-word preposition (conjunction).
+        # However (PDT-C 2.0, 2025-03): "stejně jako k tomu" --> "jako" was originally apposition head, then it got converted to AuxY, but during conversion to UD AuxY first becomes mark, then it is unrecognizable from AuxC and it gets caught here.
+        # Therefore, we tentatively try 'auxp' instead of 'auxpc' and see whether it harms other positions.
+        if($self->is_deprel($d->deprel(), 'auxp'))
         {
             push(@mwauxp, $d);
         }
