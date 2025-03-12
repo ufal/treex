@@ -98,34 +98,34 @@ sub process_atree
         $self->relabel_subordinate_clauses($root);
         $self->check_ncsubjpass_when_auxpass($root);
         $self->raise_punctuation_from_coordinating_conjunction($root);
-    }
-    # It is possible that there is still a dependency labeled 'predn'.
-    # If it wasn't right under root in the beginning (because of AuxC for example)
-    # but it got there during later transformations, it was not processed
-    # (because the root does not take part in any specific constructions).
-    # So we now simply relabel it as parataxis.
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        if($node->deprel() eq 'predn')
-        {
-            $node->set_deprel('parataxis');
-        }
-    }
-    ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
-    ###!!! Copy them to conll/deprel (which is displayed) until we make Tred know deprel.
-    @nodes = $root->get_descendants({'ordered' => 1});
-    if(1)
-    {
+        # It is possible that there is still a dependency labeled 'predn'.
+        # If it wasn't right under root in the beginning (because of AuxC for example)
+        # but it got there during later transformations, it was not processed
+        # (because the root does not take part in any specific constructions).
+        # So we now simply relabel it as parataxis.
+        my @nodes = $root->get_descendants();
         foreach my $node (@nodes)
         {
-            my $upos = $node->iset()->upos();
-            my $ufeat = join('|', $node->iset()->get_ufeatures());
-            $node->set_tag($upos);
-            $node->set_conll_cpos($upos);
-            $node->set_conll_feat($ufeat);
-            $node->set_conll_deprel($node->deprel());
-            $node->set_afun(undef); # just in case... (should be done already)
+            if($node->deprel() eq 'predn')
+            {
+                $node->set_deprel('parataxis');
+            }
+        }
+        ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
+        ###!!! Copy them to conll/deprel (which is displayed) until we make Tred know deprel.
+        @nodes = $root->get_descendants({'ordered' => 1});
+        if(1)
+        {
+            foreach my $node (@nodes)
+            {
+                my $upos = $node->iset()->upos();
+                my $ufeat = join('|', $node->iset()->get_ufeatures());
+                $node->set_tag($upos);
+                $node->set_conll_cpos($upos);
+                $node->set_conll_feat($ufeat);
+                $node->set_conll_deprel($node->deprel());
+                $node->set_afun(undef); # just in case... (should be done already)
+            }
         }
     }
     # Some of the above transformations may have split or removed nodes.
