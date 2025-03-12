@@ -640,8 +640,15 @@ sub convert_deprels
             # Czech: "jako" ("as"); sometimes it is attached even to Obj (of verbal adjectives). It should never get the 'cc' deprel, so we will mention it explicitly.
             # Index Thomisticus examples: ut (as), sicut (as), quasi (as), tanquam (like), utpote (as) etc.
             elsif($parent->wild()->{prague_deprel} =~ m/^AtvV?$/ ||
-                  lc($node->form()) =~ m/^(jako|ut|sicut|quasi|tanquam|utpote)$/)
+                  lc($node->form()) =~ m/^(ut|sicut|quasi|tanquam|utpote)$/)
+                  ###!!!lc($node->form()) =~ m/^(jako|ut|sicut|quasi|tanquam|utpote)$/)
             {
+                ###!!! 'jako' in this context may have worked well until PDT-C 1.0 but not now. I had the following comments that explain it for a while in BasPhraseBuilder.
+                # Originally: AuxP attached to AuxP (or AuxC to AuxC, or even AuxC to AuxP or AuxP to AuxC) means a multi-word preposition (conjunction).
+                # However (PDT-C 2.0, 2025-03): "stejně jako k tomu" --> "jako" was originally apposition head, then it got converted to AuxY, but during conversion to UD AuxY first becomes mark, then it is unrecognizable from AuxC and it gets caught here.
+                # Therefore, we tentatively try 'auxp' instead of 'auxpc' and see whether it harms other positions.
+                ###!!! One of the problems is that in "stejně jako k tomu", "jako" is attached directly to the preposition "k" and not to its argument "tomu".
+                ###!!! Perhaps we should add to the scenario a new block that will make sure that if AuxP has other children than its single argument, these children are only AuxP, AuxC, or punctuation.
                 $deprel = 'mark';
             }
             # AuxY may be a preposition attached to an adverb; unlike normal AuxP prepositions, this one is not the head.
