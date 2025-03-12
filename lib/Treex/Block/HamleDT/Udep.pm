@@ -75,27 +75,30 @@ sub process_atree
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
-    # The 'cop' relation can be recognized only after transformations.
-    $self->tag_copulas_aux($root);
-    $self->fix_unknown_tags($root);
-    # Look for prepositional objects (must be done after transformations).
-    $self->relabel_oblique_objects($root);
-    # Look for objects under nouns. It must be done after transformations
-    # because we may have not seen the noun previously (because of intervening
-    # AuxP and Coord nodes). A noun can be a predicate and then it can have
-    # a subject and oblique dependents. But it cannot have an object.
-    $self->relabel_objects_under_nominals($root);
-    $self->distinguish_acl_from_amod($root);
-    $self->relabel_demonstratives_with_clauses($root);
-    $self->relabel_postmodifying_determiners($root);
-    $self->raise_dependents_of_quantifiers($root);
-    $self->change_case_to_mark_under_verb($root);
-    $self->dissolve_chains_of_auxiliaries($root);
-    ###!!! The following method removes symptoms but we may want to find and remove the cause.
-    $self->fix_multiple_subjects($root);
-    $self->relabel_subordinate_clauses($root);
-    $self->check_ncsubjpass_when_auxpass($root);
-    $self->raise_punctuation_from_coordinating_conjunction($root);
+    if(0)
+    {
+        # The 'cop' relation can be recognized only after transformations.
+        $self->tag_copulas_aux($root);
+        $self->fix_unknown_tags($root);
+        # Look for prepositional objects (must be done after transformations).
+        $self->relabel_oblique_objects($root);
+        # Look for objects under nouns. It must be done after transformations
+        # because we may have not seen the noun previously (because of intervening
+        # AuxP and Coord nodes). A noun can be a predicate and then it can have
+        # a subject and oblique dependents. But it cannot have an object.
+        $self->relabel_objects_under_nominals($root);
+        $self->distinguish_acl_from_amod($root);
+        $self->relabel_demonstratives_with_clauses($root);
+        $self->relabel_postmodifying_determiners($root);
+        $self->raise_dependents_of_quantifiers($root);
+        $self->change_case_to_mark_under_verb($root);
+        $self->dissolve_chains_of_auxiliaries($root);
+        ###!!! The following method removes symptoms but we may want to find and remove the cause.
+        $self->fix_multiple_subjects($root);
+        $self->relabel_subordinate_clauses($root);
+        $self->check_ncsubjpass_when_auxpass($root);
+        $self->raise_punctuation_from_coordinating_conjunction($root);
+    }
     # It is possible that there is still a dependency labeled 'predn'.
     # If it wasn't right under root in the beginning (because of AuxC for example)
     # but it got there during later transformations, it was not processed
