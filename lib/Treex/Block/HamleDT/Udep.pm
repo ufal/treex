@@ -606,6 +606,13 @@ sub convert_deprels
             {
                 $deprel = 'dep';
             }
+            # In PDT-C 2.0, "semantico-pragmatic expressions" such as "víš", "prosím tě",
+            # are attached as AuxZ to the nearest mainstream clause. They should also
+            # have is_parenthesis_root set.
+            elsif($node->is_parenthesis_root())
+            {
+                $deprel = 'parataxis';
+            }
             # AuxZ is an emphasizing word (“especially on Monday”).
             # It also occurs with numbers (“jen čtyři firmy”, “jen několik procent”).
             # The word "jen" ("only") is not necessarily a restriction. It rather emphasizes that the number is a restriction.
