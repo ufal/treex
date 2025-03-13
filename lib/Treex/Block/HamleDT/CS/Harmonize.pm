@@ -26,6 +26,74 @@ has change_bundle_id => (is=>'ro', isa=>'Bool', default=>1, documentation=>'use 
 
 
 #------------------------------------------------------------------------------
+# This block is specific to the Czech language and to the PDT family of
+# treebanks but not to a particular treebank (and its flavor of the guidelines).
+# Most functions defined in this block are actually called from SUPER::
+# process_zone() (the functions are foreseen but have language-specific content).
+# Functions that are not foreseen globally are typically specific to just one
+# treebank and thus implemented in blocks derived from this one. The little
+# that remains inbetween is called from here, after the foreseen functions have
+# been called from SUPER, and before the treebank-specific functions will be
+# called from derived classes.
+#------------------------------------------------------------------------------
+sub process_zone
+{
+    my $self = shift;
+    my $zone = shift;
+    my $root = $self->SUPER::process_zone($zone);
+    # Fix a rare combination of preposition and subordinated clause in copula predication.
+    $self->fix_byt_pro_aby($root);
+    return $root;
+}
+
+
+
+#------------------------------------------------------------------------------
+# This function targets a rare construction observed in Czech (and specifically
+# in PDT-C 2.0). It is possible that similar constructions occur in other
+# languages but the function must be language-specific because it needs to
+# operate on selected lemmas only. The Czech example is "byl by pro, abychom
+# dělali X" = "he would be for (it) that we do X". Here "byl by" is a conditi-
+# onal copula and the rest (including the nested clause) is a predicate.
+# Nevertheless, the afun Pnom for nominal predicates is not present; instead,
+# the preposition "pro" has AuxP, its child "abychom" has AuxC, and the verb
+# under "abychom" has Adv because it is an adverbial clause. We will replace
+# the AuxP of "pro" with Pnom. It will address two issues that would otherwise
+# occur when moving to UD: The nominal predicate with copula would not be
+# recognized, and the preposition would be treated as another marker (besides
+# "abychom") of the subordinate clause.
+#------------------------------------------------------------------------------
+sub fix_byt_pro_aby
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    foreach my $node (@nodes)
+    {
+        # We only want to do this if the parent is the copula "být". And we
+        # cannot recognize the copula other than by looking at its lemma.
+        # We should also look at the lemma of the current node (preposition)
+        # because we do not mess up the compound conjunction "místo aby",
+        # regardless whether it depends on a copula or on a normal verb.
+        if($node->deprel() eq 'AuxP' && $node->parent()->is_verb())
+        {
+            my $lemma = $node->lemma() // '';
+            my $plemma = $node->parent()->lemma() // '';
+            if($plemma eq 'být' && $lemma =~ m/^(pro|proti)$/)
+            {
+                my @children = $node->children();
+                if(scalar(@children) == 1 && $children[0]->deprel() eq 'AuxC')
+                {
+                    $node->set_deprel('Pnom');
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Different source treebanks may use different attributes to store information
 # needed by Interset drivers to decode the Interset feature values. By default,
 # the CoNLL 2006 fields CPOS, POS and FEAT are concatenated and used as the

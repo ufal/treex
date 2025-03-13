@@ -34,8 +34,6 @@ sub process_zone
             $node->set_deprel($node->form() eq ',' ? 'AuxX' : 'AuxG');
         }
     }
-    # Fix a rare combination of preposition and subordinated clause in copula predication.
-    $self->fix_be_for_that($root);
     # Is_member should be set directly under the Coord|Apos node. Some Prague-style treebanks have it deeper.
     # Fix it here, before building phrases (it will not harm treebanks that are already OK.)
     $self->pdt_to_treex_is_member_conversion($root);
@@ -57,43 +55,6 @@ sub process_zone
         $node->set_is_member(undef) if(!$node->is_member());
     }
     return $root;
-}
-
-
-
-#------------------------------------------------------------------------------
-# This function targets a rare construction observed in Czech (and specifically
-# in PDT-C 2.0) but the function is language-independent and could act on other
-# languages, too. The Czech example is "byl by pro, abychom dělali X" = "he
-# would be for (it) that we do X". Here "byl by" is a conditional copula and
-# the rest (including the nested clause) is a predicate. Nevertheless, the afun
-# Pnom for nominal predicates is not present; instead, the preposition "pro"
-# has AuxP, its child "abychom" has AuxC, and the verb under "abychom" has Adv
-# because it is an adverbial clause. We will replace the AuxP of "pro" with
-# Pnom. It will address two issues that would otherwise occur when moving to
-# UD: The nominal predicate with copula would not be recognized, and the
-# preposition would be treated as another marker (besides "abychom") of the
-# subordinate clause.
-#------------------------------------------------------------------------------
-sub fix_be_for_that
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants({'ordered' => 1});
-    foreach my $node (@nodes)
-    {
-        # Do not ask whether the lemma of the parent is "být".
-        # Keep the function language-independent and hope that this pattern
-        # never occurs with verbs that are not copulas.
-        if($node->deprel() eq 'AuxP' && $node->parent()->is_verb())
-        {
-            my @children = $node->children();
-            if(scalar(@children) == 1 && $children[0]->deprel() eq 'AuxC')
-            {
-                $node->set_deprel('Pnom');
-            }
-        }
-    }
 }
 
 
