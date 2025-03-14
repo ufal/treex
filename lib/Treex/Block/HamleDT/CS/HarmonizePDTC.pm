@@ -171,7 +171,10 @@ sub revert_multiword_preps_to_auxp
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->deprel() eq 'AuxY' && $node->parent()->deprel() eq 'AuxP' && $node->parent()->ord() > $node->ord())
+        # The AuxP head normally occurs after the additional AuxY children, but
+        # sometimes the order can be inverted, as in this instance of "v rozporu s X":
+        # "prohlašuje něco, co je s čísly a daty v rozporu" (test/tamw/mf920925_005#8)
+        if($node->deprel() eq 'AuxY' && $node->parent()->deprel() eq 'AuxP')
         {
             # Not all AuxY that precede an AuxP and are attached to it should be
             # considered part of a multiword preposition. Counterexamples:
