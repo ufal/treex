@@ -7,6 +7,11 @@ requires qw{ tag_regex translate };
                                      attr => 'entity_refperson'},
                           number => {gram => 'gram_number',
                                      attr => 'entity_refnumber'});
+    my %T2U = (person => {1 => '1st',
+                          2 => '2nd',
+                          3 => '3rd'},
+               number => {sg => 'singular',
+                          pl => 'plural'});
     sub maybe_set {
         my ($self, $gram, $unode, $orig_node) = @_;
         my $get_attr = $IMPLEMENTATION{$gram}{attr};
@@ -18,9 +23,11 @@ requires qw{ tag_regex translate };
             if (my $anode = $orig_node->get_lex_anode) {
                 my $tag = $self->tag_regex($gram);
                 ($value) = $anode->tag =~ $tag;
+                $value = $self->translate($gram, $value);
             }
         }
-        $unode->$set_attr($self->translate($gram, $value)) if $value;
+        $value = $T2U{$gram}{$value};
+        $unode->$set_attr($value) if $value;
         return
     }
 }
