@@ -1,6 +1,7 @@
 package Treex::Block::T2U::LA::ConvertCoreference;
 use Moose;
 extends 'Treex::Block::T2U::ConvertCoreference';
+with 'Treex::Tool::UMR::LA::GrammatemeSetter';
 
 =head1 NAME
 

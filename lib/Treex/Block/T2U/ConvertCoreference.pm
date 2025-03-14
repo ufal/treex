@@ -4,7 +4,6 @@ package Treex::Block::T2U::ConvertCoreference;
 use Moose;
 use utf8;
 use Treex::Core::Common;
-use Treex::Tool::UMR::Common qw{ maybe_set };
 
 use Graph::Directed;
 use namespace::autoclean;
@@ -84,7 +83,7 @@ after 'process_document' => sub {
             next TANTE if grep $_->isa('Treex::Core::Node::Deleted'),
                           $unode, $uante;
 
-            maybe_set($_, $unode, $tante) for qw( person number );
+            $self->maybe_set($_, $unode, $tante) for qw( person number );
 
             # inter-sentential link
             if ($unode->root != $uante->root) {
@@ -159,6 +158,8 @@ sub _same_sentence_coref {
         warn "$tnode->{id} made referential to $tante_id";
     }
 }
+
+sub maybe_set { die 'Not implemented, langugage specific' }
 
 sub relative { die 'Not implemented, language specific' }
 

@@ -1,6 +1,7 @@
 package Treex::Block::T2U::LA::BuildUtree;
 use Moose;
 extends 'Treex::Block::T2U::BuildUtree';
+with 'Treex::Tool::UMR::LA::GrammatemeSetter';
 
 =head1 NAME
 

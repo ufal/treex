@@ -1,0 +1,37 @@
+package Treex::Tool::UMR::GrammatemeSetter;
+use Moose::Role;
+
+requires qw{ tag_regex translate };
+
+{   my %IMPLEMENTATION = (person => {gram => 'gram_person',
+                                     attr => 'entity_refperson'},
+                          number => {gram => 'gram_number',
+                                     attr => 'entity_refnumber'});
+    sub maybe_set {
+        my ($self, $gram, $unode, $orig_node) = @_;
+        my $get_attr = $IMPLEMENTATION{$gram}{attr};
+        return if $unode->$get_attr;
+
+        my $set_attr = "set_$IMPLEMENTATION{$gram}{attr}";
+        my $value = $orig_node->${ \$IMPLEMENTATION{$gram}{gram} };
+        if (! $value) {
+            if (my $anode = $orig_node->get_lex_anode) {
+                my $tag = $self->tag_regex($gram);
+                ($value) = $anode->tag =~ $tag;
+            }
+        }
+        $unode->$set_attr($self->translate($gram, $value)) if $value;
+        return
+    }
+}
+
+
+=head1 NAME 
+
+Treex::Block::T2U::GrammatemeSetter - a role to implement grammateme
+propagation over coreference based on grammatemes of the antecedent or its
+morphological information.
+
+=cut
+
+__PACKAGE__
