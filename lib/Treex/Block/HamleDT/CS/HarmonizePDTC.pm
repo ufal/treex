@@ -817,6 +817,13 @@ sub fix_annotation_errors
             $node->set_conll_pos('VB-P---3P-NAI--');
             $node->iset()->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'aspect' => 'imp', 'mood' => 'ind', 'number' => 'plur', 'person' => '3', 'polarity' => 'neg', 'tense' => 'pres', 'verbform' => 'fin', 'voice' => 'act', 'style' => 'vrnc'});
         }
+        # PDT-C 2.0 test tamw ln94207_118 #13
+        elsif($spanstring =~ m/^\( vydání nahrávky jako by bylo symbolickým darem k jejímu letošnímu vzácnému životnímu jubileu \)$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_parent($subtree[5]);
+            $subtree[4]->set_deprel('AuxV');
+        }
     }
 }
 
