@@ -2,6 +2,7 @@ package Treex::Block::T2U::CS::ConvertCoreference;
 use utf8;
 use Moose;
 extends 'Treex::Block::T2U::ConvertCoreference';
+with 'Treex::Tool::UMR::CS::GrammatemeSetter';
 
 =head1 NAME
 

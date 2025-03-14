@@ -2,7 +2,6 @@
 package Treex::Block::T2U::BuildUtree;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::UMR::Common qw{ maybe_set };
 use namespace::autoclean;
 
 extends 'Treex::Core::Block';
@@ -311,8 +310,8 @@ sub add_tnode_to_unode
     $self->translate_non_valency_functor($tnode, $unode);
     $unode->copy_alignment($tnode) unless $tnode->is_generated;
     $self->set_nodetype($unode, $tnode);
-    maybe_set(person => $unode, $tnode);
-    maybe_set(number => $unode, $tnode);
+    $self->maybe_set(person => $unode, $tnode);
+    $self->maybe_set(number => $unode, $tnode);
     $unode->set_aspect($self->deduce_aspect($tnode))
         if 'event' eq $unode->nodetype;
     $unode->set_polarity
@@ -322,6 +321,8 @@ sub add_tnode_to_unode
 
     return $unode
 }
+
+sub maybe_set { die 'Not implemented, language dependent!' }
 
 sub deduce_aspect { die 'Not implemented, language dependent!' }
 
