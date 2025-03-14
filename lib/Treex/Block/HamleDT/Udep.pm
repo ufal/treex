@@ -618,6 +618,11 @@ sub convert_deprels
             {
                 $deprel = 'parataxis';
             }
+            # Some coordinating conjunctions in PDT-C 2.0 are also attached as AuxZ.
+            elsif($node->is_coordinator())
+            {
+                $deprel = 'cc';
+            }
             # AuxZ is an emphasizing word (“especially on Monday”).
             # It also occurs with numbers (“jen čtyři firmy”, “jen několik procent”).
             # The word "jen" ("only") is not necessarily a restriction. It rather emphasizes that the number is a restriction.
