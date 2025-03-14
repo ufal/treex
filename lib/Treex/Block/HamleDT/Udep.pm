@@ -608,8 +608,13 @@ sub convert_deprels
             }
             # In PDT-C 2.0, "semantico-pragmatic expressions" such as "víš", "prosím tě",
             # are attached as AuxZ to the nearest mainstream clause. They should also
-            # have is_parenthesis_root set.
-            elsif($node->is_parenthesis_root())
+            # have is_parenthesis_root set. However, not all of them have is_parenthesis_root
+            # (sometimes "prosím tě" is AuxZ but not parenthesis), and on the other
+            # hand, is_parenthesis_root + AuxZ includes some non-clausal insertions
+            # such as "také"; those should probably not end up as 'parataxis', while
+            # verbs definitely cannot be 'advmod:emph'. So let's now just ask whether
+            # we are looking at a verb.
+            elsif($node->is_verb())
             {
                 $deprel = 'parataxis';
             }
