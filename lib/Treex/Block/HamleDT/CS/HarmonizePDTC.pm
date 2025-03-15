@@ -827,6 +827,13 @@ sub fix_annotation_errors
             $subtree[4]->set_parent($subtree[5]);
             $subtree[4]->set_deprel('AuxV');
         }
+        # PDT-C 2.0 test tamw ln94203_11 # 11
+        # Slovo "tří" má teď deprel AuxY, kvůli čemuž konvertor vyrobí složenou předložku "s tří", která navíc nemá žádný argument.
+        elsif($spanstring =~ m/^s tří$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_deprel('Obj');
+        }
     }
 }
 
