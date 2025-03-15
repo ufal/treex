@@ -834,6 +834,14 @@ sub fix_annotation_errors
             my @subtree = $self->get_node_subtree($node);
             $subtree[1]->set_deprel('Obj');
         }
+        # PDT-C 2.0 test tamw ln95046_024 # 13
+        # Slovo "nichž" má teď deprel AuxY, kvůli čemuž konvertor vyrobí složenou předložku "z nichž", která navíc nemá žádný argument.
+        elsif($spanstring =~ m/^, z nichž největší šance Sundermann dává dlouhánu Kollerovi$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_parent($subtree[3]);
+            $subtree[2]->set_deprel('Adv');
+        }
     }
 }
 
