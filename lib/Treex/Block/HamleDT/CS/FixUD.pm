@@ -2744,10 +2744,6 @@ sub fix_annotation_errors
         $subtree[8]->set_parent($subtree[9]);
         $subtree[8]->set_deprel('cop');
     }
-    elsif($spanstring =~ m/byli levicoví/i)
-    {
-        log_info('spanstring = '.$spanstring);
-    }
     # Make sure that no node has more than one subject. This is to prevent
     # validation errors in UD. However, instead of randomly picking a subject
     # and re-labeling it as dep, we should investigate and fix the error
