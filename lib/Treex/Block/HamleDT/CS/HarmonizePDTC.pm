@@ -184,7 +184,8 @@ sub revert_multiword_preps_to_auxp
                 # tj. bez ohledu na politickou příslušnost "i.e. regardless of political affiliation"
                 # to je(st) = tj. = to znamená
                 # a to právě v Québeku "and that's right in Quebec"
-                unless($node->form() =~ m/^(tj|tzn|a|to|tím|totiž|je(st)?|znamená|jako?|la|aneb)$/i)
+                # "i" is not part of compound prepositions ("i při růstu" should be two modifiers of the noun), although it can be part of compound subordinators ("i když").
+                unless($node->form() =~ m/^(tj|tzn|a|i|to|tím|totiž|je(st)?|znamená|jako?|la|aneb)$/i)
                 {
                     $node->set_deprel('AuxP');
                 }
