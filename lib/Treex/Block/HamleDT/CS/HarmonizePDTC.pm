@@ -185,7 +185,7 @@ sub revert_multiword_preps_to_auxp
                 # to je(st) = tj. = to znamená
                 # a to právě v Québeku "and that's right in Quebec"
                 # "i" is not part of compound prepositions ("i při růstu" should be two modifiers of the noun), although it can be part of compound subordinators ("i když").
-                unless($node->form() =~ m/^(tj|tzn|a|i|to|tím|totiž|je(st)?|znamená|jako?|la|aneb)$/i)
+                unless($node->form() =~ m/^(tj|tzn|a|i|to|tím|tedy|totiž|je(st)?|znamená|jako?|la|aneb)$/i)
                 {
                     $node->set_deprel('AuxP');
                 }
