@@ -79,10 +79,15 @@ sub fix_byt_pro_aby
         {
             my $lemma = $node->lemma() // '';
             my $plemma = $node->parent()->lemma() // '';
-            if($plemma eq 'být' && $lemma =~ m/^(pro|proti)$/)
+            # Do not match the lemma to the end. The lemma could be "proti-1".
+            if($plemma eq 'být' && $lemma =~ m/^(pro|proti)/)
             {
+                # The first example I encountered was "být pro, aby...", so there
+                # was an AuxC child with the "aby" clause. But there are also
+                # examples like "24 poslanců bylo proti", where the preposition
+                # has no children at all.
                 my @children = $node->children();
-                if(scalar(@children) == 1 && $children[0]->deprel() eq 'AuxC')
+                if(scalar(@children) == 0 || scalar(@children) == 1 && $children[0]->deprel() eq 'AuxC')
                 {
                     $node->set_deprel('Pnom');
                 }
