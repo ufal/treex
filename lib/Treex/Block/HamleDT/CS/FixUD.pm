@@ -2283,15 +2283,18 @@ sub fix_annotation_errors
             $subtree[1]->set_deprel('flat');
         }
     }
+    # PDT test/amw/vesm9211_020 # 49
     elsif($spanstring =~ m/^i \. j - \d+$/)
     {
         my @subtree = $self->get_node_subtree($node);
         $subtree[1]->set_tag('SYM');
         $subtree[1]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
-        $subtree[1]->set_deprel('flat');
+        $subtree[1]->set_parent($subtree[2]);
+        $subtree[1]->set_deprel('cc');
         $subtree[3]->set_tag('SYM');
         $subtree[3]->iset()->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
-        $subtree[3]->set_deprel('flat');
+        $subtree[3]->set_parent($subtree[4]);
+        $subtree[3]->set_deprel('cc');
     }
     elsif($spanstring =~ m/^Kdykoliv p > pc ,$/i)
     {
