@@ -184,7 +184,7 @@ sub revert_multiword_preps_to_auxp
                 # tj. bez ohledu na politickou příslušnost "i.e. regardless of political affiliation"
                 # to je(st) = tj. = to znamená
                 # a to právě v Québeku "and that's right in Quebec"
-                unless($node->form() =~ m/^(tj|tzn|a|to|tím|je(st)?|znamená|jako?|la|aneb)$/i)
+                unless($node->form() =~ m/^(tj|tzn|a|to|tím|totiž|je(st)?|znamená|jako?|la|aneb)$/i)
                 {
                     $node->set_deprel('AuxP');
                 }
