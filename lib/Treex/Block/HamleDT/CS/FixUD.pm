@@ -2717,6 +2717,31 @@ sub fix_annotation_errors
         $subtree[6]->set_parent($subtree[3]);
         $subtree[6]->set_deprel('punct');
     }
+    # PDT-C 2.0 train amw ln95042_020 # 35
+    # Maybe the original annotation is correct but I fail to convert it correctly.
+    elsif($spanstring =~ m/^přestože , a právě proto , že byli levicoví/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        my $parent = $node->parent();
+        $subtree[8]->set_parent($parent);
+        $subtree[8]->set_deprel('advcl');
+        $subtree[0]->set_parent($subtree[8]);
+        $subtree[0]->set_deprel('mark');
+        $subtree[6]->set_parent($subtree[0]);
+        $subtree[6]->set_deprel('conj');
+        $subtree[1]->set_parent($subtree[6]);
+        $subtree[1]->set_deprel('punct');
+        $subtree[2]->set_parent($subtree[6]);
+        $subtree[2]->set_deprel('cc');
+        $subtree[3]->set_parent($subtree[6]);
+        $subtree[3]->set_deprel('advmod:emph');
+        $subtree[4]->set_parent($subtree[6]);
+        $subtree[4]->set_deprel('advmod');
+        $subtree[5]->set_parent($subtree[6]);
+        $subtree[5]->set_deprel('punct');
+        $subtree[7]->set_parent($subtree[8]);
+        $subtree[7]->set_deprel('cop');
+    }
     # Make sure that no node has more than one subject. This is to prevent
     # validation errors in UD. However, instead of randomly picking a subject
     # and re-labeling it as dep, we should investigate and fix the error
