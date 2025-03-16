@@ -645,13 +645,6 @@ sub fix_annotation_errors
             my @subtree = $self->get_node_subtree($node);
             $subtree[0]->set_deprel('AuxP');
         }
-        elsif($spanstring =~ m/^Toto nanejvýš zajímavé čtení musíme dát do souladu se skutečností/i)
-        {
-            my @subtree = $self->get_node_subtree($node);
-            # multi-word preposition "do souladu se"
-            $subtree[6]->set_parent($subtree[8]);
-            $subtree[7]->set_parent($subtree[8]);
-        }
         elsif($spanstring =~ m/^PMC Personal - und Management - Beratung$/i)
         {
             my @subtree = $self->get_node_subtree($node);
