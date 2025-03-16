@@ -2702,6 +2702,20 @@ sub fix_annotation_errors
         my @subtree = $self->get_node_subtree($node);
         $subtree[1]->set_parent($subtree[3]);
     }
+    # PDT-C 2.0 train amw cmpr9406_057 # 62
+    # Elipsis, no main verb. "Přece jenom" should not be the root.
+    elsif($spanstring =~ m/^Přece jenom bližší téma pro oba .$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[3]->set_parent($node->get_root());
+        $subtree[3]->set_deprel('root');
+        $subtree[0]->set_parent($subtree[3]);
+        $subtree[0]->set_deprel('advmod');
+        $subtree[1]->set_parent($subtree[0]);
+        $subtree[1]->set_deprel('fixed');
+        $subtree[6]->set_parent($subtree[3]);
+        $subtree[6]->set_deprel('punct');
+    }
     # Make sure that no node has more than one subject. This is to prevent
     # validation errors in UD. However, instead of randomly picking a subject
     # and re-labeling it as dep, we should investigate and fix the error
