@@ -648,7 +648,8 @@ sub convert_deprels
         {
             # When it is attached to a subordinating conjunction (AuxC), the two form a multi-word subordinator.
             # Index Thomisticus examples: ita quod (so that), etiam si (even if), quod quod (what is that), ac si (as if), et si (although)
-            if($parent->wild()->{prague_deprel} eq 'AuxC')
+            ###!!! But not always! E.g., we had an apposition "jako X, čili jako Y", it was hamledtized as a hypotactic structure, then "čili" ended up attached as AuxY to "jako", but they do not form a fixed compound subordinator!
+            if($parent->wild()->{prague_deprel} eq 'AuxC' && lc($node->form()) ne 'čili')
             {
                 # The phrase builder will later transform it to MWE.
                 $deprel = 'mark';
