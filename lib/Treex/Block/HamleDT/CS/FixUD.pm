@@ -2719,28 +2719,30 @@ sub fix_annotation_errors
     }
     # PDT-C 2.0 train amw ln95042_020 # 35
     # Maybe the original annotation is correct but I fail to convert it correctly.
-    elsif($spanstring =~ m/^přestože , a právě proto , že byli levicoví/i)
+    elsif($spanstring =~ m/^- přestože , a právě proto , že byli levicoví/i)
     {
         my @subtree = $self->get_node_subtree($node);
         my $parent = $node->parent();
-        $subtree[8]->set_parent($parent);
-        $subtree[8]->set_deprel('advcl');
-        $subtree[0]->set_parent($subtree[8]);
-        $subtree[0]->set_deprel('mark');
-        $subtree[6]->set_parent($subtree[0]);
-        $subtree[6]->set_deprel('conj');
-        $subtree[1]->set_parent($subtree[6]);
-        $subtree[1]->set_deprel('punct');
-        $subtree[2]->set_parent($subtree[6]);
-        $subtree[2]->set_deprel('cc');
-        $subtree[3]->set_parent($subtree[6]);
-        $subtree[3]->set_deprel('advmod:emph');
-        $subtree[4]->set_parent($subtree[6]);
-        $subtree[4]->set_deprel('advmod');
-        $subtree[5]->set_parent($subtree[6]);
-        $subtree[5]->set_deprel('punct');
-        $subtree[7]->set_parent($subtree[8]);
-        $subtree[7]->set_deprel('cop');
+        $subtree[9]->set_parent($parent);
+        $subtree[9]->set_deprel('advcl');
+        $subtree[0]->set_parent($subtree[9]);
+        $subtree[0]->set_deprel('punct');
+        $subtree[1]->set_parent($subtree[9]);
+        $subtree[1]->set_deprel('mark');
+        $subtree[7]->set_parent($subtree[1]);
+        $subtree[7]->set_deprel('conj');
+        $subtree[2]->set_parent($subtree[7]);
+        $subtree[2]->set_deprel('punct');
+        $subtree[3]->set_parent($subtree[7]);
+        $subtree[3]->set_deprel('cc');
+        $subtree[4]->set_parent($subtree[7]);
+        $subtree[4]->set_deprel('advmod:emph');
+        $subtree[5]->set_parent($subtree[7]);
+        $subtree[5]->set_deprel('advmod');
+        $subtree[6]->set_parent($subtree[7]);
+        $subtree[6]->set_deprel('punct');
+        $subtree[8]->set_parent($subtree[9]);
+        $subtree[8]->set_deprel('cop');
     }
     elsif($spanstring =~ m/byli levicoví/i)
     {
