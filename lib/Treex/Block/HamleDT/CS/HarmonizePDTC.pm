@@ -171,20 +171,35 @@ sub revert_multiword_preps_to_auxp
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        # The AuxP head normally occurs after the additional AuxY children, but
-        # sometimes the order can be inverted, as in this instance of "v rozporu s X":
-        # "prohlašuje něco, co je s čísly a daty v rozporu" (test/tamw/mf920925_005#8)
-        if($node->deprel() eq 'AuxY' && $node->parent()->deprel() eq 'AuxP')
+        if($node->parent()->deprel() eq 'AuxP')
         {
-            # Not all AuxY that precede an AuxP and are attached to it should be
-            # considered part of a multiword preposition. Counterexamples:
-            # tj. na 700 sedadel "i.e. about 700 seats"
-            # tj. bez ohledu na politickou příslušnost "i.e. regardless of political affiliation"
-            # to je(st) = tj. = to znamená
-            # a to právě v Québeku "and that's right in Quebec"
-            unless($node->form() =~ m/^(tj|a|to|tím|je(st)?|znamená|jako?|la|aneb)$/i)
+            # The AuxP head normally occurs after the additional AuxY children, but
+            # sometimes the order can be inverted, as in this instance of "v rozporu s X":
+            # "prohlašuje něco, co je s čísly a daty v rozporu" (test/tamw/mf920925_005#8)
+            if($node->deprel() eq 'AuxY')
             {
-                $node->set_deprel('AuxP');
+                # Not all AuxY that precede an AuxP and are attached to it should be
+                # considered part of a multiword preposition. Counterexamples:
+                # tj. na 700 sedadel "i.e. about 700 seats"
+                # tj. bez ohledu na politickou příslušnost "i.e. regardless of political affiliation"
+                # to je(st) = tj. = to znamená
+                # a to právě v Québeku "and that's right in Quebec"
+                unless($node->form() =~ m/^(tj|a|to|tím|je(st)?|znamená|jako?|la|aneb)$/i)
+                {
+                    $node->set_deprel('AuxP');
+                }
+            }
+            # PDT-C 2.0 test amw cmpr94027_023 # 100
+            # Slovo "řekněme" visí jako AuxZ přímo na předložce ("řekněme za 350000 USD"), mělo by viset na jejím argumentu, abychom si ho nepletli s argumentem.
+            # This is a general problem, so we will solve it here rather than just for the specific words.
+            elsif($node->deprel() eq 'AuxZ')
+            {
+                # Are there other candidates for the argument of the preposition?
+                my @candidates = grep {$_->deprel() !~ m/^Aux[GXPCYZ]$/} ($node->get_siblings({'ordered' => 1}));
+                if(scalar(@candidates) > 0)
+                {
+                    $node->set_parent($candidates[0]);
+                }
             }
         }
     }
