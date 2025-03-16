@@ -857,6 +857,24 @@ sub fix_annotation_errors
             $subtree[1]->set_parent($subtree[3]);
             $subtree[2]->set_deprel('Adv');
         }
+        # PDT-C 2.0 train amw cmpr9406_005 # 109
+        elsif($spanstring =~ m/^vyrábět možná 1500 aut měsíčně , ne - li více$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_parent($subtree[0]);
+            $subtree[2]->set_deprel('Obj');
+            $subtree[2]->set_is_member(0);
+            $subtree[8]->set_parent($subtree[0]);
+            $subtree[8]->set_deprel('AuxC');
+            $subtree[5]->set_parent($subtree[8]);
+            $subtree[5]->set_deprel('AuxX');
+            $subtree[6]->set_parent($subtree[8]);
+            $subtree[6]->set_deprel('Adv');
+            $subtree[9]->set_parent($subtree[6]);
+            $subtree[9]->set_deprel('Obj');
+            $subtree[9]->set_is_member(0);
+            $subtree[9]->set_is_extra_dependency(1);
+        }
     }
 }
 
