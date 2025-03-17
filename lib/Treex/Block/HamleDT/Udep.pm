@@ -50,6 +50,16 @@ sub process_atree
         }
     }
 
+    ###!!! DEBUG
+    foreach my $node ($root->get_descendants())
+    {
+        if($node->form() =~ m/^(černý|bílý)$/)
+        {
+            $node->set_is_extra_dependency(0);
+            $node->set_deprel('Sb');
+        }
+    }
+
     # Now the harmonization proper.
     $self->exchange_tags($root);
     $self->fix_symbols($root);
