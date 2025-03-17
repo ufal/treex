@@ -202,11 +202,15 @@ sub detect_counted_noun_in_genitive
         # Find counted noun in genitive.
         foreach my $d (@dependents)
         {
-            my $ok = $d->node()->is_noun() && $d->node()->iset()->case() eq 'gen nnnnnnnnnnnnnnn';
+            my $ok = $d->node()->is_noun() && $d->node()->iset()->case() eq 'gen';
             if($ok)
             {
                 my @dchildren = $d->children();
                 $ok = $ok && !any {$_->node()->is_adposition()} (@dchildren);
+                # There are special constructions where a cardinal can have a genitive
+                # child and they should not be transformed by this function.
+                # Predication of the amount: "školáků bylo málo" (the genitive noun is the subject).
+                $ok = $ok && !$self->is_deprel($d->deprel(), 'subj');
                 $ok = $ok && !$self->is_deprel($d->deprel(), 'appos');
             }
             if($ok)
