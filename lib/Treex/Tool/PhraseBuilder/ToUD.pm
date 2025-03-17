@@ -174,9 +174,14 @@ sub detect_prague_copula
         my @dependents = grep {$_ != $argument} ($phrase->dependents());
         my $parent = $phrase->parent();
         my $deprel = $phrase->deprel();
-        ###!!! DEBUG
-        log_warn('Punctuation') if($deprel eq 'punct');
-        ###!!! END OF DEBUG
+        # The whole copular clause definitely should not be treated as punctuation
+        # but apparently we sometimes find the punct deprel here.
+        ###!!! We should find the real cause and fix it! (PDT-C 2.0 train/tamw/ln94207_87 # 18)
+        if($deprel eq 'punct')
+        {
+            log_warn("Deprel of copular clause changed from 'punct' to 'dep'.");
+            $deprel = 'dep';
+        }
         my $member = $phrase->is_member();
         $copula->set_parent(undef);
         $argument->set_parent(undef);
