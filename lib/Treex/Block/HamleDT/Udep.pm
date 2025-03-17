@@ -70,8 +70,8 @@ sub process_atree
     # Now the harmonization proper.
     $self->exchange_tags($root);
     $self->fix_symbols($root);
-    return; ###!!!
     $self->fix_annotation_errors($root);
+    return; ###!!!
     $self->fix_list_item_labels($root); # must be called before convert_deprels()
     $self->convert_deprels($root);
     $self->remove_null_pronouns($root);
