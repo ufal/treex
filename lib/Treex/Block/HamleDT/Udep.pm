@@ -66,6 +66,7 @@ sub process_atree
             log_warn('Modifying '.$node->form());
         }
     }
+    next; ###!!!
 
     # Now the harmonization proper.
     $self->exchange_tags($root);
