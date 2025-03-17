@@ -75,7 +75,6 @@ sub process_atree
     $self->convert_deprels($root);
     $self->remove_null_pronouns($root);
     $self->relabel_appos_name($root);
-    return; ###!!!
     # The most difficult part is detection of coordination, prepositional and
     # similar phrases and their interaction. It will be done bottom-up using
     # a tree of phrases that will be then projected back to dependencies, in
@@ -93,6 +92,7 @@ sub process_atree
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
+    return; ###!!!
     # The 'cop' relation can be recognized only after transformations.
     $self->tag_copulas_aux($root);
     $self->fix_unknown_tags($root);
