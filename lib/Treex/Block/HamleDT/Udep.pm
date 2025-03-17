@@ -71,11 +71,11 @@ sub process_atree
     $self->exchange_tags($root);
     $self->fix_symbols($root);
     $self->fix_annotation_errors($root);
-    return; ###!!!
     $self->fix_list_item_labels($root); # must be called before convert_deprels()
     $self->convert_deprels($root);
     $self->remove_null_pronouns($root);
     $self->relabel_appos_name($root);
+    return; ###!!!
     # The most difficult part is detection of coordination, prepositional and
     # similar phrases and their interaction. It will be done bottom-up using
     # a tree of phrases that will be then projected back to dependencies, in
