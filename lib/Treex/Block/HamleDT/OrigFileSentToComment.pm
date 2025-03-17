@@ -33,7 +33,7 @@ sub process_atree
     }
     my $sent_in_file = $self->sent_in_file();
     my $comment = "orig_file_sentence $file_stem\#$sent_in_file";
-    my @comments;
+    my @comments = ();
     if(defined($bundle->wild()->{comment}))
     {
         @comments = split(/\n/, $bundle->wild()->{comment});
