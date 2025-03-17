@@ -57,6 +57,13 @@ sub process_atree
         {
             $node->set_is_extra_dependency(0);
             $node->set_deprel('Sb');
+            log_warn('Modifying '.$node->form());
+        }
+        elsif($node->form() =~ m/^[12]$/ && $node->parent()->form() eq ':')
+        {
+            $node->set_is_extra_dependency(0);
+            $node->set_deprel('Pnom');
+            log_warn('Modifying '.$node->form());
         }
     }
 
