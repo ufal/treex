@@ -14,25 +14,6 @@ extends 'Treex::Core::Block';
 sub process_atree
 {
     my ($self, $root) = @_;
-
-    ###!!! DEBUG
-    foreach my $node ($root->get_descendants())
-    {
-        if($node->form() =~ m/^(černý|bílý)$/)
-        {
-            $node->set_is_extra_dependency(0);
-            $node->set_deprel('Sb');
-            log_warn('Modifying '.$node->form());
-        }
-        elsif($node->form() =~ m/^[12]$/ && $node->parent()->form() eq ':')
-        {
-            $node->set_is_extra_dependency(0);
-            $node->set_deprel('Pnom');
-            log_warn('Modifying '.$node->form());
-        }
-    }
-    ###!!! END OF DEBUG
-
     $self->exchange_tags($root);
     $self->fix_symbols($root);
     $self->fix_annotation_errors($root);

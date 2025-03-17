@@ -894,6 +894,19 @@ sub fix_annotation_errors
             $subtree[2]->set_parent($subtree[1]);
             $subtree[2]->set_deprel('Adv');
         }
+        # PDT-C 2.0 train tamw ln94207_87 # 18
+        elsif($spanstring =~ m/^bílý : Kc 6 Vb 1 - černý : Ka 7 pg 2 h 2$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_is_extra_dependency(0);
+            $subtree[0]->set_deprel('Sb');
+            $subtree[7]->set_is_extra_dependency(0);
+            $subtree[7]->set_deprel('Sb');
+            $subtree[5]->set_is_extra_dependency(0);
+            $subtree[5]->set_deprel('Pnom');
+            $subtree[14]->set_is_extra_dependency(0);
+            $subtree[14]->set_deprel('Pnom');
+        }
     }
 }
 
