@@ -879,6 +879,14 @@ sub fix_annotation_errors
             $subtree[2]->set_parent($subtree[0]);
             $subtree[2]->set_deprel('Adv');
         }
+        # PDT-C 2.0 train tamw ln94200_125 # 6
+        # Slovo "eko" má teď deprel AuxY.
+        elsif($spanstring =~ m/^začínající na eko -$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_parent($subtree[1]);
+            $subtree[2]->set_deprel('Adv');
+        }
     }
 }
 
