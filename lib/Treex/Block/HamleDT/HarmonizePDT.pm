@@ -34,6 +34,7 @@ sub process_zone
             $node->set_deprel($node->form() eq ',' ? 'AuxX' : 'AuxG');
         }
     }
+    $self->fix_list_item_labels($root); # CLTT issue, but it could occur elsewhere, too.
     # Is_member should be set directly under the Coord|Apos node. Some Prague-style treebanks have it deeper.
     # Fix it here, before building phrases (it will not harm treebanks that are already OK.)
     $self->pdt_to_treex_is_member_conversion($root);
@@ -55,6 +56,40 @@ sub process_zone
         $node->set_is_member(undef) if(!$node->is_member());
     }
     return $root;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fix list item labels attached to AuxP or AuxC. For example, in Czech CLTT,
+# "d) pokud tak stanoví zvláštní právní předpis"
+# "d) if so provided by a special legal regulation"
+# "d)" is one token, tagged "X@", attached as "AuxG" directly to "pokud", which
+# is AuxC_Co and has "stanoví" as the second child. This is not a problem when
+# "d)" is treated as punctuation, but it is not punctuation, and "AuxG" will be
+# converted to generic "nmod" in convert_deprels(). Therefore, we should detect
+# and fix such cases before deprels are converted.
+#------------------------------------------------------------------------------
+sub fix_list_item_labels
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'AuxG' && $node->form() =~ m/^[A-Za-z0-9]+[\)\.]$/)
+        {
+            $node->set_deprel('Adv');
+            if($node->parent()->deprel() =~ m/^Aux[CP]/)
+            {
+                my @siblings = $node->get_siblings({'ordered' => 1, 'add_self' => 0});
+                if(scalar(@siblings) > 0)
+                {
+                    $node->set_parent($siblings[0]);
+                }
+            }
+        }
+    }
 }
 
 
