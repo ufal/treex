@@ -174,6 +174,9 @@ sub detect_prague_copula
         my @dependents = grep {$_ != $argument} ($phrase->dependents());
         my $parent = $phrase->parent();
         my $deprel = $phrase->deprel();
+        ###!!! DEBUG
+        log_warn('Punctuation') if($deprel eq 'punct');
+        ###!!! END OF DEBUG
         my $member = $phrase->is_member();
         $copula->set_parent(undef);
         $argument->set_parent(undef);
