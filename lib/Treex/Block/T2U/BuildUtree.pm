@@ -67,18 +67,20 @@ sub translate_val_frame
         if (my $valframe_id = $ep->val_frame_rf) {
             $valframe_id =~ s/^.*#//;
             if (my $pb = $self->mapping->{$valframe_id}{ $tnode->functor }) {
+                $pb =~ s/\?//;
                 ++$functor{$pb};
                 next EPARENT
             }
         }
-        ++$functor{ $tnode->functor };
     }
+    my $was_successful;
     if (1 == keys %functor) {
         $unode->set_functor((keys %functor)[0]);
+        $was_successful = 1;
     } else {
         log_warn("More than one functor: " . join ' ', keys %functor)
             if keys %functor > 1;
-        $unode->set_functor($tnode->functor);
+        $unode->set_functor('!!' . $tnode->functor);
     }
     if (my $valframe_id = $tnode->val_frame_rf) {
         $valframe_id =~ s/^.*#//;
@@ -87,6 +89,7 @@ sub translate_val_frame
             $unode->set_concept($pb_concept);
         }
     }
+    return $was_successful
 }
 
 {   my %FUNCTOR_MAPPING = (
@@ -306,8 +309,8 @@ sub add_tnode_to_unode
     # Set u-node attributes based on the t-node.
     $unode->_set_ord($tnode->ord());
     $self->set_concept($unode, $tnode);
-    $self->translate_val_frame($tnode, $unode);
-    $self->translate_non_valency_functor($tnode, $unode);
+    $self->translate_non_valency_functor($tnode, $unode)
+        unless $self->translate_val_frame($tnode, $unode);
     $unode->copy_alignment($tnode) unless $tnode->is_generated;
     $self->set_nodetype($unode, $tnode);
     $self->maybe_set(person => $unode, $tnode);
