@@ -58,25 +58,25 @@ sub process_atree
     $self->convert_deprels($root);
     $self->remove_null_pronouns($root);
     $self->relabel_appos_name($root);
-    # The most difficult part is detection of coordination, prepositional and
-    # similar phrases and their interaction. It will be done bottom-up using
-    # a tree of phrases that will be then projected back to dependencies, in
-    # accord with the desired annotation style. See Phrase::Builder for more
-    # details on how the source tree is decomposed. The construction parameters
-    # below say how should the resulting dependency tree look like. The code
-    # of the builder knows how the INPUT tree looks like (including the deprels
-    # already converted from Prague to the UD set).
-    my $builder = Treex::Tool::PhraseBuilder::PragueToUD->new
-    (
-        'prep_is_head'           => 0,
-        'cop_is_head'            => 0,
-        'coordination_head_rule' => 'first_conjunct',
-        'counted_genitives'      => $root->language ne 'la'
-    );
-    my $phrase = $builder->build($root);
-    $phrase->project_dependencies();
     if(0) ###!!! DEBUG
     {
+        # The most difficult part is detection of coordination, prepositional and
+        # similar phrases and their interaction. It will be done bottom-up using
+        # a tree of phrases that will be then projected back to dependencies, in
+        # accord with the desired annotation style. See Phrase::Builder for more
+        # details on how the source tree is decomposed. The construction parameters
+        # below say how should the resulting dependency tree look like. The code
+        # of the builder knows how the INPUT tree looks like (including the deprels
+        # already converted from Prague to the UD set).
+        my $builder = Treex::Tool::PhraseBuilder::PragueToUD->new
+        (
+            'prep_is_head'           => 0,
+            'cop_is_head'            => 0,
+            'coordination_head_rule' => 'first_conjunct',
+            'counted_genitives'      => $root->language ne 'la'
+        );
+        my $phrase = $builder->build($root);
+        $phrase->project_dependencies();
         # The 'cop' relation can be recognized only after transformations.
         $self->tag_copulas_aux($root);
         $self->fix_unknown_tags($root);
