@@ -869,6 +869,14 @@ sub fix_annotation_errors
             $subtree[9]->set_is_member(0);
             $subtree[9]->set_is_extra_dependency(1);
         }
+        # PDT-C 2.0 train amw ln95042_025 # 16
+        # Slovo "id" má teď deprel AuxY.
+        elsif($spanstring =~ m/^za tím id - přišlo - ealista$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_parent($subtree[0]);
+            $subtree[2]->set_deprel('Adv');
+        }
     }
 }
 
