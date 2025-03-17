@@ -66,11 +66,11 @@ sub process_atree
             log_warn('Modifying '.$node->form());
         }
     }
-    return; ###!!!
 
     # Now the harmonization proper.
     $self->exchange_tags($root);
     $self->fix_symbols($root);
+    return; ###!!!
     $self->fix_annotation_errors($root);
     $self->fix_list_item_labels($root); # must be called before convert_deprels()
     $self->convert_deprels($root);
