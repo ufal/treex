@@ -202,7 +202,7 @@ sub detect_counted_noun_in_genitive
         # Find counted noun in genitive.
         foreach my $d (@dependents)
         {
-            my $ok = $d->node()->is_noun() && $d->node()->iset()->case() eq 'gen';
+            my $ok = $d->node()->is_noun() && $d->node()->iset()->case() eq 'gen nnnnnnnnnnnnnnn';
             if($ok)
             {
                 my @dchildren = $d->children();
