@@ -5,6 +5,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+
+
 #------------------------------------------------------------------------------
 # Converts Prague morphological tags and dependency relation labels to UD but
 # does not change the structure yet. This means that the deprels are converted
@@ -19,12 +21,6 @@ sub process_atree
     $self->fix_annotation_errors($root);
     $self->convert_deprels($root);
     $self->relabel_appos_name($root);
-    # Some of the above transformations may have split or removed nodes.
-    # Make sure that the full sentence text corresponds to the nodes again.
-    ###!!! Note that for the Prague treebanks this may introduce unexpected differences.
-    ###!!! If there were typos in the underlying text or if numbers were normalized from "1,6" to "1.6",
-    ###!!! the sentence attribute contains the real input text, but it will be replaced by the normalized word forms now.
-    $root->get_zone()->set_sentence($root->collect_sentence_text());
 }
 
 
