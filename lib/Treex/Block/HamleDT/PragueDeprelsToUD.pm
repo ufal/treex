@@ -794,7 +794,8 @@ sub fix_annotation_errors
         # PDT-C 2.0 train tamw mf920922_090 # 5
         elsif($form eq 'au' && $node->parent()->form() eq 'pair')
         {
-            $node->set_deprel('compound');
+            # This will result in 'amod' but we may actually prefer 'compound'.
+            $node->set_deprel('Atr');
         }
         # In AnCora (ca+es), the MWE "10_per_cent" will have the lemma "10_%", which is a mismatch in number of elements.
         elsif($form =~ m/_(per_cent|por_ciento)$/i && $lemma =~ m/_%$/)
