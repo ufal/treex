@@ -80,7 +80,7 @@ sub fix_byt_pro_aby
             my $lemma = $node->lemma() // '';
             my $plemma = $node->parent()->lemma() // '';
             # Do not match the lemma to the end. The lemma could be "proti-1".
-            if($plemma eq 'být' && $lemma =~ m/^(pro|proti)/)
+            if($plemma =~ m/^(být|hlasovat)$/ && $lemma =~ m/^(pro|proti)/)
             {
                 # The first example I encountered was "být pro, aby...", so there
                 # was an AuxC child with the "aby" clause. But there are also
@@ -89,7 +89,14 @@ sub fix_byt_pro_aby
                 my @children = $node->children();
                 if(scalar(@children) == 0 || scalar(@children) == 1 && $children[0]->deprel() eq 'AuxC')
                 {
-                    $node->set_deprel('Pnom');
+                    if($plemma eq 'být')
+                    {
+                        $node->set_deprel('Pnom');
+                    }
+                    else # hlasovat
+                    {
+                        $node->set_deprel('Adv');
+                    }
                 }
             }
         }

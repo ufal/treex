@@ -938,7 +938,7 @@ sub fix_annotation_errors
         elsif($spanstring =~ m/^Říkám předem , že bude \.$/i)
         {
             my @subtree = $self->get_node_subtree($node);
-            $subtree[4]->set_parent($subtree[0]);
+            $subtree[4]->set_parent($subtree[3]);
             $subtree[4]->set_deprel('Obj');
         }
     }
