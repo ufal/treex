@@ -784,6 +784,13 @@ sub fix_annotation_errors
         {
             $node->set_deprel('Atr');
         }
+        # PDT-C 2.0 train tamw ln94211_30 # 13
+        # Pokud, ale to je ošklivá představa!, pokud v tom nejsou staré dobré zvyky.
+        # We have AuxY(pokud-10, Pokud-1). It should be probably reparandum.
+        elsif($form eq 'Pokud' && $deprel eq 'AuxY' && $node->parent()->form() eq 'pokud')
+        {
+            $node->set_deprel('reparandum');
+        }
         # In AnCora (ca+es), the MWE "10_per_cent" will have the lemma "10_%", which is a mismatch in number of elements.
         elsif($form =~ m/_(per_cent|por_ciento)$/i && $lemma =~ m/_%$/)
         {
