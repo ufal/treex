@@ -797,6 +797,15 @@ sub fix_annotation_errors
             # This will result in 'amod' but we may actually prefer 'compound'.
             $node->set_deprel('Atr');
         }
+        # PDT-C 2.0 train amw vesm9211_001 # 27
+        elsif($form eq 'neboli' && $node->parent()->form() eq 'jako')
+        {
+            my @takove = grep {$_->form() eq 'takové'} ($node->get_siblings());
+            if(scalar(@takove) > 0)
+            {
+                $node->set_parent($takove[0]);
+            }
+        }
         # In AnCora (ca+es), the MWE "10_per_cent" will have the lemma "10_%", which is a mismatch in number of elements.
         elsif($form =~ m/_(per_cent|por_ciento)$/i && $lemma =~ m/_%$/)
         {
