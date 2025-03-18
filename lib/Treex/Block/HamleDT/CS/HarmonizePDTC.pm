@@ -941,6 +941,21 @@ sub fix_annotation_errors
             $subtree[4]->set_parent($subtree[3]);
             $subtree[4]->set_deprel('Obj');
         }
+        # PDT-C 2.0 train amw mf920924_126 # 19
+        elsif($spanstring =~ m/^i kdyby se mu podařilo k něčemu takovému přispět ,$/i)
+        {
+            # We need the whole sentence but there are many fragments attached directly to the artificial root.
+            # Full sentence: A i kdyby se mu podařilo k něčemu takovému přispět, pak jen zřejmě za cenu velkého znevážení prezidentského úřadu:
+            my @subtree = $self->get_node_subtree($root);
+            $subtree[0]->set_parent($subtree[15]);
+            $subtree[0]->set_deprel('AuxY');
+            $subtree[2]->set_parent($subtree[15]);
+            $subtree[5]->set_deprel('Adv');
+            $subtree[5]->set_is_extra_dependency(undef);
+            $subtree[11]->set_parent($subtree[15]); # pak
+            $subtree[12]->set_parent($subtree[15]); # jen
+            $subtree[13]->set_parent($subtree[15]); # zřejmě
+        }
     }
 }
 
