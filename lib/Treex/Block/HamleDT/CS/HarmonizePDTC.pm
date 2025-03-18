@@ -957,6 +957,24 @@ sub fix_annotation_errors
             $subtree[13]->set_parent($subtree[16]); # jen
             $subtree[14]->set_parent($subtree[16]); # zřejmě
         }
+        # PDT-C 2.0 train amw vesm9211_007 # 32
+        elsif($spanstring =~ m/^tzn \. že k tomu , aby byl někdo gramotný/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # "tzn." is tagged as an abbreviated conjunction, although it contains a verb.
+            # In this particular sentence the verb is more important because of the "že",
+            # but we would have to retag the conjunction to verb, otherwise it won't work.
+            # Let's now simply remove the conjunction from the head position.
+            my $parent = $node->parent();
+            $subtree[11]->set_parent($parent);
+            $subtree[11]->set_deprel('Pred');
+            $subtree[11]->set_is_member(1);
+            $subtree[0]->set_parent($subtree[11]);
+            $subtree[0]->set_deprel('AuxY');
+            $subtree[0]->set_is_member(undef);
+            $subtree[2]->set_parent($subtree[11]);
+            $subtree[2]->set_deprel('AuxY');
+        }
     }
 }
 
