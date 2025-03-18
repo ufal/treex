@@ -907,6 +907,26 @@ sub fix_annotation_errors
             $subtree[14]->set_is_extra_dependency(0);
             $subtree[14]->set_deprel('Pnom');
         }
+        # PDT-C 2.0 train tamw ln94211_1 # 10
+        elsif($spanstring =~ m/^jako správci výpočetních systémů \( sítí \) , jako programátoři a servisní pracovníci$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            my $parent = $node->parent();
+            $subtree[7]->set_parent($parent);
+            $subtree[7]->set_deprel('Coord');
+            $subtree[0]->set_parent($subtree[7]);
+            $subtree[0]->set_deprel('AuxC');
+            $subtree[0]->set_is_member(1);
+            $subtree[8]->set_parent($subtree[7]);
+            $subtree[8]->set_deprel('AuxC');
+            $subtree[8]->set_is_member(1);
+            $subtree[1]->set_parent($subtree[0]);
+            $subtree[1]->set_deprel('Atv');
+            $subtree[1]->set_is_member(undef);
+            $subtree[10]->set_parent($subtree[8]);
+            $subtree[10]->set_deprel('Coord');
+            $subtree[10]->set_is_member(undef);
+        }
     }
 }
 
