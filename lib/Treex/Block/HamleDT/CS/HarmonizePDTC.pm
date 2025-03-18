@@ -934,6 +934,13 @@ sub fix_annotation_errors
             $subtree[4]->set_parent($subtree[12]);
             $subtree[4]->set_deprel('Pred');
         }
+        # PDT-C 2.0 train tamw ln94211_92 # 79
+        elsif($spanstring =~ m/^Říkám předem , že bude \.$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_parent($subtree[0]);
+            $subtree[4]->set_deprel('Obj');
+        }
     }
 }
 
