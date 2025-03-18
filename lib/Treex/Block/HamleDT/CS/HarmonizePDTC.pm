@@ -975,6 +975,20 @@ sub fix_annotation_errors
             $subtree[2]->set_parent($subtree[11]);
             $subtree[2]->set_deprel('AuxY');
         }
+        # PDT-C 2.0 train amw vesm9211_051 # 7
+        # Since "neřku" is now tagged as an adverb, it must not be syntactically treated as a verb.
+        elsif($spanstring =~ m/^, neřku - li pomáhají je uzdravovat$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            my $parent = $node->parent();
+            $subtree[4]->set_parent($parent);
+            $subtree[4]->set_deprel('Pred');
+            $subtree[0]->set_parent($subtree[4]);
+            $subtree[1]->set_parent($subtree[4]);
+            $subtree[1]->set_deprel('AuxY');
+            $subtree[3]->set_parent($subtree[1]);
+            $subtree[3]->set_deprel('AuxY');
+        }
     }
 }
 
