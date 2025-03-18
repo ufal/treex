@@ -947,14 +947,15 @@ sub fix_annotation_errors
             # We need the whole sentence but there are many fragments attached directly to the artificial root.
             # Full sentence: A i kdyby se mu podařilo k něčemu takovému přispět, pak jen zřejmě za cenu velkého znevážení prezidentského úřadu:
             my @subtree = $self->get_node_subtree($root);
-            $subtree[0]->set_parent($subtree[15]);
-            $subtree[0]->set_deprel('AuxY');
-            $subtree[2]->set_parent($subtree[15]);
-            $subtree[5]->set_deprel('Adv');
-            $subtree[5]->set_is_extra_dependency(undef);
-            $subtree[11]->set_parent($subtree[15]); # pak
-            $subtree[12]->set_parent($subtree[15]); # jen
-            $subtree[13]->set_parent($subtree[15]); # zřejmě
+            # $subtree[0] is now the root!
+            $subtree[1]->set_parent($subtree[16]);
+            $subtree[1]->set_deprel('AuxY');
+            $subtree[3]->set_parent($subtree[16]);
+            $subtree[6]->set_deprel('Adv');
+            $subtree[6]->set_is_extra_dependency(undef);
+            $subtree[12]->set_parent($subtree[16]); # pak
+            $subtree[13]->set_parent($subtree[16]); # jen
+            $subtree[14]->set_parent($subtree[16]); # zřejmě
         }
     }
 }
