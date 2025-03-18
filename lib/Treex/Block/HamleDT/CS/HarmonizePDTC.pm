@@ -927,6 +927,13 @@ sub fix_annotation_errors
             $subtree[10]->set_deprel('Coord');
             $subtree[10]->set_is_member(undef);
         }
+        # PDT-C 2.0 train tamw ln94211_30 # 13
+        elsif($spanstring =~ m/^pokud , ale to je ošklivá představa/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_parent($subtree[12]);
+            $subtree[4]->set_deprel('Pred');
+        }
     }
 }
 
