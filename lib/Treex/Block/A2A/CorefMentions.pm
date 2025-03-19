@@ -849,6 +849,8 @@ sub check_spans
                 else ###!!! DEBUG
                 {
                     my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
+                    my $headi = $mentions[$i]{head}->get_conllu_id().':'.$mentions[$i]{head}->form();
+                    my $headj = $mentions[$j]{head}->get_conllu_id().':'.$mentions[$j]{head}->form();
                     log_info("Comparing mentions of entities '$mentions[$i]{cid}' and '$mentions[$j]{cid}', headed at '$headi' and '$headj' respectively:\n$message");
                 }
             }
