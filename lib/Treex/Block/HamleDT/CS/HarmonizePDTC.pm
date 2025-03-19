@@ -989,6 +989,13 @@ sub fix_annotation_errors
             $subtree[3]->set_parent($subtree[1]);
             $subtree[3]->set_deprel('AuxY');
         }
+        # PDT-C 2.0 train amw vesm9303_023 # 18
+        elsif($spanstring =~ m/^vyslovovat skupinu \[ - ns - \] jako \[ - nz - \]$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_deprel('Atr');
+            $subtree[10]->set_deprel('Atv');
+        }
     }
 }
 
