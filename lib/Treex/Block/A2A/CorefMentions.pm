@@ -178,9 +178,13 @@ sub adjust_t_head
 {
     my $self = shift;
     my $tnode = shift;
-    while($tnode->is_member() && $tnode->parent()->functor() eq 'APPS')
+    ###!!! Zatím nefunguje následovné spojování entit, které je tím občas vyvoláno.
+    if(0)
     {
-        $tnode = $tnode->parent();
+        while($tnode->is_member() && $tnode->parent()->functor() eq 'APPS')
+        {
+            $tnode = $tnode->parent();
+        }
     }
     return $tnode;
 }
