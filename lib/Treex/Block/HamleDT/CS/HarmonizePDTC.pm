@@ -150,6 +150,16 @@ sub restore_exd
             $self->restore_exd($argument);
         }
     }
+    # train/amw/vesm9303_051 # 33
+    # Díla I a II této řady nebyla a nemohou být publikována
+    elsif ( $node->deprel() eq 'AuxV' && $node->is_member() )
+    {
+        my @siblings = grep {$_->deprel() eq 'Pred' && $_->is_member() && !$_->is_extra_dependency()} ($node->get_siblings({'ordered' => 1}));
+        if ( scalar(@siblings) > 0 )
+        {
+            $node->set_deprel('Pred');
+        }
+    }
     elsif ( $node->deprel() !~ m/^Aux/ )
     {
         $node->set_deprel('ExD');
