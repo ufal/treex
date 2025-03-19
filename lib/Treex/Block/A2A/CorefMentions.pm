@@ -59,7 +59,7 @@ sub process_atree
         log_warn("Number of mentions shrank from $n_before to $n_after.");
         foreach my $mention (@mentions)
         {
-            log_info("cid=$mention->{cid}, head=$mention->{head}, nodes=".join(' ', map {$_->form()} (@{$mention->{nodes}})));
+            log_info("cid=$mention->{cid}, head=".$mention->{head}->form().", nodes=".join(' ', map {$_->form()} (@{$mention->{nodes}})));
         }
     }
     # We could not mark the mention spans at the nodes before all mentions had
@@ -779,6 +779,13 @@ sub check_spans
             # Are the mentions discontinuous?
             my $disconti = defined($firstgapi) && $firstgapi < $lasti;
             my $discontj = defined($firstgapj) && $firstgapj < $lastj;
+            ###!!! DEBUG
+            {
+                my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
+                my $headi = $mentions[$i]{head}->get_conllu_id().':'.$mentions[$i]{head}->form();
+                my $headj = $mentions[$j]{head}->get_conllu_id().':'.$mentions[$j]{head}->form();
+                log_info("Comparing mentions $i and $j of entities '$mentions[$i]{cid}' and '$mentions[$j]{cid}', headed at '$headi' and '$headj' respectively:\n$message");
+            }
             # The worst troubles arise with pairs of mentions of the same entity.
             if($mentions[$i]{cid} eq $mentions[$j]{cid})
             {
@@ -855,13 +862,6 @@ sub check_spans
                     Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($mentions[$j]{head});
                     $mentions[$j]{head} = undef;
                     $mentions[$j]{removed} = 1;
-                }
-                else ###!!! DEBUG
-                {
-                    my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
-                    my $headi = $mentions[$i]{head}->get_conllu_id().':'.$mentions[$i]{head}->form();
-                    my $headj = $mentions[$j]{head}->get_conllu_id().':'.$mentions[$j]{head}->form();
-                    log_info("Comparing mentions of entities '$mentions[$i]{cid}' and '$mentions[$j]{cid}', headed at '$headi' and '$headj' respectively:\n$message");
                 }
             }
             # Mentions of different entities.
