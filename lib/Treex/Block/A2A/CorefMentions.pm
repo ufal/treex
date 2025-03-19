@@ -57,6 +57,10 @@ sub process_atree
     if($n_after != $n_before)
     {
         log_warn("Number of mentions shrank from $n_before to $n_after.");
+        foreach my $mention (@mentions)
+        {
+            log_info("cid=$mention->{cid}, head=$mention->{head}, nodes=".join(',', @{$mention->{nodes}}));
+        }
     }
     # We could not mark the mention spans at the nodes before all mentions had
     # been collected and adjusted. The polishing of a mention could lead to
