@@ -162,7 +162,12 @@ sub restore_exd
     }
     elsif ( $node->deprel() !~ m/^Aux/ )
     {
-        $node->set_deprel('ExD');
+        ###!!! Hack: Ignore concrete instances that we later cannot process correctly.
+        ###!!! test/tamw/ln94210_8 # 2
+        unless($node->form() =~ m/^(ceny|výše)$/i)
+        {
+            $node->set_deprel('ExD');
+        }
     }
 }
 
