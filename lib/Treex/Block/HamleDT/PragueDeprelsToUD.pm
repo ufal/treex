@@ -65,7 +65,7 @@ sub fix_symbols
         # require that the token consists solely of the symbol character.
         # Especially with '$' there are tokens like 'US$', 'CR$' etc. that
         # should be included.
-        if($node->form() =~ m/[\$%§]$/)
+        if($node->form() =~ m/[\$%§°]$/)
         {
             $node->iset()->set('pos', 'sym');
             # If the original dependency relation was AuxG, it should be changed but there is no way of knowing the correct relation.
