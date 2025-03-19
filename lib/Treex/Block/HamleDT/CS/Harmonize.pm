@@ -75,20 +75,21 @@ sub fix_byt_pro_aby
         # We should also look at the lemma of the current node (preposition)
         # because we do not mess up the compound conjunction "místo aby",
         # regardless whether it depends on a copula or on a normal verb.
+        # The first example I encountered was "být pro, aby...", so there was
+        # an AuxC child with the "aby" clause. But there are also examples like
+        # "24 poslanců bylo proti", where the preposition has no children at
+        # all. And we need eparents rather than parents because of examples
+        # like "Jste pro, nebo proti?"
+        # Occasionally there are other prepositions stranded: "existuje vně".
         if($node->deprel() eq 'AuxP')
         {
             my $lemma = $node->lemma() // '';
-            my @veparents = grep {$_->is_verb() && defined($_->lemma()) && $_->lemma() =~ m/^(být|hlasovat)$/} ($node->get_eparents({'ordered' => 1}));
+            my @veparents = grep {$_->is_verb() && defined($_->lemma()) && $_->lemma() =~ m/^(být|hlasovat|existovat)$/} ($node->get_eparents({'ordered' => 1}));
             # Do not match the lemma of the preposition to the end. The lemma could be "proti-1".
-            if($lemma =~ m/^(pro|proti)/ && scalar(@veparents) > 0)
+            if($lemma =~ m/^(pro|proti|vně)/ && scalar(@veparents) > 0)
             {
-                # The first example I encountered was "být pro, aby...", so there
-                # was an AuxC child with the "aby" clause. But there are also
-                # examples like "24 poslanců bylo proti", where the preposition
-                # has no children at all. And we need eparents rather than
-                # parents because of examples like "Jste pro, nebo proti?"
                 my $plemma = $veparents[0]->lemma();
-                my @children = $node->children();
+                my @children = grep {$_->deprel() !~ m/^Aux[GX]$/} ($node->children());
                 if(scalar(@children) == 0 || scalar(@children) == 1 && $children[0]->deprel() eq 'AuxC')
                 {
                     if($plemma eq 'být')
