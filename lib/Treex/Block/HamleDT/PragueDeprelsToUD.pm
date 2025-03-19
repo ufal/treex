@@ -68,6 +68,10 @@ sub fix_symbols
         if($node->form() =~ m/[\$%§°]$/)
         {
             $node->iset()->set('pos', 'sym');
+            # Unlike spelled-out nouns, symbols normally do not have morphological
+            # features, although there may be language-specific deviations.
+            $node->iset()->clear('case');
+            $node->iset()->clear('style');
             # If the original dependency relation was AuxG, it should be changed but there is no way of knowing the correct relation.
             # The underlying words are nouns, hence they could be Sb, Obj, Adv, Atr, Apposition or even Pnom.
         }
