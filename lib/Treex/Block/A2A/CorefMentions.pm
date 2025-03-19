@@ -809,6 +809,20 @@ sub check_spans
                     my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
                     log_warn("Interleaved mentions of entity '$mentions[$i]{cid}':\n$message");
                 }
+                elsif(scalar(@inboth) && !scalar(@inionly) && !scalar(@injonly))
+                {
+                    # The mentions have identical spans. It should be only one
+                    # mention. Note that here we are comparing mentions from
+                    # the same cluster.
+                    my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
+                    my $headi = $mentions[$i]{head}->get_conllu_id().':'.$mentions[$i]{head}->form();
+                    my $headj = $mentions[$j]{head}->get_conllu_id().':'.$mentions[$j]{head}->form();
+                    log_warn("Two different mentions of entity '$mentions[$i]{cid}', headed at '$headi' and '$headj' respectively, have identical spans:\n$message");
+                    # Same-span mentions would be invalid in CoNLL-U, so let us remove one of them.
+                    Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($mentions[$j]{head});
+                    $mentions[$j]{head} = undef;
+                    $mentions[$j]{removed} = 1;
+                }
                 elsif(scalar(@inboth) && !scalar(@injonly))
                 {
                     # Span j is a subset of span i.
@@ -848,20 +862,6 @@ sub check_spans
                             }
                         }
                     }
-                }
-                elsif(scalar(@inboth) && !scalar(@inionly) && !scalar(@injonly))
-                {
-                    # The mentions have identical spans. It should be only one
-                    # mention. Note that here we are comparing mentions from
-                    # the same cluster.
-                    my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
-                    my $headi = $mentions[$i]{head}->get_conllu_id().':'.$mentions[$i]{head}->form();
-                    my $headj = $mentions[$j]{head}->get_conllu_id().':'.$mentions[$j]{head}->form();
-                    log_warn("Two different mentions of entity '$mentions[$i]{cid}', headed at '$headi' and '$headj' respectively, have identical spans:\n$message");
-                    # Same-span mentions would be invalid in CoNLL-U, so let us remove one of them.
-                    Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($mentions[$j]{head});
-                    $mentions[$j]{head} = undef;
-                    $mentions[$j]{removed} = 1;
                 }
             }
             # Mentions of different entities.
