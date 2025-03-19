@@ -51,17 +51,7 @@ sub process_atree
     # Now check that the various mentions in the tree fit together.
     # Crossing spans are suspicious. Nested discontinuous spans are, too.
     $self->check_spans($root, @mentions);
-    my $n_before = scalar(@mentions);
     @mentions = grep {!$_->{removed}} (@mentions);
-    my $n_after = scalar(@mentions);
-    if($n_after != $n_before)
-    {
-        log_warn("Number of mentions shrank from $n_before to $n_after.");
-        foreach my $mention (@mentions)
-        {
-            log_info("cid=$mention->{cid}, head=".$mention->{head}->form().", nodes=".join(' ', map {$_->form()} (@{$mention->{nodes}})));
-        }
-    }
     # We could not mark the mention spans at the nodes before all mentions had
     # been collected and adjusted. The polishing of a mention could lead to
     # shuffling empty nodes and invalidating node ids in previously marked
@@ -779,13 +769,6 @@ sub check_spans
             # Are the mentions discontinuous?
             my $disconti = defined($firstgapi) && $firstgapi < $lasti;
             my $discontj = defined($firstgapj) && $firstgapj < $lastj;
-            ###!!! DEBUG
-            {
-                my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
-                my $headi = $mentions[$i]{head}->get_conllu_id().':'.$mentions[$i]{head}->form();
-                my $headj = $mentions[$j]{head}->get_conllu_id().':'.$mentions[$j]{head}->form();
-                log_info("Comparing mentions $i and $j of entities '$mentions[$i]{cid}' and '$mentions[$j]{cid}', headed at '$headi' and '$headj' respectively:\n$message");
-            }
             # The worst troubles arise with pairs of mentions of the same entity.
             if($mentions[$i]{cid} eq $mentions[$j]{cid})
             {
