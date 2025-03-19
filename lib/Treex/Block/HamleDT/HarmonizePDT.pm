@@ -46,6 +46,34 @@ sub process_zone
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
+    # Apposition "zvratné, tj. jako vracející se zpět k podmětu": The conjunction
+    # was "tj.", it is now attached to "jako", which is an AuxC and its only child
+    # should be "vracející". Move the conjunction further down to "vracející" so
+    # that it is not later considered as a fixed expression "tj. jako". ###!!!
+    # It would be better to do this within the phrase builder: First encapsulate
+    # "tj." including the period in one nonterminal (so that the period stays attached
+    # to it), then make sure that prepositional phrases attach further dependents
+    # to the argument and not to the preposition (here conjunction "jako").
+    foreach my $node (@nodes)
+    {
+        if($node->form() eq 'tj')
+        {
+            my $period = $node->get_next_node();
+            if($period->form() eq '.')
+            {
+                my $jako = $period->get_next_node();
+                if($jako->form() eq 'jako' && $node->parent() == $jako && $period->parent() == $jako)
+                {
+                    my @children = grep {$_ != $node && $_ != $period} ($jako->get_children({'ordered' => 1}));
+                    if(scalar(@children) > 0)
+                    {
+                        $node->set_parent($children[0]);
+                        $period->set_parent($node);
+                    }
+                }
+            }
+        }
+    }
     # We used to reattach final punctuation before handling coordination and apposition but that was a mistake.
     # The sentence-final punctuation might serve as coap head, in which case this function must not modify it.
     # The function knows it but it cannot be called before coap annotation has stabilized.
