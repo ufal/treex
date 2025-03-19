@@ -161,6 +161,7 @@ sub get_anode_for_tnode
     # relations, as well as related functional relations ('cc', 'punct').
     while(!$anode->is_empty() && defined($anode->parent()) && $anode->deprel() =~ m/^(appos|cc|punct)(:|$)/)
     {
+        log_warn("Coref climbing via '".$anode->deprel()."' from '".$anode->form()."' to '".$anode->parent()->form()."'.");
         $anode = $anode->parent();
     }
     return $anode;
