@@ -155,6 +155,14 @@ sub get_anode_for_tnode
     {
         $anode = $tnode->get_lex_anode();
     }
+    # Many things will look much simpler if we always consider apposition as
+    # a single mention, rather than two (or more). So we will now climb within
+    # the basic UD tree (ignoring enhanced relations) along any 'appos'
+    # relations, as well as related functional relations ('cc', 'punct').
+    while(!$anode->is_empty() && defined($anode->parent()) && $anode->deprel() =~ m/^(appos|cc|punct)(:|$)/)
+    {
+        $anode = $anode->parent();
+    }
     return $anode;
 }
 
