@@ -846,6 +846,11 @@ sub check_spans
                     $mentions[$j]{head} = undef;
                     $mentions[$j]{removed} = 1;
                 }
+                else ###!!! DEBUG
+                {
+                    my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{span}, $mentions[$j]{span}, @allnodes);
+                    log_info("Comparing mentions of entities '$mentions[$i]{cid}' and '$mentions[$j]{cid}', headed at '$headi' and '$headj' respectively:\n$message");
+                }
             }
             # Mentions of different entities.
             else
