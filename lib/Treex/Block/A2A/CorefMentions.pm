@@ -51,7 +51,13 @@ sub process_atree
     # Now check that the various mentions in the tree fit together.
     # Crossing spans are suspicious. Nested discontinuous spans are, too.
     $self->check_spans($root, @mentions);
+    my $n_before = scalar(@mentions);
     @mentions = grep {!$_->{removed}} (@mentions);
+    my $n_after = scalar(@mentions);
+    if($n_after != $n_before)
+    {
+        log_warn("Number of mentions shrank from $n_before to $n_after.");
+    }
     # We could not mark the mention spans at the nodes before all mentions had
     # been collected and adjusted. The polishing of a mention could lead to
     # shuffling empty nodes and invalidating node ids in previously marked
