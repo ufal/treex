@@ -868,10 +868,19 @@ sub check_spans
                     # Same-span mentions would be invalid in CoNLL-U.
                     # Merge the clusters first, then remove the second mention.
                     my $type = Treex::Tool::Coreference::Cluster::get_cluster_type($mentions[$i]{head});
-                    Treex::Tool::Coreference::Cluster::merge_clusters($mentions[$i]{cid}, $mentions[$i]{head}, $mentions[$j]{cid}, $mentions[$j]{head}, $type);
+                    my $merged_id = Treex::Tool::Coreference::Cluster::merge_clusters($mentions[$i]{cid}, $mentions[$i]{head}, $mentions[$j]{cid}, $mentions[$j]{head}, $type);
                     Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($mentions[$j]{head});
                     $mentions[$j]{head} = undef;
                     $mentions[$j]{removed} = 1;
+                    my $obsolete_id = $mentions[$i]{cid} ne $merged_id ? $mentions[$i]{cid} : $mentions[$j]{cid};
+                    foreach my $mention (@mentions)
+                    {
+                        if($mention->{cid} eq $obsolete_id)
+                        {
+                            $mention->{cid} = $merged_id;
+                        }
+                    }
+                    log_warn("Merged the two entities, new id is '$merged_id'.");
                 }
             }
         }

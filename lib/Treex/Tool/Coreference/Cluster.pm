@@ -346,6 +346,7 @@ sub merge_clusters
         set_cluster_type($node, $type);
         @{$node->wild()->{cluster_members}} = @cluster_member_ids;
     }
+    return $merged_id;
 }
 
 
