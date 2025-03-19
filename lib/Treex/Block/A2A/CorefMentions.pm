@@ -86,6 +86,7 @@ sub get_raw_mention_span
         my $tnode = $document->get_node_by_id($head->wild()->{'tnode.rf'});
         if(defined($tnode))
         {
+            $tnode = $self->adjust_t_head($tnode);
             my @tsubtree = $self->get_t_subtree($tnode);
             foreach my $tsn (@tsubtree)
             {
@@ -166,6 +167,27 @@ sub get_raw_mention_span
 
 
 #------------------------------------------------------------------------------
+# For a t-node acting as the head of a mention, decides whether we want to
+# use a different head. The function is called before we collect the
+# descendants and it may influence the mention span. The motivation to create
+# the function is apposition. Members of apposition are always coreferential
+# and we do not want to treat them as separate mentions. Things will look
+# simpler if we take the whole apposition as one mention.
+#------------------------------------------------------------------------------
+sub adjust_t_head
+{
+    my $self = shift;
+    my $tnode = shift;
+    while($tnode->is_member() && $tnode->parent()->functor() eq 'APPS')
+    {
+        $tnode = $tnode->parent();
+    }
+    return $tnode;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Collects descendants of a t-node in the t-tree. We have been using the
 # following code before writing this function:
 #
@@ -205,6 +227,15 @@ sub get_t_subtree
     }
     return sort {$a->ord() <=> $b->ord()} (@descendants);
 }
+
+
+
+#------------------------------------------------------------------------------
+# Decides for a t-node that is a member of a paratactic structure (CoAp)
+# whether its subtree should include shared dependents of the paratactic
+# structure. The answer is always true for members of coordination. When the
+# structure is apposition, the answer is true for the first member.
+#------------------------------------------------------------------------------
 sub tnode_takes_shared_dependents
 {
     my $self = shift;

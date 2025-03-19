@@ -40,8 +40,6 @@ sub process_anode
         my $tnode = $anode->get_document()->get_node_by_id($tnode_rf);
         if(defined($tnode))
         {
-            ###!!! THIS IS EXPERIMENTAL
-            $anode = $self->climb_atree($anode);
             # Do we already have a cluster id?
             my $current_cluster_id = $anode->get_misc_attr('ClusterId');
             my $current_cluster_type = Treex::Tool::Coreference::Cluster::get_cluster_type($anode);
@@ -156,42 +154,6 @@ sub get_anode_for_tnode
     else
     {
         $anode = $tnode->get_lex_anode();
-    }
-    return $self->climb_atree($anode);
-}
-
-
-
-#------------------------------------------------------------------------------
-# Given a coreference link between two t-nodes, we initially identify the
-# corresponding a-nodes using the pre-generated t-tree-a-tree links. However,
-# the two trees are different and some a-nodes are not suitable to represent
-# mentions of entities. Climbing the a-tree may give us better candidates, even
-# though they are linked to other t-nodes (but we require that they are linked
-# to a t-node because subsequent blocks may rely on it). Examples:
-#
-# Punctuation. In t-tree it may serve as the technical head of coordination or
-# apposition. In a-tree (UD style) it is always a leaf. Climb to its parent,
-# which should be a conjunct or a member of apposition.
-###!!! But if this is coordination, the comma was linked to the t-head of the
-###!!! coordination, and following effective descendants in the t-tree would
-###!!! give us the correct mention span. If we climb in the a-tree, we will end
-###!!! up at one of the conjuncts, which has a different span.
-#
-# Apposition. Climb the appos relations in the a-tree. We are not interested in
-# coreference links between two members of one apposition.
-###!!! But again, if we stop at the first member of the apposition, it is
-###!!! linked to the t-node that corresponds to the first member only; not to
-###!!! the whole apposition. So the span we will infer will be incorrect.
-#------------------------------------------------------------------------------
-sub climb_atree
-{
-    my $self = shift;
-    my $anode = shift;
-    while(defined($anode) && !$anode->is_empty() && defined($anode->parent()) && $anode->deprel() =~ m/^(appos|cc|punct)(:|$)/ && exists($anode->parent()->wild()->{'tnode.rf'}))
-    {
-        log_warn("Coref climbing via '".$anode->deprel()."' from '".$anode->form()."' to '".$anode->parent()->form()."'.");
-        $anode = $anode->parent();
     }
     return $anode;
 }
