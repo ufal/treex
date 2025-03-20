@@ -48,7 +48,7 @@ sub process_atree
             my $address = $mention->thead()->get_address();
             log_fatal("Failed to determine the span of node $address.\n");
         }
-        my %span_hash; map {my $id = $_->get_conllu_id(); $span_hash{$id}++} (@mention_nodes);
+        my %span_hash; map {my $id = $_->get_conllu_id(); $span_hash{$id} = $_} (@mention_nodes);
         ###!!! For now treat the mention as an ordinary hash rather than an EntityMention object.
         $mention->{anodes} = \@mention_nodes;
         $mention->{aspan} = \%span_hash;
