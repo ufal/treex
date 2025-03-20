@@ -107,22 +107,7 @@ sub merge_entities
     log_fatal('Unknown first entity') if(!any {$_ == $e1} (@{$self->entities()}));
     log_fatal('Unknown second entity') if(!any {$_ == $e2} (@{$self->entities()}));
     # If e1 does not have type and e2 does, copy it.
-    if($e2->type())
-    {
-        if($e1->type())
-        {
-            my $t1 = $e1->type();
-            my $t2 = $e2->type();
-            if($t1 ne $t2)
-            {
-                log_warn("Merging entities of different types: '$t1' vs. '$t2'.");
-            }
-        }
-        else
-        {
-            $e1->set_type($e2->type());
-        }
-    }
+    $e1->reconsider_type($e2->type());
     # Verify that there is no bridging relation between the two entities.
     # If there is one, it must be removed.
     my @new_bridging;

@@ -54,7 +54,7 @@ sub process_coreference
     for(my $i = 0; $i <= $#{$cnodes}; $i++)
     {
         my $ctnode = $cnodes->[$i];
-        my $ctype = $ctypes->[$i];
+        my $ctype = $self->convert_entity_type($ctypes->[$i]);
         # $ctnode is the target t-node of the coreference edge.
         #if(!defined($ctype) && $ng >= 2)
         #{
@@ -70,21 +70,7 @@ sub process_coreference
             $eset->merge_entities($cmention->entity(), $self->entity());
         }
         # Project the type from the coreference link to the entity.
-        if($ctype)
-        {
-            if($self->entity()->type())
-            {
-                if($ctype ne $self->entity()->type())
-                {
-                    my $t0 = $self->entity()->type();
-                    log_warn("Conflicting entity types: currently '$t0' but new coreference suggests '$ctype'.");
-                }
-            }
-            else
-            {
-                $self->entity()->set_type($ctype);
-            }
-        }
+        $self->entity()->reconsider_type($ctype);
     }
 }
 
@@ -116,6 +102,35 @@ sub process_bridging
         }
         $eset->add_bridging($srcmention, $tgtmention, $btype);
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Translates an entity type from the labels used in the t-layer of PDT to the
+# labels used in CorefUD. This function does not need access to any particular
+# mention, so it could be considered static.
+#------------------------------------------------------------------------------
+sub convert_entity_type
+{
+    my $self = shift;
+    my $ctype = shift;
+    if($ctype eq 'GEN')
+    {
+        # Generic entity, e.g., "úředníci".
+        $ctype = 'gen';
+    }
+    elsif($ctype eq 'SPEC')
+    {
+        # Specific entity or event, e.g., "Václav Klaus".
+        $ctype = 'spec';
+    }
+    else
+    {
+        log_warn("Unknown coreference cluster type '$ctype'.");
+        $ctype = undef;
+    }
+    return $ctype;
 }
 
 
@@ -181,8 +196,8 @@ sub convert_bridging
     }
     else
     {
-        $btype = undef;
         log_warn("Unknown bridging relation type '$btype'.");
+        $btype = undef;
     }
     return ($btype, $swap);
 }

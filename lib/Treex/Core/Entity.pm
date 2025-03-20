@@ -32,6 +32,42 @@ sub id
 
 
 #------------------------------------------------------------------------------
+# If we did not know the type of the entity and we are now provided with a new
+# (non-empty) type, set it. If we already knew the type and we are now provided
+# with a different one (which could happen due to annotation inconsistencies),
+# resolve the conflict.
+#------------------------------------------------------------------------------
+sub reconsider_type
+{
+    log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
+    my $self = shift;
+    my $new_type = shift;
+    # If the new type is undefined or empty, do not do anything.
+    return if(!defined($new_type) || $new_type eq '');
+    # Now the new type is non-empty. If the old type was undefined, just set it.
+    if(!$self->type())
+    {
+        $self->set_type($new_type);
+    }
+    else
+    {
+        # So we already had a type. If it was the same, fine. But if it was
+        # different, we must resolve the conflict.
+        if($new_type ne $self->type())
+        {
+            # The conflict can be only between 'gen' and 'spec'. We will give priority to 'gen'.
+            # (Anja says that the annotators looked specifically for 'gen', then batch-annotated everything else as 'spec'.)
+            # We could also issue a warning but it does not seem very helpful.
+            # log_warn("Conflict in entity types from different sources: '$new_type' vs. '".$self->type()."'.");
+            $self->set_type('gen');
+        }
+    }
+    return $self->type();
+}
+
+
+
+#------------------------------------------------------------------------------
 # Takes a t-node and checks whether there is already an entity mention headed
 # by this node. If there is, the function returns the EntityMention object.
 # Otherwise it returns undef.
