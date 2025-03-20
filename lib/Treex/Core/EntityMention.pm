@@ -115,20 +115,27 @@ sub convert_entity_type
 {
     my $self = shift;
     my $ctype = shift;
-    if($ctype eq 'GEN')
+    if(defined($ctype))
     {
-        # Generic entity, e.g., "úředníci".
-        $ctype = 'gen';
-    }
-    elsif($ctype eq 'SPEC')
-    {
-        # Specific entity or event, e.g., "Václav Klaus".
-        $ctype = 'spec';
-    }
-    else
-    {
-        log_warn("Unknown coreference cluster type '$ctype'.");
-        $ctype = undef;
+        if($ctype eq 'GEN')
+        {
+            # Generic entity, e.g., "úředníci".
+            $ctype = 'gen';
+        }
+        elsif($ctype eq 'SPEC')
+        {
+            # Specific entity or event, e.g., "Václav Klaus".
+            $ctype = 'spec';
+        }
+        elsif($ctype eq '')
+        {
+            $ctype = undef;
+        }
+        else
+        {
+            log_warn("Unknown coreference cluster type '$ctype'.");
+            $ctype = undef;
+        }
     }
     return $ctype;
 }
