@@ -89,43 +89,6 @@ sub get_anode_for_tnode
 
 
 
-#------------------------------------------------------------------------------
-# Returns the next available cluster id for the current document.
-#------------------------------------------------------------------------------
-sub get_new_cluster_id
-{
-    my $self = shift;
-    my $node = shift; # we need a node to be able to access the bundle
-    # We need a new cluster id.
-    # In released data, the ClusterId should be just 'c' + natural number.
-    # However, larger unique strings are allowed during intermediate stages,
-    # and we need them in order to ensure uniqueness across multiple documents
-    # in one file. Clusters never span multiple documents, so we will insert
-    # the document id. Since Treex documents do not have an id attribute, we
-    # will assume that a prefix of the bundle id uniquely identifies the document.
-    my $docid = $node->get_bundle()->id();
-    # In PDT, remove trailing '-p1s1' (paragraph and sentence number).
-    # In PCEDT, remove trailing '-s1' (there are no paragraph boundaries).
-    $docid =~ s/-(p[0-9A-Z]+)?s[0-9A-Z]+$//;
-    # Certain characters cannot be used in cluster ids because they are used
-    # as delimiters in the coreference annotation.
-    $docid =~ s/[-|=:,+\s]//g;
-    my $last_document_id = $self->last_document_id();
-    my $last_cluster_id = $self->last_cluster_id();
-    if($docid ne $last_document_id)
-    {
-        $last_document_id = $docid;
-        $self->set_last_document_id($last_document_id);
-        $last_cluster_id = 0;
-    }
-    $last_cluster_id++;
-    $self->set_last_cluster_id($last_cluster_id);
-    my $id = $docid.'c'.$last_cluster_id;
-    return $id;
-}
-
-
-
 1;
 
 __END__
@@ -149,6 +112,6 @@ Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2021 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2021, 2025 by Institute of Formal and Applied Linguistics, Charles University, Prague.
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

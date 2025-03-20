@@ -50,13 +50,41 @@ sub create_mention
     # Check that there is no mention with this head yet.
     log_fatal('Trying to create mention headed by node that already has another mention') if($self->get_mention_by_thead($thead));
     # If not, create it.
-    my $last_entity_id = $self->last_entity_id();
-    my $entity = new Treex::Core::Entity('eset' => $self, 'id' => 'e'.(++$last_entity_id));
-    $self->set_last_entity_id($last_entity_id);
+    my $entity = new Treex::Core::Entity('eset' => $self, 'id' => $self->get_new_entity_id($thead));
     push(@{$self->{entities}}, $entity);
     my $mention = $entity->create_mention($thead);
     $self->{mentions}{$thead->id()} = $mention;
     return $mention;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the next available entity id for the current document.
+#------------------------------------------------------------------------------
+sub get_new_entity_id
+{
+    my $self = shift;
+    my $node = shift; # we need a node to be able to access the bundle
+    # We need a new entity id.
+    # In released data, the id should be just 'e' + natural number.
+    # However, larger unique strings are allowed during intermediate stages,
+    # and we need them in order to ensure uniqueness across multiple documents
+    # in one file. Entities never span multiple documents, so we will insert
+    # the document id. Since Treex documents do not have an id attribute, we
+    # will assume that a prefix of the bundle id uniquely identifies the document.
+    my $docid = $node->get_bundle()->id();
+    # In PDT, remove trailing '-p1s1' (paragraph and sentence number).
+    # In PCEDT, remove trailing '-s1' (there are no paragraph boundaries).
+    $docid =~ s/-(p[0-9A-Z]+)?s[0-9A-Z]+$//;
+    # Certain characters cannot be used in cluster ids because they are used
+    # as delimiters in the coreference annotation.
+    $docid =~ s/[-|=:,+\s]//g;
+    my $last_entity_id = $self->last_entity_id();
+    $last_entity_id++;
+    $self->set_last_entity_id($last_entity_id);
+    my $id = $docid.'e'.$last_entity_id;
+    return $id;
 }
 
 
