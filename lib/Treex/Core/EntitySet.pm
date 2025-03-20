@@ -130,7 +130,7 @@ sub merge_entities
         my $btype = $b->{type};
         if($bsrce == $e1 && $btgte == $e2 || $bsrce == $e2 && $btgte == $e1)
         {
-            log_warn("Removing bridging relation '$type' because its source and target entities are being merged.");
+            log_warn("Removing bridging relation '$btype' because its source and target entities are being merged.");
         }
         else
         {
