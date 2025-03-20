@@ -48,8 +48,8 @@ sub process_anode
             # bridging links.)
             ###!!! This should be implemented better. Because we now get the
             ###!!! links and later will get them again for the actual processing.
-            my ($cnodes, $ctypes) = $thead->get_coref_nodes({'with_types' => 1});
-            my ($bridgenodes, $bridgetypes) = $thead->get_bridging_nodes();
+            my ($cnodes, $ctypes) = $tnode->get_coref_nodes({'with_types' => 1});
+            my ($bridgenodes, $bridgetypes) = $tnode->get_bridging_nodes();
             if(scalar(@{$cnodes}) > 0 || scalar(@{$bridgenodes}) > 0)
             {
                 # Get the document-wide collection of entities.
