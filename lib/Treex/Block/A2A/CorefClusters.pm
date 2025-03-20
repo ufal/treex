@@ -42,15 +42,26 @@ sub process_anode
         my $tnode = $document->get_node_by_id($tnode_rf);
         if(defined($tnode))
         {
-            # Get the document-wide collection of entities.
-            if(!exists($document->wild()->{eset}))
+            # We do not want to create a mention around this node now if we do
+            # not know about outgoing coreference or bridging links. (The node
+            # may still become a mention if there are incoming coreference or
+            # bridging links.)
+            ###!!! This should be implemented better. Because we now get the
+            ###!!! links and later will get them again for the actual processing.
+            my ($cnodes, $ctypes) = $thead->get_coref_nodes({'with_types' => 1});
+            my ($bridgenodes, $bridgetypes) = $thead->get_bridging_nodes();
+            if(scalar(@{$cnodes}) > 0 || scalar(@{$bridgenodes}) > 0)
             {
-                $document->wild()->{eset} = new Treex::Core::EntitySet();
+                # Get the document-wide collection of entities.
+                if(!exists($document->wild()->{eset}))
+                {
+                    $document->wild()->{eset} = new Treex::Core::EntitySet();
+                }
+                my $eset = $document->wild()->{eset};
+                my $mention = $eset->get_or_create_mention_for_thead($tnode);
+                $mention->process_coreference();
+                $mention->process_bridging();
             }
-            my $eset = $document->wild()->{eset};
-            my $mention = $eset->get_or_create_mention_for_thead($tnode);
-            $mention->process_coreference();
-            $mention->process_bridging();
         }
     }
 }
