@@ -13,21 +13,8 @@ use Treex::Core::Node::T;
 
 has 'eset'     => (is => 'rw', isa => 'Maybe[Treex::Core::EntitySet]', documentation => 'Refers to the set of all entities in the current document.');
 has 'mentions' => (is => 'rw', isa => 'HashRef', default => sub {{}}, documentation => 'Hash holding references to EntityMention objects, i.e., all mentions of the entity, indexed by the id of the thead node.');
+has 'id'       => (is => 'rw', isa => 'Str', documentation => 'Unique id of the entity, typically combination of document id and numeric entity index.');
 has 'type'     => (is => 'rw', isa => 'Str', documentation => 'Optional entity type. May be learned from some coreference links (Spec vs. Gen). All links between mentions of one entity should have either no type or the same type, but sometimes there are conflicts because of annotation inconsistencies.');
-
-
-
-#------------------------------------------------------------------------------
-# Returns a string identfier of the entity. In the future, we will probably
-# have the id as an attribute and it will be based on the document id and the
-# index of the entity within the document. For now, we simply return the self
-# reference.
-#------------------------------------------------------------------------------
-sub id
-{
-    my $self = shift;
-    return ref($self);
-}
 
 
 
@@ -151,6 +138,11 @@ Reference to the C<EntitySet> object to which this entity belongs.
 =item mentions
 
 A non-empty hash of C<EntityMention> objects, indexed by the id of the thead node.
+
+=item id
+
+Unique id of the entity, typically combination of document id and numeric
+entity index.
 
 =item type
 

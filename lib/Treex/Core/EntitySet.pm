@@ -14,6 +14,7 @@ use Treex::Core::Entity;
 has 'entities' => (is => 'rw', isa => 'ArrayRef', default => sub {[]}, documentation => 'Array holding references to Entity objects, i.e., all entities in the set (document).');
 has 'mentions' => (is => 'rw', isa => 'HashRef', default => sub {{}}, documentation => 'Hash holding references to EntityMention objects, i.e., all mentions of all entities in the set (document), indexed by the id of the thead node.');
 has 'bridging' => (is => 'rw', isa => 'ArrayRef', default => sub {[]}, documentation => 'Array holding bridging relations. Implemented as typed directed mention-mention relations, but understood as entity-entity relations. Therefore, at most one such relation between a particular pair of entities is allowed.');
+has 'last_entity_id' => (is => 'rw', default => 0);
 
 
 
@@ -49,7 +50,9 @@ sub create_mention
     # Check that there is no mention with this head yet.
     log_fatal('Trying to create mention headed by node that already has another mention') if($self->get_mention_by_thead($thead));
     # If not, create it.
-    my $entity = new Treex::Core::Entity('eset' => $self);
+    my $last_entity_id = $self->last_entity_id();
+    my $entity = new Treex::Core::Entity('eset' => $self, 'id' => 'e'.(++$last_entity_id));
+    $self->set_last_entity_id($last_entity_id);
     push(@{$self->{entities}}, $entity);
     my $mention = $entity->create_mention($thead);
     $self->{mentions}{$thead->id()} = $mention;

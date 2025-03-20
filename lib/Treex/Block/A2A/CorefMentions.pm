@@ -627,7 +627,7 @@ sub mark_mention
     $mention->{ahead}->set_misc_attr('MentionSpan', $mspan);
     $mention->{ahead}->set_misc_attr('MentionText', $mtext) if($self->mention_text());
     log_info("ClusterId=".$mention->entity()->id());
-    log_info("Clustertype=".$mention->entity()->type()) if($mention->entity()->type());
+    log_info("ClusterType=".$mention->entity()->type()) if($mention->entity()->type());
     log_info("MentionSpan=".$mspan);
     log_info("MentionText=".$mtext);
     # We will want to later run A2A::CorefMentionHeads to find out whether the
