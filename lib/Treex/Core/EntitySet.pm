@@ -109,6 +109,13 @@ sub merge_entities
     # Double check that these entities belong to the present set.
     log_fatal('Unknown first entity') if(!any {$_ == $e1} (@{$self->entities()}));
     log_fatal('Unknown second entity') if(!any {$_ == $e2} (@{$self->entities()}));
+    # Use the lower id. The higher id will remain unused.
+    my $id1 = $e1->id();
+    my $id2 = $e2->id();
+    $id1 =~ s/^(.*)e(\d+)$/$2/;
+    $id2 =~ s/^(.*)e(\d+)$/$2/;
+    my $merged_id = $1.'e'.($id1 < $id2 ? $id1 : $id2);
+    $e1->set_id($merged_id);
     # If e1 does not have type and e2 does, copy it.
     $e1->reconsider_type($e2->type());
     # Verify that there is no bridging relation between the two entities.
