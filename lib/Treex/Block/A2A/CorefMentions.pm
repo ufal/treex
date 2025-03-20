@@ -187,7 +187,7 @@ sub polish_mention_span
 {
     my $self = shift;
     my $mention = shift; # hash ref with the attributes of the mention
-    return if(scalar(@{$mention->{nodes}}) == 0);
+    return if(scalar(@{$mention->{anodes}}) == 0);
     $self->remove_mention_final_conjunction($mention);
     $self->shift_empty_nodes_to_the_rest_of_the_mention($mention);
     $self->remove_mention_initial_punctuation($mention);
