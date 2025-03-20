@@ -222,6 +222,21 @@ sub add_bridging
 
 
 #------------------------------------------------------------------------------
+# Gets all bridging relations starting at a mention. We need them when we are
+# saving mention information as MISC attributes of its head a-node.
+#------------------------------------------------------------------------------
+sub get_bridging_starting_at_mention
+{
+    log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
+    my $self = shift;
+    my $mention = shift;
+    my @bridging = grep {$_->{srcm} == $mention} (@{$self->bridging()});
+    return @bridging;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns a textual representation of the phrase and all subphrases. Useful for
 # debugging. This is an abstract method that must be implemented in the derived
 # classes.
