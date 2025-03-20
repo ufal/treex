@@ -947,12 +947,6 @@ sub sort_node_ids
 sub sort_nodes_by_ids
 {
     my $self = shift;
-    ###!!! DEBUG
-    foreach my $x (@_)
-    {
-        confess('bad type') if($x =~ m/^[0-9]*$/);
-    }
-    ###!!!
     return sort
     {
         Treex::Core::Node::A::cmp_conllu_ids($a->get_conllu_id(), $b->get_conllu_id())
