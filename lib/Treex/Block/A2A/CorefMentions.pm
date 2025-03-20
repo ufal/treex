@@ -838,7 +838,9 @@ sub fix_crossing_mentions
     my $i = shift; # index to @{$mentions}
     my $j = shift; # index to @{$mentions}
     my $root = $mentions->[$i]{anodes}[0]->get_root();
-    foreach my $nid (@{$inboth})
+    # Make a copy of the original @inboth because we will be modifying it.
+    my @original_inboth = @{$inboth};
+    foreach my $nid (@original_inboth)
     {
         my $node = $root->get_node_by_conllu_id($nid);
         my $form = $node->form() // '';
