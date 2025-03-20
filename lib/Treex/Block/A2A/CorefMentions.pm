@@ -91,7 +91,8 @@ sub get_raw_mention_span
 {
     my $self = shift;
     my $mention = shift; # Treex::Core::EntityMention
-    my $document = $mention->thead()->get_document();
+    my $bundle = $mention->thead()->get_bundle();
+    my $document = $bundle->get_document();
     my %snodes; # indexed by CoNLL-U id; a hash to prevent auxiliary a-nodes occurring repeatedly (because they are shared by multiple nodes)
     ###!!! $tnode = $self->adjust_t_head($tnode); ###!!! If we want to do this, it will have to be quite different.
     # Assume that $mention->compute_tspan() has been already performed and we have tspan.
@@ -124,7 +125,7 @@ sub get_raw_mention_span
                 foreach my $asn (@anodes)
                 {
                     # Check that the a-node is in the same sentence.
-                    if(defined($asn) && $asn->get_root() == $aroot)
+                    if(defined($asn) && $asn->get_bundle() == $bundle)
                     {
                         $snodes{$asn->ord()} = $asn;
                     }
@@ -138,7 +139,7 @@ sub get_raw_mention_span
             foreach my $asn (@anodes)
             {
                 # For non-generated nodes, the lexical a-node should be in the same sentence, but to be on the safe side, check it.
-                if(defined($asn) && $asn->get_root() == $aroot)
+                if(defined($asn) && $asn->get_bundle() == $bundle)
                 {
                     $snodes{$asn->ord()} = $asn;
                 }
