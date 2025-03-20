@@ -3,6 +3,7 @@ use utf8;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Coreference::Cluster;
+use Treex::Core::EntitySet;
 extends 'Treex::Core::Block';
 
 
@@ -37,91 +38,19 @@ sub process_anode
     if(exists($anode->wild()->{'tnode.rf'}))
     {
         my $tnode_rf = $anode->wild()->{'tnode.rf'};
-        my $tnode = $anode->get_document()->get_node_by_id($tnode_rf);
+        my $document = $anode->get_document();
+        my $tnode = $document->get_node_by_id($tnode_rf);
         if(defined($tnode))
         {
-            # Do we already have a cluster id?
-            my $current_cluster_id = $anode->get_misc_attr('ClusterId');
-            my $current_cluster_type = Treex::Tool::Coreference::Cluster::get_cluster_type($anode);
-            # Get coreference edges.
-            my ($cnodes, $ctypes) = $tnode->get_coref_nodes({'with_types' => 1});
-            ###!!! Anja naznačovala, že pokud z jednoho uzlu vede více než jedna hrana gramatické koreference,
-            ###!!! s jejich cíli by se nemělo nakládat jako s několika antecedenty, ale jako s jedním split antecedentem.
-            ###!!! Gramatickou koreferenci poznáme tak, že má nedefinovaný typ entity.
-            my $ng = scalar(grep {!defined($_)} (@{$ctypes}));
-            if($ng >= 2)
+            # Get the document-wide collection of entities.
+            if(!exists($document->wild()->{eset}))
             {
-                log_warn("Grammatical coreference has $ng antecedents. Perhaps it should be one split antecedent.");
+                $document->wild()->{eset} = new Treex::Core::EntitySet();
             }
-            for(my $i = 0; $i <= $#{$cnodes}; $i++)
-            {
-                my $ctnode = $cnodes->[$i];
-                my $ctype = $ctypes->[$i];
-                # $ctnode is the target t-node of the coreference edge.
-                # We need to access its corresponding lexical a-node.
-                my $canode = $self->get_anode_for_tnode($ctnode);
-                if(defined($canode))
-                {
-                    if(!defined($ctype) && $ng >= 2)
-                    {
-                        ###!!! Debugging: Mark instances of grammatical coreference with multiple antecedents.
-                        Treex::Tool::Coreference::Cluster::add_mention_misc($canode, 'GramCorefSplitTo');
-                        Treex::Tool::Coreference::Cluster::add_mention_misc($anode, 'GramCorefSplitFrom');
-                    }
-                    # Does the target node already have a cluster id and type?
-                    my $current_target_cluster_id = $canode->get_misc_attr('ClusterId');
-                    my $current_target_cluster_type = Treex::Tool::Coreference::Cluster::get_cluster_type($canode);
-                    $current_cluster_type = $self->process_cluster_type($ctype, $current_cluster_type, $anode, $current_target_cluster_type, $canode);
-                    if(defined($current_cluster_id) && defined($current_target_cluster_id))
-                    {
-                        # Are we merging two clusters that were created independently?
-                        if($current_cluster_id ne $current_target_cluster_id)
-                        {
-                            # Merge the two clusters. Use the lower id. The higher id will remain unused.
-                            Treex::Tool::Coreference::Cluster::merge_clusters($current_cluster_id, $anode, $current_target_cluster_id, $canode, $current_cluster_type);
-                        }
-                    }
-                    elsif(defined($current_cluster_id))
-                    {
-                        # It is possible that the cluster does not have a type yet.
-                        Treex::Tool::Coreference::Cluster::mark_cluster_type($anode, $current_cluster_type) if(defined($current_cluster_type));
-                        Treex::Tool::Coreference::Cluster::add_nodes_to_cluster($current_cluster_id, $anode, $canode);
-                    }
-                    elsif(defined($current_target_cluster_id))
-                    {
-                        # It is possible that the cluster does not have a type yet.
-                        Treex::Tool::Coreference::Cluster::mark_cluster_type($canode, $current_cluster_type) if(defined($current_cluster_type));
-                        Treex::Tool::Coreference::Cluster::add_nodes_to_cluster($current_target_cluster_id, $canode, $anode);
-                        $current_cluster_id = $current_target_cluster_id;
-                    }
-                    else
-                    {
-                        $current_cluster_id = Treex::Tool::Coreference::Cluster::create_cluster($self->get_new_cluster_id($anode), $current_cluster_type, $anode, $canode);
-                    }
-                }
-                else
-                {
-                    log_warn("Target of coreference does not have a corresponding a-node.");
-                }
-            }
-            # Get bridging edges.
-            my ($bridgenodes, $bridgetypes) = $tnode->get_bridging_nodes();
-            for(my $i = 0; $i <= $#{$bridgenodes}; $i++)
-            {
-                my $btnode = $bridgenodes->[$i];
-                my $btype = $bridgetypes->[$i];
-                # $btnode is the target t-node of the bridging edge.
-                # We need to access its corresponding lexical a-node.
-                my $banode = $self->get_anode_for_tnode($btnode);
-                if(defined($banode))
-                {
-                    $self->mark_bridging($anode, $banode, $btype);
-                }
-                else
-                {
-                    log_warn("Target of bridging does not have a corresponding a-node.");
-                }
-            }
+            my $eset = $document->wild()->{eset};
+            my $mention = $eset->get_or_create_mention_for_thead($tnode);
+            $mention->process_coreference();
+            $mention->process_bridging();
         }
     }
 }
