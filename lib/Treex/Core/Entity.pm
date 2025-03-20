@@ -18,6 +18,20 @@ has 'type'     => (is => 'rw', isa => 'Str', documentation => 'Optional entity t
 
 
 #------------------------------------------------------------------------------
+# Returns a string identfier of the entity. In the future, we will probably
+# have the id as an attribute and it will be based on the document id and the
+# index of the entity within the document. For now, we simply return the self
+# reference.
+#------------------------------------------------------------------------------
+sub id
+{
+    my $self = shift;
+    return ref($self);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Takes a t-node and checks whether there is already an entity mention headed
 # by this node. If there is, the function returns the EntityMention object.
 # Otherwise it returns undef.

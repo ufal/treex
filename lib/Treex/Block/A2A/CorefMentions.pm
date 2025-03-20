@@ -698,6 +698,7 @@ sub check_spans
             # The worst troubles arise with pairs of mentions of the same entity.
             if($mentions[$i]->entity() == $mentions[$j]->entity())
             {
+                my $cid = $mentions[$i]->entity()->id();
                 if(scalar(@inboth) && scalar(@inionly) && scalar(@injonly))
                 {
                     # The mentions are crossing because their spans have a non-
@@ -705,8 +706,7 @@ sub check_spans
                     # other. This is suspicious at best for two mentions of the
                     # same entity.
                     my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{aspan}, $mentions[$j]{aspan}, @allnodes);
-                    ###!!! nemame {cid}
-                    log_warn("Crossing mentions of entity '$mentions[$i]{cid}':\n$message");
+                    log_warn("Crossing mentions of entity '$cid':\n$message");
                     # Try to fix it by removing the intersection nodes from the mention to which they are not connected by basic dependencies.
                     $self->fix_crossing_mentions(\@inboth, \@inionly, \@injonly, \@mentions, $i, $j);
                 }
@@ -717,8 +717,7 @@ sub check_spans
                     # before the other ends; but their intersection is empty,
                     # otherwise we would have reported them as crossing.
                     my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{aspan}, $mentions[$j]{aspan}, @allnodes);
-                    ###!!! nemame {cid}
-                    log_warn("Interleaved mentions of entity '$mentions[$i]{cid}':\n$message");
+                    log_warn("Interleaved mentions of entity '$cid':\n$message");
                 }
                 elsif(scalar(@inboth) && !scalar(@inionly) && !scalar(@injonly))
                 {
@@ -728,8 +727,7 @@ sub check_spans
                     my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{aspan}, $mentions[$j]{aspan}, @allnodes);
                     my $headi = $mentions[$i]{ahead}->get_conllu_id().':'.$mentions[$i]{ahead}->form();
                     my $headj = $mentions[$j]{ahead}->get_conllu_id().':'.$mentions[$j]{ahead}->form();
-                    ###!!! nemame {cid}
-                    log_warn("Two different mentions of entity '$mentions[$i]{cid}', headed at '$headi' and '$headj' respectively, have identical spans:\n$message");
+                    log_warn("Two different mentions of entity '$cid', headed at '$headi' and '$headj' respectively, have identical spans:\n$message");
                     # Same-span mentions would be invalid in CoNLL-U, so let us remove one of them.
                     Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($mentions[$j]{ahead}); ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     $mentions[$j]{ahead} = undef;
@@ -749,8 +747,7 @@ sub check_spans
                             if(!exists($mentions[$i]{aspan}{$id}))
                             {
                                 my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{aspan}, $mentions[$j]{aspan}, @allnodes);
-                                ###!!! nemame {cid}
-                                log_warn("Discontinuous nested mentions of entity '$mentions[$i]{cid}' where the inner mention is not covered by a continuous subspan of the outer mention:\n$message");
+                                log_warn("Discontinuous nested mentions of entity '$cid' where the inner mention is not covered by a continuous subspan of the outer mention:\n$message");
                                 last;
                             }
                         }
@@ -770,8 +767,7 @@ sub check_spans
                             if(!exists($mentions[$j]{aspan}{$id}))
                             {
                                 my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{aspan}, $mentions[$j]{aspan}, @allnodes);
-                                ###!!! nemame {cid}
-                                log_warn("Discontinuous nested mentions of entity '$mentions[$i]{cid}' where the inner mention is not covered by a continuous subspan of the outer mention:\n$message");
+                                log_warn("Discontinuous nested mentions of entity '$cid' where the inner mention is not covered by a continuous subspan of the outer mention:\n$message");
                                 last;
                             }
                         }
@@ -795,25 +791,18 @@ sub check_spans
                     my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{aspan}, $mentions[$j]{aspan}, @allnodes);
                     my $headi = $mentions[$i]{ahead}->get_conllu_id().':'.$mentions[$i]{ahead}->form();
                     my $headj = $mentions[$j]{ahead}->get_conllu_id().':'.$mentions[$j]{ahead}->form();
-                    ###!!! nemame {cid}
-                    log_warn("Mentions of entities '$mentions[$i]{cid}' and '$mentions[$j]{cid}', headed at '$headi' and '$headj' respectively, have identical spans:\n$message");
+                    my $cidi = $mentions[$i]->entity()->id();
+                    my $cidj = $mentions[$j]->entity()->id();
+                    log_warn("Mentions of entities '$cidi' and '$cidj', headed at '$headi' and '$headj' respectively, have identical spans:\n$message");
                     # Same-span mentions would be invalid in CoNLL-U.
-                    # Merge the clusters first, then remove the second mention.
-                    my $type = $mentions[$i]->entity()->type();
-                    my $merged_id = Treex::Tool::Coreference::Cluster::merge_clusters($mentions[$i]{cid}, $mentions[$i]{head}, $mentions[$j]{cid}, $mentions[$j]{head}, $type); ###########!!!!!!!!!!!!!!!!
-                    Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($mentions[$j]{head}); ####!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    # Merge the entities first, then remove the second mention.
+                    my $eset = $mentions[$i]->eset();
+                    $eset->merge_entities($mentions[$i]->entity(), $mentions[$j]->entity());
+                    ###!!! Zatím neumíme zlikvidovat mention, odebrat ho z entity i ze sbírky!
+                    #Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($mentions[$j]{head}); ####!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     $mentions[$j]{ahead} = undef;
                     $mentions[$j]{removed} = 1;
-                    ###!!! nemame {cid}
-                    my $obsolete_id = $mentions[$i]{cid} ne $merged_id ? $mentions[$i]{cid} : $mentions[$j]{cid};
-                    foreach my $mention (@mentions)
-                    {
-                        if($mention->{cid} eq $obsolete_id)
-                        {
-                            $mention->{cid} = $merged_id;
-                        }
-                    }
-                    log_warn("Merged the two entities, new id is '$merged_id'.");
+                    log_warn("Merged the two entities, new id is '$cidi'.");
                 }
             }
         }
