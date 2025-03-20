@@ -86,7 +86,7 @@ sub get_mentions_in_bundle
     log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
     my $self = shift;
     my $bundle = shift;
-    return grep {$self->{mentions}{$_}->thead()->get_bundle() == $bundle} (sort(keys(%{$self->{mentions}})));
+    return map {$self->{mentions}{$_}} (grep {$self->{mentions}{$_}->thead()->get_bundle() == $bundle} (sort(keys(%{$self->{mentions}}))));
 }
 
 
