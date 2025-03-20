@@ -841,6 +841,7 @@ sub fix_crossing_mentions
     foreach my $nid (@{$inboth})
     {
         my $node = $root->get_node_by_conllu_id($nid);
+        my $form = $node->form() // '';
         my $ancestor = $node->parent();
         my $ancestorid = $ancestor->get_conllu_id();
         while(1)
@@ -848,6 +849,7 @@ sub fix_crossing_mentions
             if(any {$_ == $ancestorid} (@{$inionly}))
             {
                 # Move $nid from @inboth to @inionly. Also physicaly remove the node from mention $j and adjust all variables.
+                log_warn("Removing node $nid '$form' from mention $j.");
                 @{$inboth} = grep {$_ != $nid} (@{$inboth});
                 @{$inionly} = $self->sort_node_ids(@{$inionly}, $nid);
                 @{$mentions->[$j]{anodes}} = grep {$_ != $node} (@{$mentions->[$j]{anodes}});
@@ -858,6 +860,7 @@ sub fix_crossing_mentions
             elsif(any {$_ == $ancestorid} (@{$injonly}))
             {
                 # Move $nid from @inboth to @injonly. Also physicaly remove the node from mention $i and adjust all variables.
+                log_warn("Removing node $nid '$form' from mention $i.");
                 @{$inboth} = grep {$_ != $nid} (@{$inboth});
                 @{$injonly} = $self->sort_node_ids(@{$injonly}, $nid);
                 @{$mentions->[$i]{anodes}} = grep {$_ != $node} (@{$mentions->[$i]{anodes}});
