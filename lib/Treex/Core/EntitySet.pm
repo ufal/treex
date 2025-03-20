@@ -7,7 +7,7 @@ use Moose;
 use MooseX::SemiAffordanceAccessor; # attribute x is written using set_x($value) and read using x()
 use List::MoreUtils qw(any);
 use Treex::Core::Log;
-use Treex::Core::Node::T;
+use Treex::Core::Entity;
 
 
 
