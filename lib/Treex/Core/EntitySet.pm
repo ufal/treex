@@ -113,7 +113,10 @@ sub merge_entities
         {
             my $t1 = $e1->type();
             my $t2 = $e2->type();
-            log_warn("Merging entities of different types: '$t1' vs. '$t2'.");
+            if($t1 ne $t2)
+            {
+                log_warn("Merging entities of different types: '$t1' vs. '$t2'.");
+            }
         }
         else
         {

@@ -32,7 +32,7 @@ sub process_atree
         my $ahead;
         if(exists($_->thead()->wild()->{'anode.rf'}))
         {
-            $_->{ahead} = $ahead = $document->get_node_by_id($_->wild()->{'anode.rf'});
+            $_->{ahead} = $ahead = $document->get_node_by_id($_->thead()->wild()->{'anode.rf'});
         }
         $ahead
     }
