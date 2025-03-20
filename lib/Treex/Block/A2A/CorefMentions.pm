@@ -711,6 +711,8 @@ sub check_spans
                     log_warn("Crossing mentions of entity '$cid':\n$message");
                     # Try to fix it by removing the intersection nodes from the mention to which they are not connected by basic dependencies.
                     $self->fix_crossing_mentions(\@inboth, \@inionly, \@injonly, \@mentions, $i, $j);
+                    $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{aspan}, $mentions[$j]{aspan}, @allnodes);
+                    log_warn("Attemtped to fix it as follows:\n$message");
                 }
                 elsif(!scalar(@inboth) && $disconti && $discontj && ($firsti < $firstj && $lasti > $firstj || $firstj < $firsti && $lastj > $firsti))
                 {
@@ -731,7 +733,8 @@ sub check_spans
                     my $headj = $mentions[$j]{ahead}->get_conllu_id().':'.$mentions[$j]{ahead}->form();
                     log_warn("Two different mentions of entity '$cid', headed at '$headi' and '$headj' respectively, have identical spans:\n$message");
                     # Same-span mentions would be invalid in CoNLL-U, so let us remove one of them.
-                    Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($mentions[$j]{ahead}); ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    ###!!! Zatím neumíme zlikvidovat mention, odebrat ho z entity i ze sbírky!
+                    #Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($mentions[$j]{ahead}); ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     $mentions[$j]{ahead} = undef;
                     $mentions[$j]{removed} = 1;
                 }
