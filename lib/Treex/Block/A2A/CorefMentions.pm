@@ -622,8 +622,12 @@ sub mark_mention
         my $form = $mention->{ahead}->form() // '';
         log_fatal("Mention head $id:$form ($address) is not included in the span '$mspan'.");
     }
+    $mention->{ahead}->set_misc_attr('ClusterId', $mention->entity()->id());
+    $mention->{ahead}->set_misc_attr('ClusterType', $mention->entity()->type()) if($mention->entity()->type());
     $mention->{ahead}->set_misc_attr('MentionSpan', $mspan);
     $mention->{ahead}->set_misc_attr('MentionText', $mtext) if($self->mention_text());
+    log_info("ClusterId=".$mention->entity()->id());
+    log_info("Clustertype=".$mention->entity()->type());
     log_info("MentionSpan=".$mspan);
     log_info("MentionText=".$mtext);
     # We will want to later run A2A::CorefMentionHeads to find out whether the
