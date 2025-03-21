@@ -163,6 +163,39 @@ sub get_mentions_in_bundle
 
 
 #------------------------------------------------------------------------------
+# Removes a mention from the set. This may result in removing an entity, if it
+# was a singleton. Bridging relations starting or ending at the mention will be
+# removed, too (they will not be moved to another mention of the same entity).
+# The t-node that serves as the head of the mention will stay untouched in the
+# tree.
+#------------------------------------------------------------------------------
+sub remove_mention
+{
+    log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
+    my $self = shift;
+    my $mention = shift;
+    log_fatal('Cannot remove undefined mention') if(!defined($mention));
+    # Update bridging relations.
+    my @bridging = grep {$_->{srcm} != $mention && $_->{tgtm} != $mention} (@{$self->bridging()});
+    $self->set_bridging(\@bridging);
+    # Remove the mention from its entity.
+    my $entity = $mention->entity();
+    $mention->set_entity(undef);
+    delete($entity->mentions()->{$mention->thead()});
+    # Remove the entity if this was its only mention.
+    my $n = scalar(keys(%{$entity->mention()}));
+    if($n == 0)
+    {
+        my @entities = grep {$_ != $entity} (@{$self->entities()});
+        $self->set_entities(\@entities);
+    }
+    # Remove the mention from the eset-wide hash.
+    delete($self->mentions()->{$mention->thead()});
+}
+
+
+
+#------------------------------------------------------------------------------
 # Merges two entities into one. This must be done when a coreference link is
 # discovered between two mentions that have so far been in different entities.
 #------------------------------------------------------------------------------
@@ -354,6 +387,14 @@ and returns it.
 Returns all mentions in the set that have their t-head in a particular bundle.
 Use C<$node->get_bundle()> if you want to get mentions in the same sentence as
 C<$node>.
+
+=item $eset->remove_mention($mention);
+
+Removes a mention from the set. This may result in removing an entity, if it
+was a singleton. Bridging relations starting or ending at the mention will be
+removed, too (they will not be moved to another mention of the same entity).
+The t-node that serves as the head of the mention will stay untouched in the
+tree.
 
 =item $eset->merge_entities ($e1, $e2);
 

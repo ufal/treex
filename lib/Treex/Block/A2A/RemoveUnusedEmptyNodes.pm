@@ -41,7 +41,7 @@ sub process_atree
             # even if they participate in coreference clusters. Discard them.
             elsif(scalar($node->get_enhanced_parents('^root(:|$)')) >= 1)
             {
-                Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
+                $eset->remove_mention($mention);
                 $self->remove_empty_leaf($node, $tnode);
                 splice(@nodes, $i, 1);
                 $i--;
@@ -79,7 +79,7 @@ sub process_atree
                     log_warn("#Cor node has no enhanced parents or the matrix verb has no enhanced children coreferential with the #Cor node.");
                 }
                 # Now we can finally remove the #Cor node.
-                Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
+                $eset->remove_mention($mention);
                 $self->remove_empty_leaf($node, $tnode);
                 splice(@nodes, $i, 1);
                 $i--;
@@ -115,7 +115,7 @@ sub process_atree
                     log_warn("#QCor node has no enhanced parents or the matrix verb has no enhanced children coreferential with the #QCor node.");
                 }
                 # Now we can finally remove the #QCor node.
-                Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
+                $eset->remove_mention($mention);
                 $self->remove_empty_leaf($node, $tnode);
                 splice(@nodes, $i, 1);
                 $i--;
@@ -132,7 +132,7 @@ sub process_atree
             # That probably does not hurt, so we do not attempt to solve it.
             elsif($node->lemma() eq '#Rcp')
             {
-                Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
+                $eset->remove_mention($mention);
                 $self->remove_empty_leaf($node, $tnode);
                 splice(@nodes, $i, 1);
                 $i--;
@@ -192,29 +192,12 @@ sub process_atree
                             # node references. First add the new node to the cluster, then remove the
                             # old node (adding a new node requires us to provide another node that is
                             # already in the cluster).
-                            Treex::Tool::Coreference::Cluster::add_nodes_to_cluster($cid, $node, $technical_head);
-                            Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
-                            # The two functions above have also moved ClusterId and ClusterType in MISC.
-                            # However, there may be other annotations that have not been moved, in
-                            # particular Bridging. Move them now.
-                            ###!!! If there is Bridging, the result will be incorrect.
-                            ###!!! The mentions/nodes of the target cluster used to have the #Forn node
-                            ###!!! in their bridging source references, the reference was removed during
-                            ###!!! remove_nodes...() above but it was not replaced with a reference to
-                            ###!!! the technical head.
-                            my @misc = $node->get_misc();
-                            foreach my $m (@misc)
-                            {
-                                if($m =~ m/^(.+?)=(.+)$/)
-                                {
-                                    $technical_head->set_misc_attr($1, $2);
-                                    log_fatal("The current implementation is not prepared for #Forn nodes that are source points of bridging.") if($1 eq 'Bridging');
-                                }
-                                else
-                                {
-                                    $technical_head->set_misc_attr($m);
-                                }
-                            }
+                            my $new_mention = $eset->create_mention($technical_head);
+                            $eset->merge_entities($mention->entity(), $new_mention->entity());
+                            ###!!! This way we lose bridging relations originating or ending at the old mention.
+                            ###!!! We should move them to the new mention instead.
+                            ###!!! Perhaps EntitySet should have a dedicated function to only replace thead of a mention instead of removing the mention and creating a new one.
+                            $eset->remove_mention($mention);
                             # The t-node has been re-linked to the technical head, hence undef for the removing function.
                             $self->remove_empty_leaf($node, undef);
                             splice(@nodes, $i, 1);
@@ -269,7 +252,7 @@ sub process_atree
                         # Remember both functors at the survivor.
                         $self->merge_functors($survivor, $node);
                         # Now we can remove the extra node.
-                        Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($node);
+                        $eset->remove_mention($mention);
                         $self->remove_empty_leaf($node, $tnode);
                         splice(@nodes, $i, 1);
                         $i--;
@@ -492,6 +475,6 @@ Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2021 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2021, 2025 by Institute of Formal and Applied Linguistics, Charles University, Prague.
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
