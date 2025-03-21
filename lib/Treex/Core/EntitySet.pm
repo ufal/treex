@@ -158,38 +158,7 @@ sub get_mentions_in_bundle
     log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
     my $self = shift;
     my $bundle = shift;
-    $self->sanity_check(); ###!!!
     return map {$self->mentions()->{$_}} (grep {$self->mentions()->{$_}->thead()->get_bundle() == $bundle} (sort(keys(%{$self->mentions()}))));
-}
-
-
-
-#------------------------------------------------------------------------------
-# Sanity check for debugging purposes: Do all mentions in the EntitySet have
-# defined t-head nodes?
-#------------------------------------------------------------------------------
-sub sanity_check
-{
-    my $self = shift;
-    my $mentions = $self->mentions();
-    my @thead_ids = sort(keys(%{$mentions}));
-    foreach my $thid (@thead_ids)
-    {
-        my $mention = $mentions->{$thid};
-        if(!defined($mention))
-        {
-            log_fatal("Lost reference to EntityMention with t-head id '$thid'");
-        }
-        if(exists($mention->{removal_log}))
-        {
-            log_fatal("EntityMention indexed under t-head id '$thid' has been removed: $mention->{removal_log}");
-        }
-        my $thead = $mention->thead();
-        if(!defined($thead))
-        {
-            log_fatal("EntityMention indexed under t-head id '$thid' lost reference to its t-head");
-        }
-    }
 }
 
 
@@ -231,7 +200,37 @@ sub remove_mention
     $mention->{removal_log} = longmess('mention removed');
     # Remove the mention from the eset-wide hash.
     delete($self->mentions()->{$thid});
-    $self->sanity_check(); ###!!!
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sanity check for debugging purposes: Do all mentions in the EntitySet have
+# defined t-head nodes? We may need to call this if we suspect that someone
+# keeps accessing an EntityMention that has been removed from the set.
+#------------------------------------------------------------------------------
+sub sanity_check
+{
+    my $self = shift;
+    my $mentions = $self->mentions();
+    my @thead_ids = sort(keys(%{$mentions}));
+    foreach my $thid (@thead_ids)
+    {
+        my $mention = $mentions->{$thid};
+        if(!defined($mention))
+        {
+            log_fatal("Lost reference to EntityMention with t-head id '$thid'");
+        }
+        if(exists($mention->{removal_log}))
+        {
+            log_fatal("EntityMention indexed under t-head id '$thid' has been removed: $mention->{removal_log}");
+        }
+        my $thead = $mention->thead();
+        if(!defined($thead))
+        {
+            log_fatal("EntityMention indexed under t-head id '$thid' lost reference to its t-head");
+        }
+    }
 }
 
 
