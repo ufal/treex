@@ -272,6 +272,10 @@ sub add_bridging
     my $type = shift; # bridging relation type
     my $srce = $srcm->entity();
     my $tgte = $tgtm->entity();
+    if($srce == $tgte)
+    {
+        log_fatal("same-entity bridging");
+    }
     # Verify that there is no bridging relation between the two entities yet.
     foreach my $b (@{$self->bridging()})
     {
