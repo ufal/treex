@@ -229,6 +229,8 @@ sub remove_mention
     $mention->{removal_log} = longmess('mention removed');
     # Remove the mention from the eset-wide hash.
     delete($self->mentions()->{$thead});
+    my $mentions = $self->mentions();
+    delete $mentions->{$thead};
     $self->sanity_check(); ###!!!
 }
 
