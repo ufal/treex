@@ -626,7 +626,15 @@ sub mark_mention
     $mention->{ahead}->set_misc_attr('MentionMisc', 'gstype:'.$mention->entity()->type()) if($mention->entity()->type());
     $mention->{ahead}->set_misc_attr('MentionSpan', $mspan);
     $mention->{ahead}->set_misc_attr('MentionText', $mtext) if($self->mention_text());
-    my @bridging_from_mention = $mention->get_bridging_starting_here();
+    ###!!! Avoid bridging to target mentions which we have removed. However,
+    ###!!! this may not be enough. The real problem is that the target entity
+    ###!!! does not appear on output, and it can be there because of another
+    ###!!! mention. We should resolve all removals properly with all dependencies,
+    ###!!! and only then go on with serialization in MISC.
+    ###!!! Also, the problem may be that we remove "unused" empty nodes without
+    ###!!! knowing that they are used. That block has not been updated to the
+    ###!!! new implementation of entities yet!
+    my @bridging_from_mention = grep {!$_->{tgtm}->{removed}} ($mention->get_bridging_starting_here());
     if(scalar(@bridging_from_mention) > 0)
     {
         $mention->{ahead}->set_misc_attr('Bridging', join(',', map {$_->{tgtm}->entity()->id().':'.$_->{type}} (@bridging_from_mention)));
