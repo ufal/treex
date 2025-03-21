@@ -183,7 +183,7 @@ sub remove_mention
     $mention->set_entity(undef);
     delete($entity->mentions()->{$mention->thead()});
     # Remove the entity if this was its only mention.
-    my $n = scalar(keys(%{$entity->mention()}));
+    my $n = scalar(keys(%{$entity->mentions()}));
     if($n == 0)
     {
         my @entities = grep {$_ != $entity} (@{$self->entities()});
