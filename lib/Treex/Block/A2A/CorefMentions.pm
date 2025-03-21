@@ -73,6 +73,14 @@ sub process_atree
     {
         $self->mark_mention($mention);
     }
+    ###!!! We cannot leave the EntitySet object among the wild attributes of
+    ###!!! the document. The Treex writer would attempt to serialize it to the
+    ###!!! output and it would fail because of cyclic references. We can
+    ###!!! destroy it here because we do not need it beyond this point in the
+    ###!!! current pipeline. However, in the long term it would be better to
+    ###!!! create a separate block that will take care of it and that can be
+    ###!!! placed at any suitable position in the scenario.
+    delete($document->wild()->{eset});
 }
 
 
