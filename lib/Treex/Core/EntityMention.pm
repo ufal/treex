@@ -275,6 +275,20 @@ sub tnode_takes_shared_dependents
 
 
 #------------------------------------------------------------------------------
+# Gets all bridging relations starting at a mention. We need them when we are
+# saving mention information as MISC attributes of its head a-node.
+#------------------------------------------------------------------------------
+sub get_bridging_starting_here
+{
+    log_fatal('Incorrect number of arguments') if(scalar(@_) != 1);
+    my $self = shift;
+    my @bridging = $self->eset()->get_bridging_starting_at_mention($self);
+    return @bridging;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns a textual representation of the phrase and all subphrases. Useful for
 # debugging. This is an abstract method that must be implemented in the derived
 # classes.
@@ -348,6 +362,14 @@ C<Entity> objects.
 Examines the bridging links of the t-head of the mention and adds the
 corresponding bridging relations to the C<EntitySet> object to which the
 current mention belongs.
+
+=item $eset->get_bridging_starting_here();
+
+Returns an array of bridging hashes (with keys C<srcm> for source mention,
+C<tgtm> for target mention, and C<type> for bridging relation type) containing
+all bridging relations that start at the given entity mention. The array is
+sorted by target entity ids. This is useful when the output is being prepared
+(in CorefUD, bridging relations are stored at source mentions).
 
 =back
 

@@ -90,6 +90,46 @@ sub get_new_entity_id
 
 
 #------------------------------------------------------------------------------
+# Compares two entity ids. It is useful when sorting bridging relations by
+# target entities. This function does not need access to an EntitySet object;
+# it can be considered static.
+#------------------------------------------------------------------------------
+sub cmp_entity_ids
+{
+    my $a = shift;
+    my $b = shift;
+    my $aid = 0;
+    my $bid = 0;
+    my $adoc = '';
+    my $bdoc = '';
+    if($a =~ m/^(.+)e(\d+)$/)
+    {
+        $adoc = $1;
+        $aid = $2;
+    }
+    if($b =~ m/^(.+)e(\d+)$/)
+    {
+        $bdoc = $1;
+        $bid = $2;
+    }
+    if($adoc && $bdoc && $aid && $bid)
+    {
+        my $r = $adoc cmp $bdoc;
+        unless($r)
+        {
+            $r = $aid <=> $bid;
+        }
+        return $r;
+    }
+    else
+    {
+        return $a cmp $b;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # If a t-node already has a mention, returns the mention. Otherwise creates the
 # mention and then returns it.
 #------------------------------------------------------------------------------
@@ -230,7 +270,7 @@ sub get_bridging_starting_at_mention
     log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
     my $self = shift;
     my $mention = shift;
-    my @bridging = grep {$_->{srcm} == $mention} (@{$self->bridging()});
+    my @bridging = sort {cmp_entity_ids($a->{tgtm}->entity()->id(), $b->{tgtm}->entity()->id())} (grep {$_->{srcm} == $mention} (@{$self->bridging()}));
     return @bridging;
 }
 
@@ -328,6 +368,14 @@ it is understood as a relation between two entities and it will not be added
 if there is another relation between the same entities already. The relation
 is typed and directed (e.g., the entity of the source mention is a subset of
 the entity of the target mention).
+
+=item $eset->get_bridging_starting_at_mention ($src_mention);
+
+Returns an array of bridging hashes (with keys C<srcm> for source mention,
+C<tgtm> for target mention, and C<type> for bridging relation type) containing
+all bridging relations that start at the given entity mention. The array is
+sorted by target entity ids. This is useful when the output is being prepared
+(in CorefUD, bridging relations are stored at source mentions).
 
 =back
 

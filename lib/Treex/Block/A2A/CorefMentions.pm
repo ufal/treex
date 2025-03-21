@@ -626,27 +626,14 @@ sub mark_mention
     $mention->{ahead}->set_misc_attr('MentionMisc', 'gstype:'.$mention->entity()->type()) if($mention->entity()->type());
     $mention->{ahead}->set_misc_attr('MentionSpan', $mspan);
     $mention->{ahead}->set_misc_attr('MentionText', $mtext) if($self->mention_text());
+    my @bridging_from_mention = $mention->get_bridging_starting_here();
+    if(scalar(@bridging_from_mention) > 0)
+    {
+        $mention->{ahead}->set_misc_attr('Bridging', join(',', map {$_->{tgtm}->entity()->id().':'.$_->{type}} (@bridging_from_mention)));
+    }
     # We will want to later run A2A::CorefMentionHeads to find out whether the
     # UD head should be different from the tectogrammatical head, and to move
     # the mention annotation to the UD head node.
-    ###!!! EntityMention should have a shortcut method for this.
-    my @bridging_from_mention = $mention->eset()->get_bridging_starting_at_mention($mention);
-    if(scalar(@bridging_from_mention) > 0)
-    {
-        #my $bridging = $srcnode->get_misc_attr('Bridging');
-        #my @bridging = ();
-        #@bridging = split(/,/, $bridging) if(defined($bridging));
-        #push(@bridging, "$current_target_cluster_id:$btype");
-        #if(scalar(@bridging) > 0)
-        #{
-        #    @bridging = Treex::Tool::Coreference::Cluster::sort_bridging(@bridging);
-        #    $srcnode->set_misc_attr('Bridging', join(',', @bridging));
-        #    Treex::Tool::Coreference::Cluster::add_bridging_to_cluster($tgtnode, $srcnode);
-        #}
-        my @target_and_type = map {$_->{tgtm}->entity()->id().':'.$_->{type}} (@bridging_from_mention);
-        @target_and_type = Treex::Tool::Coreference::Cluster::sort_bridging(@target_and_type);
-        $mention->{ahead}->set_misc_attr('Bridging', join(',', @target_and_type));
-    }
 }
 
 
