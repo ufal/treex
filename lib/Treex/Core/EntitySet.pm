@@ -158,7 +158,7 @@ sub get_mentions_in_bundle
     log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
     my $self = shift;
     my $bundle = shift;
-    $self->sanity_check();
+    $self->sanity_check(); ###!!!
     return map {$self->mentions()->{$_}} (grep {$self->mentions()->{$_}->thead()->get_bundle() == $bundle} (sort(keys(%{$self->mentions()}))));
 }
 
@@ -182,7 +182,7 @@ sub sanity_check
         }
         if(exists($mention->{removal_log}))
         {
-            log_fatal("EntityMention has been removed: $mention->{removal_log}");
+            log_fatal("EntityMention indexed under t-head id '$thid' has been removed: $mention->{removal_log}");
         }
         my $thead = $mention->thead();
         if(!defined($thead))
@@ -229,6 +229,7 @@ sub remove_mention
     $mention->{removal_log} = longmess('mention removed');
     # Remove the mention from the eset-wide hash.
     delete($self->mentions()->{$thead});
+    $self->sanity_check(); ###!!!
 }
 
 
