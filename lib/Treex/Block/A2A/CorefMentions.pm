@@ -27,6 +27,11 @@ sub process_atree
         {
             $_->{ahead} = $ahead = $document->get_node_by_id($_->thead()->wild()->{'anode.rf'});
         }
+        else
+        {
+            log_warn("Removing mention because its t-head cannot be mapped on an a-head.");
+            $eset->remove_mention($_);
+        }
         $ahead
     }
     ($eset->get_mentions_in_bundle($bundle));
