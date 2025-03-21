@@ -724,6 +724,9 @@ sub check_spans
                     log_warn("Crossing mentions of entity '$cid':\n$message");
                     # Try to fix it by removing the intersection nodes from the mention to which they are not connected by basic dependencies.
                     $self->fix_crossing_mentions(\@inboth, \@inionly, \@injonly, \@mentions, $i, $j);
+                    ###!!! Teď by to ovšem chtělo znova pustit $self->polish_mention_span($mentions[$i/$j]) na obě zmínky. Tím by se nám ale mohlo změnit srovnání těchto zmínek s něčím, s čím byly už srovnány dříve, tak je otázka, jestli by se i to nemělo zopakovat.
+                    $self->polish_mention_span($mentions[$i]);
+                    $self->polish_mention_span($mentions[$j]);
                     $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{aspan}, $mentions[$j]{aspan}, @allnodes);
                     log_warn("Attemtped to fix it as follows:\n$message");
                 }
@@ -746,8 +749,7 @@ sub check_spans
                     my $headj = $mentions[$j]{ahead}->get_conllu_id().':'.$mentions[$j]{ahead}->form();
                     log_warn("Two different mentions of entity '$cid', headed at '$headi' and '$headj' respectively, have identical spans:\n$message");
                     # Same-span mentions would be invalid in CoNLL-U, so let us remove one of them.
-                    ###!!! Zatím neumíme zlikvidovat mention, odebrat ho z entity i ze sbírky!
-                    #Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($mentions[$j]{ahead}); ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    ###!!! Měli bychom zavolat $eset->remove_mention($mentions[$j]), ale ne hned teď, protože by nám to narušilo pole, které právě procházíme.
                     $mentions[$j]{ahead} = undef;
                     $mentions[$j]{removed} = 1;
                 }
@@ -816,8 +818,7 @@ sub check_spans
                     # Merge the entities first, then remove the second mention.
                     my $eset = $mentions[$i]->eset();
                     $eset->merge_entities($mentions[$i]->entity(), $mentions[$j]->entity());
-                    ###!!! Zatím neumíme zlikvidovat mention, odebrat ho z entity i ze sbírky!
-                    #Treex::Tool::Coreference::Cluster::remove_nodes_from_cluster($mentions[$j]{head}); ####!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    ###!!! Měli bychom zavolat $eset->remove_mention($mentions[$j]), ale ne hned teď, protože by nám to narušilo pole, které právě procházíme.
                     $mentions[$j]{ahead} = undef;
                     $mentions[$j]{removed} = 1;
                     log_warn("Merged the two entities, new id is '$cidi'.");
