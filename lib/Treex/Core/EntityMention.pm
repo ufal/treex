@@ -289,7 +289,7 @@ sub get_bridging_starting_here
         if($b->{srcm}->entity() == $b->{tgtm}->entity())
         {
             my $eid = $b->{srcm}->entity()->id();
-            log_fatal("Bridging between two mentions of the same entity '$eid'");
+            log_fatal("Bridging between two mentions of the same entity '$eid' ($b->{srcm} --> $b->{tgtm})");
         }
     }
     return @bridging;
