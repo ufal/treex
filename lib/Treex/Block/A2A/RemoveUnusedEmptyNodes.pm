@@ -13,6 +13,8 @@ sub process_atree
     my $root = shift;
     my @nodes = $root->get_descendants();
     my $document = $root->get_document();
+    return if(!exists($document->wild()->{eset}));
+    my $eset = $document->wild()->{eset};
     for(my $i = 0; $i <= $#nodes; $i++)
     {
         my $node = $nodes[$i];
@@ -23,15 +25,16 @@ sub process_atree
         if($node->is_empty() && exists($node->wild()->{'tnode.rf'}) && scalar($node->get_enhanced_children()) == 0)
         {
             my $tnode = $document->get_node_by_id($node->wild()->{'tnode.rf'});
-            my $cid = $node->get_misc_attr('ClusterId');
+            my $mention = $eset->get_mention_by_thead($tnode);
             # If the node is not member of any coreference cluster, we do not
             # need it and can discard it.
-            if(!defined($cid))
+            if(!defined($mention))
             {
                 $self->remove_empty_leaf($node, $tnode);
                 splice(@nodes, $i, 1);
                 $i--;
             }
+            my $cid = $mention->entity()->id(); ###!!! WE PROBABLY NEED TO ADAPT THIS BLOCK TO THE NEW ENTITY IMPLEMENTATION MUCH MORE!
             # An empty node may depend directly on the artificial root if the
             # verb is deleted (the verb is probably known from the previous
             # sentence). Such orphaned empty nodes would not be informative
