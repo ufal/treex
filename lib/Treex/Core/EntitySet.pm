@@ -274,7 +274,9 @@ sub add_bridging
     my $tgte = $tgtm->entity();
     if($srce == $tgte)
     {
-        log_fatal("same-entity bridging");
+        my $eid = $srce->id();
+        log_warn("Ignoring bridging relation '$type' because the source and the target mentions belong to the same entity '$eid'.");
+        return;
     }
     # Verify that there is no bridging relation between the two entities yet.
     foreach my $b (@{$self->bridging()})
