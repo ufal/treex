@@ -26,6 +26,7 @@ sub process_atree
         {
             my $tnode = $document->get_node_by_id($node->wild()->{'tnode.rf'});
             my $mention = $eset->get_mention_by_thead($tnode);
+            my $cid = defined($mention) ? $mention->entity()->id() : undef; ###!!! WE PROBABLY NEED TO ADAPT THIS BLOCK TO THE NEW ENTITY IMPLEMENTATION MUCH MORE!
             # If the node is not member of any coreference cluster, we do not
             # need it and can discard it.
             if(!defined($mention))
@@ -34,7 +35,6 @@ sub process_atree
                 splice(@nodes, $i, 1);
                 $i--;
             }
-            my $cid = $mention->entity()->id(); ###!!! WE PROBABLY NEED TO ADAPT THIS BLOCK TO THE NEW ENTITY IMPLEMENTATION MUCH MORE!
             # An empty node may depend directly on the artificial root if the
             # verb is deleted (the verb is probably known from the previous
             # sentence). Such orphaned empty nodes would not be informative
