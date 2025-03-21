@@ -211,11 +211,13 @@ sub remove_mention
     my $thead = $mention->thead();
     my $entity = $mention->entity();
     log_fatal('Undefined thead or entity. Has the mention been already removed?') if(!defined($thead) || !defined($entity));
+    my $thid = $thead->id();
+    log_fatal("Mention with thead id '$thid' not indexed in this EntitySet") if(!exists($self->mentions()->{$thid}));
     # Update bridging relations.
     my @bridging = grep {$_->{srcm} != $mention && $_->{tgtm} != $mention} (@{$self->bridging()});
     $self->set_bridging(\@bridging);
     # Remove the mention from its entity.
-    delete($entity->mentions()->{$mention->thead()});
+    delete($entity->mentions()->{$thid});
     # Remove the entity if this was its only mention.
     my $n = scalar(keys(%{$entity->mentions()}));
     if($n == 0)
@@ -228,9 +230,7 @@ sub remove_mention
     $mention->set_entity(undef);
     $mention->{removal_log} = longmess('mention removed');
     # Remove the mention from the eset-wide hash.
-    delete($self->mentions()->{$thead});
-    my $mentions = $self->mentions();
-    delete $mentions->{$thead};
+    delete($self->mentions()->{$thid});
     $self->sanity_check(); ###!!!
 }
 
