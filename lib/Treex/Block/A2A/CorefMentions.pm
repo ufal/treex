@@ -7,13 +7,6 @@ use Treex::Core::EntitySet;
 use Treex::Core::EntityMention;
 extends 'Treex::Core::Block';
 
-has mention_text => (
-    is            => 'rw',
-    isa           => 'Bool',
-    default       => 0,
-    documentation => 'Save MentionText in MISC. Default: 0.'
-);
-
 
 
 sub process_atree
@@ -64,15 +57,19 @@ sub process_atree
     # Now check that the various mentions in the tree fit together.
     # Crossing spans are suspicious. Nested discontinuous spans are, too.
     $self->check_spans($root, @mentions);
-    @mentions = grep {!$_->{removed}} (@mentions);
-    # We could not mark the mention spans at the nodes before all mentions had
-    # been collected and adjusted. The polishing of a mention could lead to
-    # shuffling empty nodes and invalidating node ids in previously marked
-    # mention spans.
+    # While checking the spans, we may have decided to remove some mentions,
+    # but at that time we just marked them for removal. Remove them now.
     foreach my $mention (@mentions)
     {
-        $self->mark_mention($mention);
+        if($mention->{removed})
+        {
+            $eset->remove_mention($mention);
+        }
     }
+    @mentions = (); # not really necessary but we must not use the array again, as it contains removed mentions
+    # We will want to later run A2A::CorefMentionHeads to find out whether the
+    # UD head should be different from the tectogrammatical head, and to move
+    # the mention annotation to the UD head node.
 }
 
 
@@ -557,96 +554,6 @@ sub add_brackets_on_mention_boundary
 
 
 #------------------------------------------------------------------------------
-# Saves mention attributes in misc of a node.
-#------------------------------------------------------------------------------
-sub mark_mention
-{
-    my $self = shift;
-    my $mention = shift; # hash ref with the attributes of the mention
-    my @allnodes = $self->sort_nodes_by_ids($mention->{ahead}->get_root()->get_descendants());
-    # If a contiguous sequence of two or more nodes is a part of the mention,
-    # it should be represented using a hyphen (i.e., "8-9" instead of "8,9",
-    # and "8-10" instead of "8,9,10"). We must be careful though. There may
-    # be empty nodes that are not included, e.g., we may have to write "8,9"
-    # because there is 8.1 and it is not a part of the mention.
-    my $i = 0; # index to mention nodes
-    my $n = scalar(@{$mention->{anodes}});
-    my @current_segment = ();
-    my @result2 = ();
-    # Add undef to enforce flushing of the current segment at the end.
-    foreach my $node (@allnodes, undef)
-    {
-        if($i < $n && defined($node) && $mention->{anodes}[$i] == $node)
-        {
-            push(@current_segment, $node);
-            $i++;
-        }
-        else
-        {
-            # The current segment is interrupted (but it may be empty anyway).
-            if(scalar(@current_segment) > 0)
-            {
-                # Flush the current segment, if any.
-                if(scalar(@current_segment) > 1)
-                {
-                    push(@result2, $current_segment[0]->get_conllu_id().'-'.$current_segment[-1]->get_conllu_id());
-                }
-                elsif(scalar(@current_segment) == 1)
-                {
-                    push(@result2, $current_segment[0]->get_conllu_id());
-                }
-                @current_segment = ();
-                last if($i >= $n);
-            }
-        }
-    }
-    # For debugging purposes it is useful to also see the word forms of the span, so we will provide them, too.
-    my $mspan = join(',', @result2);
-    my $mtext = '';
-    for(my $i = 0; $i <= $#{$mention->{anodes}}; $i++)
-    {
-        $mtext .= $mention->{anodes}[$i]->form();
-        if($i < $#{$mention->{anodes}})
-        {
-            unless($mention->{anodes}[$i+1]->ord() == $mention->{anodes}[$i]->ord()+1 && $mention->{anodes}[$i]->no_space_after())
-            {
-                $mtext .= ' ';
-            }
-        }
-    }
-    # Sanity check: The head of the mention must be included in the span.
-    if(!any {$_ == $mention->{ahead}} (@{$mention->{anodes}}))
-    {
-        my $address = $mention->{ahead}->get_address();
-        my $id = $mention->{ahead}->get_conllu_id();
-        my $form = $mention->{ahead}->form() // '';
-        log_fatal("Mention head $id:$form ($address) is not included in the span '$mspan'.");
-    }
-    $mention->{ahead}->set_misc_attr('ClusterId', $mention->entity()->id());
-    $mention->{ahead}->set_misc_attr('MentionMisc', 'gstype:'.$mention->entity()->type()) if($mention->entity()->type());
-    $mention->{ahead}->set_misc_attr('MentionSpan', $mspan);
-    $mention->{ahead}->set_misc_attr('MentionText', $mtext) if($self->mention_text());
-    ###!!! Avoid bridging to target mentions which we have removed. However,
-    ###!!! this may not be enough. The real problem is that the target entity
-    ###!!! does not appear on output, and it can be there because of another
-    ###!!! mention. We should resolve all removals properly with all dependencies,
-    ###!!! and only then go on with serialization in MISC.
-    ###!!! Also, the problem may be that we remove "unused" empty nodes without
-    ###!!! knowing that they are used. That block has not been updated to the
-    ###!!! new implementation of entities yet!
-    my @bridging_from_mention = grep {!$_->{tgtm}->{removed}} ($mention->get_bridging_starting_here());
-    if(scalar(@bridging_from_mention) > 0)
-    {
-        $mention->{ahead}->set_misc_attr('Bridging', join(',', map {$_->{tgtm}->entity()->id().':'.$_->{type}} (@bridging_from_mention)));
-    }
-    # We will want to later run A2A::CorefMentionHeads to find out whether the
-    # UD head should be different from the tectogrammatical head, and to move
-    # the mention annotation to the UD head node.
-}
-
-
-
-#------------------------------------------------------------------------------
 # Takes a list of mention spans in a sentence. Checks for unexpected relations
 # between two spans.
 #------------------------------------------------------------------------------
@@ -982,12 +889,16 @@ Treex::Block::A2A::CorefMentions
 =item DESCRIPTION
 
 For nodes that participate in coreference/bridging clusters, desccribed in MISC
-attributes by a previous run of A2A::CorefClusters, marks the span of the
+attributes by a previous run of A2A::CorefClusters, computes the span of the
 mention the node represents.
 
 Note that this block should be run when the set of nodes is stable. If we add
-or remove a node later, the MentionSpan attributes that we now generate will
-have to be recomputed.
+or remove a node later, the mention spans that we now generate will have to be
+recomputed.
+
+The spans will be stored in the EntityMention objects of the document. To mark
+them as MISC attributes of the nodes, add the A2A::CorefToMisc block to your
+scenario before Write::CoNLLU.
 
 =head1 AUTHORS
 
@@ -995,6 +906,6 @@ Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2021, 2025 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2021, 2025 by Institute of Formal and Applied Linguistics, Charles University, Prague.
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
