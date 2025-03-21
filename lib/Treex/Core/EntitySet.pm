@@ -175,12 +175,14 @@ sub remove_mention
     my $self = shift;
     my $mention = shift;
     log_fatal('Cannot remove undefined mention') if(!defined($mention));
+    # First obtain the attributes of the mention that we will need during the process.
+    my $thead = $mention->thead();
+    my $entity = $mention->entity();
+    log_fatal('Undefined thead or entity. Has the mention been already removed?') if(!defined($thead) || !defined($entity));
     # Update bridging relations.
     my @bridging = grep {$_->{srcm} != $mention && $_->{tgtm} != $mention} (@{$self->bridging()});
     $self->set_bridging(\@bridging);
     # Remove the mention from its entity.
-    my $entity = $mention->entity();
-    $mention->set_entity(undef);
     delete($entity->mentions()->{$mention->thead()});
     # Remove the entity if this was its only mention.
     my $n = scalar(keys(%{$entity->mentions()}));
@@ -189,8 +191,11 @@ sub remove_mention
         my @entities = grep {$_ != $entity} (@{$self->entities()});
         $self->set_entities(\@entities);
     }
+    # Erase the attributes of the mention, just in case someone still holds reference to it.
+    $mention->set_thead(undef);
+    $mention->set_entity(undef);
     # Remove the mention from the eset-wide hash.
-    delete($self->mentions()->{$mention->thead()});
+    delete($self->mentions()->{$thead});
 }
 
 
