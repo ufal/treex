@@ -283,6 +283,15 @@ sub get_bridging_starting_here
     log_fatal('Incorrect number of arguments') if(scalar(@_) != 1);
     my $self = shift;
     my @bridging = $self->eset()->get_bridging_starting_at_mention($self);
+    ###!!! SANITY CHECK: Bridging must not go to a mention of the same entity!
+    foreach my $b (@bridging)
+    {
+        if($b->{srcm}->entity() == $b->{tgtm}->entity())
+        {
+            my $eid = $b->{srcm}->entity()->id();
+            log_fatal("Bridging between two mentions of the same entity '$eid'");
+        }
+    }
     return @bridging;
 }
 
