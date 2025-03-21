@@ -8,7 +8,7 @@ use MooseX::SemiAffordanceAccessor; # attribute x is written using set_x($value)
 use List::MoreUtils qw(any);
 use Treex::Core::Log;
 use Treex::Core::Entity;
-use Carp;
+use Carp qw(cluck longmess shortmess);
 
 
 
@@ -180,6 +180,10 @@ sub sanity_check
         {
             log_fatal("Lost reference to EntityMention with t-head id '$thid'");
         }
+        if(exists($mention->{removal_log}))
+        {
+            log_fatal("EntityMention has been removed: $mention->{removal_log}");
+        }
         my $thead = $mention->thead();
         if(!defined($thead))
         {
@@ -222,6 +226,7 @@ sub remove_mention
     # Erase the attributes of the mention, just in case someone still holds reference to it.
     $mention->set_thead(undef);
     $mention->set_entity(undef);
+    $mention->{removal_log} = longmess('mention removed');
     # Remove the mention from the eset-wide hash.
     delete($self->mentions()->{$thead});
 }
