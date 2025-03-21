@@ -187,17 +187,6 @@ sub process_atree
                             # case it did not have a t-node before).
                             $technical_head->wild()->{'tnode.rf'} = $tnode->id();
                             $tnode->wild()->{'anode.rf'} = $technical_head->id();
-                            # Move the coreference annotation from the #Forn node to the technical head.
-                            # Use the cluster maintenance functions to take care of the various internal
-                            # node references. First add the new node to the cluster, then remove the
-                            # old node (adding a new node requires us to provide another node that is
-                            # already in the cluster).
-                            my $new_mention = $eset->create_mention($technical_head);
-                            $eset->merge_entities($mention->entity(), $new_mention->entity());
-                            ###!!! This way we lose bridging relations originating or ending at the old mention.
-                            ###!!! We should move them to the new mention instead.
-                            ###!!! Perhaps EntitySet should have a dedicated function to only replace thead of a mention instead of removing the mention and creating a new one.
-                            $eset->remove_mention($mention);
                             # The t-node has been re-linked to the technical head, hence undef for the removing function.
                             $self->remove_empty_leaf($node, undef);
                             splice(@nodes, $i, 1);
