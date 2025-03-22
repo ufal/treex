@@ -298,7 +298,7 @@ sub as_string
     my $thead_as_string = defined($thead) ? $thead->id().' ('.$thead->t_lemma().')' : 'undef';
     my $entity = $self->entity();
     my $entity_as_string = defined($entity) ? $entity->as_string() : 'undef';
-    return "EntityMention $self with t-head $thead_as_string belonging to $entity_as_string";
+    return "$self with t-head $thead_as_string belonging to entity $entity_as_string";
 }
 
 

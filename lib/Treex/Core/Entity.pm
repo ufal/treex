@@ -99,7 +99,7 @@ sub as_string
 {
     my $self = shift;
     my $id = $self->id() // 'undef';
-    return "Entity $self with id $id";
+    return "$self with id $id";
 }
 
 
