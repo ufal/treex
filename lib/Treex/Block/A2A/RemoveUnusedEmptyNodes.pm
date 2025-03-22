@@ -2,7 +2,6 @@ package Treex::Block::A2A::RemoveUnusedEmptyNodes;
 use utf8;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::Coreference::Cluster;
 extends 'Treex::Core::Block';
 
 

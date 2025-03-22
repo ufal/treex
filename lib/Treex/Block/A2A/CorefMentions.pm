@@ -2,7 +2,6 @@ package Treex::Block::A2A::CorefMentions;
 use utf8;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::Coreference::Cluster;
 use Treex::Core::EntitySet;
 use Treex::Core::EntityMention;
 extends 'Treex::Core::Block';

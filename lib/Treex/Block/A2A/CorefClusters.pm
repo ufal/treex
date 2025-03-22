@@ -2,7 +2,6 @@ package Treex::Block::A2A::CorefClusters;
 use utf8;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::Coreference::Cluster;
 use Treex::Core::EntitySet;
 extends 'Treex::Core::Block';
 

@@ -2,7 +2,6 @@ package Treex::Block::A2A::CorefToMisc;
 use utf8;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::Coreference::Cluster;
 use Treex::Core::EntitySet;
 use Treex::Core::EntityMention;
 extends 'Treex::Core::Block';
@@ -139,6 +138,89 @@ sub sort_nodes_by_ids
         Treex::Core::Node::A::cmp_conllu_ids($a->get_conllu_id(), $b->get_conllu_id())
     }
     (@_);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds a temporary attribute that pertains to a mention but is not recognized
+# in our CorefUD specification. We use a double-miscellaneous approach: within
+# the MISC column of CoNLL-U, all such attributes must be compressed within the
+# value of a MentionMisc attribute. This is needed so that Udapi can preserve
+# the attributes when manipulating mention annotation.
+#------------------------------------------------------------------------------
+sub add_mention_misc
+{
+    my $node = shift;
+    my $attr = shift; # a string to add; it should not contain the '=' character because it could confuse Udapi when it decodes MentionMisc=...
+    if(!defined($attr) || $attr eq '')
+    {
+        log_fatal("Cannot add an empty attribute to MentionMisc.");
+    }
+    # We do not want any whitespace characters in MentionMisc, although the plain space character (' ') would not violate the CoNLL-U format.
+    if($attr =~ m/^[-=\|\s]$/)
+    {
+        log_fatal("The MentionMisc attribute '$attr' contains disallowed characters.");
+    }
+    my $mmisc = $node->get_misc_attr('MentionMisc');
+    # Delimiters within the value of MentionMisc are not part of the CorefUD specification.
+    # We use the comma ','.
+    my @mmisc = ();
+    if(defined($mmisc))
+    {
+        @mmisc = split(',', $mmisc);
+    }
+    unless(any {$_ eq $attr} (@mmisc))
+    {
+        push(@mmisc, $attr);
+    }
+    $mmisc = join(',', @mmisc);
+    $node->set_misc_attr('MentionMisc', $mmisc);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes the new contents of MentionMisc as a list of strings, serializes it and
+# sets the MentionMisc attribute. Can be used by the caller to filter the
+# values and set the result back to MentionMisc.
+#------------------------------------------------------------------------------
+sub set_mention_misc
+{
+    my $node = shift;
+    my @mmisc = @_;
+    if(scalar(@mmisc) > 0)
+    {
+        # Delimiters within the value of MentionMisc are not part of the CorefUD specification.
+        # We use the comma ','.
+        my $mmisc = join(',', @mmisc);
+        $node->set_misc_attr('MentionMisc', $mmisc);
+    }
+    else
+    {
+        $node->clear_misc_attr('MentionMisc');
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the current contents of MentionMisc as a list of strings. The caller
+# may than look for a specific value or attribute-value pair, as in
+# grep {m/^gstype:/} (get_mention_misc($node));
+#------------------------------------------------------------------------------
+sub get_mention_misc
+{
+    my $node = shift;
+    my $mmisc = $node->get_misc_attr('MentionMisc');
+    # Delimiters within the value of MentionMisc are not part of the CorefUD specification.
+    # We use the comma ','.
+    my @mmisc = ();
+    if(defined($mmisc))
+    {
+        @mmisc = split(',', $mmisc);
+    }
+    return @mmisc;
 }
 
 
