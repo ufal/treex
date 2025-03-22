@@ -59,6 +59,7 @@ sub process_coreference
         #if(!defined($ctype) && $ng >= 2)
         #{
         #    ###!!! Debugging: Mark instances of grammatical coreference with multiple antecedents.
+        ###!!! DZ 2025-03-22: I removed the Treex::Tool::Coreference::Cluster module because it is now obsolete. But I saved add_mention_misc() and two related functions. They are now tentatively deposited in A2A::CorefToMisc, without actually being used there.
         #    Treex::Tool::Coreference::Cluster::add_mention_misc($canode, 'GramCorefSplitTo');
         #    Treex::Tool::Coreference::Cluster::add_mention_misc($anode, 'GramCorefSplitFrom');
         #}
