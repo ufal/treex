@@ -88,11 +88,13 @@ sub sanity_check
         my $type = $b->{type};
         if($mentions->{$srcm->thead()} != $srcm)
         {
-            log_fatal("Bridging source mention '$srcm' is no longer indexed in EntitySet");
+            my $as = $srcm->as_string();
+            log_fatal("Bridging source mention $as is no longer indexed in EntitySet");
         }
         if($mentions->{$tgtm->thead()} != $tgtm)
         {
-            log_fatal("Bridging target mention '$tgtm' is no longer indexed in EntitySet");
+            my $as = $tgtm->as_string();
+            log_fatal("Bridging target mention $as is no longer indexed in EntitySet");
         }
     }
 }
@@ -401,19 +403,6 @@ sub get_bridging_starting_at_mention
     $self->sanity_check(); ###!!!
     my @bridging = sort {cmp_entity_ids($a->{tgtm}->entity()->id(), $b->{tgtm}->entity()->id())} (grep {$_->{srcm} == $mention} (@{$self->bridging()}));
     return @bridging;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Returns a textual representation of the phrase and all subphrases. Useful for
-# debugging. This is an abstract method that must be implemented in the derived
-# classes.
-#------------------------------------------------------------------------------
-sub as_string
-{
-    my $self = shift;
-    log_fatal("The as_string() method is not implemented");
 }
 
 

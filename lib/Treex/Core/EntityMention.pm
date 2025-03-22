@@ -289,14 +289,16 @@ sub get_bridging_starting_here
 
 
 #------------------------------------------------------------------------------
-# Returns a textual representation of the phrase and all subphrases. Useful for
-# debugging. This is an abstract method that must be implemented in the derived
-# classes.
+# Returns a textual representation of the mention. Useful for debugging.
 #------------------------------------------------------------------------------
 sub as_string
 {
     my $self = shift;
-    log_fatal("The as_string() method is not implemented");
+    my $thead = $self->thead();
+    my $thead_as_string = defined($thead) ? $thead->id().' ('.$thead->t_lemma().')' : 'undef';
+    my $entity = $self->entity();
+    my $entity_as_string = defined($entity) ? $entity->as_string() : 'undef';
+    return "EntityMention $self with t-head $thead_as_string belonging to $entity_as_string";
 }
 
 

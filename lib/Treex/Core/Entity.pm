@@ -93,14 +93,13 @@ sub create_mention
 
 
 #------------------------------------------------------------------------------
-# Returns a textual representation of the phrase and all subphrases. Useful for
-# debugging. This is an abstract method that must be implemented in the derived
-# classes.
+# Returns a textual representation of the entity. Useful for debugging.
 #------------------------------------------------------------------------------
 sub as_string
 {
     my $self = shift;
-    log_fatal("The as_string() method is not implemented");
+    my $id = $self->id() // 'undef';
+    return "Entity $self with id $id";
 }
 
 
