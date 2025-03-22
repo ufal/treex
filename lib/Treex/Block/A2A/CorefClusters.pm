@@ -38,7 +38,8 @@ sub process_anode
         # na mezinárodních konferencích v Bukurešti v roce 1974 a Mexico City v roce 1984
         # "konference" je na t-rovině zduplikována, jenže pak je označena koreference mezi mexickou a bukurešťskou konferencí!
         # K tomu je problém s chybnou anotací syntaxe na analytické rovině.
-        $sentid eq 'ln94208-79-p7s1' && $anode->is_empty() && defined($anode->lemma()) && $anode->lemma() eq 'konference'
+        $sentid eq 'ln94208-79-p7s1' && $anode->is_empty() && defined($anode->lemma()) && $anode->lemma() eq 'konference' ||
+        $sentid eq 'mf930713-117-p2s3' || $sentid eq 'mf930713-117-p4s2'
     )
     {
         return;
