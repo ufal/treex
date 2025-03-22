@@ -119,6 +119,11 @@ sub sanity_check_mention
     {
         log_fatal("Checking $explain... $as does not belong to any entity");
     }
+    ###!!!
+    if($entity->id() eq 'ln94204105e33')
+    {
+        log_info("Checking $explain... $as seems OK");
+    }
 }
 
 
