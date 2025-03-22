@@ -13,7 +13,9 @@ sub process_atree
     my $root = shift;
     my @nodes = $root->get_descendants();
     my $document = $root->get_document();
-    return if(!exists($document->wild()->{eset}));
+    # If we are here, we expect the EntitySet to exist, even if empty.
+    # It should have been created in A2A::CorefClusters.
+    log_fatal('Document has no EntitySet') if(!exists($document->wild()->{eset}));
     my $eset = $document->wild()->{eset};
     for(my $i = 0; $i <= $#nodes; $i++)
     {
@@ -24,9 +26,9 @@ sub process_atree
         # caused this by GenerateEmptyNodes::adjust_copied_conjunct()).
         if($node->is_empty() && exists($node->wild()->{'tnode.rf'}) && scalar($node->get_enhanced_children()) == 0)
         {
+            #$node->set_misc_attr('CheckedByRemoveUnusedEmptyNodes', 'Yes');
             my $tnode = $document->get_node_by_id($node->wild()->{'tnode.rf'});
             my $mention = $eset->get_mention_by_thead($tnode);
-            my $cid = defined($mention) ? $mention->entity()->id() : undef; ###!!! WE PROBABLY NEED TO ADAPT THIS BLOCK TO THE NEW ENTITY IMPLEMENTATION MUCH MORE!
             # If the node is not member of any coreference cluster, we do not
             # need it and can discard it.
             if(!defined($mention))
@@ -55,7 +57,7 @@ sub process_atree
             elsif($node->lemma() eq '#Cor')
             {
                 my ($eparents, $antecedent);
-                ($eparents, $antecedent) = $self->find_cor_qcor_parents_and_antecedent($node, $cid);
+                ($eparents, $antecedent) = $self->find_cor_qcor_parents_and_antecedent($node);
                 if(defined($antecedent) && scalar(@{$eparents}) > 0)
                 {
                     # Attach the antecedent as nsubj:xsubj enhanced child of the infinitive(s).
@@ -96,7 +98,7 @@ sub process_atree
             elsif($node->lemma() eq '#QCor')
             {
                 my ($eparents, $antecedent);
-                ($eparents, $antecedent) = $self->find_cor_qcor_parents_and_antecedent($node, $cid);
+                ($eparents, $antecedent) = $self->find_cor_qcor_parents_and_antecedent($node);
                 if(defined($antecedent) && scalar(@{$eparents}) > 0)
                 {
                     # Attach the antecedent as nmod:gen enhanced child of the object(s).
@@ -219,12 +221,7 @@ sub process_atree
                 my @same_form = grep {!$_->is_empty() && $_->form() eq $form} (@nodes);
                 if(scalar(@same_form) > 0)
                 {
-                    my @coreferential = grep
-                    {
-                        my $cid1 = $_->get_misc_attr('ClusterId');
-                        defined($cid1) && $cid1 eq $cid
-                    }
-                    (@same_form);
+                    my @coreferential = grep {$self->nodes_are_coreferential($document, $_, $node)} (@same_form);
                     if(scalar(@coreferential) > 0)
                     {
                         my $survivor = $coreferential[0];
@@ -264,8 +261,8 @@ sub process_atree
 sub find_cor_qcor_parents_and_antecedent
 {
     my $self = shift;
-    my $node = shift; # the #Cor/#QCor node
-    my $cid = shift; # cluster (entity) id of the #Cor/#QCor node
+    my $node = shift; # the #Cor/#QCor empty a-node
+    my $document = $node->get_document();
     if($node->lemma() !~ m/^\#Q?Cor$/)
     {
         log_fatal('This is not a #Cor/#QCor node.');
@@ -286,9 +283,6 @@ sub find_cor_qcor_parents_and_antecedent
     # level (pro_někoho/BEN je lepší věnovat jeho/#QCor pozornost optimalizaci
     # provozu).
     my @eparents = $node->get_enhanced_parents();
-    #log_info(sprintf("DEBUG: %s", $node->get_address()));
-    #log_info(sprintf("DEBUG: %s node %s, cluster %s", $node->lemma(), $node->get_conllu_id(), $cid));
-    #log_info(sprintf("DEBUG: eparents %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@eparents))));
     # Find the matrix verb(s), i.e., enhanced grandparents of $node. Ignore
     # conj parents of @eparents, such relations would lead from one eparent to
     # another. Note: We call the grandparent matrix verb, but it could be also
@@ -305,7 +299,6 @@ sub find_cor_qcor_parents_and_antecedent
             }
         }
     }
-    #log_info(sprintf("DEBUG: mverbs %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@mverbs))));
     # The #Cor node should be coreferential with one of the children of the
     # matrix verb. We must search enhanced children because it could be a
     # generated node, too (e.g. in case of pro-drop).
@@ -313,12 +306,10 @@ sub find_cor_qcor_parents_and_antecedent
     foreach my $mverb (@mverbs)
     {
         my @echildren = $mverb->get_enhanced_children('^conj(:|$)', 1); # not conj children
-        #log_info(sprintf("DEBUG: echildren %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@echildren))));
         foreach my $echild (@echildren)
         {
-            # Look for children whose cluster id is $cid.
-            my $xcid = $echild->get_misc_attr('ClusterId') // '';
-            next if($xcid ne $cid);
+            # Look for coreferential children.
+            next unless($self->nodes_are_coreferential($document, $node, $echild));
             # Avoid finding the original #Cor/#QCor node (we never know which
             # enhanced relation will lead us back).
             next if($echild == $node);
@@ -336,7 +327,6 @@ sub find_cor_qcor_parents_and_antecedent
     {
         return (\@eparents, $candidates[0]);
     }
-    #log_info("DEBUG: Nothing found, searching the rest of the sentence.");
     # Sometimes the antecedent is elsewhere in the tree. For example: "politik
     # autoritářský, zvyklý #Cor rozhodovat sám". So if we do not find the
     # antecedent at the first try, we will climb up the tree and at each level
@@ -345,21 +335,16 @@ sub find_cor_qcor_parents_and_antecedent
     my @queue = @mverbs;
     while(scalar(@candidates) == 0 and scalar(@queue) > 0)
     {
-        #log_info(sprintf("DEBUG: queue %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@queue))));
         my $mverb = shift(@queue);
         next if($visited{$mverb->get_conllu_id()});
         my @subtree = Treex::Core::Node::A::sort_nodes_by_conllu_ids($mverb, $mverb->get_enhanced_descendants());
-        #log_info(sprintf("DEBUG: subtree %s", join(' ', map {$_->get_conllu_id().':'.($_->is_root() ? 'ROOT': $_->form())} (@subtree))));
         foreach my $descendant (@subtree)
         {
             my $id = $descendant->get_conllu_id();
-            #log_info("DEBUG: skipping $id, visited before.") if($visited{$id});
             next if($visited{$id});
             $visited{$id}++;
             next if($descendant->is_root());
-            my $xcid = $descendant->get_misc_attr('ClusterId') // '';
-            #log_info(sprintf("DEBUG: %s:%s is in cluster %s.", $id, $descendant->form(), $cid));
-            next if($xcid ne $cid);
+            next unless($self->nodes_are_coreferential($document, $node, $descendant));
             next if($descendant == $node);
             next if(any {$_ == $descendant} (@eparents));
             next if(any {$_ == $descendant} (@candidates));
@@ -381,6 +366,37 @@ sub find_cor_qcor_parents_and_antecedent
     }
     # If there are still no candidates, we will return undef as the second result.
     return (\@eparents, $candidates[0]);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes two a-nodes, obtains their corresponding t-nodes, checks whether both
+# of them head an entity mention and if they do, checks whether it is the same
+# entity.
+#------------------------------------------------------------------------------
+sub nodes_are_coreferential
+{
+    my $self = shift;
+    my $document = shift;
+    my $anode1 = shift;
+    my $anode2 = shift;
+    # my $tnode = $document->get_node_by_id($node->wild()->{'tnode.rf'});
+    if(exists($anode1->wild()->{'tnode.rf'}) && exists($anode2->wild()->{'tnode.rf'}))
+    {
+        my $tnode1 = $document->get_node_by_id($anode1->wild()->{'tnode.rf'});
+        my $tnode2 = $document->get_node_by_id($anode2->wild()->{'tnode.rf'});
+        my $eset = $document->wild()->{eset};
+        my $mention1 = $eset->get_mention_by_thead($tnode1);
+        my $mention2 = $eset->get_mention_by_thead($tnode2);
+        if(defined($mention1) && defined($mention2))
+        {
+            my $entity1 = $mention1->entity();
+            my $entity2 = $mention2->entity();
+            return $entity1 == $entity2;
+        }
+    }
+    return 0;
 }
 
 

@@ -134,7 +134,8 @@ sub get_mention_by_thead
     my $self = shift;
     my $thead = shift; # Treex::Core::Node::T
     my $id = $thead->id();
-    return exists($self->{mentions}{$id}) ? $self->{mentions}{$id} : undef;
+    my $mentions = $self->mentions();
+    return exists($mentions->{$id}) ? $mentions->{$id} : undef;
 }
 
 

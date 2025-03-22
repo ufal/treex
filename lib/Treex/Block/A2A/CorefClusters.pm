@@ -18,6 +18,16 @@ sub process_anode
     my $self = shift;
     my $anode = shift;
     my $last_cluster_id = $self->last_cluster_id();
+    # Get the document-wide collection of entities. If it does not exist yet,
+    # create it. We want it to exist even if the current document contains no
+    # coreference links. If someone used this block, they may want to use others
+    # that rely on the EntitySet, even if it is empty.
+    my $document = $anode->get_document();
+    if(!exists($document->wild()->{eset}))
+    {
+        $document->wild()->{eset} = new Treex::Core::EntitySet();
+    }
+    my $eset = $document->wild()->{eset};
     ###!!! In a few cases, annotation errors in PDT cause validity problems later in CorefUD.
     ###!!! Ideally we should fix the source annotation but that is out of our reach at present.
     ###!!! So, instead, we hard-code ids of nodes whose coreference links should be ignored.
@@ -38,7 +48,6 @@ sub process_anode
     if(exists($anode->wild()->{'tnode.rf'}))
     {
         my $tnode_rf = $anode->wild()->{'tnode.rf'};
-        my $document = $anode->get_document();
         my $tnode = $document->get_node_by_id($tnode_rf);
         if(defined($tnode))
         {
@@ -52,12 +61,6 @@ sub process_anode
             my ($bridgenodes, $bridgetypes) = $tnode->get_bridging_nodes();
             if(scalar(@{$cnodes}) > 0 || scalar(@{$bridgenodes}) > 0)
             {
-                # Get the document-wide collection of entities.
-                if(!exists($document->wild()->{eset}))
-                {
-                    $document->wild()->{eset} = new Treex::Core::EntitySet();
-                }
-                my $eset = $document->wild()->{eset};
                 my $mention = $eset->get_or_create_mention_for_thead($tnode);
                 $mention->process_coreference();
                 $mention->process_bridging();

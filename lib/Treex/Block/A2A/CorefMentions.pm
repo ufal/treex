@@ -15,7 +15,9 @@ sub process_atree
     my $root = shift;
     my $bundle = $root->get_bundle();
     my $document = $bundle->get_document();
-    return if(!exists($document->wild()->{eset}));
+    # If we are here, we expect the EntitySet to exist, even if empty.
+    # It should have been created in A2A::CorefClusters.
+    log_fatal('Document has no EntitySet') if(!exists($document->wild()->{eset}));
     my $eset = $document->wild()->{eset};
     # Get entity mentions in the current sentence.
     ###!!! For the moment ignore mentions for which we cannot easily obtain the counterpart of their t-head in the a-tree.
