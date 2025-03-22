@@ -197,7 +197,10 @@ sub guess_and_set_morphology
     elsif($tlemma eq '#Neg')
     {
         $anode->set_tag('PART');
-        $anode->iset()->set_hash({'pos' => 'part', 'polarity' => 'neg'});
+        # It would make sense to set polarity=neg but we currently do not have it
+        # for overt "ne" particles and the UD validator does not allow Polarity
+        # with particles in Czech.
+        $anode->iset()->set_hash({'pos' => 'part'}); #, 'polarity' => 'neg'});
         $anode->set_form('ne') if($language eq 'cs');
     }
     # Empty verb that cannot be copied from an overt node but it has overt dependents.
