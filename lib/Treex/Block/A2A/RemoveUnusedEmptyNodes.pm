@@ -250,8 +250,8 @@ sub process_atree
                 # koreferenční šipky ale vedou divně. Od generovaného poloostrova k jenž a odtud k původnímu
                 # poloostrovu, to je ještě OK. Ale od vygenerovaného "korejský" to vede někam o tři věty zpátky
                 # a s původním "korejský" v této větě (sent_id='mf930713-141-p2s3') se to vůbec nespojí.
-                # Remove anyway.
-                else
+                # Remove anyway. (Except pronouns, those were added for good reason and having other pronouns with the same form in the same sentence is a likely coincidence for them.)
+                elsif(!$node->is_pronominal())
                 {
                     $eset->remove_mention($mention);
                     $self->remove_empty_leaf($node, $tnode);
