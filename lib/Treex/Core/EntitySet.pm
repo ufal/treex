@@ -39,6 +39,7 @@ sub sanity_check
             log_fatal("Lost reference to EntityMention with t-head id '$thid'");
         }
         $self->sanity_check_mention($mention, "mention indexed under t-head id '$thid'");
+        my $entity = $mention->entity();
         my $eid = $entity->id();
         if(!any {$_ == $entity} (@{$entities}))
         {
