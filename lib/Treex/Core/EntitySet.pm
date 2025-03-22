@@ -73,6 +73,28 @@ sub sanity_check
             log_fatal("Entity '$eid' has no mentions");
         }
     }
+    # Check the list of bridging relations.
+    my $bridging = $self->bridging();
+    foreach my $b (@{$bridging})
+    {
+        my @keys = sort(keys(%{$b}));
+        my $keys = join(',', @keys);
+        if($keys ne 'srcm,tgtm,type')
+        {
+            log_fatal("Unexpected keys of a bridging hash: '$keys'");
+        }
+        my $srcm = $b->{srcm};
+        my $tgtm = $b->{tgtm};
+        my $type = $b->{type};
+        if($mentions->{$srcm->thead()} != $srcm)
+        {
+            log_fatal("Bridging source mention '$srcm' is no longer indexed in EntitySet");
+        }
+        if($mentions->{$tgtm->thead()} != $tgtm)
+        {
+            log_fatal("Bridging target mention '$tgtm' is no longer indexed in EntitySet");
+        }
+    }
 }
 
 
