@@ -38,20 +38,7 @@ sub sanity_check
         {
             log_fatal("Lost reference to EntityMention with t-head id '$thid'");
         }
-        if(exists($mention->{removal_log}))
-        {
-            log_fatal("EntityMention indexed under t-head id '$thid' has been removed: $mention->{removal_log}");
-        }
-        my $thead = $mention->thead();
-        if(!defined($thead))
-        {
-            log_fatal("EntityMention indexed under t-head id '$thid' lost reference to its t-head");
-        }
-        my $entity = $mention->entity();
-        if(!defined($entity))
-        {
-            log_fatal("EntityMention indexed under t-head id '$thid' does not belong to any entity");
-        }
+        $self->sanity_check_mention($mention, "mention indexed under t-head id '$thid'");
         my $eid = $entity->id();
         if(!any {$_ == $entity} (@{$entities}))
         {
@@ -108,12 +95,28 @@ sub sanity_check_mention
     {
         log_fatal("Checking $explain... $as does not refer back to $self");
     }
+    # Does the mention know its t-head?
+    my $thead = $mention->thead();
+    if(!defined($thead))
+    {
+        log_fatal("Checking $explain... $as lost reference to its t-head");
+    }
     # Does this EntitySet index the mention?
-    my $thid = $mention->thead()->id();
+    my $thid = $thead->id();
     my $mentions = $self->mentions();
     if(!exists($mentions->{$thid}) || $mentions->{$thid} != $mention)
     {
         log_fatal("Checking $explain... $as is no longer indexed in $self");
+    }
+    # Are the attributes of the mention OK?
+    if(exists($mention->{removal_log}))
+    {
+        log_fatal("Checking $explain... $as has been removed: $mention->{removal_log}");
+    }
+    my $entity = $mention->entity();
+    if(!defined($entity))
+    {
+        log_fatal("Checking $explain... $as does not belong to any entity");
     }
 }
 
