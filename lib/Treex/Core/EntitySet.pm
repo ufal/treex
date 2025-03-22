@@ -20,6 +20,64 @@ has 'last_entity_id' => (is => 'rw', default => 0);
 
 
 #------------------------------------------------------------------------------
+# Sanity check for debugging purposes: Do all mentions in the EntitySet have
+# defined t-head nodes? We may need to call this if we suspect that someone
+# keeps accessing an EntityMention that has been removed from the set.
+#------------------------------------------------------------------------------
+sub sanity_check
+{
+    my $self = shift;
+    # Check the hash of mentions.
+    my $mentions = $self->mentions();
+    my @thead_ids = sort(keys(%{$mentions}));
+    my $entities = $self->entities();
+    foreach my $thid (@thead_ids)
+    {
+        my $mention = $mentions->{$thid};
+        if(!defined($mention))
+        {
+            log_fatal("Lost reference to EntityMention with t-head id '$thid'");
+        }
+        if(exists($mention->{removal_log}))
+        {
+            log_fatal("EntityMention indexed under t-head id '$thid' has been removed: $mention->{removal_log}");
+        }
+        my $thead = $mention->thead();
+        if(!defined($thead))
+        {
+            log_fatal("EntityMention indexed under t-head id '$thid' lost reference to its t-head");
+        }
+        my $entity = $mention->entity();
+        if(!defined($entity))
+        {
+            log_fatal("EntityMention indexed under t-head id '$thid' does not belong to any entity");
+        }
+        my $eid = $entity->id();
+        if(!any {$_ == $entity} (@{$entities}))
+        {
+            log_fatal("EntityMention indexed under t-head id '$thid' belongs to Entity '$eid' that is no longer indexed in the EntitySet");
+        }
+    }
+    # Check the list of entities.
+    foreach my $entity (@{$entities})
+    {
+        if(!defined($entity))
+        {
+            log_fatal("The list of entities contains an undefined element");
+        }
+        my $eid = $entity->id();
+        my $entity_mentions = $entity->mentions();
+        my @entity_thead_ids = sort(keys(%{$entity_mentions}));
+        if(scalar(@entity_thead_ids) == 0)
+        {
+            log_fatal("Entity '$eid' has no mentions");
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Takes a t-node and checks whether there is already an entity mention headed
 # by this node. If there is, the function returns the EntityMention object.
 # Otherwise it returns undef.
@@ -205,37 +263,6 @@ sub remove_mention
 
 
 #------------------------------------------------------------------------------
-# Sanity check for debugging purposes: Do all mentions in the EntitySet have
-# defined t-head nodes? We may need to call this if we suspect that someone
-# keeps accessing an EntityMention that has been removed from the set.
-#------------------------------------------------------------------------------
-sub sanity_check
-{
-    my $self = shift;
-    my $mentions = $self->mentions();
-    my @thead_ids = sort(keys(%{$mentions}));
-    foreach my $thid (@thead_ids)
-    {
-        my $mention = $mentions->{$thid};
-        if(!defined($mention))
-        {
-            log_fatal("Lost reference to EntityMention with t-head id '$thid'");
-        }
-        if(exists($mention->{removal_log}))
-        {
-            log_fatal("EntityMention indexed under t-head id '$thid' has been removed: $mention->{removal_log}");
-        }
-        my $thead = $mention->thead();
-        if(!defined($thead))
-        {
-            log_fatal("EntityMention indexed under t-head id '$thid' lost reference to its t-head");
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
 # Merges two entities into one. This must be done when a coreference link is
 # discovered between two mentions that have so far been in different entities.
 #------------------------------------------------------------------------------
@@ -349,6 +376,7 @@ sub get_bridging_starting_at_mention
     log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
     my $self = shift;
     my $mention = shift;
+    $self->sanity_check(); ###!!!
     my @bridging = sort {cmp_entity_ids($a->{tgtm}->entity()->id(), $b->{tgtm}->entity()->id())} (grep {$_->{srcm} == $mention} (@{$self->bridging()}));
     return @bridging;
 }
