@@ -86,16 +86,34 @@ sub sanity_check
         my $srcm = $b->{srcm};
         my $tgtm = $b->{tgtm};
         my $type = $b->{type};
-        if($mentions->{$srcm->thead()} != $srcm)
-        {
-            my $as = $srcm->as_string();
-            log_fatal("Bridging source mention $as is no longer indexed in EntitySet");
-        }
-        if($mentions->{$tgtm->thead()} != $tgtm)
-        {
-            my $as = $tgtm->as_string();
-            log_fatal("Bridging target mention $as is no longer indexed in EntitySet");
-        }
+        $self->sanity_check_mention($srcm, 'bridging source mention');
+        $self->sanity_check_mention($tgtm, 'bridging target mention');
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sanity check of a particular mention.
+#------------------------------------------------------------------------------
+sub sanity_check_mention
+{
+    my $self = shift;
+    my $mention = shift;
+    my $explain = shift; # string for error message: where did we get this mention?
+    my $as = $mention->as_string();
+    # Does the mention refer back to this EntitySet?
+    my $eset = $mention->eset();
+    if(!defined($eset) || $eset != $self)
+    {
+        log_fatal("Checking $explain... $as does not refer back to $self");
+    }
+    # Does this EntitySet index the mention?
+    my $thid = $mention->thead()->id();
+    my $mentions = $self->mentions();
+    if(!exists($mentions->{$thid}) || $mentions->{$thid} != $mention)
+    {
+        log_fatal("Checking $explain... $as is no longer indexed in $self");
     }
 }
 
