@@ -107,6 +107,15 @@ sub mark_mention
         my $form = $mention->{ahead}->form() // '';
         log_fatal("Mention head $id:$form ($address) is not included in the span '$mspan'.");
     }
+    # Sanity check: The head of the mention must not be already head of another mention.
+    my $clusterid = $mention->{ahead}->get_misc_attr('ClusterId');
+    if($clusterid)
+    {
+        my $address = $mention->{ahead}->get_address();
+        my $id = $mention->{ahead}->get_conllu_id();
+        my $form = $mention->{ahead}->form() // '';
+        log_fatal("Mention head $id:$form ($address) already heads another mention with ClusterId=$clusterid");
+    }
     $mention->{ahead}->set_misc_attr('ClusterId', $mention->entity()->id());
     $mention->{ahead}->set_misc_attr('MentionMisc', 'gstype:'.$mention->entity()->type()) if($mention->entity()->type());
     $mention->{ahead}->set_misc_attr('MentionSpan', $mspan);

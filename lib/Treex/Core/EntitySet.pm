@@ -119,11 +119,6 @@ sub sanity_check_mention
     {
         log_fatal("Checking $explain... $as does not belong to any entity");
     }
-    ###!!!
-    if($entity->id() eq 'ln94204105e33')
-    {
-        log_info("Checking $explain... $as seems OK");
-    }
 }
 
 
@@ -427,7 +422,6 @@ sub get_bridging_starting_at_mention
     log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
     my $self = shift;
     my $mention = shift;
-    $self->sanity_check(); ###!!!
     my @bridging = sort {cmp_entity_ids($a->{tgtm}->entity()->id(), $b->{tgtm}->entity()->id())} (grep {$_->{srcm} == $mention} (@{$self->bridging()}));
     return @bridging;
 }

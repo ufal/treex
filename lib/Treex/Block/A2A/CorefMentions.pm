@@ -622,6 +622,18 @@ sub check_spans
             # Are the mentions discontinuous?
             my $disconti = defined($firstgapi) && $firstgapi < $lasti;
             my $discontj = defined($firstgapj) && $firstgapj < $lastj;
+            # Do the mentions have the same a-head?
+            ###!!! We currently cannot serialize this in A2A::CorefToMisc!
+            ###!!! Temporary solution: Throw away one of the mentions!
+            if($mentions[$i]{ahead} == $mentions[$j]{ahead})
+            {
+                my $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{aspan}, $mentions[$j]{aspan}, @allnodes);
+                log_warn("Two mentions have the same head:\n$message");
+                log_warn("As we currently cannot serialize this, removing the second mention.");
+                $mentions[$j]{ahead} = undef;
+                $mentions[$j]{removed} = 1;
+                next;
+            }
             # The worst troubles arise with pairs of mentions of the same entity.
             if($mentions[$i]->entity() == $mentions[$j]->entity())
             {
@@ -640,7 +652,7 @@ sub check_spans
                     $self->polish_mention_span($mentions[$i]);
                     $self->polish_mention_span($mentions[$j]);
                     $message = $self->visualize_two_spans($firstid, $lastid, $mentions[$i]{aspan}, $mentions[$j]{aspan}, @allnodes);
-                    log_warn("Attemtped to fix it as follows:\n$message");
+                    log_warn("Attempted to fix it as follows:\n$message");
                 }
                 elsif(!scalar(@inboth) && $disconti && $discontj && ($firsti < $firstj && $lasti > $firstj || $firstj < $firsti && $lastj > $firsti))
                 {

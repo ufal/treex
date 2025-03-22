@@ -298,7 +298,15 @@ sub as_string
     my $thead_as_string = defined($thead) ? $thead->id().' ('.$thead->t_lemma().')' : 'undef';
     my $entity = $self->entity();
     my $entity_as_string = defined($entity) ? $entity->as_string() : 'undef';
-    return "$self with t-head $thead_as_string belonging to entity $entity_as_string";
+    my $ahead_as_string = '';
+    if(exists($self->{ahead}))
+    {
+        my $address = $self->{ahead}->get_address();
+        my $id = $self->{ahead}->get_conllu_id();
+        my $form = $self->{ahead}->form() // '';
+        $ahead_as_string = "$id:$form ($address)";
+    }
+    return "$self with t-head $thead_as_string and a-head $ahead_as_string belonging to entity $entity_as_string";
 }
 
 
