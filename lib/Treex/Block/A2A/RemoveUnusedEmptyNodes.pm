@@ -243,6 +243,21 @@ sub process_atree
                         $i--;
                     }
                 }
+                # We did not find a coreferential namesake but we know there is a namesake.
+                # It could be an annotation error that they are not coreferential, as in this sentence:
+                # Korejský poloostrov, na němž se od sedmého století formoval a vyvíjel jediný státní celek, byl zasažen válkou a po podepsání příměří 27. července 1953 násilně rozdělen na dva státy.
+                # "Korejský poloostrov" je zdvojeno, jednou jako PAT od zasáhnout, jednou jako PAT od rozdělit,
+                # koreferenční šipky ale vedou divně. Od generovaného poloostrova k jenž a odtud k původnímu
+                # poloostrovu, to je ještě OK. Ale od vygenerovaného "korejský" to vede někam o tři věty zpátky
+                # a s původním "korejský" v této větě (sent_id='mf930713-141-p2s3') se to vůbec nespojí.
+                # Remove anyway.
+                else
+                {
+                    $eset->remove_mention($mention);
+                    $self->remove_empty_leaf($node, $tnode);
+                    splice(@nodes, $i, 1);
+                    $i--;
+                }
             }
         }
     }
