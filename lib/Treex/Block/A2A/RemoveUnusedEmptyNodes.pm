@@ -108,6 +108,14 @@ sub process_atree
                             $i--;
                         }
                     }
+                    # Remove some specific empty nodes that have been known to cause trouble in concrete sentences.
+                    elsif($form =~ m/(korejský|opravnu|prodejnu)/i)
+                    {
+                        $eset->remove_mention($mention);
+                        $self->remove_empty_leaf($node, $tnode);
+                        splice(@nodes, $i, 1);
+                        $i--;
+                    }
                 }
             }
         }
