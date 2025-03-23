@@ -47,76 +47,16 @@ sub process_atree
                 splice(@nodes, $i, 1);
                 $i--;
             }
-            else
+            elsif
+            (
+                $self->remove_cor_node($node, $tnode, $mention) ||
+                $self->remove_qcor_node($node, $tnode, $mention) ||
+                $self->remove_rcp_node($node, $tnode, $mention) ||
+                $self->remove_forn_node($node, $tnode, $mention) ||
+                $self->remove_duplicate_conjunct_node($node, $tnode, $mention, \@nodes)
+            )
             {
-                my $removed =
-                $self->remove_cor_node($node, $tnode, $mention, \@nodes, \$i) ||
-                $self->remove_qcor_node($node, $tnode, $mention, \@nodes, \$i) ||
-                $self->remove_rcp_node($node, $tnode, $mention, \@nodes, \$i) ||
-                $self->remove_forn_node($node, $tnode, $mention, \@nodes, \$i);
-                unless($removed)
-                {
-                    # Occasionally a shared dependent of coordination may have been
-                    # duplicated but the two t-nodes are still coreferential (the reason
-                    # for duplication may have been different functors between the nodes
-                    # and individual conjuncts):
-                    # "zákon o nepromlčitelnosti (komunistických zločinů) a trestním postihu komunistických zločinů"
-                    # If empty a-node X is coreferential with non-empty a-node Y in the
-                    # same sentence, and they have the same form (which is the remaining
-                    # trace that they were probably generated from the same surface
-                    # word), remove node X and add an enhanced dependency from Y to the
-                    # parent of X.
-                    my $form = $node->form();
-                    my @same_form = grep {!$_->is_empty() && $_->form() eq $form} (@nodes);
-                    if(scalar(@same_form) > 0)
-                    {
-                        my @coreferential = grep {$self->nodes_are_coreferential($document, $_, $node)} (@same_form);
-                        if(scalar(@coreferential) > 0)
-                        {
-                            my $survivor = $coreferential[0];
-                            # Copy incoming edges of the removed node as incoming edges of the survivor.
-                            my @edeps = $node->get_enhanced_deps();
-                            foreach my $edep (@edeps)
-                            {
-                                my $eparent = $root->get_node_by_conllu_id($edep->[0]);
-                                unless($eparent == $survivor)
-                                {
-                                    $survivor->add_enhanced_dependency($eparent, $edep->[1]);
-                                }
-                            }
-                            # Remember both functors at the survivor.
-                            $self->merge_functors($survivor, $node);
-                            # Now we can remove the extra node.
-                            $eset->remove_mention($mention);
-                            $self->remove_empty_leaf($node, $tnode);
-                            splice(@nodes, $i, 1);
-                            $i--;
-                        }
-                        # We did not find a coreferential namesake but we know there is a namesake.
-                        # It could be an annotation error that they are not coreferential, as in this sentence:
-                        # Korejský poloostrov, na němž se od sedmého století formoval a vyvíjel jediný státní celek, byl zasažen válkou a po podepsání příměří 27. července 1953 násilně rozdělen na dva státy.
-                        # "Korejský poloostrov" je zdvojeno, jednou jako PAT od zasáhnout, jednou jako PAT od rozdělit,
-                        # koreferenční šipky ale vedou divně. Od generovaného poloostrova k jenž a odtud k původnímu
-                        # poloostrovu, to je ještě OK. Ale od vygenerovaného "korejský" to vede někam o tři věty zpátky
-                        # a s původním "korejský" v této větě (sent_id='mf930713-141-p2s3') se to vůbec nespojí.
-                        # Remove anyway. (Except pronouns, those were added for good reason and having other pronouns with the same form in the same sentence is a likely coincidence for them.)
-                        elsif(!$node->is_pronominal())
-                        {
-                            $eset->remove_mention($mention);
-                            $self->remove_empty_leaf($node, $tnode);
-                            splice(@nodes, $i, 1);
-                            $i--;
-                        }
-                    }
-                    # Remove some specific empty nodes that have been known to cause trouble in concrete sentences.
-                    elsif($form =~ m/(korejský|opravnu|prodejnu)/i)
-                    {
-                        $eset->remove_mention($mention);
-                        $self->remove_empty_leaf($node, $tnode);
-                        splice(@nodes, $i, 1);
-                        $i--;
-                    }
-                }
+                splice(@nodes, $i--, 1);
             }
         }
     }
@@ -138,8 +78,6 @@ sub remove_cor_node
     my $node = shift;
     my $tnode = shift;
     my $mention = shift;
-    my $nodes = shift; # array ref
-    my $i = shift; # scalar ref
     if($node->lemma() eq '#Cor')
     {
         my ($eparents, $antecedent);
@@ -169,8 +107,6 @@ sub remove_cor_node
         # Now we can finally remove the #Cor node.
         $mention->eset()->remove_mention($mention);
         $self->remove_empty_leaf($node, $tnode);
-        splice(@{$nodes}, $$i, 1);
-        $$i--;
         return 1;
     }
     return 0;
@@ -193,8 +129,6 @@ sub remove_qcor_node
     my $node = shift;
     my $tnode = shift;
     my $mention = shift;
-    my $nodes = shift; # array ref
-    my $i = shift; # scalar ref
     if($node->lemma() eq '#QCor')
     {
         my ($eparents, $antecedent);
@@ -219,8 +153,6 @@ sub remove_qcor_node
         # Now we can finally remove the #QCor node.
         $mention->eset()->remove_mention($mention);
         $self->remove_empty_leaf($node, $tnode);
-        splice(@{$nodes}, $$i, 1);
-        $$i--;
         return 1;
     }
     return 0;
@@ -245,14 +177,10 @@ sub remove_rcp_node
     my $node = shift;
     my $tnode = shift;
     my $mention = shift;
-    my $nodes = shift; # array ref
-    my $i = shift; # scalar ref
     if($node->lemma() eq '#Rcp')
     {
         $mention->eset()->remove_mention($mention);
         $self->remove_empty_leaf($node, $tnode);
-        splice(@{$nodes}, $$i, 1);
-        $$i--;
         return 1;
     }
     return 0;
@@ -273,8 +201,6 @@ sub remove_forn_node
     my $node = shift;
     my $tnode = shift;
     my $mention = shift;
-    my $nodes = shift; # array ref
-    my $i = shift; # scalar ref
     if($node->lemma() eq '#Forn')
     {
         if(defined($tnode))
@@ -322,8 +248,6 @@ sub remove_forn_node
                     $tnode->wild()->{'anode.rf'} = $technical_head->id();
                     # The t-node has been re-linked to the technical head, hence undef for the removing function.
                     $self->remove_empty_leaf($node, undef);
-                    splice(@{$nodes}, $$i, 1);
-                    $$i--;
                     return 1;
                 }
                 else
@@ -336,6 +260,77 @@ sub remove_forn_node
                 log_warn("No children of generated #Forn node found. The #Forn node will not be removed.");
             }
         }
+    }
+    return 0;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Occasionally a shared dependent of coordination may have been duplicated but
+# the two t-nodes are still coreferential (the reason for duplication may have
+# been different functors between the nodes and individual conjuncts): "zákon
+# o nepromlčitelnosti (komunistických zločinů) a trestním postihu
+# komunistických zločinů" If empty a-node X is coreferential with non-empty
+# a-node Y in the same sentence, and they have the same form (which is the
+# remaining trace that they were probably generated from the same surface
+# word), remove node X and add an enhanced dependency from Y to the parent of X.
+#------------------------------------------------------------------------------
+sub remove_duplicate_conjunct_node
+{
+    my $self = shift;
+    my $node = shift;
+    my $tnode = shift;
+    my $mention = shift;
+    my $nodes = shift; # array ref
+    my $eset = $mention->eset();
+    my $form = $node->form();
+    my @same_form = grep {!$_->is_empty() && $_->form() eq $form} (@{$nodes});
+    if(scalar(@same_form) > 0)
+    {
+        my $document = $node->get_document();
+        my @coreferential = grep {$self->nodes_are_coreferential($document, $_, $node)} (@same_form);
+        if(scalar(@coreferential) > 0)
+        {
+            my $survivor = $coreferential[0];
+            # Copy incoming edges of the removed node as incoming edges of the survivor.
+            my @edeps = $node->get_enhanced_deps();
+            my $root = $node->get_root();
+            foreach my $edep (@edeps)
+            {
+                my $eparent = $root->get_node_by_conllu_id($edep->[0]);
+                unless($eparent == $survivor)
+                {
+                    $survivor->add_enhanced_dependency($eparent, $edep->[1]);
+                }
+            }
+            # Remember both functors at the survivor.
+            $self->merge_functors($survivor, $node);
+            # Now we can remove the extra node.
+            $eset->remove_mention($mention);
+            $self->remove_empty_leaf($node, $tnode);
+        }
+        # We did not find a coreferential namesake but we know there is a namesake.
+        # It could be an annotation error that they are not coreferential, as in this sentence:
+        # Korejský poloostrov, na němž se od sedmého století formoval a vyvíjel jediný státní celek, byl zasažen válkou a po podepsání příměří 27. července 1953 násilně rozdělen na dva státy.
+        # "Korejský poloostrov" je zdvojeno, jednou jako PAT od zasáhnout, jednou jako PAT od rozdělit,
+        # koreferenční šipky ale vedou divně. Od generovaného poloostrova k jenž a odtud k původnímu
+        # poloostrovu, to je ještě OK. Ale od vygenerovaného "korejský" to vede někam o tři věty zpátky
+        # a s původním "korejský" v této větě (sent_id='mf930713-141-p2s3') se to vůbec nespojí.
+        # Remove anyway. (Except pronouns, those were added for good reason and having other pronouns with the same form in the same sentence is a likely coincidence for them.)
+        elsif(!$node->is_pronominal())
+        {
+            $eset->remove_mention($mention);
+            $self->remove_empty_leaf($node, $tnode);
+        }
+        return 1;
+    }
+    # Remove some specific empty nodes that have been known to cause trouble in concrete sentences.
+    elsif($form =~ m/(korejský|opravnu|prodejnu)/i)
+    {
+        $eset->remove_mention($mention);
+        $self->remove_empty_leaf($node, $tnode);
+        return 1;
     }
     return 0;
 }
