@@ -31,8 +31,6 @@ sub process_unode($self, $unode, $) {
     my $tnode = $unode->get_tnode;
     $self->translate_compl($unode, $tnode)
         if 'COMPL' eq $tnode->functor;
-    $self->subordinate2coord($unode, $tnode)
-        if $tnode->functor =~ /^(?:CONTRD|CNCS)$/;
     $self->adjust_coap($unode, $tnode) if 'coap' eq $tnode->nodetype;
     $self->remove_double_edge($unode, $1, $tnode)
         if $unode->functor =~ /^(.+)-of$/;
@@ -91,36 +89,6 @@ sub translate_compl($self, $unode, $tnode) {
     }
 }
 
-sub subordinate2coord($self, $unode, $tnode) {
-    if ($tnode->is_member) {
-        $tnode = $tnode->_get_transitive_coap_root;
-        ($unode) = $tnode->get_referencing_nodes('t.rf');
-        if (! $unode) {
-            log_warn($tnode->{id} . ' has no unode for subordinate2coord');
-            return
-        }
-        log_info('Skipping 2nd run'), return
-            if $self->_coord_members_already_sub2coorded->{ $unode->id }++;
-    }
-
-    my $t_parent   = $tnode->get_parent;
-    my ($u_parent) = $t_parent->get_referencing_nodes('t.rf');
-    my $operator   = $u_parent->parent->create_child;
-    $operator->set_concept($unode->functor);
-    $operator->set_functor($u_parent->functor);
-    $u_parent->set_functor('ARG1');
-    $unode->set_functor('ARG2');
-    $u_parent->set_parent($operator);
-    $unode->set_parent($operator);
-
-    my @auxc = grep 'AuxC' eq $_->afun,
-               $unode->get_alignment;
-    $unode->_remove_from_node_list('alignment.rf', @auxc);
-    $operator->_add_to_node_list('alignment.rf', @auxc);
-
-    return
-}
-
 sub negate_sibling($self, $unode, $tnode) {
     my $tparent = $tnode->parent;
     my @tsiblings
@@ -174,7 +142,7 @@ sub adjust_coap($self, $unode, $tnode) {
         my $ch = $_;
         ! grep $ch == $_, @t_members
     } grep ! $_->is_member
-           && $_->functor !~ /^(?:C(?:M|ONTRD|NCS)|INTF)$/
+           && $_->functor !~ /^(?:CM|INTF)$/
            && ! ('RHEM' eq $_->functor && $_->t_lemma =~ /^$negation$/),
     $tnode->children;
     my @u_members = grep 'ref' ne ($_->nodetype // ""),
@@ -249,13 +217,6 @@ tree.
 
 Translates the complement COMPL into a C<manner> or C<mod> based on the sempos
 of the parent. The second dependency is translated into a C<mod_of> arrow.
-
-=item subordinate2coord
-
-C<CONTRD> and C<CNCS> are treated as subordinate on t-layer, but they are
-translated as C<but-1> in UMR which is coordinate. The structure must be
-therefore changed: a new node is created to represent the coordination and
-both the C<CONTRD/CNCS> and its parent are rehung to it.
 
 =item adjust_coap
 

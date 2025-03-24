@@ -123,7 +123,7 @@ sub translate_val_frame
     ##### CAUSAL ###########################
         'AIM'   => 'purpose',
         'CAUS'  => 'cause',
-        'CNCS' => 'but-91',  # sub->coord!
+        'CNCS' => 'concession',
         'COND' => 'condition',
         'INTT' => 'purpose',
     ##### MANNER ###########################
@@ -161,7 +161,7 @@ sub translate_val_frame
         'CONFR' => 'contrast-91',  # event
         'CONJ' => 'and',
         'CONTRA' => 'contra-entity',       # NOT in UMR
-        'CSQ' => 'have-result-91',
+        'CSQ' => 'consecutive',
         'DISJ' => 'or', # exclusive-disjunctive
         'GRAD' => 'gradation',
         'REAS' => 'have-cause-91',  # event
