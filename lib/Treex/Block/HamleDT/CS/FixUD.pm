@@ -2744,6 +2744,12 @@ sub fix_annotation_errors
         $subtree[8]->set_parent($subtree[9]);
         $subtree[8]->set_deprel('cop');
     }
+    # PDT-C 2.0 train tamw faust_2010_07_mu_08 # 12
+    elsif($spanstring =~ m/^jít ven s ; jít za ; odejít rozhořčený$/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[4]->set_deprel('parataxis');
+    }
     # Make sure that no node has more than one subject. This is to prevent
     # validation errors in UD. However, instead of randomly picking a subject
     # and re-labeling it as dep, we should investigate and fix the error
