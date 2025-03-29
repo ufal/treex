@@ -149,7 +149,7 @@ sub split_fused_words
             $new_nodes[1]->set_deprel($aux_deprel);
         }
         # Pronouns and conjunctions with the clitic auxiliary "-s" ("jsi").
-        elsif($node->form() =~ m/^(co|jak|jestli|kdo|se|si|ty|vždyť|že)(s)$/i && $node->is_second_person())
+        elsif($node->form() =~ m/^(co|jak|jestli|kdo|když|se|si|ty|vždyť|že)(s)$/i && $node->is_second_person())
         {
             my $w1 = $1;
             my $w2 = $2;
