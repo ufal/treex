@@ -84,8 +84,9 @@ sub fix_byt_pro_aby
         if($node->deprel() eq 'AuxP')
         {
             my $lemma = $node->lemma() // '';
-            my @veparents = grep {$_->is_verb() && defined($_->lemma()) && $_->lemma() =~ m/^(být|hlasovat|existovat)$/} ($node->get_eparents({'ordered' => 1}));
-            # Do not match the lemma of the preposition to the end. The lemma could be "proti-1".
+            # The parent is typically a verb, but it can be also a verbal noun.
+            # Do not match the lemmas to the end. The lemma could be "proti-1", "otočení_^(*3it)" etc.
+            my @veparents = grep {defined($_->lemma()) && $_->lemma() =~ m/^(být|hlasovat|existovat|otočení|společnost)/} ($node->get_eparents({'ordered' => 1}));
             if($lemma =~ m/^(pro|proti|vně)/ && scalar(@veparents) > 0)
             {
                 my $plemma = $veparents[0]->lemma();
