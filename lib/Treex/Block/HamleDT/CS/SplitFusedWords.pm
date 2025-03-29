@@ -155,6 +155,7 @@ sub split_fused_words
             my $w2 = $2;
             my $iset_hash = $node->iset()->get_hash();
             delete($iset_hash->{person}) unless($node->form() =~ m/^tys$/i);
+            delete($iset_hash->{number}) unless($node->form() =~ m/^(cos|kdos|tys)$/i);
             delete($iset_hash->{tense});
             delete($iset_hash->{voice});
             delete($iset_hash->{polarity});
