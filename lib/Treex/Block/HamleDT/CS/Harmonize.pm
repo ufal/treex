@@ -21,8 +21,6 @@ has iset_driver =>
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
-has change_bundle_id => (is=>'ro', isa=>'Bool', default=>1, documentation=>'use id of a-tree roots as the bundle id');
-
 
 
 #------------------------------------------------------------------------------
