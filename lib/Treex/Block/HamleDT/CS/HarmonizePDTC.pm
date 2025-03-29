@@ -1011,6 +1011,14 @@ sub fix_annotation_errors
             $subtree[4]->set_deprel('Atr');
             $subtree[10]->set_deprel('Atv');
         }
+        # PDT-C 2.0 train tamw faust_2010_07_jh_04 # 4
+        # This is probably not an error according to the PDT-C guidelines but it breaks conversion to UD.
+        elsif($spanstring =~ m/^jako by nic$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_parent($subtree[2]);
+            $subtree[1]->set_is_extra_dependency(undef);
+        }
     }
 }
 
