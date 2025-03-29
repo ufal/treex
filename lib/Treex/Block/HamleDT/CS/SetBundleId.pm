@@ -23,6 +23,8 @@ sub process_zone
     $sentence_id =~ s/^a-//;
     $sentence_id =~ s/-root$//;
     $sentence_id =~ s/-SCzechA//;
+    # If there is a hyphen between paragraph and sentence number, remove it.
+    $sentence_id =~ s/(-p\d+)-(s[-0-9A-Z]+)$/$1$2/;
     if(length($sentence_id)>1)
     {
         my $bundle = $zone->get_bundle();
