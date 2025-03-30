@@ -51,6 +51,16 @@ sub process_zone
         {
             $document_id = "pdtsc_$1$2";
         }
+        # Sometimes the sequence of sentence ids in one PDTSC document is interrupted
+        # by a wrong sentence id, which makes the sentence look like from a different
+        # document. We want to keep it in the document it belongs to! (And we must
+        # do it because otherwise the subsequent sentences from the document would
+        # get duplicate ids because they would be numbered from 1 again.)
+        if($last_document_id =~ m/^pdtsc_/ && $sentence_id =~ m/^a_tree/)
+        {
+            $document_id = $last_document_id;
+            $sentence_id = "$document_id-paragraph-";
+        }
     }
     if($document_id eq $last_document_id)
     {
