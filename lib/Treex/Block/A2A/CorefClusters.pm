@@ -7,16 +7,10 @@ extends 'Treex::Core::Block';
 
 
 
-has last_document_id => (is => 'rw', default => '');
-has last_cluster_id  => (is => 'rw', default => 0);
-
-
-
 sub process_anode
 {
     my $self = shift;
     my $anode = shift;
-    my $last_cluster_id = $self->last_cluster_id();
     # Get the document-wide collection of entities. If it does not exist yet,
     # create it. We want it to exist even if the current document contains no
     # coreference links. If someone used this block, they may want to use others
