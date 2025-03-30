@@ -48,6 +48,7 @@ sub split_fused_token
     my $parent = $fused_node->parent();
     my $root = $fused_node->get_root();
     my @new_nodes;
+    my $entity_heir_node;
     foreach my $nn (@new_node_descriptions)
     {
         my $node = $parent->create_child();
@@ -72,6 +73,17 @@ sub split_fused_token
             $node->set_deprel($nn->{deprel});
         }
         push(@new_nodes, $node);
+        if(!defined($entity_heir_node) && $nn->{inherit_entity})
+        {
+            $entity_heir_node = $node;
+        }
+    }
+    # Which of the new nodes should inherit the lexical link to the t-node?
+    # Either one of the new nodes has been flagged with 'inherit_entity',
+    # or we simply pick the first one.
+    if(!defined($entity_heir_node))
+    {
+        $entity_heir_node = $new_nodes[0];
     }
     # The no_space_after attribute applies to the multi-word token (fusion), not to the individual nodes.
     # However, the CoNLL-U writer expects to find it at the last node of the fusion.
@@ -85,6 +97,35 @@ sub split_fused_token
     foreach my $child (@children)
     {
         $child->set_parent($new_nodes[0]);
+    }
+    # If there is tectogrammatical annotation and we are partially projecting it
+    # to UD (e.g., functors and coreference), we have links between a-nodes and
+    # corresponding t-nodes in wild attributes. We must redirect them to one of
+    # the new nodes before the fused node is deleted.
+    if(defined($fused_node->wild()->{'tnode.rf'}))
+    {
+        my $tnode = $fused_node->get_document()->get_node_by_id($fused_node->wild()->{'tnode.rf'});
+        if(defined($tnode->wild()->{'anode.rf'}) && $tnode->wild()->{'anode.rf'} eq $fused_node->id())
+        {
+            $entity_heir_node->wild()->{'tnode.rf'} = $tnode->id();
+            $tnode->wild()->{'anode.rf'} = $entity_heir_node->id();
+            # Besides the wild reference, there is probably also the standard
+            # lex a-node reference. It would be removed when the a-node is removed,
+            # so there is no danger of broken links, but we still want to replace
+            # it with a reference to the new node, otherwise we may not be able
+            # to compute the span of a coreference mention.
+            if($tnode->get_lex_anode() == $fused_node)
+            {
+                $tnode->set_lex_anode($entity_heir_node);
+            }
+        }
+        else
+        {
+            my $fused_node_id = $fused_node->id();
+            my $tnode_id = $tnode->id();
+            my $backinfo = defined($tnode->wild()->{'anode.rf'}) ? " It refers to '".$tnode->wild()->{'anode.rf'}."' instead." : '';
+            log_warn("A-node '$fused_node_id' refers to t-node '$tnode_id' but the t-node does not refer correctly back.$backinfo");
+        }
     }
     # Take care about node ordering.
     my $ord = $fused_node->ord();
@@ -188,7 +229,7 @@ Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014, 2015, 2017 by Institute of Formal and Applied Linguistics,
+Copyright © 2014, 2015, 2017, 2025 by Institute of Formal and Applied Linguistics,
 Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it

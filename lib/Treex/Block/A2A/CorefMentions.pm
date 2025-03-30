@@ -23,10 +23,10 @@ sub process_atree
     ###!!! For now treat the mention as an ordinary hash rather than an EntityMention object, and just assign to their ->{ahead}.
     my @mentions = grep
     {
-        my $ahead;
-        if(exists($_->thead()->wild()->{'anode.rf'}))
+        my $ahead = $self->get_a_node_for_t_node($document, $_->thead());
+        if(defined($ahead))
         {
-            $_->{ahead} = $ahead = $document->get_node_by_id($_->thead()->wild()->{'anode.rf'});
+            $_->{ahead} = $ahead;
         }
         else
         {
@@ -76,6 +76,42 @@ sub process_atree
     # We will want to later run A2A::CorefMentionHeads to find out whether the
     # UD head should be different from the tectogrammatical head, and to move
     # the mention annotation to the UD head node.
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes a t-node and returns its corresponding a-node (object, not just id).
+# Returns undef if there is no corresponding a-node (or it cannot be found).
+#------------------------------------------------------------------------------
+sub get_a_node_for_t_node
+{
+    my $self = shift;
+    my $document = shift;
+    my $tnode = shift;
+    log_fatal('Undefined document') if(!defined($document));
+    log_fatal('Undefined t-node') if(!defined($tnode));
+    my $twild = $tnode->wild();
+    if(exists($twild->{'anode.rf'}))
+    {
+        my $anoderf = $twild->{'anode.rf'};
+        # We can make it more benevolent and issue only a warning if the t-reference
+        # is broken. But it seems better to make it a fatal error because it should
+        # never happen and if it does, it is probably our bug in another block.
+        #if(!$document->id_is_indexed($anoderf))
+        #{
+        #    my $tnoderf = $tnode->id();
+        #    log_warn("A-node id '$anoderf', referenced from t-node '$tnoderf', is not indexed in the document. Has it been removed?");
+        #    return undef;
+        #}
+        # The following call will raise a fatal exception if the reference is unknown.
+        my $anode = $document->get_node_by_id($anoderf);
+        return $anode;
+    }
+    else # no anode.rf in wild
+    {
+        return undef;
+    }
 }
 
 

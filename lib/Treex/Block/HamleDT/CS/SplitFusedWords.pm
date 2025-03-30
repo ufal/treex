@@ -122,7 +122,8 @@ sub split_fused_words
                                  'deprel' => 'case'},
                 {'form' => 'co', 'lemma'  => 'co',    'tag' => 'PRON', 'conll_pos' => 'PQ--4----------',
                                  'iset'   => {'pos' => 'noun', 'prontype' => 'int|rel', 'gender' => 'neut', 'number' => 'sing', 'case' => 'acc'},
-                                 'deprel' => $node->deprel()}
+                                 'deprel' => $node->deprel(),
+                                 'inherit_entity' => 1}
             );
             $new_nodes[0]->set_parent($new_nodes[1]);
         }
@@ -170,7 +171,8 @@ sub split_fused_words
             my $host_recipe = {'form' => $w1,
                 'lemma'  => $node->lemma(), 'tag' => $node->tag(), 'conll_pos' => $node->conll_pos(),
                 'iset'   => $iset_hash,
-                'deprel' => $node->deprel()};
+                'deprel' => $node->deprel(),
+                'inherit_entity' => 1}; # entity: PRON from 'cos', 'sis', 'ses'; for others it does not matter
             my $aux_recipe = {'form' => 'jsi',
                 'lemma'  => 'být',          'tag' => 'AUX',        'conll_pos' => 'VB-S---2P-AA---',
                 'iset'   => {'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act',
@@ -212,7 +214,8 @@ sub split_fused_words
                 $node,
                 {'form' => $w1, 'lemma'  => $node->lemma(), 'tag' => $node->tag(), 'conll_pos' => 'Vt-S---3P-NA--2',
                                 'iset'   => $iset_hash,
-                                'deprel' => $node->deprel()},
+                                'deprel' => $node->deprel(),
+                                'inherit_entity' => 1},
                 {'form' => $w2, 'lemma'  => 'neboť',        'tag' => 'CCONJ',      'conll_pos' => 'J^-------------',
                                 'iset'   => {'pos' => 'conj', 'conjtype' => 'coor'},
                                 'deprel' => 'cc'}

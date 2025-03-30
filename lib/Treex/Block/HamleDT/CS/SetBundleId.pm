@@ -19,12 +19,16 @@ sub process_zone
     # The bundles in the PDT data have simple ids like this: 's1'.
     # In contrast, the id of the root node of an a-tree reflects the original PDT id: 'a-cmpr9406-001-p2s1' (surprisingly it does not identify the zone).
     # A-tree ids in Faust are different: faust_2010_07_jh_04-SCzechA-p0315-s1-root
+    # A-tree ids in PDTSC: hg-13808_03.05-hg-13808_03-1214
     my $sentence_id = $root->id();
     $sentence_id =~ s/^a-//;
     $sentence_id =~ s/-root$//;
     $sentence_id =~ s/-SCzechA//;
     # If there is a hyphen between paragraph and sentence number, remove it.
     $sentence_id =~ s/(-p\d+)-(s[-0-9A-Z]+)$/$1$2/;
+    # In PDTSC, a-tree ids tend to repeat the document id but the first instance also has a number of split file (documents were split to files of 50 utterances at most, to make annotation in TrEd easier).
+    $sentence_id =~ s/^([a-z][a-z]-[0-9]+_[0-9]+)\.[0-9]+-\1-/pdtsc_$1-p1s/;
+    $sentence_id =~ s/-(x[0-9]+)$/$1/;
     if(length($sentence_id)>1)
     {
         my $bundle = $zone->get_bundle();
