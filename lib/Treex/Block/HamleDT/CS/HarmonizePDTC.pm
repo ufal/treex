@@ -178,19 +178,17 @@ sub revert_multiword_preps_to_auxp
             # "prohlašuje něco, co je s čísly a daty v rozporu" (test/tamw/mf920925_005#8)
             if($node->deprel() eq 'AuxY')
             {
-                # Not all AuxY that precede an AuxP and are attached to it should be
-                # considered part of a multiword preposition. Counterexamples:
+                # Not all AuxY that are attached to an AuxP should be considered
+                # part of a multiword preposition.
+                # Some counterexamples:
                 # tj. na 700 sedadel "i.e. about 700 seats"
                 # tj. bez ohledu na politickou příslušnost "i.e. regardless of political affiliation"
-                # to je(st) = tj. = to znamená
-                # a to právě v Québeku "and that's right in Quebec"
-                # "i" is not part of compound prepositions ("i při růstu" should be two modifiers of the noun), although it can be part of compound subordinators ("i když").
                 # Disallow "a" in "a to", "a tím" etc. Allow "a" in "a la" (borrowed from French, acting like a compound preposition with nominative in Czech).
-                if($node->form() !~ m/^(tj|tzn|a|i|to|tím|tedy|totiž|je(st)?|znamená|jako?|la|aneb|čili|či|např)$/i ||
-                   $node->form() =~ m/^[aà]$/i && $node->parent()->form() =~ m/^la$/i)
-                {
-                    $node->set_deprel('AuxP');
-                }
+                my $lcpf = lc($node->parent()->form());
+                my $lccf = lc($node->form());
+                next if($lccf =~ m/^(tj|tzn|a|i|to|tím|tedy|totiž|je(st)?|znamená|jako?|la|aneb|čili|či|např)$/i && !($lccf =~ m/^[aà]$/i && $lcpf =~ m/^la$/i));
+                next if($lccf eq 'na' && $lcpf eq 'na'); # simply repeated: "To je město na na severu Čech."
+                $node->set_deprel('AuxP');
             }
             # PDT-C 2.0 test amw cmpr94027_023 # 100
             # Slovo "řekněme" visí jako AuxZ přímo na předložce ("řekněme za 350000 USD"), mělo by viset na jejím argumentu, abychom si ho nepletli s argumentem.
@@ -1069,6 +1067,12 @@ sub fix_annotation_errors
             $subtree[8]->set_parent($subtree[10]);
             $subtree[8]->set_is_member(undef);
             $subtree[8]->set_is_extra_dependency(undef);
+        }
+        # PDT-C 2.0 dev tamw pdtsc_112_1.02 # 11
+        elsif($spanstring =~ m/^jak jsem se již zmínil ,$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_parent($subtree[4]);
         }
     }
 }

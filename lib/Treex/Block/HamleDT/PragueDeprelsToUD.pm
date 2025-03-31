@@ -538,7 +538,14 @@ sub convert_deprels
             # Index Thomisticus: ad invicem (each other); "invicem" is adverb that could be roughly translated as "mutually".
             elsif($node->is_adposition())
             {
-                $deprel = 'case';
+                if($node->form() eq 'na' && $node->parent()->form() eq 'na') # simple repetition: To je město na na severu Čech.
+                {
+                    $deprel = 'reparandum';
+                }
+                else
+                {
+                    $deprel = 'case';
+                }
             }
             # When it is attached to a verb, it is a sentence adverbial, disjunct or connector.
             # Index Thomisticus examples: igitur (therefore), enim (indeed), unde (whence), sic (so, thus), ergo (therefore).
