@@ -506,10 +506,15 @@ sub convert_deprels
         # The AuxY deprel is used in various situations, see below.
         elsif($deprel eq 'AuxY')
         {
+            # An AuxY depending on an AuxC may signal a multiword subordinator, which could be converted to mark and later to fixed.
+            # However, some combinations are not fixed expressions. This could be decided using language-specific lists; another clue
+            # is that if the words are not adjacent, they probably do not form a compound subordinator.
+            ###!!! See also HamleDT::CS::HarmonizePDTC::prevent_compound_subordinators();
             # When it is attached to a subordinating conjunction (AuxC), the two form a multi-word subordinator.
             # Index Thomisticus examples: ita quod (so that), etiam si (even if), quod quod (what is that), ac si (as if), et si (although)
             ###!!! But not always! E.g., we had an apposition "jako X, čili jako Y", it was hamledtized as a hypotactic structure, then "čili" ended up attached as AuxY to "jako", but they do not form a fixed compound subordinator!
-            if($parent->wild()->{prague_deprel} eq 'AuxC' && lc($node->form()) ne 'čili')
+            ###!!! Also not for double "že": "Myslí si, že když to máme za humny, že na to je dost času."
+            if($parent->wild()->{prague_deprel} eq 'AuxC' && lc($node->form()) ne 'čili' && $node->form() !~ m/^(čili|že)$/i) ###!!! raději bych měl testovat formu rodiče i dítěte, abych zase nevyhodil něco, co vyhodit nechci!
             {
                 # The phrase builder will later transform it to MWE.
                 $deprel = 'mark';

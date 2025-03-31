@@ -24,6 +24,7 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
     $self->revert_multiword_preps_to_auxp($root);
+    $self->prevent_compound_subordinators($root);
     return $root;
 }
 
@@ -201,6 +202,57 @@ sub revert_multiword_preps_to_auxp
                 if(scalar(@candidates) > 0)
                 {
                     $node->set_parent($candidates[0]);
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# An AuxY dependent of an AuxC node could mean a compound subordinator, or it
+# could be just two subordinators co-occurring at the same subordinate clause.
+# Subsequent conversion to UD is likely to favor the compound interpretation.
+# In some cases we know it is undesired (language-specific word pairs, or
+# simply the fact that the two words are not adjacent). We can prevent the
+# compound reading by re-attaching the dependent word to the argument of the
+# main subordinator, i.e., to the predicate of the subordinate clause.
+#------------------------------------------------------------------------------
+BEGIN
+{
+    # List of unwanted word pairs (first the parent, then the child).
+    # It is constant, thus prepared at compile time and available globally.
+    @Treex::Block::HamleDT::CS::HarmonizePDTC::non_compound_subordinators =
+    (
+        ['jako', 'čili'],
+        ['že', 'že']
+    );
+}
+sub prevent_compound_subordinators
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'AuxY' && $node->parent()->deprel() eq 'AuxC')
+        {
+            # Do we want to prevent the interpretation of this word pair as a compound subordinator?
+            my $lcpf = lc($node->parent()->form());
+            my $lccf = lc($node->form());
+            if(any {$lcpf eq $_->[0] && $lccf eq $_->[1]} (@Treex::Block::HamleDT::CS::HarmonizePDTC::non_compound_subordinators))
+            {
+                # Yes, we want to prevent it. Find a sibling suitable to play the new parent.
+                my @siblings = grep {$_->deprel() !~ m/^Aux[GXY]$/} ($node->get_siblings({'ordered' => 1}));
+                my $n = scalar(@siblings);
+                if($n > 1)
+                {
+                    log_warn("Trying to reattach AuxY from AuxC to its argument, found $n parent candidates.");
+                }
+                if($n > 0)
+                {
+                    $node->set_parent($siblings[-1]);
                 }
             }
         }
@@ -1002,6 +1054,21 @@ sub fix_annotation_errors
             my @subtree = $self->get_node_subtree($node);
             $subtree[1]->set_parent($subtree[2]);
             $subtree[1]->set_is_extra_dependency(undef);
+        }
+        # PDT-C 2.0 dev tamw pdtsc_014_2.03 # 17
+        # A comma should not be member of Coord unless it is itself a head of Coord.
+        elsif($spanstring =~ m/^, čtyři z vrchu , dvě z boku ,$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_is_member(undef);
+        }
+        # PDT-C 2.0 dev tamw pdtsc_097_2.04 # 1
+        elsif($spanstring =~ m/^už jsem nebyl asi tak rychlý nebo přece jenom tak obratný$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[8]->set_parent($subtree[10]);
+            $subtree[8]->set_is_member(undef);
+            $subtree[8]->set_is_extra_dependency(undef);
         }
     }
 }

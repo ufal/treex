@@ -1293,6 +1293,7 @@ BEGIN
         ['na téma',            'fixed',   'na téma',            'ADP NOUN',            'RR--4---------- NNNS4-----A----',                 'pos=adp|adpostype=prep|case=acc|extpos=adp pos=noun|nountype=com|gender=neut|number=sing|case=acc',                                                    '0:case 1:fixed'],
         ['na způsob',          'fixed',   'na způsob',          'ADP NOUN',            'RR--4---------- NNIS4-----A----',                 'pos=adp|adpostype=prep|case=acc|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=acc',                                       '0:case 1:fixed'],
         ['s ohledem na',       'always',  's ohled na',         'ADP NOUN ADP',        'RR--7---------- NNIS7-----A---- RR--4----------', 'pos=adp|adpostype=prep|case=ins|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=ins pos=adp|adpostype=prep|case=acc',       '0:case 1:fixed 1:fixed'],
+        ['s výjimkou',         'fixed',   's výjimka',          'ADP NOUN',            'RR--7---------- NNFS7-----A----',                 'pos=adp|adpostype=prep|case=ins|extpos=adp pos=noun|nountype=com|gender=fem|number=sing|case=ins',                                                     '0:case 1:fixed'],
         ['v době',             'fixed',   'v doba',             'ADP NOUN',            'RR--6---------- NNFS6-----A----',                 'pos=adp|adpostype=prep|case=loc|extpos=adp pos=noun|nountype=com|gender=fem|number=sing|case=loc',                                                     '0:case 1:fixed'],
         ['v případě',          'fixed',   'v případ',           'ADP NOUN',            'RR--6---------- NNIS6-----A----',                 'pos=adp|adpostype=prep|case=loc|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc',                                       '0:case 1:fixed'],
         ['z hlediska',         'fixed',   'z hledisko',         'ADP NOUN',            'RR--2---------- NNNS2-----A----',                 'pos=adp|adpostype=prep|case=gen|extpos=adp pos=noun|nountype=com|gender=neut|number=sing|case=gen',                                                    '0:case 1:fixed'],
@@ -2749,6 +2750,13 @@ sub fix_annotation_errors
     {
         my @subtree = $self->get_node_subtree($node);
         $subtree[4]->set_deprel('parataxis');
+    }
+    # PDT-C 2.0 dev tamw pdtsc_046_1.02 # 19
+    elsif($spanstring =~ m/^, de facto ne se všemi ,$/)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[4]->set_parent($subtree[5]);
+        $subtree[4]->set_deprel('case');
     }
     # Make sure that no node has more than one subject. This is to prevent
     # validation errors in UD. However, instead of randomly picking a subject
