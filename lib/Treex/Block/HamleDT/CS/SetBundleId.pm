@@ -56,7 +56,7 @@ sub process_zone
         # document. We want to keep it in the document it belongs to! (And we must
         # do it because otherwise the subsequent sentences from the document would
         # get duplicate ids because they would be numbered from 1 again.)
-        if($last_document_id =~ m/^pdtsc_/ && $sentence_id =~ m/^a_tree/)
+        if($last_document_id =~ m/^pdtsc_/ && $sentence_id =~ m/^a_/)
         {
             $document_id = $last_document_id;
             $sentence_id = "$document_id-paragraph-";
