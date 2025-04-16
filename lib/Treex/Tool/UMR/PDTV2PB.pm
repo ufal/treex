@@ -79,7 +79,7 @@ sub _build_mapping($self) {
             $mapping{$current_id}{umr_id} = $umr_id;
 
         } elsif ($row->[3]) {
-            my $functor = $row->[1] =~ s/:.*//r;
+            my ($functor) = $row->[1] =~ /^\??([^:]+)/;
             log_warn("Ambiguous mapping $mapping{$current_id}{umr_id}"
                      . " $current_id $functor:"
                      . " $row->[3]/$mapping{$current_id}{$functor}!")

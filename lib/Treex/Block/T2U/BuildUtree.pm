@@ -67,7 +67,7 @@ sub translate_val_frame
         if (my $valframe_id = $ep->val_frame_rf) {
             $valframe_id =~ s/^.*#//;
             if (my $pb = $self->mapping->{$valframe_id}{ $tnode->functor }) {
-                $pb =~ s/\?//;
+                $pb =~ s/^\?//;
                 ++$functor{$pb};
                 next EPARENT
             }
