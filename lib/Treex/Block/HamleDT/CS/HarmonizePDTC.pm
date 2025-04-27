@@ -1074,6 +1074,12 @@ sub fix_annotation_errors
             my @subtree = $self->get_node_subtree($node);
             $subtree[1]->set_parent($subtree[4]);
         }
+        # PDT-C 2.0 test tamw pdtsc_126_2.08 # 44
+        elsif($spanstring =~ m/^, buď přírodní , nebo obalené$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'coor'});
+        }
     }
 }
 
