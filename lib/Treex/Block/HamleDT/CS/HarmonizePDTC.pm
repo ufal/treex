@@ -1079,6 +1079,8 @@ sub fix_annotation_errors
         {
             my @subtree = $self->get_node_subtree($node);
             $subtree[1]->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'coor'});
+            $subtree[1]->set_tag('J^-------------');
+            $subtree[1]->set_lemma('buď');
         }
     }
 }
