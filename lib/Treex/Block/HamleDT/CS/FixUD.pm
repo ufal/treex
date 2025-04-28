@@ -1345,7 +1345,7 @@ BEGIN
         ['až v',               'fixed',   'až v',               'PART ADP',            'TT------------- RR--6----------',                 'pos=part pos=adp|adpostype=prep|case=loc',      '0:advmod:emph 0:case'],
         ['až ve',              'fixed',   'až v',               'PART ADP',            'TT------------- RV--6----------',                 'pos=part pos=adp|adpostype=voc|case=loc',       '0:advmod:emph 0:case'],
         ['až z',               'fixed',   'až z',               'PART ADP',            'TT------------- RR--2----------',                 'pos=part pos=adp|adpostype=prep|case=gen',      '0:advmod:emph 0:case'],
-        ['co když',            'always',  'co když',            'PART SCONJ',          'TT------------- J,-------------',                 'pos=part pos=conj|conjtype=sub',                '0:mark 0:mark'],
+        ['co když',            'fixed',   'co když',            'PART SCONJ',          'TT------------- J,-------------',                 'pos=part pos=conj|conjtype=sub',                '0:mark 0:mark'],
         ['čím dál tím',        'always',  'co daleko ten',      'PRON ADV DET',        'PQ--7---------- Dg-------2A---- PDZS7----------', 'pos=noun|prontype=rel|animacy=inan|case=ins pos=adv|polarity=pos|degree=cmp pos=adj|prontype=dem|gender=neut|number=sing|case=ins', '2:obl 3:advmod 0:obl'],
         ['dříve než',          'fixed',   'dříve než',          'ADV SCONJ',           'Dg-------2A---- J,-------------',                 'pos=adv|polarity=pos|degree=cmp pos=conj|conjtype=sub', '0:advmod 0:mark'],
         ['hlavně když',        'fixed',   'hlavně když',        'ADV SCONJ',           'Dg-------1A---- J,-------------',                 'pos=adv|polarity=pos|degree=pos pos=conj|conjtype=sub', '0:advmod 0:mark'],
@@ -2760,6 +2760,17 @@ sub fix_annotation_errors
         my @subtree = $self->get_node_subtree($node);
         $subtree[4]->set_parent($subtree[5]);
         $subtree[4]->set_deprel('case');
+    }
+    # PDT-C 2.0 train tamw pdtsc_090_1.01 # 33
+    elsif($spanstring =~ m/^, že předpisy dodržuju až někdy na tu rychlost$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        $subtree[4]->set_parent($subtree[8]);
+        $subtree[4]->set_deprel('advmod:emph');
+        $subtree[5]->set_parent($subtree[3]);
+        $subtree[5]->set_deprel('advmod');
+        $subtree[6]->set_parent($subtree[8]);
+        $subtree[6]->set_deprel('case');
     }
     # Make sure that no node has more than one subject. This is to prevent
     # validation errors in UD. However, instead of randomly picking a subject

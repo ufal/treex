@@ -186,8 +186,9 @@ sub revert_multiword_preps_to_auxp
                 # Disallow "a" in "a to", "a tím" etc. Allow "a" in "a la" (borrowed from French, acting like a compound preposition with nominative in Czech).
                 my $lcpf = lc($node->parent()->form());
                 my $lccf = lc($node->form());
-                next if($lccf =~ m/^(tj|tzn|a|i|to|tím|tedy|totiž|je(st)?|znamená|jako?|la|aneb|čili|či|např)$/i && !($lccf =~ m/^[aà]$/i && $lcpf =~ m/^la$/i));
+                next if($lccf =~ m/^(tj|tzn|a|i|sice|to|tím|tedy|totiž|je(st)?|znamená|jako?|la|aneb|čili|či|jenomže|např|nebo|neboli)$/i && !($lccf =~ m/^[aà]$/i && $lcpf =~ m/^la$/i));
                 next if($lccf eq 'na' && $lcpf eq 'na'); # simply repeated: "To je město na na severu Čech."
+                next if($lccf eq 'přes' && $lcpf eq 'přes'); # simply repeated: "dělá tam šéfa přes přes sklady nebo přes něco takového"
                 $node->set_deprel('AuxP');
             }
             # PDT-C 2.0 test amw cmpr94027_023 # 100
@@ -223,6 +224,7 @@ BEGIN
     # It is constant, thus prepared at compile time and available globally.
     @Treex::Block::HamleDT::CS::HarmonizePDTC::non_compound_subordinators =
     (
+        ['co', 'jako'],
         ['jako', 'čili'],
         ['že', 'že']
     );
@@ -1075,12 +1077,185 @@ sub fix_annotation_errors
             $subtree[1]->set_parent($subtree[4]);
         }
         # PDT-C 2.0 test tamw pdtsc_126_2.08 # 44
+        # PDT-C 2.0 train tamw pdtsc_124_3.08 # 33
         elsif($spanstring =~ m/^, buď přírodní , nebo obalené$/i)
         {
             my @subtree = $self->get_node_subtree($node);
             $subtree[1]->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'coor'});
             $subtree[1]->set_tag('J^-------------');
             $subtree[1]->set_lemma('buď');
+        }
+        elsif($spanstring =~ m/^buď pražské , nebo středočeské$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'coor'});
+            $subtree[0]->set_tag('J^-------------');
+            $subtree[0]->set_lemma('buď');
+        }
+        # PDT-C 2.0 train tamw pdtsc_007_1.02 # 18
+        # Unfinished sentence, preposition without argument, Adv will be converted better than AuxP.
+        elsif($spanstring =~ m/^, kterou jste před$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[3]->set_deprel('Adv');
+        }
+        # PDT-C 2.0 train tamw pdtsc_032_2.04 # 21
+        # I am not sure if this is an error from the PDT perspective but attaching the parenthesis to "alkoholik" rather than "nebyl" should help the conversion to UD.
+        elsif($spanstring =~ m/^nebyl jsem žádný alkoholik , pivo jsem nikdy v životě nepil , a dodneška nejsem \.$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[10]->set_parent($subtree[3]);
+        }
+        # PDT-C 2.0 train tamw pdtsc_036_2.01 # 30
+        # Unfinished sentence, preposition without argument, Atr will be converted better than AuxP.
+        elsif($spanstring =~ m/^na odvoz do$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_deprel('Atr');
+        }
+        # PDT-C 2.0 train tamw pdtsc_053_2.06 # 40
+        elsif($spanstring =~ m/^nevím jestli bych letos$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # It is ellipsis but to convert it to UD, we should hide the ExD annotation.
+            $subtree[2]->set_deprel('Obj');
+            $subtree[2]->set_is_extra_dependency(undef);
+            $subtree[3]->set_parent($subtree[2]);
+            $subtree[3]->set_is_extra_dependency(undef);
+        }
+        # PDT-C 2.0 train tamw pdtsc_059_2.09 # 8
+        elsif($spanstring =~ m/^vlastně jen tak šup sem , šup tam , hadrem otřela šatnu a už si tam četla nebo pletla \.$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[12]->set_parent($node->parent());
+            $subtree[12]->set_is_member(undef);
+            $subtree[19]->set_parent($subtree[12]);
+            $subtree[0]->set_parent($subtree[12]);
+            $subtree[0]->set_is_member(undef);
+            $subtree[0]->set_is_extra_dependency(undef);
+            $subtree[2]->set_parent($subtree[10]);
+            $subtree[3]->set_parent($subtree[2]);
+            $subtree[3]->set_deprel('Adv');
+            $subtree[3]->set_is_member(undef);
+            $subtree[3]->set_is_extra_dependency(undef);
+            $subtree[4]->set_deprel('Adv');
+            $subtree[6]->set_deprel('Adv');
+            $subtree[7]->set_parent($subtree[6]);
+            $subtree[7]->set_deprel('Adv');
+            $subtree[8]->set_parent($subtree[3]);
+            $subtree[8]->set_deprel('AuxX');
+        }
+        # PDT-C 2.0 train tamw pdtsc_063_2.09 # 11
+        elsif($spanstring =~ m/^letí se letadlem a co kdybychom spadli/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_deprel('Pred');
+            $subtree[4]->set_is_extra_dependency(undef);
+            $subtree[5]->set_parent($subtree[4]);
+            $subtree[5]->set_is_member(undef);
+            $subtree[5]->set_is_extra_dependency(undef);
+            $subtree[6]->set_deprel('Adv');
+            $subtree[6]->set_is_extra_dependency(undef);
+        }
+        # PDT-C 2.0 train tamw pdtsc_064_2.06 # 42
+        elsif($spanstring =~ m/^bla bla bla$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_deprel('Atr');
+            $subtree[1]->set_deprel('Atr');
+        }
+        # PDT-C 2.0 train tamw pdtsc_067_3.01 # 32
+        elsif($spanstring =~ m/^osmi metrové$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_deprel('Atr');
+        }
+        # PDT-C 2.0 train tamw pdtsc_073_3.15 # 7
+        elsif($spanstring =~ m/^se nepůjdu tam někde klanět/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_parent($node->parent());
+            $subtree[1]->set_deprel('Obj');
+            $subtree[4]->set_parent($subtree[1]);
+            $subtree[4]->set_deprel('Obj');
+        }
+        # PDT-C 2.0 train tamw pdtsc_073_3.17 # 1
+        elsif($spanstring =~ m/^, už co by jako mazák$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_parent($subtree[5]);
+            $subtree[2]->set_parent($subtree[5]);
+            $subtree[2]->set_deprel('AuxC');
+            $subtree[3]->set_parent($subtree[2]);
+            $subtree[3]->set_deprel('AuxY');
+        }
+        # PDT-C 2.0 train tamw pdtsc_087_3.06 # 3
+        elsif($spanstring =~ m/^, když jsem se$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_deprel('Adv');
+            $subtree[2]->set_is_extra_dependency(undef);
+            $subtree[3]->set_parent($subtree[2]);
+            $subtree[3]->set_deprel('AuxT');
+            $subtree[3]->set_is_extra_dependency(undef);
+        }
+        # PDT-C 2.0 train tamw pdtsc_087_3.08 # 13
+        elsif($spanstring =~ m/^on jako švec a ona normálně z jižních čech z malého hospodářství/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_parent($subtree[0]);
+            $subtree[1]->set_deprel('AuxC');
+            $subtree[1]->set_is_member(undef);
+            $subtree[1]->set_is_extra_dependency(undef);
+            $subtree[3]->set_deprel('Coord');
+            $subtree[5]->set_parent($subtree[4]);
+            $subtree[5]->set_deprel('Adv');
+            $subtree[5]->set_is_member(undef);
+            $subtree[5]->set_is_extra_dependency(undef);
+            $subtree[6]->set_parent($subtree[4]);
+            $subtree[6]->set_deprel('AuxP');
+            $subtree[6]->set_is_member(undef);
+            $subtree[6]->set_is_extra_dependency(undef);
+            $subtree[9]->set_parent($subtree[4]);
+            $subtree[9]->set_deprel('AuxP');
+            $subtree[9]->set_is_member(undef);
+            $subtree[9]->set_is_extra_dependency(undef);
+        }
+        # PDT-C 2.0 train tamw pdtsc_091_3.03 # 30
+        elsif($spanstring =~ m/^jsem se potom cvičení , nechci říct věnovala , ale cvičila jsem/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_parent($subtree[7]);
+            $subtree[0]->set_deprel('AuxV');
+            $subtree[0]->set_is_member(undef);
+            $subtree[0]->set_is_extra_dependency(undef);
+            $subtree[1]->set_parent($subtree[7]);
+            $subtree[1]->set_deprel('AuxT');
+            $subtree[1]->set_is_member(undef);
+            $subtree[1]->set_is_extra_dependency(undef);
+            $subtree[2]->set_parent($subtree[7]);
+            $subtree[2]->set_deprel('Adv');
+            $subtree[2]->set_is_member(undef);
+            $subtree[2]->set_is_extra_dependency(undef);
+            $subtree[7]->set_parent($subtree[9]);
+            $subtree[7]->set_deprel('Adv');
+            $subtree[7]->set_is_member(1);
+            $subtree[7]->set_is_extra_dependency(undef);
+            $subtree[3]->set_parent($subtree[7]);
+            $subtree[3]->set_deprel('Obj');
+            $subtree[3]->set_is_member(undef);
+            $subtree[3]->set_is_extra_dependency(undef);
+            $subtree[5]->set_parent($subtree[7]);
+        }
+        # PDT-C 2.0 train tamw pdtsc_102_2.05 # 28
+        elsif($spanstring =~ m/^už samo o sobě$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_parent($node->parent());
+            $subtree[1]->set_deprel('Atv');
+            $subtree[0]->set_parent($subtree[1]);
+            $subtree[2]->set_parent($subtree[1]);
+            $subtree[3]->set_deprel('Atr');
         }
     }
 }

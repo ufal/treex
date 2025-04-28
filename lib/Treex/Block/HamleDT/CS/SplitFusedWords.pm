@@ -39,14 +39,14 @@ sub split_fused_words
     foreach my $node (@nodes)
     {
         my $parent = $node->parent();
-        if($node->form() =~ m/^(a|kdy)(bych|bys|by|bychom|byste)$/i)
+        if($node->form() =~ m/^(a|kdy)(bych|bys|by|bychom|bysme|byste)$/i)
         {
             my $w1 = $1;
             my $w2 = $2;
             $w1 =~ s/^(a)$/$1by/i;
             $w1 =~ s/^(kdy)$/$1ž/i;
             my ($pchar, $person, $nchar, $number);
-            if($w2 =~ m/^(bych|bychom)$/i)
+            if($w2 =~ m/^(bych|bychom|bysme)$/i)
             {
                 $pchar = '1';
                 $person = '1';
@@ -66,7 +66,7 @@ sub split_fused_words
                 $nchar = 'S';
                 $number = 'sing';
             }
-            elsif($w2 =~ m/^(bychom|byste)$/i)
+            elsif($w2 =~ m/^(bychom|bysme|byste)$/i)
             {
                 $nchar = 'P';
                 $number = 'plur';

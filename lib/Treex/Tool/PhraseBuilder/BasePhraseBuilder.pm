@@ -101,7 +101,6 @@ sub set_deprel
     my $self = shift;
     my $phrase = shift;
     my $id = shift;
-    my $map = $self->dialect();
     return $phrase->set_deprel($self->map_deprel($id));
 }
 
@@ -864,7 +863,10 @@ sub detect_prague_apposition
                 # We want to make it normal punctuation instead.
                 # (Note that we cannot recognize punctuation by dependency label in this case.
                 # It will be labeled 'ExD', not 'AuxX' or 'AuxG'.)
-                if($d->node()->is_punctuation() && $d->node()->is_leaf())
+                # (Also note that $d->node()->is_leaf() may not give us the correct result
+                # if the punctuation was originally a leaf but now it is the new head of
+                # nested coordination. We must use $d->is_terminal() instead.)
+                if($d->node()->is_punctuation() && $d->is_terminal())
                 {
                     $d->set_is_member(undef);
                     push(@punctuation, $d);
@@ -967,6 +969,11 @@ sub detect_prague_apposition
                     }
                 }
             }
+        }
+        else
+        {
+            log_warn(sprintf("Apposition with only one member: '%s'", $head_conjunct->node()->form()));
+            log_warn(sprintf("Shared dependents: '%s'", join(' ', map {$_->node()->form()} (@sdependents))));
         }
     }
     return $phrase;
