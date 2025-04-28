@@ -1257,6 +1257,84 @@ sub fix_annotation_errors
             $subtree[2]->set_parent($subtree[1]);
             $subtree[3]->set_deprel('Atr');
         }
+        # PDT-C 2.0 train tamw pdtsc_130_3.08 # 16
+        elsif($spanstring =~ m/^: " vy půjdete dělat \. "$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[3]->set_parent($node->parent());
+            $subtree[3]->set_deprel('Obj');
+            $subtree[0]->set_parent($subtree[3]);
+            $subtree[1]->set_parent($subtree[3]);
+            $subtree[2]->set_parent($subtree[3]);
+            $subtree[4]->set_parent($subtree[3]);
+            $subtree[4]->set_deprel('Obj');
+            $subtree[4]->set_is_extra_dependency(undef);
+            $subtree[5]->set_parent($subtree[3]);
+            $subtree[6]->set_parent($subtree[3]);
+        }
+        # PDT-C 2.0 train tamw pdtsc_132_2.03 # 17
+        elsif($spanstring =~ m/^víc štěstí než$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_parent($subtree[1]);
+            $subtree[0]->set_deprel('Atr');
+            $subtree[2]->set_parent($subtree[0]);
+            $subtree[2]->set_deprel('Adv');
+        }
+        # PDT-C 2.0 train tamw pdtsc_134_3.07 # 47
+        elsif($spanstring =~ m/^tím , že jsme$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[3]->set_deprel('Atr');
+            $subtree[3]->set_is_extra_dependency(undef);
+        }
+        # PDT-C 2.0 train tamw pdtsc_138_3.09 # 14
+        elsif($spanstring =~ m/^v lese takhle když \. \. \. , tak \. \. \.$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            foreach my $sn (@subtree)
+            {
+                $sn->set_is_member(undef);
+                $sn->set_is_extra_dependency(undef);
+            }
+            $subtree[8]->set_parent($node->parent());
+            $subtree[8]->set_deprel('Pred');
+            for(my $i = 9; $i <= 11; $i++)
+            {
+              $subtree[$i]->set_parent($subtree[8]);
+              $subtree[$i]->set_deprel('AuxK');
+            }
+            $subtree[0]->set_parent($subtree[8]);
+            $subtree[0]->set_deprel('AuxP');
+            $subtree[1]->set_parent($subtree[0]);
+            $subtree[1]->set_deprel('Adv');
+            $subtree[2]->set_parent($subtree[8]);
+            $subtree[2]->set_deprel('Adv');
+            $subtree[3]->set_parent($subtree[8]);
+            $subtree[3]->set_deprel('Adv');
+            $subtree[7]->set_parent($subtree[3]);
+        }
+        # PDT-C 2.0 train tamw pdtsc_143_3.03 # 23
+        elsif($spanstring =~ m/^po dobu , co tam bude sedět a s pány klábosit nebo hrát ,$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_parent($node->parent());
+            $subtree[0]->set_deprel('AuxP');
+            $subtree[1]->set_parent($subtree[0]);
+            $subtree[1]->set_deprel('Adv');
+            $subtree[7]->set_parent($subtree[1]);
+            $subtree[7]->set_deprel('Coord');
+            $subtree[2]->set_parent($subtree[7]);
+            $subtree[2]->set_deprel('AuxX');
+            $subtree[3]->set_parent($subtree[7]);
+            $subtree[3]->set_deprel('AuxC');
+        }
+        # PDT-C 2.0 train tamw pdtsc_143_3.10 # 9
+        elsif($spanstring =~ m/^au - pairka$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_deprel('Atr');
+        }
     }
 }
 

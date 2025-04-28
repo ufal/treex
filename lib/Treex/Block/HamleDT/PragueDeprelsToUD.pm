@@ -299,7 +299,8 @@ sub convert_deprels
             ###!!! Úroda byla v tomto roce o mnoho lepší než loni.
             ###!!! There should be obl(lepší, roce) but nmod(lepší, mnoho).
             # Adposition leads to 'obl' because of preposition stranding in languages like English (i.e., it is promoted in ellipsis).
-            $deprel = $self->is_clausal_head($node) ? 'advcl' : ($node->is_noun() || $node->is_adjective() || $node->is_numeral() || $node->is_adposition() || $node->iset()->pos() eq '') ? 'obl' : 'advmod';
+            # Advcl: is_clausal_head() or subordinating conjunction (stranded in incomplete clauses).
+            $deprel = $self->is_clausal_head($node) || $node->is_subordinator() ? 'advcl' : ($node->is_noun() || $node->is_adjective() || $node->is_numeral() || $node->is_adposition() || $node->iset()->pos() eq '') ? 'obl' : 'advmod';
         }
         # Attribute of a noun: amod, nummod, nmod, acl
         elsif($deprel eq 'Atr')

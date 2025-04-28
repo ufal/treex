@@ -46,6 +46,7 @@ sub process_atree
     $self->raise_dependents_of_quantifiers($root);
     $self->change_case_to_mark_under_verb($root);
     $self->dissolve_chains_of_auxiliaries($root);
+    $self->raise_children_of_fixed($root);
     ###!!! The following method removes symptoms but we may want to find and remove the cause.
     $self->fix_multiple_subjects($root);
     $self->relabel_subordinate_clauses($root);
@@ -489,6 +490,27 @@ sub dissolve_chains_of_auxiliaries
         # Thus we must check whether the deprel is aux (or aux:pass); it is not important whether the UPOS tag is AUX.
         # We also cannot dissolve the chain if the grandparent is root.
         while($node->deprel() =~ m/^(aux|cop)(:|$)/ && $node->parent()->deprel() =~ m/^(aux|cop)(:|$)/ && !$node->parent()->parent()->is_root())
+        {
+            $node->set_parent($node->parent()->parent());
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixed expressions rarely have non-fixed children but if they do, then the
+# children must be attached to the head of the fixed expression.
+#------------------------------------------------------------------------------
+sub raise_children_of_fixed
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # No need for recursion because there should not be chains of fixed relations.
+        if($node->deprel() !~ m/^root(:|$)/ && $node->parent()->deprel() =~ m/^fixed(:|$)/)
         {
             $node->set_parent($node->parent()->parent());
         }

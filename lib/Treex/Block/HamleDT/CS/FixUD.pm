@@ -1660,6 +1660,14 @@ sub fix_fixed_expressions
             }
         }
     }
+    foreach my $node (@nodes)
+    {
+        # No need for recursion because there should not be chains of fixed relations.
+        if($node->deprel() !~ m/^root(:|$)/ && $node->parent()->deprel() =~ m/^fixed(:|$)/)
+        {
+            $node->set_parent($node->parent()->parent());
+        }
+    }
 }
 
 
