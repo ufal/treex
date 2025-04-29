@@ -78,14 +78,19 @@ sub _build_mapping($self) {
                 && $mapping{$current_id}{umr_id} ne $umr_id;
             $mapping{$current_id}{umr_id} = $umr_id;
 
-        } elsif (my $relation = $row->[4] || $row->[3]) {
-            my ($functor) = $row->[1] =~ /^\??([^:]+)/;
-            log_warn("Ambiguous mapping $mapping{$current_id}{umr_id}"
-                     . " $current_id $functor:"
-                     . " $relation/$mapping{$current_id}{$functor}!")
-                if exists $mapping{$current_id}{$functor}
-                && $mapping{$current_id}{$functor} ne $relation;
-            $mapping{$current_id}{$functor} = $relation;
+        } else {
+            my $relation = $row->[4];
+            $relation = $row->[3] if ! defined $relation
+                                  || $relation !~ /^\??(?:ARG(?:\d|m-\w{3}))$/;
+            if ($relation) {
+                my ($functor) = $row->[1] =~ /^\??([^:]+)/;
+                log_warn("Ambiguous mapping $mapping{$current_id}{umr_id}"
+                         . " $current_id $functor:"
+                         . " $relation/$mapping{$current_id}{$functor}!")
+                    if exists $mapping{$current_id}{$functor}
+                    && $mapping{$current_id}{$functor} ne $relation;
+                $mapping{$current_id}{$functor} = $relation;
+            }
         }
     }
     close $self->_csv;
