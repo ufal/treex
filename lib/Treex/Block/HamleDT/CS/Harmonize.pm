@@ -317,6 +317,12 @@ sub fix_morphology
                 $node->iset()->set('prontype', 'neg');
             }
         }
+        # 'ti' in '40-ti megabytovým pevným diskem' currently comes out as ADJ with NumType and NumForm, which s wrong. Get rid of the bad features. ###!!! We should fix Interset instead.
+        if($node->is_adjective() && $node->is_cardinal())
+        {
+            $node->iset()->clear_numtype();
+            $node->iset()->clear_numform();
+        }
         # Mark the verb 'být' as auxiliary regardless of context. In most contexts,
         # it is at least a copula (AUX in UD). Only in purely existential sentences
         # (without location) it will be the root of the sentence. But it is not

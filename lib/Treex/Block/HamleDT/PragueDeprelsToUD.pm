@@ -552,7 +552,14 @@ sub convert_deprels
             # Index Thomisticus examples: igitur (therefore), enim (indeed), unde (whence), sic (so, thus), ergo (therefore).
             elsif($parent->is_verb() && !$node->is_coordinator())
             {
-                $deprel = 'advmod';
+                if($node->is_verb())
+                {
+                    $deprel = 'compound';
+                }
+                else
+                {
+                    $deprel = 'advmod';
+                }
             }
             # New in PDT-C 2.0 (see also https://github.com/UniversalDependencies/UD_Czech-PDT/issues/15):
             # Numeric part of "5 x", attached to the "krát" part.

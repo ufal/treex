@@ -186,7 +186,7 @@ sub revert_multiword_preps_to_auxp
                 # Disallow "a" in "a to", "a tím" etc. Allow "a" in "a la" (borrowed from French, acting like a compound preposition with nominative in Czech).
                 my $lcpf = lc($node->parent()->form());
                 my $lccf = lc($node->form());
-                next if($lccf =~ m/^(tj|tzn|a|i|sice|to|tím|tedy|totiž|je(st)?|znamená|jako?|la|aneb|čili|či|jenomže|např|nebo|neboli)$/i && !($lccf =~ m/^[aà]$/i && $lcpf =~ m/^la$/i));
+                next if($lccf =~ m/^(tj|tzn|a|i|sice|to|tím|tedy|totiž|je(st)?|znamená|jako?|la|aneb|čili|či|jenomže|li|např|nebo|neboli)$/i && !($lccf =~ m/^[aà]$/i && $lcpf =~ m/^la$/i));
                 next if($lccf eq 'na' && $lcpf eq 'na'); # simply repeated: "To je město na na severu Čech."
                 next if($lccf eq 'přes' && $lcpf eq 'přes'); # simply repeated: "dělá tam šéfa přes přes sklady nebo přes něco takového"
                 $node->set_deprel('AuxP');
@@ -226,6 +226,7 @@ BEGIN
     (
         ['co', 'jako'],
         ['jako', 'čili'],
+        ['tak', 'jak'],
         ['že', 'že']
     );
 }
@@ -1334,6 +1335,219 @@ sub fix_annotation_errors
         {
             my @subtree = $self->get_node_subtree($node);
             $subtree[0]->set_deprel('Atr');
+        }
+        # PDT-C 2.0 train tamw wsj0312.cz # 3
+        elsif($spanstring =~ m/^s pro a proti$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_deprel('Atr');
+            $subtree[3]->set_deprel('Atr');
+        }
+        # PDT-C 2.0 train tamw wsj0336.cz # 3
+        elsif($spanstring =~ m/^, že budou$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_deprel('Sb');
+            $subtree[2]->set_is_extra_dependency(undef);
+        }
+        # PDT-C 2.0 train tamw wsj0401.cz # 6
+        elsif($spanstring =~ m/^uvnitř i vně evropského společenství/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_parent($subtree[1]);
+            $subtree[4]->set_deprel('Atr');
+            $subtree[4]->set_is_member(undef);
+        }
+        # PDT-C 2.0 train tamw wsj0476.cz # 1
+        elsif($spanstring =~ m/^tak , jak/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            if($node == $subtree[2])
+            {
+                $subtree[0]->set_parent($node->parent());
+                $subtree[0]->set_deprel('Adv');
+                $subtree[2]->set_parent($subtree[0]);
+            }
+        }
+        # PDT-C 2.0 train tamw wsj0529.cz # 6
+        elsif($spanstring =~ m/^velkými vývozy kanadského plynu do$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_deprel('Atr');
+        }
+        # PDT-C 2.0 train tamw wsj0667.cz # 6
+        elsif($spanstring =~ m/^, k níž došlo v$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_deprel('Adv');
+        }
+        # PDT-C 2.0 train tamw wsj0812.cz # 2
+        elsif($spanstring =~ m/^ve srovnání se 40 v roce 1986/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_parent($subtree[2]);
+            $subtree[1]->set_parent($subtree[2]);
+        }
+        # PDT-C 2.0 train tamw wsj0984.cz # 24
+        elsif($spanstring =~ m/^utratil . pět až šest tisíc dolarů \. \. \./i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[7]->set_parent($subtree[0]);
+            $subtree[8]->set_parent($subtree[0]);
+            $subtree[9]->set_parent($subtree[0]);
+        }
+        # PDT-C 2.0 train tamw wsj1052.cz # 4
+        elsif($spanstring =~ m/^, kromě jiného , aby financovala/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_parent($subtree[5]);
+        }
+        # PDT-C 2.0 train tamw wsj1286.cz # 34
+        elsif($spanstring =~ m/^jsou nebo nejsou dostatečně honorováni$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_deprel('Atr');
+            $subtree[0]->set_is_extra_dependency(undef);
+        }
+        # PDT-C 2.0 train tamw wsj1323.cz # 18
+        elsif($spanstring =~ m/^(ťuk|ťap) -$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_deprel('Atr');
+        }
+        # PDT-C 2.0 train tamw wsj1382.cz # 3
+        elsif($spanstring =~ m/^odhadované a skutečné výsledky , které se týkají ztrát , jsou vynechány/i && $node->form() eq 'jsou')
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[11]->set_parent($node->parent());
+            $subtree[11]->set_deprel('Pred');
+            $subtree[3]->set_parent($subtree[11]);
+            $subtree[10]->set_parent($subtree[11]);
+            $subtree[10]->set_deprel('AuxV');
+        }
+        # PDT-C 2.0 train tamw wsj1502.cz # 27
+        elsif($spanstring =~ m/^, jak to jen jde .$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_parent($subtree[4]);
+            $subtree[1]->set_deprel('Adv');
+            $subtree[1]->set_tag('Db-------------');
+            $subtree[1]->iset()->set_hash({'pos' => 'adv'});
+        }
+        # PDT-C 2.0 train tamw wsj1509.cz # 2
+        elsif($spanstring =~ m/^, při níž společnost daimler - benz získá 50\.01 % z$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[10]->set_parent($subtree[9]);
+            $subtree[10]->set_deprel('Adv');
+        }
+        # PDT-C 2.0 train tamw wsj1699.cz # 24
+        elsif($spanstring =~ m/^jdou zde zahrnuta obydlí/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->iset()->set_typo('yes'); ###!!! We should also add 'CorrectForm=Jsou' to MISC.
+            $subtree[0]->set_lemma('být');
+            $subtree[0]->set_tag('AUX');
+            $subtree[0]->iset()->set_verbtype('aux');
+        }
+        # PDT-C 2.0 train tamw wsj1743.cz # 36
+        elsif($spanstring =~ m/^chiang kai - šekovy$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[3]->set_tag('AUFS2M---------'); # on input it has SUFS2M---------
+            $subtree[3]->iset()->set('pos' => 'adj');
+        }
+        # PDT-C 2.0 train tamw wsj1784.cz # 1
+        elsif($spanstring =~ m/^, v souladu s očekáváním analytiků i se zisky/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_parent($subtree[3]);
+            $subtree[1]->set_deprel('AuxP');
+            $subtree[2]->set_parent($subtree[3]);
+            $subtree[2]->set_deprel('AuxP');
+        }
+        # PDT-C 2.0 train tamw wsj1803.cz # 44
+        elsif($spanstring =~ m/^do a ze san franciska$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_parent($subtree[1]);
+            $subtree[4]->set_deprel('Atr');
+            $subtree[4]->set_is_member(undef);
+        }
+        # PDT-C 2.0 train tamw wsj1870.cz # 27
+        elsif($spanstring =~ m/^uvnitř i vně oblasti zálivu$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[3]->set_parent($subtree[1]);
+            $subtree[3]->set_deprel('Atr');
+            $subtree[3]->set_is_member(undef);
+        }
+        # PDT-C 2.0 train tamw wsj2011.cz # 11
+        elsif($spanstring =~ m/^na univerzitě v$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_deprel('Atr');
+        }
+        # PDT-C 2.0 train tamw wsj2041.cz # 5
+        elsif($spanstring =~ m/^hlasem pro nebo proti gándhímu a jeho/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[5]->set_parent($subtree[2]);
+        }
+        # PDT-C 2.0 train tamw wsj2055.cz # 17
+        elsif($spanstring =~ m/^při poslední přehlídce v$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[3]->set_deprel('Atr');
+        }
+        # PDT-C 2.0 train tamw wsj2093.cz # 9
+        elsif($spanstring =~ m/^, kdy dolar klesl na dno v$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[6]->set_deprel('Adv');
+        }
+        # PDT-C 2.0 dev tamw wsj0142.cz # 58
+        elsif($spanstring =~ m/^[0-9]+ % v$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_deprel('Atr');
+        }
+        # PDT-C 2.0 dev tamw wsj0155.cz # 54
+        elsif($spanstring =~ m/^s dodávkami 1.5 milionu tun v$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[5]->set_deprel('Atr');
+        }
+        # PDT-C 2.0 dev tamw wsj2232.cz # 51
+        elsif($spanstring =~ m/^spousta obchodníků v jeho okolí jako by překypovala/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[6]->set_parent($subtree[7]);
+            $subtree[6]->set_deprel('AuxV');
+        }
+        # PDT-C 2.0 dev tamw wsj2264.cz # 9
+        elsif($spanstring =~ m/^" skutečného , autentického zástupce " namibijského lidu v$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[8]->set_deprel('Atr');
+        }
+        # PDT-C 2.0 dev tamw wsj2413.cz # 21
+        elsif($spanstring =~ m/^, který rovněž nechtěl být jmenován$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[3]->set_parent($node->parent());
+            $subtree[3]->set_deprel($node->deprel());
+            $subtree[0]->set_parent($subtree[3]);
+            $subtree[1]->set_parent($subtree[3]);
+            $subtree[5]->set_parent($subtree[3]);
+            $subtree[5]->set_deprel('Obj');
+        }
+        # PDT-C 2.0 dev tamw wsj0038.cz # 1
+        elsif($spanstring =~ m/^na nakup dluhopisů$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_tag('NNIS4-----A----');
+            $subtree[1]->iset()->set_hash({'pos' => 'noun', 'nountype' => 'com', 'gender' => 'masc', 'animacy' => 'inan', 'case' => 'acc'});
         }
     }
 }

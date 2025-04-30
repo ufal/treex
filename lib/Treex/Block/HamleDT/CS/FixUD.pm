@@ -1295,18 +1295,23 @@ BEGIN
         ['à la',               'always',  'a la',               'X X',                 'F%------------- F%-------------',                 'foreign=yes|extpos=adp foreign=yes',                                                                                                                   '0:case 1:fixed'],
         ['na téma',            'fixed',   'na téma',            'ADP NOUN',            'RR--4---------- NNNS4-----A----',                 'pos=adp|adpostype=prep|case=acc|extpos=adp pos=noun|nountype=com|gender=neut|number=sing|case=acc',                                                    '0:case 1:fixed'],
         ['na způsob',          'fixed',   'na způsob',          'ADP NOUN',            'RR--4---------- NNIS4-----A----',                 'pos=adp|adpostype=prep|case=acc|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=acc',                                       '0:case 1:fixed'],
+        ['s cílem',            'fixed',   's cíl',              'ADP NOUN',            'RR--7---------- NNIS7-----A----',                 'pos=adp|adpostype=prep|case=ins|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=ins',                                       '0:case 1:fixed'],
         ['s ohledem na',       'always',  's ohled na',         'ADP NOUN ADP',        'RR--7---------- NNIS7-----A---- RR--4----------', 'pos=adp|adpostype=prep|case=ins|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=ins pos=adp|adpostype=prep|case=acc',       '0:case 1:fixed 1:fixed'],
         ['s výjimkou',         'fixed',   's výjimka',          'ADP NOUN',            'RR--7---------- NNFS7-----A----',                 'pos=adp|adpostype=prep|case=ins|extpos=adp pos=noun|nountype=com|gender=fem|number=sing|case=ins',                                                     '0:case 1:fixed'],
         ['v době',             'fixed',   'v doba',             'ADP NOUN',            'RR--6---------- NNFS6-----A----',                 'pos=adp|adpostype=prep|case=loc|extpos=adp pos=noun|nountype=com|gender=fem|number=sing|case=loc',                                                     '0:case 1:fixed'],
         ['v případě',          'fixed',   'v případ',           'ADP NOUN',            'RR--6---------- NNIS6-----A----',                 'pos=adp|adpostype=prep|case=loc|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc',                                       '0:case 1:fixed'],
+        ['ve smyslu',          'fixed',   'v smysl',            'ADP NOUN',            'RV--6---------- NNIS6-----A----',                 'pos=adp|adpostype=voc|case=loc|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc',                                        '0:case 1:fixed'],
         ['z hlediska',         'fixed',   'z hledisko',         'ADP NOUN',            'RR--2---------- NNNS2-----A----',                 'pos=adp|adpostype=prep|case=gen|extpos=adp pos=noun|nountype=com|gender=neut|number=sing|case=gen',                                                    '0:case 1:fixed'],
+        ['za účelem',          'fixed',   'za účel',            'ADP NOUN',            'RR--7---------- NNIS7-----A----',                 'pos=adp|adpostype=prep|case=ins|extpos=adp pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=ins',                                       '0:case 1:fixed'],
         # Multiword subordinators.
-        ['i když',             'always',  'i když',             'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub', '0:mark 1:fixed'],
-        ['i pokud',            'always',  'i pokud',            'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub', '0:mark 1:fixed'],
-        ['jestli že',          'always',  'jestli že',          'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub|extpos=sconj pos=conj|conjtype=sub',  '0:mark 1:fixed'],
-        ['než - li',           'always',  'než - li',           'SCONJ PUNCT SCONJ',   'J,------------- Z:------------- J,-------------', 'pos=conj|conjtype=sub|extpos=sconj pos=punc pos=conj|conjtype=sub', '0:mark 3:punct 1:fixed'],
-        ['zatím co',           'always',  'zatím co',           'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=sconj pos=adv',                              '0:mark 1:fixed'],
-        ['zda - li',           'always',  'zda - li',           'SCONJ PUNCT SCONJ',   'J,------------- Z:------------- J,-------------', 'pos=conj|conjtype=sub|extpos=sconj pos=punc pos=conj|conjtype=sub', '0:mark 3:punct 1:fixed'],
+        ['i když',             'always',  'i když',             'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub',                                        '0:mark 1:fixed'],
+        ['i pokud',            'always',  'i pokud',            'CCONJ SCONJ',         'J^------------- J,-------------',                 'pos=conj|conjtype=coor|extpos=sconj pos=conj|conjtype=sub',                                        '0:mark 1:fixed'],
+        ['jestli že',          'always',  'jestli že',          'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub|extpos=sconj pos=conj|conjtype=sub',                                         '0:mark 1:fixed'],
+        ['než - li',           'always',  'než - li',           'SCONJ PUNCT SCONJ',   'J,------------- Z:------------- J,-------------', 'pos=conj|conjtype=sub|extpos=sconj pos=punc pos=conj|conjtype=sub',                                '0:mark 3:punct 1:fixed'],
+        ['pod záminkou',       'fixed',   'pod záminka',        'ADP NOUN',            'RR--7---------- NNFS7-----A----',                 'pos=adp|adpostype=prep|case=ins|extpos=adp pos=noun|nountype=com|gender=fem|number=sing|case=ins', '0:mark 1:fixed'],
+        ['poté co',            'always',  'poté co',            'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=sconj pos=adv',                                                                     '0:mark 1:fixed'],
+        ['zatím co',           'always',  'zatím co',           'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=sconj pos=adv',                                                                     '0:mark 1:fixed'],
+        ['zda - li',           'always',  'zda - li',           'SCONJ PUNCT SCONJ',   'J,------------- Z:------------- J,-------------', 'pos=conj|conjtype=sub|extpos=sconj pos=punc pos=conj|conjtype=sub',                                '0:mark 3:punct 1:fixed'],
         # Multiword coordinators.
         # There is a dedicated function fix_a_to() (called from fix_constructions() before coming here), which makes sure that the right instances of "a sice" and "a to" are annotated as fixed expressions.
         ['a sice',             'always',  'a sice',             'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
@@ -1352,6 +1357,7 @@ BEGIN
         ['hlavně pokud',       'fixed',   'hlavně pokud',       'ADV SCONJ',           'Dg-------1A---- J,-------------',                 'pos=adv|polarity=pos|degree=pos pos=conj|conjtype=sub', '0:advmod 0:mark'],
         ['hned co',            'always',  'hned co',            'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
         ['hned jak',           'always',  'hned jak',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '-1:advmod -1:mark'],
+        ['jak jen',            'always',  'jak jen',            'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '-1:advmod -1:mark'],
         ['jako když',          'always',  'jako když',          'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',   '0:mark 0:mark'],
         ['jako kupříkladu',    'always',  'jako kupříkladu',    'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
         ['jako na',            'fixed',   'jako na',            'SCONJ ADP',           'J,------------- RR--4----------',                 'pos=conj|conjtype=sub pos=adp|adpostype=prep|case=acc', '0:mark 0:case'],
@@ -2779,6 +2785,15 @@ sub fix_annotation_errors
         $subtree[5]->set_deprel('advmod');
         $subtree[6]->set_parent($subtree[8]);
         $subtree[6]->set_deprel('case');
+    }
+    # PDT-C 2.0 train tamw wsj0595.cz # 19
+    elsif($spanstring =~ m/^a to i když$/i)
+    {
+        my @subtree = $self->get_node_subtree($node);
+        if($node == $subtree[0])
+        {
+            $subtree[2]->set_parent($node->parent());
+        }
     }
     # Make sure that no node has more than one subject. This is to prevent
     # validation errors in UD. However, instead of randomly picking a subject
