@@ -1309,7 +1309,7 @@ BEGIN
         ['jestli že',          'always',  'jestli že',          'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub|extpos=sconj pos=conj|conjtype=sub',                                         '0:mark 1:fixed'],
         ['než - li',           'always',  'než - li',           'SCONJ PUNCT SCONJ',   'J,------------- Z:------------- J,-------------', 'pos=conj|conjtype=sub|extpos=sconj pos=punc pos=conj|conjtype=sub',                                '0:mark 3:punct 1:fixed'],
         ['pod záminkou',       'fixed',   'pod záminka',        'ADP NOUN',            'RR--7---------- NNFS7-----A----',                 'pos=adp|adpostype=prep|case=ins|extpos=adp pos=noun|nountype=com|gender=fem|number=sing|case=ins', '0:mark 1:fixed'],
-        ['poté co',            'always',  'poté co',            'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=sconj pos=adv',                                                                     '0:mark 1:fixed'],
+        ['poté co',            'fixed',   'poté co',            'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=sconj pos=adv',                                                                     '0:mark 1:fixed'],
         ['zatím co',           'always',  'zatím co',           'ADV ADV',             'Db------------- Db-------------',                 'pos=adv|extpos=sconj pos=adv',                                                                     '0:mark 1:fixed'],
         ['zda - li',           'always',  'zda - li',           'SCONJ PUNCT SCONJ',   'J,------------- Z:------------- J,-------------', 'pos=conj|conjtype=sub|extpos=sconj pos=punc pos=conj|conjtype=sub',                                '0:mark 3:punct 1:fixed'],
         # Multiword coordinators.
@@ -1357,7 +1357,7 @@ BEGIN
         ['hlavně pokud',       'fixed',   'hlavně pokud',       'ADV SCONJ',           'Dg-------1A---- J,-------------',                 'pos=adv|polarity=pos|degree=pos pos=conj|conjtype=sub', '0:advmod 0:mark'],
         ['hned co',            'always',  'hned co',            'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '0:advmod 0:mark'],
         ['hned jak',           'always',  'hned jak',           'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '-1:advmod -1:mark'],
-        ['jak jen',            'always',  'jak jen',            'ADV SCONJ',           'Db------------- J,-------------',                 'pos=adv pos=conj|conjtype=sub',                 '-1:advmod -1:mark'],
+        ['jak jen',            'always',  'jak jen',            'ADV PART',            'Db------------- TT-------------',                 'pos=adv pos=part',                              '-1:advmod -1:mark'],
         ['jako když',          'always',  'jako když',          'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',   '0:mark 0:mark'],
         ['jako kupříkladu',    'always',  'jako kupříkladu',    'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
         ['jako na',            'fixed',   'jako na',            'SCONJ ADP',           'J,------------- RR--4----------',                 'pos=conj|conjtype=sub pos=adp|adpostype=prep|case=acc', '0:mark 0:case'],

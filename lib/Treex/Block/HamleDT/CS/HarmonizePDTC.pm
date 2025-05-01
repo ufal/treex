@@ -1549,6 +1549,12 @@ sub fix_annotation_errors
             $subtree[1]->set_tag('NNIS4-----A----');
             $subtree[1]->iset()->set_hash({'pos' => 'noun', 'nountype' => 'com', 'gender' => 'masc', 'animacy' => 'inan', 'case' => 'acc'});
         }
+        # PDT-C 2.0 test tamw wsj2301.cz # 2
+        elsif($spanstring =~ m/^ach ano ,$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_deprel('Partl');
+        }
     }
 }
 
