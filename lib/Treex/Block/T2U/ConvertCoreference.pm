@@ -83,7 +83,9 @@ after 'process_document' => sub {
             next TANTE if grep $_->isa('Treex::Core::Node::Deleted'),
                           $unode, $uante;
 
-            $self->maybe_set($_, $unode, $tante) for qw( person number );
+            $self->maybe_set('person', $unode, $tante);
+            $self->maybe_set('number', $unode, $tante)
+                if $tnode->gram_sempos =~ /^n/ || 'entity' eq $unode->concept;
 
             # inter-sentential link
             if ($unode->root != $uante->root) {
