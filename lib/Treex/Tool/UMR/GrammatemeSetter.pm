@@ -34,7 +34,7 @@ requires qw{ tag_regex translate };
 }
 
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::T2U::GrammatemeSetter - a role to implement grammateme
 propagation over coreference based on grammatemes of the antecedent or its
