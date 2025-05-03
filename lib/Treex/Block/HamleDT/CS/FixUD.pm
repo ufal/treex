@@ -1340,6 +1340,7 @@ BEGIN
         ['až když',            'fixed',   'až když',            'PART SCONJ',          'TT------------- J,-------------',                 'pos=part pos=conj|conjtype=sub',                '0:advmod:emph 0:mark'],
         ###!!! We should disambiguate between "až na"+Case=Loc and "až na"+Case=Acc!
         ['až na',              'fixed',   'až na',              'PART ADP',            'TT------------- RR--4----------',                 'pos=part pos=adp|adpostype=prep|case=acc',      '0:advmod:emph 0:case'],
+        ['( až ) na',          'fixed',   '( až ) na',          'PUNCT PART PUNCT ADP','Z:------------- TT------------- Z:------------- RR--4----------', 'pos=punc pos=part pos=punc pos=adp|adpostype=prep|case=acc', '2:punct 0:advmod:emph 2:punct 0:case'],
         ###!!! We should disambiguate between "až o"+Case=Loc and "až o"+Case=Acc!
         ['až o',               'fixed',   'až o',               'PART ADP',            'TT------------- RR--4----------',                 'pos=part pos=adp|adpostype=prep|case=acc',      '0:advmod:emph 0:case'],
         ###!!! We should disambiguate between "až po"+Case=Loc and "až po"+Case=Acc!
