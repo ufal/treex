@@ -73,22 +73,36 @@ sub _build_mapping($self) {
                             . ($self->_by_id->{$frame_id}{word} // '-'));
             $current_id = $frame_id;
             my $umr_id = ($row->[0] =~ /^"(.*)"$/)[0];
-            log_warn("Already exists $current_id!")
+            log_warn("Already exists $current_id $umr_id!")
                 if exists $mapping{$current_id}
                 && $mapping{$current_id}{umr_id} ne $umr_id;
             $mapping{$current_id}{umr_id} = $umr_id;
 
-        } elsif (my $relation = $row->[4] || $row->[3]) {
-            my ($functor) = $row->[1] =~ /^\??([^:]+)/;
-            log_warn("Ambiguous mapping $mapping{$current_id}{umr_id}"
-                     . " $current_id $functor:"
-                     . " $relation/$mapping{$current_id}{$functor}!")
-                if exists $mapping{$current_id}{$functor}
-                && $mapping{$current_id}{$functor} ne $relation;
-            $mapping{$current_id}{$functor} = $relation;
+        } else {
+            my $relation = $row->[4];
+            $relation = $row->[3] if ! defined $relation
+                                  || $relation !~ /^\??(?:ARG(?:\d|m-\w{3}))$/;
+            if ($relation) {
+                my ($functor) = $row->[1] =~ /^(?:\?|ALT-)?([^:]+)/;
+                log_warn("Ambiguous mapping $mapping{$current_id}{umr_id}"
+                         . " $current_id $functor:"
+                         . " $relation/$mapping{$current_id}{$functor}!")
+                    if exists $mapping{$current_id}{$functor}
+                    && $mapping{$current_id}{$functor} ne $relation;
+                $mapping{$current_id}{$functor} = $relation;
+            }
         }
     }
     close $self->_csv;
+
+    for my $id (keys %mapping) {
+        my %relation;
+        ++$relation{$_} for values %{ $mapping{$id} };
+        for my $duplicate (grep $relation{$_} > 1, keys %relation) {
+            log_warn("Duplicate relation $duplicate in $id.");
+        }
+    }
+
     return \%mapping
 }
 

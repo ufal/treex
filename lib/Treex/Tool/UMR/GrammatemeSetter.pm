@@ -23,8 +23,9 @@ requires qw{ tag_regex translate };
             if (my $anode = $orig_node->get_lex_anode) {
                 my $tag = $self->tag_regex($gram);
                 ($value) = $anode->tag =~ $tag;
-                $value = $self->translate($gram, $value);
+                $value = $self->translate($gram, $value) if $value;
             }
+            return unless $value;
         }
         $value = $T2U{$gram}{$value};
         $unode->$set_attr($value) if $value;
@@ -33,7 +34,7 @@ requires qw{ tag_regex translate };
 }
 
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::T2U::GrammatemeSetter - a role to implement grammateme
 propagation over coreference based on grammatemes of the antecedent or its
