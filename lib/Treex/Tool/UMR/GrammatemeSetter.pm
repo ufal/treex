@@ -19,7 +19,9 @@ requires qw{ tag_regex translate };
 
         my $set_attr = "set_$IMPLEMENTATION{$gram}{attr}";
         my $value = $orig_node->${ \$IMPLEMENTATION{$gram}{gram} };
-        if (! $value) {
+        if (! $value
+            && ! grep $_->tfa, $orig_node->root->descendants # Not in PDT.
+        ) {
             if (my $anode = $orig_node->get_lex_anode) {
                 my $tag = $self->tag_regex($gram);
                 ($value) = $anode->tag =~ $tag;
