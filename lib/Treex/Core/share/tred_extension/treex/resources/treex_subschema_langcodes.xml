@@ -130,6 +130,7 @@
       <value>sa</value> <!-- Sanskrit -->
       <value>pra</value> <!-- Prakrit -->
       <value>pi</value> <!-- Pāli -->
+      <value>rmc</value> <!-- Central Romani -->
       <value>sd</value> <!-- Sindhi -->
       <value>pa</value> <!-- Punjabi -->
       <value>ur</value> <!-- Urdu -->
@@ -274,6 +275,7 @@
       <!-- Sino-Tibetan and Tai-Kadai languages -->
       <value>lzh</value> <!-- Classical Chinese -->
       <value>zh</value> <!-- Chinese -->
+      <value>wuu</value> <!-- Shanghainese -->
       <value>hak</value> <!-- Hakka -->
       <value>nan</value> <!-- Taiwanese -->
       <value>yue</value> <!-- Cantonese -->
@@ -286,6 +288,7 @@
       <value>dz</value> <!-- Dzongkha -->
       <value>prx</value> <!-- Purki -->
       <value>lus</value> <!-- Mizo -->
+      <value>nmf</value> <!-- Naga -->
       <!-- Austro-Asian languages -->
       <value>vi</value> <!-- Vietnamese -->
       <value>km</value> <!-- Khmer -->
@@ -342,6 +345,8 @@
       <value>usp</value> <!-- Uspanteko -->
       <value>pay</value> <!-- Pesh -->
       <value>bzd</value> <!-- Bribri -->
+      <value>arh</value> <!-- Ika -->
+      <value>sab</value> <!-- Bokota -->
       <value>apu</value> <!-- Apurinã -->
       <value>pad</value> <!-- Paumari -->
       <value>qu</value> <!-- Quechua -->
@@ -350,6 +355,7 @@
       <value>ay</value> <!-- Aymara -->
       <value>shp</value> <!-- Shipibo -->
       <value>bor</value> <!-- Bororo -->
+      <value>umo</value> <!-- Balatipone -->
       <value>jaa</value> <!-- Madi -->
       <value>xav</value> <!-- Xavante -->
       <value>kbc</value> <!-- Kadiweu -->
@@ -382,6 +388,7 @@
       <value>qfn</value> <!-- Frisian-Dutch (code-switching) -->
       <value>qhe</value> <!-- Hindi-English (code-switching) -->
       <value>qtd</value> <!-- Turkish-German (code-switching) -->
+      <value>qti</value> <!-- Turkish English (code-switching) -->
       <value>qte</value> <!-- Telugu-English (code-switching) -->
       <value>und</value> <!-- ISO 639-2 code for undetermined/unknown language -->
     </choice>
