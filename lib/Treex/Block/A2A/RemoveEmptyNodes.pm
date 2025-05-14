@@ -15,21 +15,25 @@ sub process_atree
     for(my $i = 0; $i <= $#nodes; $i++)
     {
         my $node = $nodes[$i];
-        # If the empty node is a leaf, removing it will not affect connectedness
-        # of the enhanced graph. If it is not a leaf, we may want to do something
-        # with the children first. However, at present we only issue a warning.
-        my @echildren = $node->get_enhanced_children();
-        if(scalar(@echildren) > 0)
+        if($node->is_empty())
         {
-            log_warning("Removing empty node that is not leaf will break integrity of the enhanced graph.");
-        }
-        # Remove reference to this node from the t-layer.
-        if(exists($node->wild()->{'tnode.rf'}))
-        {
-            my $tnode = $document->get_node_by_id($node->wild()->{'tnode.rf'});
-            if(defined($tnode))
+            # If the empty node is a leaf, removing it will not affect connectedness
+            # of the enhanced graph. If it is not a leaf, we may want to do something
+            # with the children first. However, at present we only issue a warning.
+            ###!!! There are too many such nodes. Printing hundreds of warnings is not helpful.
+            #my @echildren = $node->get_enhanced_children();
+            #if(scalar(@echildren) > 0)
+            #{
+            #    log_warn("Removing empty node that is not leaf will break integrity of the enhanced graph.");
+            #}
+            # Remove reference to this node from the t-layer.
+            if(exists($node->wild()->{'tnode.rf'}))
             {
-                delete($tnode->wild()->{'anode.rf'});
+                my $tnode = $document->get_node_by_id($node->wild()->{'tnode.rf'});
+                if(defined($tnode))
+                {
+                    delete($tnode->wild()->{'anode.rf'});
+                }
             }
             $node->remove();
             splice(@nodes, $i--, 1);
