@@ -15,17 +15,15 @@ sub process_atree
     for(my $i = 0; $i <= $#nodes; $i++)
     {
         my $node = $nodes[$i];
+        # Removing empty nodes could require adjustments in the enhanced dependencies
+        # that are encoded as wild attributes. Otherwise the function _normalize_ords_and_conllu_ids()
+        # below may fail with a fatal error. However, the reason why we are removing
+        # empty nodes is that the downstream application is not going to use
+        # (or even know how to use) the enhanced dependencies. So we can simply
+        # remove them from all nodes.
+        delete($node->wild()->{enhanced});
         if($node->is_empty())
         {
-            # If the empty node is a leaf, removing it will not affect connectedness
-            # of the enhanced graph. If it is not a leaf, we may want to do something
-            # with the children first. However, at present we only issue a warning.
-            ###!!! There are too many such nodes. Printing hundreds of warnings is not helpful.
-            #my @echildren = $node->get_enhanced_children();
-            #if(scalar(@echildren) > 0)
-            #{
-            #    log_warn("Removing empty node that is not leaf will break integrity of the enhanced graph.");
-            #}
             # Remove reference to this node from the t-layer.
             if(exists($node->wild()->{'tnode.rf'}))
             {
