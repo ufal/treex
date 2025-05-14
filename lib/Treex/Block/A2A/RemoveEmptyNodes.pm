@@ -33,7 +33,7 @@ sub process_atree
                     delete($tnode->wild()->{'anode.rf'});
                 }
             }
-            $node->remove();
+            $node->remove({'children' => 'rehang'});
             splice(@nodes, $i--, 1);
         }
     }

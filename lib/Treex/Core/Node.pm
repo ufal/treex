@@ -298,7 +298,7 @@ sub remove {
     # Remove the subtree from the document's indexing table
     my @to_remove = ( $self, $self->get_descendants );
     foreach my $node ( @to_remove) {
-        if ( defined $node->id ) {
+        if ( defined $node->id && defined $document ) {
             $document->_remove_references_to_node( $node );
             $document->index_node_by_id( $node->id, undef );
         }
