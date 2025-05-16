@@ -22,6 +22,10 @@ sub process_atree
         # (or even know how to use) the enhanced dependencies. So we can simply
         # remove them from all nodes.
         delete($node->wild()->{enhanced});
+    }
+    for(my $i = 0; $i <= $#nodes; $i++)
+    {
+        my $node = $nodes[$i];
         if($node->is_empty())
         {
             # Remove reference to this node from the t-layer.
