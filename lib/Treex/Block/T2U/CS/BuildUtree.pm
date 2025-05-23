@@ -41,4 +41,9 @@ This module implements actions depending on the lemmas and tags.
     }
 }
 
+sub is_morpho_negated {
+    my ($self, $anode) = @_;
+    return 'N' eq substr $anode->tag, 10, 1
+}
+
 __PACKAGE__->meta->make_immutable

@@ -326,10 +326,6 @@ sub add_tnode_to_unode
     return $unode
 }
 
-sub maybe_set { die 'Not implemented, language dependent!' }
-
-sub deduce_aspect { die 'Not implemented, language dependent!' }
-
 sub negated_with_missing_gram {
     my ($self, $tnode) = @_;
     my %gram ;
@@ -341,10 +337,15 @@ sub negated_with_missing_gram {
 
     log_debug("POLARITY guess on morph $tnode->{id}"),
             return 1
-        if 'N' eq substr $alex->tag, 10, 1;
+        if $self->is_morpho_negated($alex);
     return
 }
 
+sub maybe_set { die 'Not implemented, language dependent!' }
+
+sub deduce_aspect { die 'Not implemented, language dependent!' }
+
+sub is_morpho_negated { die 'Not implemented, language dependent!' }
 
 1;
 __END__
