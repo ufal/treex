@@ -83,8 +83,10 @@ after 'process_document' => sub {
             next TANTE if grep $_->isa('Treex::Core::Node::Deleted'),
                           $unode, $uante;
 
-            $self->maybe_set('person', $unode, $tante);
-            $self->maybe_set('number', $unode, $tante)
+            # TODO: This is wrong, we should check whether the source unode
+            # has refer-* and copy it if it has.
+            $self->maybe_set('person', $uante, $tnode);
+            $self->maybe_set('number', $uante, $tnode)
                 if $tnode->gram_sempos =~ /^n/ || 'entity' eq $unode->concept;
 
             # inter-sentential link
