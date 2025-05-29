@@ -317,6 +317,12 @@ sub fix_morphology
                 $node->iset()->set('prontype', 'neg');
             }
         }
+        # "Proto" can be a conjunction (discourse connective) or a demonstrative adverb.
+        # If it is attached as Adv but tagged as conjunction, change the tag to ADV.
+        elsif($node->is_conjunction() && $node->deprel() eq 'Adv' && $lemma eq 'proto')
+        {
+            $node->iset()->set_hash({'pos' => 'adv', 'prontype' => 'dem'});
+        }
         # 'ti' in '40-ti megabytovým pevným diskem' currently comes out as ADJ with NumType and NumForm, which s wrong. Get rid of the bad features. ###!!! We should fix Interset instead.
         if($node->is_adjective() && $node->is_cardinal())
         {
@@ -331,6 +337,16 @@ sub fix_morphology
         if($lemma =~ m/^(být|bývat|bývávat)$/)
         {
             $node->iset()->set('verbtype', 'aux');
+        }
+        # Active participial adjective 'budoucí' should have Tense=Fut (others have Pres).
+        # In the original PDT annotations, it is not even annotated as participial.
+        if($lemma eq 'budoucí')
+        {
+            $node->iset()->set('pos', 'adj');
+            $node->iset()->set('verbform', 'part');
+            $node->iset()->set('voice', 'act');
+            $node->iset()->set('tense', 'fut');
+            $node->iset()->set('aspect', 'imp');
         }
         # Passive participles should be adjectives both in their short (predicative)
         # and long (attributive) form. Now the long forms are adjectives and short
