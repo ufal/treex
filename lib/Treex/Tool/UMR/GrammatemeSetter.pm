@@ -24,6 +24,8 @@ requires qw{ tag_regex translate };
         ) {
             if (my $anode = $orig_node->get_lex_anode) {
                 my $tag = $self->tag_regex($gram);
+                # TODO: "jejich" is P9XXXXP3, i.e. the number is X,
+                # but there is possessor's plural!
                 ($value) = $anode->tag =~ $tag;
                 $value = $self->translate($gram, $value) if $value;
             }

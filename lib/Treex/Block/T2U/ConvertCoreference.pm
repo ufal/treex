@@ -83,9 +83,26 @@ after 'process_document' => sub {
             next TANTE if grep $_->isa('Treex::Core::Node::Deleted'),
                           $unode, $uante;
 
-            $self->maybe_set('person', $unode, $tante);
-            $self->maybe_set('number', $unode, $tante)
-                if $tnode->gram_sempos =~ /^n/ || 'entity' eq $unode->concept;
+            if ($tante->gram_sempos =~ /^n(?!\.quant)/
+                || 'entity' eq $uante->concept
+            ) {
+                if ($unode->entity_refnumber) {
+                    $uante->set_entity_refnumber($unode->entity_refnumber)
+                        unless $uante->entity_refnumber;
+                } else {
+                    $self->maybe_set('number', $uante, $tnode);
+                }
+
+                if ($unode->entity_refperson
+                    && $tante->gram_sempos
+                        =~ /^n \. pron \. (?:def \. pers | indef)$/x
+                ) {
+                    $uante->set_entity_refperson($unode->entity_refperson)
+                        unless $uante->entity_refperson;
+                } else {
+                    $self->maybe_set('person', $uante, $tnode);
+                }
+            }
 
             # inter-sentential link
             if ($unode->root != $uante->root) {
