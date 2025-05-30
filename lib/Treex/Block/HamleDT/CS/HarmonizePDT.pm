@@ -271,13 +271,7 @@ sub convert_deprels
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        ###!!! We need a well-defined way of specifying where to take the source label.
-        ###!!! Currently we try three possible sources with defined priority (if one
-        ###!!! value is defined, the other will not be checked).
         my $deprel = $node->deprel();
-        $deprel = $node->afun() if(!defined($deprel));
-        $deprel = $node->conll_deprel() if(!defined($deprel));
-        $deprel = 'NR' if(!defined($deprel));
         if ( $deprel =~ s/_M$// )
         {
             $node->set_is_member(1);
@@ -286,13 +280,27 @@ sub convert_deprels
         if ( $deprel =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
         {
             $deprel = 'Atr';
+            $node->set_deprel($deprel);
         }
-        # Annotation error (one occurrence in PDT 3.0): Coord must not be leaf.
-        if($deprel eq 'Coord' && $node->is_leaf() && $node->parent()->is_root())
+        # In various Prague-style treebanks, there are occasional discrepancies between morphological tags and afuns.
+        # Some words are tagged as subordinating conjunctions but attached as adverbial modifiers.
+        # Some of them should be treated consistently as subordinators: "jako" ("like, as").
+        # Others should be treated as adverbs: "přičemž", "zato" ("while").
+        # (And if we really wanted to make them grammaticalized conjunctions, they probably should be coordinating.)
+        if ( $deprel =~ m/^(Adv)$/ && $node->is_subordinator() )
         {
-            $deprel = 'ExD';
+            my $lemma = $node->lemma() // '';
+            if ( $lemma eq 'jako' )
+            {
+                $deprel = 'AuxC';
+                $node->set_deprel($deprel);
+            }
+            elsif ( $lemma =~ m/^(přičemž|zato)$/ )
+            {
+                $node->iset()->set_hash({'pos' => 'adv', 'prontype' => 'rel'});
+                $self->set_pdt_tag($node);
+            }
         }
-        $node->set_deprel($deprel);
     }
     # Coordination of prepositional phrases or subordinate clauses:
     # In PDT, is_member is set at the node that bears the real deprel. It is not set at the AuxP/AuxC node.

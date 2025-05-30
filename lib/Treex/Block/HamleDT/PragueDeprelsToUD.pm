@@ -480,7 +480,13 @@ sub convert_deprels
                 $deprel = 'parataxis';
             }
             # Some coordinating conjunctions in PDT-C 2.0 are also attached as AuxZ.
-            elsif($node->is_coordinator())
+            ###!!! On the other hand, the other Prague-style treebanks (and older
+            ###!!! versions of PDT itself) used AuxZ with the coordinator "i" when
+            ###!!! it was used as a rhematizer ("mají význam i tím, že...").
+            ###!!! Adding this branch means that we will lose them. Trying if it
+            ###!!! helps to ignore the lemma "i" (but that is language-specific
+            ###!!! and this block is supposed to be language-agnostic).
+            elsif($node->is_coordinator() && $node->lemma() !~ m/^(ani|i)$/)
             {
                 $deprel = 'cc';
             }
@@ -527,9 +533,10 @@ sub convert_deprels
                   lc($node->form()) =~ m/^(ut|sicut|quasi|tanquam|utpote)$/)
                   ###!!!lc($node->form()) =~ m/^(jako|ut|sicut|quasi|tanquam|utpote)$/)
             {
-                ###!!! 'jako' in this context may have worked well until PDT-C 1.0 but not now. I had the following comments that explain it for a while in BasPhraseBuilder.
+                ###!!! 'jako' in this context may have worked well until PDT-C 1.0 but not now. I had the following comments that explain it for a while in BasePhraseBuilder.
                 # Originally: AuxP attached to AuxP (or AuxC to AuxC, or even AuxC to AuxP or AuxP to AuxC) means a multi-word preposition (conjunction).
-                # However (PDT-C 2.0, 2025-03): "stejně jako k tomu" --> "jako" was originally apposition head, then it got converted to AuxY, but during conversion to UD AuxY first becomes mark, then it is unrecognizable from AuxC and it gets caught here.
+                # However (PDT-C 2.0, 2025-03): "stejně jako k tomu" --> "jako" was originally apposition head, then it got converted to AuxY, but during conversion to UD AuxY first becomes mark,
+                # then it is unrecognizable from AuxC and it gets caught here.
                 # Therefore, we tentatively try 'auxp' instead of 'auxpc' and see whether it harms other positions.
                 ###!!! One of the problems is that in "stejně jako k tomu", "jako" is attached directly to the preposition "k" and not to its argument "tomu".
                 ###!!! Perhaps we should add to the scenario a new block that will make sure that if AuxP has other children than its single argument, these children are only AuxP, AuxC, or punctuation.

@@ -218,6 +218,7 @@ sub fix_morphology
     # But that is not a problem, other adverbs have grammaticalized to conjunctions too.
     # On the other hand, the following should stay SCONJ and the relation should change to mark:
     # "jakoby" ("as if"), "dokud" ("while")
+    ###!!! This fix should no longer be needed because I have added it already to HamleDT::CS::HarmonizePDT::convert_deprels().
     elsif($lform =~ m/^(přičemž|zato)$/)
     {
         $iset->set_hash({'pos' => 'adv', 'prontype' => 'rel'});

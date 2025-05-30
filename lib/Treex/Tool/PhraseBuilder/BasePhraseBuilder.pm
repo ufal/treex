@@ -925,7 +925,17 @@ sub detect_prague_apposition
         else
         {
             push(@coordinators, $old_head);
-            $self->set_deprel($old_head, 'auxy');
+            # Although we call the array @coordinators, the conjunction could actually be categorized as subordinating
+            # (e.g., Czech "jako" in "zdravotní riziko, jako úrazy, poškození chladem nebo teplem").
+            # If that is the case, we want the word to end up as 'mark' in UD rather than as 'cc'.
+            if($node->is_subordinator())
+            {
+                $self->set_deprel($old_head, 'auxc');
+            }
+            else
+            {
+                $self->set_deprel($old_head, 'auxy');
+            }
         }
         $old_head->set_is_member(undef);
         # Now it is clear that we have an apposition.

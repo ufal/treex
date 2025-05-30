@@ -55,16 +55,6 @@ sub process_zone
     $root->set_deprel('AuxS');
     $self->convert_deprels($root);
     $self->fix_annotation_errors($root);
-    # fix_annotation_errors() may have removed nodes so we must acquire a new list of nodes.
-    @nodes = $root->get_descendants();
-    # To avoid any confusion, make sure that 'deprel' is the only attribute bearing the dependency relation label.
-    # Otherwise later changes will break synchronization with 'afun' and 'conll/deprel'.
-    foreach my $node (@nodes)
-    {
-        $node->set_afun(undef);
-        $node->set_conll_deprel(undef);
-    }
-
     # The return value can be used by the overriding methods of subclasses.
     return $root;
 }

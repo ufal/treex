@@ -38,71 +38,18 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
+    # SUPER will call the following methods first (we can redefine them if needed), in the following order:
+    # $self->convert_tags($root);
+    # $self->fix_tokenization($root);
+    # $self->fix_morphology($root);
+    # $self->convert_deprels($root);
+    # $self->fix_annotation_errors($root);
     my $root = $self->SUPER::process_zone($zone);
     # Fix a rare combination of preposition and subordinated clause in copula predication.
     $self->fix_byt_pro_aby($root);
+    # If "jako" is attached as AuxY to something to its right, it should instead head that something as AuxC.
+    $self->fix_jako_auxy($root);
     return $root;
-}
-
-
-
-#------------------------------------------------------------------------------
-# This function targets a rare construction observed in Czech (and specifically
-# in PDT-C 2.0). It is possible that similar constructions occur in other
-# languages but the function must be language-specific because it needs to
-# operate on selected lemmas only. The Czech example is "byl by pro, abychom
-# dělali X" = "he would be for (it) that we do X". Here "byl by" is a conditi-
-# onal copula and the rest (including the nested clause) is a predicate.
-# Nevertheless, the afun Pnom for nominal predicates is not present; instead,
-# the preposition "pro" has AuxP, its child "abychom" has AuxC, and the verb
-# under "abychom" has Adv because it is an adverbial clause. We will replace
-# the AuxP of "pro" with Pnom. It will address two issues that would otherwise
-# occur when moving to UD: The nominal predicate with copula would not be
-# recognized, and the preposition would be treated as another marker (besides
-# "abychom") of the subordinate clause.
-#------------------------------------------------------------------------------
-sub fix_byt_pro_aby
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants({'ordered' => 1});
-    foreach my $node (@nodes)
-    {
-        # We only want to do this if the parent is the copula "být". And we
-        # cannot recognize the copula other than by looking at its lemma.
-        # We should also look at the lemma of the current node (preposition)
-        # because we do not mess up the compound conjunction "místo aby",
-        # regardless whether it depends on a copula or on a normal verb.
-        # The first example I encountered was "být pro, aby...", so there was
-        # an AuxC child with the "aby" clause. But there are also examples like
-        # "24 poslanců bylo proti", where the preposition has no children at
-        # all. And we need eparents rather than parents because of examples
-        # like "Jste pro, nebo proti?"
-        # Occasionally there are other prepositions stranded: "existuje vně".
-        if($node->deprel() eq 'AuxP')
-        {
-            my $lemma = $node->lemma() // '';
-            # The parent is typically a verb, but it can be also a verbal noun.
-            # Do not match the lemmas to the end. The lemma could be "proti-1", "otočení_^(*3it)" etc.
-            my @veparents = grep {defined($_->lemma()) && $_->lemma() =~ m/^(být|hlasovat|existovat|otočení|společnost)/} ($node->get_eparents({'ordered' => 1}));
-            if($lemma =~ m/^(pro|proti|vně)/ && scalar(@veparents) > 0)
-            {
-                my $plemma = $veparents[0]->lemma();
-                my @children = grep {$_->deprel() !~ m/^Aux[GX]$/} ($node->children());
-                if(scalar(@children) == 0 || scalar(@children) == 1 && $children[0]->deprel() eq 'AuxC')
-                {
-                    if($plemma eq 'být')
-                    {
-                        $node->set_deprel('Pnom');
-                    }
-                    else # hlasovat
-                    {
-                        $node->set_deprel('Adv');
-                    }
-                }
-            }
-        }
-    }
 }
 
 
@@ -853,6 +800,107 @@ sub convert_deprels
     # In PDT, is_member is set at the node that bears the real deprel. It is not set at the AuxP/AuxC node.
     # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
     $self->pdt_to_treex_is_member_conversion($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# This function targets a rare construction observed in Czech (and specifically
+# in PDT-C 2.0). It is possible that similar constructions occur in other
+# languages but the function must be language-specific because it needs to
+# operate on selected lemmas only. The Czech example is "byl by pro, abychom
+# dělali X" = "he would be for (it) that we do X". Here "byl by" is a conditi-
+# onal copula and the rest (including the nested clause) is a predicate.
+# Nevertheless, the afun Pnom for nominal predicates is not present; instead,
+# the preposition "pro" has AuxP, its child "abychom" has AuxC, and the verb
+# under "abychom" has Adv because it is an adverbial clause. We will replace
+# the AuxP of "pro" with Pnom. It will address two issues that would otherwise
+# occur when moving to UD: The nominal predicate with copula would not be
+# recognized, and the preposition would be treated as another marker (besides
+# "abychom") of the subordinate clause.
+#------------------------------------------------------------------------------
+sub fix_byt_pro_aby
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    foreach my $node (@nodes)
+    {
+        # We only want to do this if the parent is the copula "být". And we
+        # cannot recognize the copula other than by looking at its lemma.
+        # We should also look at the lemma of the current node (preposition)
+        # because we do not mess up the compound conjunction "místo aby",
+        # regardless whether it depends on a copula or on a normal verb.
+        # The first example I encountered was "být pro, aby...", so there was
+        # an AuxC child with the "aby" clause. But there are also examples like
+        # "24 poslanců bylo proti", where the preposition has no children at
+        # all. And we need eparents rather than parents because of examples
+        # like "Jste pro, nebo proti?"
+        # Occasionally there are other prepositions stranded: "existuje vně".
+        if($node->deprel() eq 'AuxP')
+        {
+            my $lemma = $node->lemma() // '';
+            # The parent is typically a verb, but it can be also a verbal noun.
+            # Do not match the lemmas to the end. The lemma could be "proti-1", "otočení_^(*3it)" etc.
+            my @veparents = grep {defined($_->lemma()) && $_->lemma() =~ m/^(být|hlasovat|existovat|otočení|společnost)/} ($node->get_eparents({'ordered' => 1}));
+            if($lemma =~ m/^(pro|proti|vně)/ && scalar(@veparents) > 0)
+            {
+                my $plemma = $veparents[0]->lemma();
+                my @children = grep {$_->deprel() !~ m/^Aux[GX]$/} ($node->children());
+                if(scalar(@children) == 0 || scalar(@children) == 1 && $children[0]->deprel() eq 'AuxC')
+                {
+                    if($plemma eq 'být')
+                    {
+                        $node->set_deprel('Pnom');
+                    }
+                    else # hlasovat
+                    {
+                        $node->set_deprel('Adv');
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# This function addresses what could be considered annotation error but it is
+# more general than just focusing on one sentence. The subordinating conjunc-
+# tion "jako" ("like") occurs attached as AuxY to coordination head, which
+# makes it treated as a coordinating conjunction, while in fact it should be
+# placed above the coordination as AuxC. Example: "provozovat různé koníčky
+# jako rekreaci a gymnastiku".
+#------------------------------------------------------------------------------
+sub fix_jako_auxy
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    foreach my $node (@nodes)
+    {
+        my $lcform = defined($node->form()) ? lc($node->form()) : '';
+        my $deprel = $node->deprel() // '';
+        my @children = $node->children();
+        if($lcform eq 'jako' && $deprel eq 'AuxY')
+        {
+            if($node->parent()->ord() > $node->ord())
+            {
+                my $parent = $node->parent();
+                my $grandparent = $parent->parent();
+                $node->set_parent($grandparent);
+                $node->set_deprel('AuxC');
+                $parent->set_parent($node);
+            }
+            # A different error: "Tesil se žehlí jako vlněná látka přes vlhkou látku".
+            # Here "jako" is connected between "žehlí" and "látka", but still as AuxY.
+            elsif(scalar(@children) == 1 && $children[0]->ord() > $node->ord())
+            {
+                $node->set_deprel('AuxC');
+            }
+        }
+    }
 }
 
 
