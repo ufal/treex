@@ -282,25 +282,6 @@ sub convert_deprels
             $deprel = 'Atr';
             $node->set_deprel($deprel);
         }
-        # In various Prague-style treebanks, there are occasional discrepancies between morphological tags and afuns.
-        # Some words are tagged as subordinating conjunctions but attached as adverbial modifiers.
-        # Some of them should be treated consistently as subordinators: "jako" ("like, as").
-        # Others should be treated as adverbs: "přičemž", "zato" ("while").
-        # (And if we really wanted to make them grammaticalized conjunctions, they probably should be coordinating.)
-        if ( $deprel =~ m/^(Adv)$/ && $node->is_subordinator() )
-        {
-            my $lemma = $node->lemma() // '';
-            if ( $lemma eq 'jako' )
-            {
-                $deprel = 'AuxC';
-                $node->set_deprel($deprel);
-            }
-            elsif ( $lemma =~ m/^(přičemž|zato)$/ )
-            {
-                $node->iset()->set_hash({'pos' => 'adv', 'prontype' => 'rel'});
-                $self->set_pdt_tag($node);
-            }
-        }
     }
     # Coordination of prepositional phrases or subordinate clauses:
     # In PDT, is_member is set at the node that bears the real deprel. It is not set at the AuxP/AuxC node.

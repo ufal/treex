@@ -49,6 +49,7 @@ sub process_zone
     $self->fix_byt_pro_aby($root);
     # If "jako" is attached as AuxY to something to its right, it should instead head that something as AuxC.
     $self->fix_jako_auxy($root);
+    $self->fix_adverb_vs_conjunction($root);
     return $root;
 }
 
@@ -898,6 +899,46 @@ sub fix_jako_auxy
             elsif(scalar(@children) == 1 && $children[0]->ord() > $node->ord())
             {
                 $node->set_deprel('AuxC');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# In various Prague-style treebanks, there are occasional discrepancies between
+# morphological tags and afuns. Some words are tagged as subordinating
+# conjunctions but attached as adverbial modifiers. Some of them should be
+# treated consistently as subordinators: "jako" ("like, as").
+# Others should be treated as adverbs: "přičemž", "zato" ("while").
+# (And if we really wanted to make them grammaticalized conjunctions, they
+# probably should be coordinating.)
+#------------------------------------------------------------------------------
+sub fix_adverb_vs_conjunction
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    foreach my $node (@nodes)
+    {
+        my $deprel = $node->deprel() // '';
+        if($deprel =~ m/^(Adv)$/ && $node->is_subordinator())
+        {
+            my $lemma = $node->lemma() // '';
+            if($lemma =~ m/^(dokud|jako)$/)
+            {
+                $node->set_deprel($deprel = 'AuxC');
+            }
+            elsif($lemma =~ m/^(jak|přičemž)$/)
+            {
+                $node->iset()->set_hash({'pos' => 'adv', 'prontype' => 'rel'});
+                $self->set_pdt_tag($node);
+            }
+            elsif($lemma =~ m/^(zato)$/)
+            {
+                $node->iset()->set_hash({'pos' => 'adv', 'prontype' => 'dem'});
+                $self->set_pdt_tag($node);
             }
         }
     }
