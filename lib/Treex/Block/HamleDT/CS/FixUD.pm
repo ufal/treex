@@ -1304,6 +1304,7 @@ BEGIN
         # There is a dedicated function fix_a_to() (called from fix_constructions() before coming here), which makes sure that the right instances of "a sice" and "a to" are annotated as fixed expressions.
         ['a sice',             'always',  'a sice',             'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
         ['a to',               'fixed',   'a to',               'CCONJ PART',          'J^------------- TT-------------',                 'pos=conj|conjtype=coor|extpos=cconj pos=part', '0:cc 1:fixed'],
+        ['nebo - li',          'always',  'nebo - li',          'CCONJ PUNCT SCONJ',   'J^------------- Z:------------- J,-------------', 'pos=conj|conjtype=coor|extpos=cconj pos=punc pos=conj|conjtype=sub',                               '0:cc 3:punct 1:fixed'],
         # MA says that 'neřku' has grammaticalized as an adverb, although historically it is 1st person singular present of 'říkat' (to say).
         ['neřku - li',         'always',  'neřku - li',         'ADV PUNCT SCONJ',     'Db------------- Z:------------- J,-------------', 'pos=adv|extpos=cconj pos=punc pos=conj|conjtype=sub', '0:cc 3:punct 1:fixed'],
         # There is a dedicated function fix_to_jest() (called from fix_constructions() before coming here), which make sure that the right instances of "to je" and "to jest" are annotated as fixed expressions.

@@ -1555,6 +1555,27 @@ sub fix_annotation_errors
             my @subtree = $self->get_node_subtree($node);
             $subtree[0]->set_deprel('Partl');
         }
+        # PDT-C 2.0 dev tamw wsj0137.cz # 13
+        elsif($spanstring =~ m/^o 5.92 bodu , nebo - li o 0.16 \%$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_parent($node->parent());
+            $subtree[0]->set_deprel('AuxP');
+            $subtree[0]->set_is_member(undef);
+            $subtree[6]->set_parent($subtree[0]);
+            $subtree[6]->set_deprel('AuxC');
+            $subtree[3]->set_parent($subtree[6]);
+            $subtree[3]->set_deprel('AuxX');
+            $subtree[4]->set_parent($subtree[6]);
+            $subtree[4]->set_deprel('AuxC');
+            $subtree[5]->set_parent($subtree[6]);
+            $subtree[5]->set_deprel('AuxG');
+            $subtree[7]->set_parent($subtree[6]);
+            $subtree[7]->set_deprel('AuxP');
+            $subtree[7]->set_is_member(undef);
+            $subtree[8]->set_parent($subtree[7]);
+            $subtree[8]->set_deprel('Apposition');
+        }
     }
 }
 
