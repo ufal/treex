@@ -12,7 +12,8 @@ deduction from morphology.
 =cut
 
 {    my %REGEX = (person => '^.{7}([123])',
-                  number => '^.{3}([SP])');
+                  number => '^(?x:(?| .{6} ([SP])'
+                                 . '| .{3} ([SP]) ))');
     sub tag_regex($self, $grammateme) { $REGEX{$grammateme} }
 }
 
