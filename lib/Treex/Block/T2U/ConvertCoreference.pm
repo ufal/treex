@@ -86,6 +86,7 @@ after 'process_document' => sub {
             if ($tnode->gram_sempos =~ /^n(?!\.quant)/
                 || 'entity' eq $unode->concept
             ) {
+                # TODO: Container numerals (sempos = n.denot)
                 if ($uante->entity_refnumber) {
                     $unode->set_entity_refnumber($uante->entity_refnumber)
                         unless $unode->entity_refnumber;
@@ -95,7 +96,8 @@ after 'process_document' => sub {
 
                 if ($uante->entity_refperson
                     && $tnode->gram_sempos
-                        =~ /^n \. pron \. (?:def \. pers | indef)$/x
+                        =~ /^n \. pron \. (?: def \. (?: pers | demon)
+                                            | indef )$/x
                 ) {
                     $unode->set_entity_refperson($uante->entity_refperson)
                         unless $unode->entity_refperson;
