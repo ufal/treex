@@ -12,7 +12,7 @@ use List::Util qw{ uniq };
 
 # u-layer attributes
 has [
-    qw( nodetype concept functor aspect modal_strength
+    qw( nodetype concept functor aspect modal_strength ops
     )
 ] => ( is => 'rw' );
 

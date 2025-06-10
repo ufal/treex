@@ -14,6 +14,8 @@ extends 'Treex::Core::Block';
 
 has '+language' => ( required => 1 );
 
+has coref2fix => (is => 'rw', isa => 'HashRef', default => sub { +{} });
+
 has _coord_members_already_sub2coorded => (is => 'ro', isa => 'HashRef',
                                            default => sub { +{} });
 
@@ -26,6 +28,24 @@ sub process_unode($self, $unode, $) {
         log_debug("Removed INTF " . $unode->id);
         $unode->remove;
         return
+    }
+
+    if ('#Forn' eq $unode->concept && 'name' eq $unode->functor) {
+        $unode->set_concept('name');
+        my @ops;
+        for my $child ($unode->children) {
+            if ('!!FPHR' eq $child->functor) {
+                push @ops, $child->concept;
+                $self->safe_remove($child, $unode);
+            } else {
+                log_warn("#Forn with non-FPHR child: $unode->{id}");
+            }
+        }
+        if (@ops) {
+            $unode->set_ops(Treex::PML::Factory->createList(\@ops));
+        } else {
+            log_warn("#Forn without FPHR children: $unode->{id}");
+        }
     }
 
     my $tnode = $unode->get_tnode;
@@ -114,6 +134,35 @@ sub negate_sibling($self, $unode, $tnode) {
     $unode->remove;
     return
 }
+
+sub safe_remove($self, $node, $parent) {
+    log_debug("Safe remove $node->{id}, reroute to $parent->{id}");
+    if (my $coref = $node->get_attr('coref')) {
+        $parent->set_attr('coref', [@{ $parent->get_attr('coref') // [] },
+                                    @$coref]);
+    }
+    $self->coref2fix->{ $node->id } = $parent->id;
+    $node->remove;
+}
+
+after process_document => sub($self, $document) {
+    return unless keys %{ $self->coref2fix };
+
+    for my $tree ($document->trees) {
+        for my $node ($tree->descendants) {
+            if (my $coref = $node->get_attr('coref')) {
+                my @new_coref = map
+                    exists $self->coref2fix->{ $_->{'target_node.rf'} }
+                    ? {type => $_->{type},
+                       'target_node.rf'
+                           => $self->coref2fix->{ $_->{'target_node.rf'} }}
+                    : $_,
+                    @$coref;
+                $node->set_attr('coref', \@new_coref);
+            }
+        }
+    }
+};
 
 sub is_exclusive { die 'Not implemented, language specific' }
 

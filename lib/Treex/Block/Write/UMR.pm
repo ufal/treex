@@ -184,6 +184,14 @@ sub _get_sent_subtree($self, $unode) {
         $umr_str .= ':modal-strength ' . $unode->modal_strength;
     }
 
+    if ($unode->ops) {
+        $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
+        my $i = 1;
+        $umr_str .= join ' ',
+                    map ':op' . $i++ . ' "' . $self->_printable($_). '"',
+                    @{ $unode->ops };
+    }
+
     $umr_str .= ')';
     return $umr_str
 }
