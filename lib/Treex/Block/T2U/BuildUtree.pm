@@ -178,8 +178,8 @@ sub translate_val_frame
     sub translate_non_valency_functor
     {
         my ($self, $tnode, $unode) = @_;
-        $unode->set_functor($FUNCTOR_MAPPING{ $tnode->{functor} }
-                            // ('!!' . $tnode->{functor}));
+        $unode->set_functor($FUNCTOR_MAPPING{ $tnode->functor }
+                            // ('!!' . $tnode->functor));
     }
 
     sub adjust_coap
@@ -290,7 +290,7 @@ sub should_reverse {
 
         my $nodetype =
             ('v' eq ($tnode->attr('gram/sempos') // "")
-             || '#EmpVerb' eq $tnode->{t_lemma}
+             || '#EmpVerb' eq $tnode->t_lemma
              || exists $EVENT{ $unode->concept })   ? 'event'
 
             : ('coap' eq $tnode->nodetype
