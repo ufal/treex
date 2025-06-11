@@ -30,23 +30,8 @@ sub process_unode($self, $unode, $) {
         return
     }
 
-    if ('#Forn' eq $unode->concept && 'name' eq $unode->functor) {
-        $unode->set_concept('name');
-        my @ops;
-        for my $child ($unode->children) {
-            if ('!!FPHR' eq $child->functor) {
-                push @ops, $child->concept;
-                $self->safe_remove($child, $unode);
-            } else {
-                log_warn("#Forn with non-FPHR child: $unode->{id}");
-            }
-        }
-        if (@ops) {
-            $unode->set_ops(Treex::PML::Factory->createList(\@ops));
-        } else {
-            log_warn("#Forn without FPHR children: $unode->{id}");
-        }
-    }
+    $self->translate_forn_id($unode) if '#Forn' eq $unode->concept
+                                     && 'name' eq $unode->functor;
 
     my $tnode = $unode->get_tnode;
     $self->translate_compl($unode, $tnode)
@@ -58,6 +43,24 @@ sub process_unode($self, $unode, $) {
         if 'RHEM' eq $tnode->functor && $tnode->t_lemma =~ /^$negation$/
         || 'CM' eq $tnode->functor && $tnode->t_lemma =~ /^(?:#Neg|$negation)$/;
     return
+}
+
+sub translate_forn_id($self, $unode) {
+    $unode->set_concept('name');
+    my @ops;
+    for my $child ($unode->children) {
+        if ('!!FPHR' eq $child->functor) {
+            push @ops, $child->concept;
+            $self->safe_remove($child, $unode);
+        } else {
+            log_warn("#Forn with non-FPHR child: $unode->{id}");
+        }
+    }
+    if (@ops) {
+        $unode->set_ops(Treex::PML::Factory->createList(\@ops));
+    } else {
+        log_warn("#Forn without FPHR children: $unode->{id}");
+    }
 }
 
 sub translate_compl($self, $unode, $tnode) {
