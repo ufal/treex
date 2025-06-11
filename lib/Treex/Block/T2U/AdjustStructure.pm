@@ -135,6 +135,8 @@ sub negate_sibling($self, $unode, $tnode) {
     return
 }
 
+# Remove a node, all coref chains going through it should go through
+# its parent (or any other node specified) instead.
 sub safe_remove($self, $node, $parent) {
     log_debug("Safe remove $node->{id}, reroute to $parent->{id}");
     if (my $coref = $node->get_attr('coref')) {
@@ -142,7 +144,12 @@ sub safe_remove($self, $node, $parent) {
                                     @$coref]);
     }
     $self->coref2fix->{ $node->id } = $parent->id;
-    $node->remove;
+    if ($node->children) {
+        log_warn('Removing with children ', $node->id);
+    } else {
+        $node->remove;
+    }
+    return
 }
 
 after process_document => sub($self, $document) {
