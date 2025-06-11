@@ -94,15 +94,18 @@ after 'process_document' => sub {
                     $self->maybe_set('number', $unode, $tante);
                 }
 
-                if ($uante->entity_refperson
-                    && $tnode->gram_sempos
+                if ($tnode->gram_sempos
                         =~ /^n \. pron \. (?: def \. (?: pers | demon)
                                             | indef )$/x
+                    || 'entity' eq $unode->concept
                 ) {
-                    $unode->set_entity_refperson($uante->entity_refperson)
-                        unless $unode->entity_refperson;
-                } else {
-                    $self->maybe_set('person', $unode, $tante);
+
+                    if ($uante->entity_refperson) {
+                        $unode->set_entity_refperson($uante->entity_refperson)
+                            unless $unode->entity_refperson;
+                    } else {
+                        $self->maybe_set('person', $unode, $tante);
+                    }
                 }
             }
 
