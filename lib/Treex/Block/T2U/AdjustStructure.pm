@@ -51,6 +51,7 @@ sub translate_forn_id($self, $unode) {
     for my $child ($unode->children) {
         if ('!!FPHR' eq $child->functor) {
             push @ops, $child->concept;
+            $unode->add_to_alignment($child->get_alignment);
             $self->safe_remove($child, $unode);
         } else {
             log_warn("#Forn with non-FPHR child: $unode->{id}");
