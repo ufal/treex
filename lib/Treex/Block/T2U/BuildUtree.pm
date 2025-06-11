@@ -316,7 +316,8 @@ sub add_tnode_to_unode
     $self->maybe_set(person => $unode, $tnode)
         if $tnode->gram_sempos =~ /^n\.pron/ || 'entity' eq $unode->concept;
     $self->maybe_set(number => $unode, $tnode)
-        if $tnode->gram_sempos =~ /^n/ || 'entity' eq $unode->concept;
+        if $tnode->gram_sempos =~ /^n(?!\.quant)/
+        || 'entity' eq $unode->concept;
     $unode->set_aspect($self->deduce_aspect($tnode))
         if 'event' eq $unode->nodetype;
     $unode->set_polarity
