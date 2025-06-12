@@ -24,4 +24,8 @@ deduction from morphology.
     sub translate($self, $grammateme, $value) { $GRAM{$grammateme}{$value} }
 }
 
+sub is_valid_tag($self, $tag) {
+    $tag =~ /^[nap]/
+}
+
 __PACKAGE__

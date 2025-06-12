@@ -1,7 +1,7 @@
 package Treex::Tool::UMR::GrammatemeSetter;
 use Moose::Role;
 
-requires qw{ tag_regex translate };
+requires qw{ tag_regex translate is_valid_tag };
 
 {   my %IMPLEMENTATION = (person => {gram => 'gram_person',
                                      attr => 'entity_refperson'},
@@ -17,21 +17,23 @@ requires qw{ tag_regex translate };
         my $get_attr = $IMPLEMENTATION{$gram}{attr};
         return if $unode->$get_attr;
 
-        my $set_attr = "set_$IMPLEMENTATION{$gram}{attr}";
-        my $value = $orig_node->${ \$IMPLEMENTATION{$gram}{gram} };
+        my $value = $orig_node->gram_sempos =~ /^n/
+                  ? $orig_node->${ \$IMPLEMENTATION{$gram}{gram} }
+                  : undef;
         if (! $value
             && ! grep $_->tfa, $orig_node->root->descendants # Not in PDT.
         ) {
             if (my $anode = $orig_node->get_lex_anode) {
                 my $tag = $self->tag_regex($gram);
-                # TODO: "jejich" is P9XXXXP3, i.e. the number is X,
-                # but there is possessor's plural!
+                return unless $self->is_valid_tag($tag);
+
                 ($value) = $anode->tag =~ $tag;
                 $value = $self->translate($gram, $value) if $value;
             }
             return unless $value;
         }
         $value = $T2U{$gram}{$value};
+        my $set_attr = "set_$IMPLEMENTATION{$gram}{attr}";
         $unode->$set_attr($value) if $value;
         return
     }

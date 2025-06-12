@@ -313,6 +313,7 @@ sub add_tnode_to_unode
         unless $self->translate_val_frame($tnode, $unode);
     $unode->copy_alignment($tnode) unless $tnode->is_generated;
     $self->set_nodetype($unode, $tnode);
+
     $self->maybe_set(person => $unode, $tnode)
         if $tnode->gram_sempos =~ /^n\.pron/ || 'entity' eq $unode->concept;
     $self->maybe_set(number => $unode, $tnode)

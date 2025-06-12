@@ -14,4 +14,7 @@ Treex::Block::T2U::LA::ConvertCoreference - Latin specifics for converting coref
     sub relative { $RELATIVE }
 }
 
+# TODO!
+sub can_become_entity {}
+
 __PACKAGE__->meta->make_immutable

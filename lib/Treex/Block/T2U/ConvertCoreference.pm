@@ -83,31 +83,12 @@ after 'process_document' => sub {
             next TANTE if grep $_->isa('Treex::Core::Node::Deleted'),
                           $unode, $uante;
 
-            if ($tnode->gram_sempos =~ /^n(?!\.quant)/
-                || 'entity' eq $unode->concept
-            ) {
-                # TODO: Container numerals (sempos = n.denot)
-                if ($uante->entity_refnumber) {
-                    $unode->set_entity_refnumber($uante->entity_refnumber)
-                        unless $unode->entity_refnumber;
-                } else {
-                    $self->maybe_set('number', $unode, $tante);
-                }
+            $unode->set_concept('entity')
+                if $tante->gram_sempos =~ /^n\.denot/
+                && $tnode->functor ne 'RSTR'
+                && $self->can_become_entity($tnode->t_lemma);
 
-                if ($tnode->gram_sempos
-                        =~ /^n \. pron \. (?: def \. (?: pers | demon)
-                                            | indef )$/x
-                    || 'entity' eq $unode->concept
-                ) {
-
-                    if ($uante->entity_refperson) {
-                        $unode->set_entity_refperson($uante->entity_refperson)
-                            unless $unode->entity_refperson;
-                    } else {
-                        $self->maybe_set('person', $unode, $tante);
-                    }
-                }
-            }
+            $self->propagate_number_person($unode, $tnode, $uante, $tante);
 
             # inter-sentential link
             if ($unode->root != $uante->root) {
@@ -143,6 +124,44 @@ after 'process_document' => sub {
         }
     }
 };
+
+sub propagate_number_person {
+    my ($self, $unode, $tnode, $uante, $tante) = @_;
+    if ($tnode->gram_sempos =~ /^n(?!\.quant)/
+        || 'entity' eq $unode->concept
+    ) {
+        # TODO: Container numerals (sempos = n.denot)
+        if (! $unode->entity_refnumber) {
+            if ($uante->entity_refnumber) {
+                $unode->set_entity_refnumber($uante->entity_refnumber);
+            } else {
+                $self->maybe_set('number', $unode, $tante);
+            }
+        }
+    }
+    if ($tnode->gram_sempos =~ /^n \. pron \. (?: def \. (?: pers | demon)
+                                                | indef )$/x
+        || 'entity' eq $unode->concept
+    ) {
+        if (! $unode->entity_refperson) {
+            if ($uante->entity_refperson && $tante->gram_sempos !~ /^v/) {
+                $unode->set_entity_refperson($uante->entity_refperson);
+                return
+            }
+            if ('entity' eq $unode->concept) {
+                if ($tante->gram_sempos =~ /^n\.denot/) {
+                    $unode->set_entity_refperson('3rd');
+                    return
+                }
+
+                if ($tante->gram_sempos =~ /^v/) {
+                    $unode->set_concept('event');
+                }
+            }
+            $self->maybe_set('person', $unode, $tante);
+        }
+    }
+}
 
 sub _same_sentence_coref {
     my ($self, $tnode, $unode, $uante, $tante_id, $doc) = @_;
@@ -186,6 +205,8 @@ sub _same_sentence_coref {
 sub maybe_set { die 'Not implemented, langugage specific' }
 
 sub relative { die 'Not implemented, language specific' }
+
+sub can_become_entity { die 'Not implemented, language specific' }
 
 # TODO: Coordinated verbs only if all of them share the "ktery" (see wsj2454.cz)
 # $tnode is "ktery", $up is a RSTR verb, $gp is a coref antecedent.
