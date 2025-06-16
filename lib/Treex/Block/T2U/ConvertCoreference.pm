@@ -4,6 +4,7 @@ package Treex::Block::T2U::ConvertCoreference;
 use Moose;
 use utf8;
 use Treex::Core::Common;
+use Treex::Tool::UMR::Common qw{ entity2person };
 
 use Graph::Directed;
 use namespace::autoclean;
@@ -146,6 +147,7 @@ sub propagate_number_person {
         if (! $unode->entity_refperson) {
             if ($uante->entity_refperson && $tante->gram_sempos !~ /^v/) {
                 $unode->set_entity_refperson($uante->entity_refperson);
+                entity2person($unode);
                 return
             }
             if ('entity' eq $unode->concept) {
@@ -159,6 +161,7 @@ sub propagate_number_person {
                 }
             }
             $self->maybe_set('person', $unode, $tante);
+            entity2person($unode);
         }
     }
 }

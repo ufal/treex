@@ -29,7 +29,7 @@ use warnings;
 use strict;
 
 use Exporter qw{ import };
-our @EXPORT_OK = qw{ is_coord expand_coord };
+our @EXPORT_OK = qw{ is_coord expand_coord entity2person };
 
 sub is_coord {
     my ($unode) = @_;
@@ -48,6 +48,14 @@ sub expand_coord {
                     grep $_->functor =~ /$expansion_re/,
                     $unode->children;
     return @expansion
+}
+
+sub entity2person {
+    my ($unode) = @_;
+    $unode->set_concept('person')
+        if 'entity' eq $unode->concept
+        && $unode->entity_refperson =~ /^(?:1st|2nd)/;
+    return
 }
 
 __PACKAGE__

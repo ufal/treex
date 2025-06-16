@@ -2,6 +2,7 @@
 package Treex::Block::T2U::BuildUtree;
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::UMR::Common qw{ entity2person };
 use namespace::autoclean;
 
 extends 'Treex::Core::Block';
@@ -319,6 +320,7 @@ sub add_tnode_to_unode
     $self->maybe_set(number => $unode, $tnode)
         if $tnode->gram_sempos =~ /^n(?!\.quant)/
         || 'entity' eq $unode->concept;
+    entity2person($unode);
     $unode->set_aspect($self->deduce_aspect($tnode))
         if 'event' eq $unode->nodetype;
     $unode->set_polarity
