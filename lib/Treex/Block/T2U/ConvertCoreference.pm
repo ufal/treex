@@ -132,6 +132,7 @@ sub propagate_number_person {
         || 'entity' eq $unode->concept
     ) {
         # TODO: Container numerals (sempos = n.denot)
+        # TODO: Skip RSTR "ten" (but set number to "matčin")
         if (! $unode->entity_refnumber) {
             if ($uante->entity_refnumber) {
                 $unode->set_entity_refnumber($uante->entity_refnumber);
