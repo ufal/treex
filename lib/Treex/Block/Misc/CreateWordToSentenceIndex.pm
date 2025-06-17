@@ -32,7 +32,7 @@ sub process_zone {
     my $sentid = scalar(@{$self->_index->{sentences}});
     push @{$self->_index->{sentences}}, $zone;
 
-    my @nodes = grep { $_->tag =~ /$self->tag_regex/ } $zone->get_atree()->get_descendants();
+    my @nodes = grep { $_->tag =~ $self->tag_regex } $zone->get_atree()->get_descendants();
 
     foreach my $node (@nodes) {
         # if ( length($node->lemma) < $WORD_MIN_LEN || length($node->lemma) > $WORD_MAX_LEN) { 
