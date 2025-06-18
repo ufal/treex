@@ -29,7 +29,7 @@ use warnings;
 use strict;
 
 use Exporter qw{ import };
-our @EXPORT_OK = qw{ is_coord expand_coord entity2person };
+our @EXPORT_OK = qw{ is_coord expand_coord entity2person is_possesive };
 
 sub is_coord {
     my ($unode) = @_;
@@ -56,6 +56,12 @@ sub entity2person {
         if 'entity' eq $unode->concept
         && $unode->entity_refperson =~ /^(?:1st|2nd)/;
     return
+}
+
+sub is_possesive {
+    my ($tnode) = @_;
+    my $alex = $tnode->get_lex_anode or return;
+    return $alex->tag =~ /^(?:AU|P[S19])/
 }
 
 __PACKAGE__

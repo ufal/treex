@@ -4,7 +4,7 @@ package Treex::Block::T2U::ConvertCoreference;
 use Moose;
 use utf8;
 use Treex::Core::Common;
-use Treex::Tool::UMR::Common qw{ entity2person };
+use Treex::Tool::UMR::Common qw{ entity2person is_possesive };
 
 use Graph::Directed;
 use namespace::autoclean;
@@ -128,11 +128,12 @@ after 'process_document' => sub {
 
 sub propagate_number_person {
     my ($self, $unode, $tnode, $uante, $tante) = @_;
-    if ($tnode->gram_sempos =~ /^n(?!\.quant)/
-        || 'entity' eq $unode->concept
+    if (($tnode->gram_sempos =~ /^n(?!\.quant)/
+         || 'entity' eq $unode->concept)
+        && ('RSTR' ne $tnode->functor || is_possesive($tnode))
     ) {
+        warn("COREF $unode->{id}");
         # TODO: Container numerals (sempos = n.denot)
-        # TODO: Skip RSTR "ten" (but set number to "matčin")
         if (! $unode->entity_refnumber) {
             if ($uante->entity_refnumber) {
                 $unode->set_entity_refnumber($uante->entity_refnumber);
@@ -141,9 +142,10 @@ sub propagate_number_person {
             }
         }
     }
-    if ($tnode->gram_sempos =~ /^n \. pron \. (?: def \. (?: pers | demon)
-                                                | indef )$/x
-        || 'entity' eq $unode->concept
+    if (($tnode->gram_sempos =~ /^n \. pron \. (?: def \. (?: pers | demon)
+                                                 | indef )$/x
+         || 'entity' eq $unode->concept)
+        && ('RSTR' ne $tnode->functor || is_possesive($tnode))
     ) {
         if (! $unode->entity_refperson) {
             if ($uante->entity_refperson && $tante->gram_sempos !~ /^v/) {

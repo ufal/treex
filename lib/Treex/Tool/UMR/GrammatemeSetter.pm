@@ -17,7 +17,7 @@ requires qw{ tag_regex translate is_valid_tag };
         my $get_attr = $IMPLEMENTATION{$gram}{attr};
         return if $unode->$get_attr;
 
-        my $value = $orig_node->gram_sempos =~ /^n/
+        my $value = ($orig_node->gram_sempos // "") =~ /^n/
                   ? $orig_node->${ \$IMPLEMENTATION{$gram}{gram} }
                   : undef;
         if (! $value
