@@ -681,7 +681,8 @@ sub copy_subtree {
                                             foreach my $target_tree_node ( $target_node->get_root()->get_descendants() ) {
 
                                                 # for a node with the same rule $query and rule-id corresponding to rule node parents' lemma
-                                                if ( $rule_node_parent->t_lemma =~ /{$target_tree_node->wild->{'query_label'}->{$query}}[0]/i ) {
+                                                my $regex = $target_tree_node->wild->{'query_label'}{$query}[0];
+                                                if ( $rule_node_parent->t_lemma =~ /$regex/i ) {
                                                     $target_node->set_parent($target_tree_node);
                                                 }
                                             }
