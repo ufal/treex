@@ -47,18 +47,37 @@ sub process_unode($self, $unode, $) {
 
 sub translate_forn_id($self, $unode) {
     $unode->set_concept('name');
-    my @ops;
+    my @fphrs;
     for my $child ($unode->children) {
         if ('!!FPHR' eq $child->functor) {
-            push @ops, $child->concept;
+            push @fphrs, [$child->get_tnode];
             $unode->add_to_alignment($child->get_alignment);
             $self->safe_remove($child, $unode);
         } else {
             log_warn("#Forn with non-FPHR child: $unode->{id}");
         }
     }
-    if (@ops) {
-        $unode->set_ops(Treex::PML::Factory->createList(\@ops));
+    if (@fphrs) {
+        my $i = 0;
+        while ($i < $#fphrs) {
+            my $tnode = $fphrs[$i][-1];
+            my $alex = $tnode->get_lex_anode;
+            if (! $alex) {
+                warn join ' ', "No alex", $tnode->id, $unode->id;
+                return
+            }
+            if ($alex->no_space_after) {
+                push @{ $fphrs[$i] }, @{ splice @fphrs, $i + 1, 1 };
+            } else {
+                ++$i;
+            }
+        }
+        my @ops = map join("", map $_->t_lemma, @$_), @fphrs;
+        if (@ops > 1) {
+            $unode->set_ops(Treex::PML::Factory->createList(\@ops));
+        } else {
+            $unode->set_concept($ops[0]);
+        }
     } else {
         log_warn("#Forn without FPHR children: $unode->{id}");
     }
