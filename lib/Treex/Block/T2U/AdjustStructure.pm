@@ -15,6 +15,7 @@ extends 'Treex::Core::Block';
 has '+language' => ( required => 1 );
 
 has coref2fix => (is => 'rw', isa => 'HashRef', default => sub { +{} });
+has remove_later => (is => 'rw', isa => 'HashRef', default => sub { +{} });
 
 has _coord_members_already_sub2coorded => (is => 'ro', isa => 'HashRef',
                                            default => sub { +{} });
@@ -30,8 +31,13 @@ sub process_unode($self, $unode, $) {
         return
     }
 
-    $self->translate_forn_id($unode) if '#Forn' eq $unode->concept
-                                     && 'name' eq $unode->functor;
+    if ('#Forn' eq $unode->concept) {
+        if ('name' eq $unode->functor) {
+            $self->translate_forn($unode, 'name', 1);
+        } else {
+            $self->translate_forn($unode, 'foreign-phrase', 0);
+        }
+    }
 
     my $tnode = $unode->get_tnode;
     $self->translate_compl($unode, $tnode)
@@ -45,8 +51,8 @@ sub process_unode($self, $unode, $) {
     return
 }
 
-sub translate_forn_id($self, $unode) {
-    $unode->set_concept('name');
+sub translate_forn($self, $unode, $concept, $threshold) {
+    $unode->set_concept($concept);
     my @fphrs;
     for my $child ($unode->children) {
         if ('!!FPHR' eq $child->functor) {
@@ -64,16 +70,16 @@ sub translate_forn_id($self, $unode) {
             my $alex = $tnode->get_lex_anode;
             if (! $alex) {
                 warn join ' ', "No alex", $tnode->id, $unode->id;
-                return
-            }
-            if ($alex->no_space_after) {
+                ++$i
+            } elsif ($alex->no_space_after) {
                 push @{ $fphrs[$i] }, @{ splice @fphrs, $i + 1, 1 };
             } else {
                 ++$i;
             }
         }
         my @ops = map join("", map $_->t_lemma, @$_), @fphrs;
-        if (@ops > 1) {
+        log_warn(join ' ', 'No FPHRs', $unode->id) unless @ops;
+        if (@ops > $threshold) {
             $unode->set_ops(Treex::PML::Factory->createList(\@ops));
         } else {
             $unode->set_concept($ops[0]);
@@ -170,7 +176,9 @@ sub safe_remove($self, $node, $parent) {
     if ($node->children) {
         log_warn('Removing with children ', $node->id);
     } else {
-        $node->remove;
+        # We can't remove the node now, as it would remove all
+        # references to it, including same_as.rf.
+        undef $self->remove_later->{ $node->id };
     }
     return
 }
@@ -180,6 +188,8 @@ after process_document => sub($self, $document) {
 
     for my $tree ($document->trees) {
         for my $node ($tree->descendants) {
+            next unless $node->isa('Treex::Core::Node::U');
+
             if (my $coref = $node->get_attr('coref')) {
                 my @new_coref = map
                     exists $self->coref2fix->{ $_->{'target_node.rf'} }
@@ -190,6 +200,17 @@ after process_document => sub($self, $document) {
                     @$coref;
                 $node->set_attr('coref', \@new_coref);
             }
+            if (my $same = $node->{'same_as.rf'}) {
+                $node->set_attr('same_as.rf', $self->coref2fix->{$same})
+                    if exists $self->coref2fix->{$same};
+            }
+        }
+    }
+    # Now it's safe to remove the nodes.
+    for my $tree ($document->trees) {
+        for my $node ($tree->descendants) {
+            next unless $node->isa('Treex::Core::Node::U');
+            $node->remove if exists $self->remove_later->{ $node->id };
         }
     }
 };
