@@ -184,6 +184,21 @@ sub safe_remove($self, $node, $parent) {
 }
 
 after process_document => sub($self, $document) {
+    $self->fix_coref($document);
+    $self->rename_octothorpes($document);
+};
+
+sub rename_octothorpes($self, $document) {
+    for my $tree ($document->trees) {
+        for my $node ($tree->descendants) {
+            next unless $node->isa('Treex::Core::Node::U');
+            $node->set_concept($node->concept =~ s/^#/%/r)
+                if $node->concept =~ /^#/;
+        }
+    }
+}
+
+sub fix_coref($self, $document) {
     return unless keys %{ $self->coref2fix };
 
     for my $tree ($document->trees) {
@@ -213,7 +228,8 @@ after process_document => sub($self, $document) {
             $node->remove if exists $self->remove_later->{ $node->id };
         }
     }
-};
+    return
+}
 
 sub is_exclusive { die 'Not implemented, language specific' }
 
