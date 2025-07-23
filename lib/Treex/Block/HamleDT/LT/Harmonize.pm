@@ -916,6 +916,18 @@ sub fix_annotation_errors
             # The phrase is headed by a 'Coord' but it should be 'Coord_Co'.
             $node->set_is_member(1);
         }
+        # mok_santr2_91_sak-s49
+        # naujausias mokslo žinias ir mokomąją medžiagą
+        # the latest scientific knowledge and educational materials
+        if($form eq 'ir' && $spanstring =~ m/^naujausias mokslo žinias ir mokomąją medžiagą$/i)
+        {
+            # In the input data, the conjunction has the deprel 'Aux' instead of 'Coord'.
+            # The conjuncts were OK, they had both 'Atr_Co', but in the meantime we may have removed them, seeing that the parent was not 'Coord'.
+            $node->set_deprel('Coord');
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_is_member(1);
+            $subtree[5]->set_is_member(1);
+        }
     }
 }
 
