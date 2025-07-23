@@ -410,7 +410,7 @@ sub convert_deprels
         ###!!! TODO: distinguish core arguments (xcomp) from non-core arguments and adjuncts (acl/advcl).
         elsif($deprel =~ m/^AtvV?$/)
         {
-            $deprel = 'xcomp';
+            $deprel = 'advcl:pred';
         }
         # Auxiliary verb "být" ("to be"): aux, aux:pass
         elsif($deprel eq 'AuxV')
