@@ -529,7 +529,7 @@ sub convert_deprels
             # When it is attached to a complement (Atv, AtvV), it is usually an equivalent of the subordinating conjunction "as" and it should be 'mark'.
             # Czech: "jako" ("as"); sometimes it is attached even to Obj (of verbal adjectives). It should never get the 'cc' deprel, so we will mention it explicitly.
             # Index Thomisticus examples: ut (as), sicut (as), quasi (as), tanquam (like), utpote (as) etc.
-            elsif($parent->wild()->{prague_deprel} =~ m/^AtvV?$/ ||
+            elsif($parent->wild()->{prague_deprel} =~ m/^AtvV?$/ && lc($node->form()) ne 'jednak' ||
                   lc($node->form()) =~ m/^(ut|sicut|quasi|tanquam|utpote)$/)
                   ###!!!lc($node->form()) =~ m/^(jako|ut|sicut|quasi|tanquam|utpote)$/)
             {
