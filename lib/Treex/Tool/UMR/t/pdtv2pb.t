@@ -8,8 +8,7 @@ use strict;
     use Treex::Core::Log;
     use Sub::Override;
     my $override = 'Sub::Override'->new(
-
-    'Treex::Core::Log::log_warn' => sub { warn shift });
+        'Treex::Core::Log::log_warn' => sub { warn shift });
     with 'Treex::Tool::UMR::PDTV2PB';
     sub BUILD {}
 }
