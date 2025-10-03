@@ -325,7 +325,8 @@ sub fix_morphology
         }
         # The particle in UD is defined differently from what Czech linguists typically label as particles.
         # In many cases, the UD category should be adverb. Especially if a homonymous adverb exists.
-        if($node->is_particle() && $lemma =~ m/^(stejně|tedy)$/)
+        if($node->is_particle() && $lemma =~ m/^(jakoby|stejně|tedy)$/ ||
+           $node->is_subordinator() && $lemma =~ m/^(jakoby)$/)
         {
             $node->iset()->set('pos', 'adv');
         }
