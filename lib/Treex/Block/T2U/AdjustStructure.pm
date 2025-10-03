@@ -56,9 +56,6 @@ sub process_unode($self, $unode, $) {
     $self->adjust_coap($unode, $tnode) if 'coap' eq $tnode->nodetype;
     $self->translate_percnt($unode, $tnode)
         if 'percentage-entity' eq ($unode->concept // "");
-    $self->simplify_double_edges($unode);
-    $self->remove_backwards_edge($unode, $1, $tnode)
-        if $unode->functor =~ /^(.+)-of$/;
     $self->negate_sibling($unode, $tnode)
         if 'RHEM' eq $tnode->functor && $tnode->t_lemma =~ /^$negation$/
         || 'CM' eq $tnode->functor && $tnode->t_lemma =~ /^(?:#Neg|$negation)$/;
@@ -245,6 +242,7 @@ sub safe_remove($self, $node, $parent) {
 
 after process_document => sub($self, $document) {
     $self->fix_coref($document);
+    $self->remove_double_edge($document);
     $self->rename_octothorpes($document);
 };
 
@@ -361,35 +359,40 @@ sub adjust_coap($self, $unode, $tnode) {
     return
 }
 
-# TODO: tnode not needed?
-sub remove_backwards_edge($self, $unode, $functor, $tnode) {
-    my @unodes = expand_coord($unode);
-    warn "Expand: ", join ' ', map $_->concept, @unodes;
-    for my $uexp (map $_->children, @unodes) {
-        warn "Try $uexp->{concept}";
-        if ($uexp->functor eq $functor) {
-            if ('ref' eq $uexp->nodetype) {
-                $uexp->remove;
-            } else {
-                warn "Double $functor $tnode->{id} $uexp->{concept}";
+sub remove_double_edge($self, $document) {
+    for my $tree ($document->trees) {
+        for my $unode ($tree->descendants) {
+            next unless $unode->isa('Treex::Core::Node::U');
+
+            my %ref;
+            for my $child (grep 'ref' ne $_->nodetype, $unode->children) {
+                ++$ref{ $child->{functor} }{ $child->id };
+            }
+            for my $child (grep 'ref' eq $_->nodetype, $unode->children) {
+                if ($ref{ $child->{functor} }{ $child->{'same_as.rf'} }++) {
+                    $child->remove;
+                }
+            }
+
+            if (($unode->functor // "") =~ /^(.+)-of$/) {
+                my $functor = $1;
+                my @unodes = expand_coord($unode);
+                warn "Expand: ", join ' ', map $_->concept, @unodes;
+                for my $uexp (map $_->children, @unodes) {
+                    warn "Try $uexp->{concept}";
+                    if ($uexp->functor eq $functor) {
+                        if ('ref' eq $uexp->nodetype) {
+                            $uexp->remove;
+                        } else {
+                            warn "Double $functor $uexp->{concept}";
+                        }
+                    }
+                }
             }
         }
     }
     return
 }
-
-sub simplify_double_edges($self, $unode) {
-    my %ref;
-    for my $child (grep 'ref' ne $_->nodetype, $unode->children) {
-        ++$ref{ $child->{functor} }{ $child->id };
-    }
-    for my $child (grep 'ref' eq $_->nodetype, $unode->children) {
-        if ($ref{ $child->{functor} }{ $child->{'same_as.rf'} }++) {
-            $child->remove;
-        }
-    }
-}
-
 
 sub _solve_ref($self, $unode) {
     while ('ref' eq ($unode->nodetype // "")) {
@@ -422,14 +425,13 @@ Common dependents in a coordination are rehung to the first coordination
 member. Arrows are created from all other members to the common dependents to
 express their relation.
 
-=item remove_backwards_edge
+=item remove_double_edge
 
-When a C<*-of> relation is created from a coordination, the node sometimes
-still have arrows with the inverted relation, too. Remove this surplus arrows.
-
-=item simplify_double_edges
-
-Sometimes, a node has several arrows to the same target with the same relation. Keep only a single arrow. Similarly, remove arrows that duplicate edges.
+If a node has several arrows to the same target with the same relation, keep
+only a single arrow or remove all the arrows that duplicate an edge.
+Similarly, when a C<*-of> relation is created from a coordination, the node
+sometimes still have arrows with the inverted relation, too. Remove these
+surplus arrows.
 
 =item negate_sibling
 
