@@ -36,6 +36,7 @@ sub process_atree
         $self->fix_annotation_errors($node);
         $self->identify_acl_relcl($node);
         $self->fix_copula_location($node);
+        $self->fix_adverb_mark($node);
     }
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
@@ -603,6 +604,24 @@ sub fix_copula_location
     }
     $node->set_parent($new_head);
     $node->set_deprel('cop');
+}
+
+
+
+#------------------------------------------------------------------------------
+# If an adverb ends up attached as mark, something is wrong. Either it should
+# be subordinator rather than adverb, or it should be advmod rather than mark.
+# Based on observed cases, we choose the latter solution. Note that it would
+# be difficult to fix this earlier: If the adverb was AuxC in PDT, the PDT
+# tree structure was quite different from UD.
+#------------------------------------------------------------------------------
+sub fix_adverb_mark
+{
+    my $self = shift;
+    my $node = shift;
+    return unless($node->is_adverb());
+    return unless($node->deprel() =~ m/^mark(:|$)/);
+    $node->set_deprel('advmod');
 }
 
 
