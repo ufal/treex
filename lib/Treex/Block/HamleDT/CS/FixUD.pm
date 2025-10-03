@@ -1373,6 +1373,7 @@ BEGIN
         ['jako například , že', 'always', 'jako například , že', 'SCONJ ADV PUNCT SCONJ', 'J,------------- Db------------- Z:------------- J,-------------', 'pos=conj|conjtype=sub pos=adv pos=punc pos=conj|conjtype=sub', '0:mark 0:advmod 0:punct 0:mark'],
         ['jako například',     'always',  'jako například',     'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
         ['jako o',             'fixed',   'jako o',             'SCONJ ADP',           'J,------------- RV--4----------',                 'pos=conj|conjtype=sub pos=adp|adpostype=prep|case=acc', '0:mark 0:case'],
+        ['jako ostatně',       'always',  'jako ostatně',       'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
         ['jako u',             'fixed',   'jako u',             'SCONJ ADP',           'J,------------- RV--2----------',                 'pos=conj|conjtype=sub pos=adp|adpostype=prep|case=gen', '0:mark 0:case'],
         ['jako ve',            'fixed',   'jako v',             'SCONJ ADP',           'J,------------- RV--6----------',                 'pos=conj|conjtype=sub pos=adp|adpostype=voc|case=loc', '0:mark 0:case'],
         ['jako že',            'always',  'jako že',            'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',   '0:mark 0:mark'],
