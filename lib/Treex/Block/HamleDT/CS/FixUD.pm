@@ -621,6 +621,7 @@ sub fix_adverb_mark
     my $node = shift;
     return unless($node->is_adverb());
     return unless($node->deprel() =~ m/^mark(:|$)/);
+    return if($node->iset()->extpos() eq 'sconj'); # "zatím co" written with space
     $node->set_deprel('advmod');
 }
 
