@@ -371,8 +371,13 @@ sub fix_auxiliary_verb
                 {
                     ###!!! Warning! This could lead to a double-subject (or double-object)
                     ###!!! situation if the parent already has a subject/object.
-                    if($child->deprel() =~ m/^[nc]subj/ && any {$_->deprel() =~ m/^[nc]subj/} ($node->children()) ||
-                       $child->deprel() eq m/^obj/ && any {$_->deprel() =~ m/^obj/} ($node->children()))
+                    my @mychildren = $node->children();
+                    log_info("My children = ".join(', ', @mychildren));
+                    my @mysubjects = grep {$_->deprel() =~ m/^[nc]subj/} (@mychildren);
+                    my @myobjects = grep {$_->deprel() =~ m/^obj/} (@mychildren);
+                    if(scalar(@mychildren) > 0 &&
+                       ($child->deprel() =~ m/^[nc]subj/ && scalar(@mysubjects) > 0 ||
+                        $child->deprel() eq m/^obj/ && scalar(@myobjects) > 0))
                     {
                         ###!!! Ideally, we should find a better solution.
                         $child->set_deprel('dep');
