@@ -47,9 +47,9 @@ sub process_atree
     $self->change_case_to_mark_under_verb($root);
     $self->dissolve_chains_of_auxiliaries($root);
     $self->raise_children_of_fixed($root);
+    $self->relabel_subordinate_clauses($root);
     ###!!! The following method removes symptoms but we may want to find and remove the cause.
     $self->fix_multiple_subjects($root);
-    $self->relabel_subordinate_clauses($root);
     $self->check_ncsubjpass_when_auxpass($root);
     $self->raise_punctuation_from_coordinating_conjunction($root);
     # It is possible that there is still a dependency labeled 'predn'.
@@ -430,51 +430,6 @@ sub change_case_to_mark_under_verb
 
 
 #------------------------------------------------------------------------------
-# If a verb has an aux:pass or expl:pass child, its subject must be also *pass.
-# We try to get the subjects right already during deprel conversion, checking
-# whether the parent is a passive participle. But that will not work for
-# reflexive passives, where we have to wait until the reflexive pronoun has its
-# deprel. Probably it will also not work if the participle does not have the
-# voice feature because its function is not limited to passive (such as in
-# English). This method will fix it. It should be called after the main part of
-# conversion is done (otherwise coordination could obscure the passive
-# auxiliary).
-#------------------------------------------------------------------------------
-sub check_ncsubjpass_when_auxpass
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my @children = $node->children();
-        my @auxpass = grep {$_->deprel() =~ m/^(aux|expl):pass$/} (@children);
-        if(scalar(@auxpass) > 0)
-        {
-            foreach my $child (@children)
-            {
-                if($child->deprel() eq 'nsubj')
-                {
-                    $child->set_deprel('nsubj:pass');
-                }
-                elsif($child->deprel() eq 'csubj')
-                {
-                    $child->set_deprel('csubj:pass');
-                }
-                # Specific to some languages only: if the oblique agent is expressed, it is a bare instrumental noun phrase.
-                # In the Prague-style annotation, it would be labeled as "obj" when we come here.
-                elsif($child->deprel() eq 'obj' && $child->is_instrumental())
-                {
-                    $child->set_deprel('obl:agent');
-                }
-            }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
 # UD guidelines disallow chains of auxiliary verbs. Regardless whether there is
 # hierarchy in application of grammatical rules, all auxiliaries should be
 # attached directly to the main verb (example [en] "could have been done").
@@ -520,10 +475,71 @@ sub raise_children_of_fixed
 
 
 #------------------------------------------------------------------------------
-# Make sure that no node has more than two subjects. Normally it should not be
-# more than one but if a nested clause acts as a nonverbal predicate and there
-# is no copula in the outer clause, it is possible that both the outer and the
-# inner subject will be attached to the same node.
+# Relabel subordinate clauses. In the Croatian SETimes corpus, their predicates
+# are labeled 'Pred', which translates as 'parataxis'. But we want to
+# distinguish the various types of subordinate clauses instead.
+#------------------------------------------------------------------------------
+sub relabel_subordinate_clauses
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $deprel = $node->deprel();
+        if($deprel eq 'parataxis')
+        {
+            my $parent = $node->parent();
+            next if($parent->is_root());
+            my @marks = grep {$_->deprel() eq 'mark'} ($node->children());
+            # We do not know what to do when there is no mark. Perhaps it is indeed a parataxis?
+            next if(scalar(@marks)==0);
+            # Relative clauses modify a noun. They substitute for an adjective.
+            if($parent->is_noun())
+            {
+                $node->set_deprel('acl');
+                foreach my $mark (@marks)
+                {
+                    # The Croatian treebank analyzes both subordinating conjunctions and relative pronouns
+                    # the same way. We want to separate them again. Pronouns should not be labeled 'mark'.
+                    # They probably fill a slot in the frame of the subordinate verb: 'nsubj', 'obj' etc.
+                    if($mark->is_pronoun() && $mark->is_noun())
+                    {
+                        my $case = $mark->iset()->case();
+                        if($case eq 'nom' || $case eq '')
+                        {
+                            $mark->set_deprel('nsubj');
+                        }
+                        else
+                        {
+                            $mark->set_deprel('obj');
+                        }
+                    }
+                }
+            }
+            # Complement clauses depend on a verb that requires them as argument.
+            # Examples: he says that..., he believes that..., he hopes that...
+            elsif(any {my $l = $_->lemma(); defined($l) && $l eq 'da'} (@marks))
+            {
+                $node->set_deprel('ccomp');
+            }
+            # Adverbial phrases modify a verb. They substitute for an adverb.
+            # Example: ... if he passes the exam.
+            else
+            {
+                $node->set_deprel('advcl');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Make sure that no node has more than one subject, except subjects subtyped as
+# outer. If a nested clause acts as a nonverbal predicate, it is possible that
+# both the outer and the inner subject will be attached to the same node, but
+# then the outer subject must be subtyped as :outer.
 #------------------------------------------------------------------------------
 sub fix_multiple_subjects
 {
@@ -532,10 +548,55 @@ sub fix_multiple_subjects
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my @subjects = grep {$_->deprel() =~ m/subj/} ($node->get_children({'ordered' => 1}));
-        for(my $i = 2; $i <= $#subjects; $i++)
+        my @subjects = grep {$_->deprel() =~ m/subj/ && $_->deprel() !~ m/:outer/} ($node->get_children({'ordered' => 1}));
+        for(my $i = 1; $i <= $#subjects; $i++)
         {
             $subjects[$i]->set_deprel('dep');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# If a verb has an aux:pass or expl:pass child, its subject must be also *pass.
+# We try to get the subjects right already during deprel conversion, checking
+# whether the parent is a passive participle. But that will not work for
+# reflexive passives, where we have to wait until the reflexive pronoun has its
+# deprel. Probably it will also not work if the participle does not have the
+# voice feature because its function is not limited to passive (such as in
+# English). This method will fix it. It should be called after the main part of
+# conversion is done (otherwise coordination could obscure the passive
+# auxiliary).
+#------------------------------------------------------------------------------
+sub check_ncsubjpass_when_auxpass
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my @children = $node->children();
+        my @auxpass = grep {$_->deprel() =~ m/^(aux|expl):pass$/} (@children);
+        if(scalar(@auxpass) > 0)
+        {
+            foreach my $child (@children)
+            {
+                if($child->deprel() eq 'nsubj')
+                {
+                    $child->set_deprel('nsubj:pass');
+                }
+                elsif($child->deprel() eq 'csubj')
+                {
+                    $child->set_deprel('csubj:pass');
+                }
+                # Specific to some languages only: if the oblique agent is expressed, it is a bare instrumental noun phrase.
+                # In the Prague-style annotation, it would be labeled as "obj" when we come here.
+                elsif($child->deprel() eq 'obj' && $child->is_instrumental())
+                {
+                    $child->set_deprel('obl:agent');
+                }
+            }
         }
     }
 }
@@ -647,67 +708,6 @@ sub fix_annotation_errors
         {
             $lemma = lc($form);
             $node->set_lemma($lemma);
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Relabel subordinate clauses. In the Croatian SETimes corpus, their predicates
-# are labeled 'Pred', which translates as 'parataxis'. But we want to
-# distinguish the various types of subordinate clauses instead.
-#------------------------------------------------------------------------------
-sub relabel_subordinate_clauses
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $deprel = $node->deprel();
-        if($deprel eq 'parataxis')
-        {
-            my $parent = $node->parent();
-            next if($parent->is_root());
-            my @marks = grep {$_->deprel() eq 'mark'} ($node->children());
-            # We do not know what to do when there is no mark. Perhaps it is indeed a parataxis?
-            next if(scalar(@marks)==0);
-            # Relative clauses modify a noun. They substitute for an adjective.
-            if($parent->is_noun())
-            {
-                $node->set_deprel('acl');
-                foreach my $mark (@marks)
-                {
-                    # The Croatian treebank analyzes both subordinating conjunctions and relative pronouns
-                    # the same way. We want to separate them again. Pronouns should not be labeled 'mark'.
-                    # They probably fill a slot in the frame of the subordinate verb: 'nsubj', 'obj' etc.
-                    if($mark->is_pronoun() && $mark->is_noun())
-                    {
-                        my $case = $mark->iset()->case();
-                        if($case eq 'nom' || $case eq '')
-                        {
-                            $mark->set_deprel('nsubj');
-                        }
-                        else
-                        {
-                            $mark->set_deprel('obj');
-                        }
-                    }
-                }
-            }
-            # Complement clauses depend on a verb that requires them as argument.
-            # Examples: he says that..., he believes that..., he hopes that...
-            elsif(any {my $l = $_->lemma(); defined($l) && $l eq 'da'} (@marks))
-            {
-                $node->set_deprel('ccomp');
-            }
-            # Adverbial phrases modify a verb. They substitute for an adverb.
-            # Example: ... if he passes the exam.
-            else
-            {
-                $node->set_deprel('advcl');
-            }
         }
     }
 }
