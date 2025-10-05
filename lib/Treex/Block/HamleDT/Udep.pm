@@ -549,9 +549,13 @@ sub fix_multiple_subjects
     foreach my $node (@nodes)
     {
         my @subjects = grep {$_->deprel() =~ m/subj/ && $_->deprel() !~ m/:outer/} ($node->get_children({'ordered' => 1}));
-        for(my $i = 1; $i <= $#subjects; $i++)
+        if(scalar(@subjects) > 1)
         {
-            $subjects[$i]->set_deprel('dep');
+            log_warn("Multiple subjects not subtyped as ':outer'. Keeping the first one, relabeling others as 'dep'.");
+            for(my $i = 1; $i <= $#subjects; $i++)
+            {
+                $subjects[$i]->set_deprel('dep');
+            }
         }
     }
 }

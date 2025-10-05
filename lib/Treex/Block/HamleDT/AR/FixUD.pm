@@ -369,6 +369,14 @@ sub fix_auxiliary_verb
             {
                 if($child->deprel() =~ m/^([nc]subj|obj|obl|advmod|discourse|vocative|expl)(:|$)/)
                 {
+                    ###!!! Warning! This could lead to a double-subject (or double-object)
+                    ###!!! situation if the parent already has a subject/object.
+                    if($child->deprel() =~ m/^[nc]subj/ && any {$_->deprel() =~ m/^[nc]subj/} ($node->children()) ||
+                       $child->deprel() eq m/^obj/ && any {$_->deprel() =~ m/^obj/} ($node->children()))
+                    {
+                        ###!!! Ideally, we should find a better solution.
+                        $child->set_deprel('dep');
+                    }
                     $child->set_parent($node);
                 }
             }
