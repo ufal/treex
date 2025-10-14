@@ -674,7 +674,7 @@ sub fix_constructions
         # "v play off"
         elsif($node->is_noun() && $deprel =~ m/^advmod(:|$)/)
         {
-            $deprel = 'obl';
+            $deprel = $node->parent()->is_noun() ? 'nmod' : 'obl';
             $node->set_deprel($deprel);
         }
         # An initial ("K", "Z") is sometimes mistaken for a preposition, although
@@ -692,14 +692,14 @@ sub fix_constructions
         # "většinou" ("mostly") is the noun "většina", almost grammaticalized to an adverb.
         elsif(lc($node->form()) eq 'většinou' && $node->is_noun() && $deprel =~ m/^advmod(:|$)/)
         {
-            $deprel = 'obl';
+            $deprel = $node->parent()->is_noun() ? 'nmod' : 'obl';
             $node->set_deprel($deprel);
         }
         # "v podstatě" ("basically") is a prepositional phrase used as an adverb.
         # Similar: "ve skutečnosti" ("in reality")
         elsif($node->form() =~ m/^(podstatě|skutečnosti)$/i && $deprel =~ m/^(cc|advmod)(:|$)/)
         {
-            $deprel = 'obl';
+            $deprel = $node->parent()->is_noun() ? 'nmod' : 'obl';
             $node->set_deprel($deprel);
         }
         # The noun "pravda" ("truth") used as sentence-initial particle is attached
@@ -1209,6 +1209,10 @@ sub fix_constructions
             foreach my $child (@children)
             {
                 $child->set_parent($parent);
+                if($child->deprel() =~ m/^obl(:|$)/ && $parent->is_noun())
+                {
+                    $child->set_deprel('nmod');
+                }
             }
         }
         # In PDT, isolated letters are sometimes attached as punctuation:
@@ -1866,7 +1870,7 @@ sub fix_a_to
     # "a tím i" ("and this way also")
     elsif(lc($node->form()) eq 'tím' && $deprel =~ m/^(cc|advmod)(:|$)/)
     {
-        $deprel = 'obl';
+        $deprel = $node->parent()->is_noun() ? 'nmod' : 'obl';
         $node->set_deprel($deprel);
     }
     # If "to" is now attached as "fixed" (and not as "obl", as in the last branch),
@@ -2107,7 +2111,7 @@ sub fix_annotation_errors
     {
         my @subtree = $self->get_node_subtree($node);
         my $parent = $node->parent();
-        my $deprel = 'obl';
+        my $deprel = $node->parent()->is_noun() ? 'nmod' : 'obl';
         $subtree[1]->set_lemma('§');
         $subtree[1]->set_tag('SYM');
         $subtree[1]->iset()->set_hash({'pos' => 'sym', 'typo' => 'yes'});
