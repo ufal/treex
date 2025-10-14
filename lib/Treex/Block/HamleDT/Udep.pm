@@ -51,6 +51,7 @@ sub process_atree
     ###!!! The following method removes symptoms but we may want to find and remove the cause.
     $self->fix_multiple_subjects($root);
     $self->check_ncsubjpass_when_auxpass($root);
+    $self->check_obl_under_nominal($root);
     $self->raise_punctuation_from_coordinating_conjunction($root);
     # It is possible that there is still a dependency labeled 'predn'.
     # If it wasn't right under root in the beginning (because of AuxC for example)
@@ -608,6 +609,26 @@ sub check_ncsubjpass_when_auxpass
 
 
 #------------------------------------------------------------------------------
+# If a nominal modifies another nominal and the parent is not a nominal
+# predicate of a clause, their relation cannot be 'obl' and must be 'nmod'.
+#------------------------------------------------------------------------------
+sub check_obl_under_nominal
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() =~ m/^obl(:|$)/ && $self->is_nominal_not_predicate($node->parent()))
+        {
+            $node->set_deprel('nmod');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Punctuation in coordination is sometimes attached to a non-head conjunction
 # instead to the head (e.g. in Index Thomisticus). Now all coordinating
 # conjunctions are attached to the first conjunct and so should be commas.
@@ -653,6 +674,26 @@ sub agree
     foreach my $v1 (@v1)
     {
         return 1 if($i2->contains($feature, $v1));
+    }
+    return 0;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Checks whether a node is the head of a nominal that is not at the same time
+# the head of a clause (nominal predicate). Looks at upos and deprel (its main
+# / universal part). If it cannot be sure that the answer is 1, it will return
+# 0 (for example, if the deprel is 'appos', the node is probably not clausal,
+# but we cannot completely exclude it, therefore we will return 0).
+#------------------------------------------------------------------------------
+sub is_nominal_not_predicate
+{
+    my $self = shift;
+    my $node = shift;
+    if(($node->is_noun() || $node->is_pronominal() || $node->is_numeral()) && $node->deprel() =~ m/^(nsubj|obj|iobj|obl|vocative|dislocated|expl|nmod|nummod)(:|$)/)
+    {
+        return 1;
     }
     return 0;
 }
