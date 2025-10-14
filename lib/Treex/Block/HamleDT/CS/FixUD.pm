@@ -1647,7 +1647,7 @@ sub fix_fixed_expressions
                 {
                     if(defined($subroot_node))
                     {
-                        $expression_nodes[$i]->set_b_e_dependency($subroot_node, $found_expression->{deprels}[$i]);
+                        $expression_nodes[$i]->set_b_e_dependency($subroot_node, $self->decide_obl_or_nmod($subroot_node, $found_expression->{deprels}[$i]));
                     }
                     else
                     {
@@ -1657,7 +1657,7 @@ sub fix_fixed_expressions
                 }
                 else
                 {
-                    $expression_nodes[$i]->set_b_e_dependency($parent, $found_expression->{deprels}[$i]);
+                    $expression_nodes[$i]->set_b_e_dependency($parent, $self->decide_obl_or_nmod($parent, $found_expression->{deprels}[$i]));
                 }
             }
             # To prevent temporary cycles when changing the internal structure
@@ -1673,7 +1673,7 @@ sub fix_fixed_expressions
             my $parent_i = $found_expression->{parents}[$i];
             if($parent_i > 0)
             {
-                $expression_nodes[$i]->set_b_e_dependency($expression_nodes[$parent_i-1], $found_expression->{deprels}[$i]);
+                $expression_nodes[$i]->set_b_e_dependency($expression_nodes[$parent_i-1], $self->decide_obl_or_nmod($expression_nodes[$parent_i-1], $found_expression->{deprels}[$i]));
             }
         }
     }
@@ -1685,6 +1685,21 @@ sub fix_fixed_expressions
             $node->set_parent($node->parent()->parent());
         }
     }
+}
+###!!!
+# If the deprel prescribed by the table is obl, look at the parent and see if
+# it should not actually be nmod. We have been checking this in Udep::check_obl_under_nominal()
+# and we do not want to spoil it here again.
+sub decide_obl_or_nmod
+{
+    my $self = shift;
+    my $new_parent = shift;
+    my $suggested_deprel = shift;
+    if($suggested_deprel =~ m/^obl(:|$)/ && $new_parent->deprel() =~ m/^(nsubj|obj|iobj|obl|vocative|dislocated|expl|nmod|nummod)(:|$)/)
+    {
+        return 'nmod';
+    }
+    return $suggested_deprel;
 }
 
 
