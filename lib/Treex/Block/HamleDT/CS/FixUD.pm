@@ -28,6 +28,11 @@ sub process_atree
     # Prague in Udep.pm. We repeat it here because of Czech-PUD, which is not
     # converted.
     $self->relabel_oblique_objects($root);
+    # Some depictives in accusative with the conjunction "jako" slipped through
+    # the cracks as "objects" while they should be xcomp or advcl:pred.
+    ###!!! Perhaps this should be fixed already when harmonizing the Prague
+    ###!!! style (AtvV instead of Obj) but for now we do it here, it is simpler.
+    $self->relabel_depictive_objects($root);
     $self->fix_constructions($root);
     $self->fix_fixed_expressions($root);
     foreach my $node (@nodes)
@@ -455,6 +460,79 @@ sub is_core_argument
           && !$caseiset->is_locative()
           && !$caseiset->is_ablative()
           && !$caseiset->is_instrumental();
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Some depictives in accusative with the conjunction "jako" slipped through
+# the cracks as "objects" while they should be xcomp or advcl:pred.
+###!!! Perhaps this should be fixed already when harmonizing the Prague
+###!!! style (AtvV instead of Obj) but for now we do it here, it is simpler.
+#------------------------------------------------------------------------------
+sub relabel_depictive_objects
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() =~ m/^obj(:|$)/)
+        {
+            my $jako = any {$_->lemma() eq 'jako'} ($node->children());
+            if($jako)
+            {
+                $node->set_deprel('advcl:pred');
+            }
+            else
+            {
+            }
+        }
+    }
+    # Do this only after all "jako" nominals have been resolved. Otherwise we
+    # would count them when looking for possible other objects, although they
+    # no longer pose a problem.
+    foreach my $node (@nodes)
+    {
+        # In "činilo jeho samotu docela zábavnou", the noun "samotu"
+        # is a direct object but the adjective "zábavnou" should be
+        # annotated as a resultative (xcomp). However, we cannot
+        # distinguish resultatives from depictives, as the decision
+        # depends on the semantics of the verb. Therefore, we make them
+        # all optional depictives for the time being. ###!!!
+        if($node->deprel() =~ m/^obj(:|$)/ && $node->is_adjective() && !$node->is_pronominal())
+        {
+            my $other_objects = any {$_->deprel() =~ m/^obj(:|$)/} ($node->get_siblings());
+            if($other_objects)
+            {
+                $node->set_deprel('advcl:pred'); ###!!! or xcomp
+            }
+        }
+    }
+    ###!!! The rest also serves the goal of removing superfluous objects but it
+    ###!!! is no longer about secondary predication, so it should ultimately
+    ###!!! end up in a separate function and maybe block. But then we would
+    ###!!! also have to make sure that it does not interfere with the things we
+    ###!!! do above with depictives.
+    foreach my $node (@nodes)
+    {
+        # A few Czech verbs allow two accusative objects: "učit", "naučit",
+        # "vyučovat", "odnaučit", "stát" (někoho něco). One of the objects
+        # should be 'iobj', the other 'obj'. We want to make the "recipient"
+        # (or beneficiary, or simply the participant closest to such roles)
+        # the indirect object, but we cannot identify them automatically and
+        # reliably. Picking personal pronouns (especially 1st and 2nd person)
+        # as the recipient should work but it would not resolve everything.
+        ###!!! For now, simply keep the last one as 'obj', make the others 'iobj'.
+        my @objects = grep {$_->deprel() =~ m/^obj(:|$)/} ($node->children({'ordered' => 1}));
+        if(scalar(@objects) > 1)
+        {
+            for(my $i = 0; $i < $#objects; $i++)
+            {
+                $objects[$i]->set_deprel('iobj');
+            }
+        }
     }
 }
 
