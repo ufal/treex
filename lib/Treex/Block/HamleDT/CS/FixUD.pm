@@ -35,6 +35,7 @@ sub process_atree
     $self->relabel_depictive_objects($root);
     $self->fix_constructions($root);
     $self->fix_fixed_expressions($root);
+    $self->fix_fixed_expressions_with_gaps($root);
     foreach my $node (@nodes)
     {
         $self->fix_jak_znamo($root);
@@ -1785,6 +1786,72 @@ sub decide_obl_or_nmod
         return 'nmod';
     }
     return $suggested_deprel;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Makes sure that no fixed expressions have gaps in them. This is possible in
+# UD, although it triggers a warning. But we believe that such expressions are
+# not fixed enough, at least in Czech.
+###!!! In the future, we should move this decision to an earlier phase, i.e.,
+# during the harmonization of the Prague style, where we could introduce a new
+# Fixed relation and a corresponding special type of nonterminal phrase.
+# Perhaps we should ban also non-gappy versions of expressions that can have
+# gaps, or all multiword prepositions whatsoever. (But we may want to preserve
+# them in MISC and/or in the enhanced graph.)
+#------------------------------------------------------------------------------
+sub fix_fixed_expressions_with_gaps
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    foreach my $node (@nodes)
+    {
+        my @fixed = grep {$_->deprel() =~ m/^fixed(:|$)/} ($node->children({'ordered' => 1}));
+        if(scalar(@fixed) > 0)
+        {
+            unshift(@fixed, $node);
+            # We have a fixed expression. Does it have a gap? The UD validator
+            # would ignore a gap which only contains punctuation.
+            my $minord = $fixed[0]->ord();
+            my $maxord = $fixed[-1]->ord();
+            my @gap = grep {$_->ord() > $minord && $_->ord() < $maxord && !in($_, @fixed)} (@nodes);
+            if(scalar(@gap) > 0)
+            {
+                ###!!! There are various patterns that call for different solutions.
+                ###!!! For example, "z jeho strany" (the possessive in the gap is the parent of the fixed expression "ze strany")
+                ###!!! or "současně i s X" (the rhematizer "i" in the gap has the same parent as the fixed expression "současně s").
+                ###!!! For the moment, we take an easy (but wrong) approach of
+                ###!!! simply re-attaching all members directly to the parent.
+                if(scalar(@fixed) == 2 && scalar(@gap) == 1 && $gap[0]->is_possessive())
+                {
+                    $fixed[1]->set_parent($gap[0]->parent());
+                    $fixed[1]->set_deprel($gap[0]->deprel() == 'det' ? 'nmod' : $gap[0]->deprel());
+                    $fixed[0]->set_parent($fixed[1]);
+                    $gap[0]->set_parent($fixed[1]);
+                    $gap[0]->set_deprel('det');
+                }
+                # Skip instances where the gap consists of a single punctuation symbol.
+                elsif(!(scalar(@gap) == 1 && $gap[0]->deprel() =~ m/^punct(:|$)/))
+                {
+                    my $parent = $node->parent();
+                    my $deprel = $node->deprel();
+                    foreach my $f (@fixed[1..$#fixed])
+                    {
+                        $f->set_parent($parent);
+                        $f->set_deprel($deprel);
+                    }
+                }
+            }
+        }
+    }
+}
+sub in
+{
+    my $element = shift;
+    my @list = @_;
+    return any {$_ == $element} (@list);
 }
 
 

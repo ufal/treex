@@ -1576,6 +1576,13 @@ sub fix_annotation_errors
             $subtree[8]->set_parent($subtree[7]);
             $subtree[8]->set_deprel('Apposition');
         }
+        # PDT-C 2.0 dev tamw wsj2428.cz # 22
+        elsif($spanstring =~ m/^o více než dva a půl bodu , neboli o zhruba o 25 dolarů na každou 1000 dolarovou položku ,$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[9]->set_parent($subtree[12]);
+            $subtree[9]->set_deprel('AuxP');
+        }
     }
 }
 
