@@ -1457,6 +1457,9 @@ BEGIN
         ['jako například',     'always',  'jako například',     'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
         ['jako o',             'fixed',   'jako o',             'SCONJ ADP',           'J,------------- RV--4----------',                 'pos=conj|conjtype=sub pos=adp|adpostype=prep|case=acc', '0:mark 0:case'],
         ['jako ostatně',       'always',  'jako ostatně',       'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
+        ###!!! "jako spíš(e)" could be a multiword coordinator. But currently it is usually not treated as a fixed expression and I am hesitating to change it.
+        ['jako spíš',          'fixed',   'jako spíš',          'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
+        ['jako spíše',         'fixed',   'jako spíš',          'SCONJ ADV',           'J,------------- Db-------------',                 'pos=conj|conjtype=sub pos=adv',                 '0:mark 0:advmod'],
         ['jako u',             'fixed',   'jako u',             'SCONJ ADP',           'J,------------- RV--2----------',                 'pos=conj|conjtype=sub pos=adp|adpostype=prep|case=gen', '0:mark 0:case'],
         ['jako ve',            'fixed',   'jako v',             'SCONJ ADP',           'J,------------- RV--6----------',                 'pos=conj|conjtype=sub pos=adp|adpostype=voc|case=loc', '0:mark 0:case'],
         ['jako že',            'always',  'jako že',            'SCONJ SCONJ',         'J,------------- J,-------------',                 'pos=conj|conjtype=sub pos=conj|conjtype=sub',   '0:mark 0:mark'],
