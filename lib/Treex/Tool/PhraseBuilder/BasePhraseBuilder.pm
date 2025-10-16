@@ -882,7 +882,8 @@ sub detect_prague_apposition
             # In PDT they are labeled AuxY but other words in the tree may get
             # that label too. We identify it as 'cc' and use the dialect vocabulary
             # to see what label we actually expect.
-            elsif($self->is_deprel($d->deprel(), 'auxyz')) ###!!! Originally there was 'cc', which translates just to 'AuxY'. I am now (2025, PDT-C 2.0) testing 'auxyz' instead ('AuxY' OR 'AuxZ') to account for "stejně" in "stejně jako".
+            ###!!! Originally there was 'cc', which translates just to 'AuxY'. I am now (2025, PDT-C 2.0) testing 'auxyz' instead ('AuxY' OR 'AuxZ') to account for "stejně" in "stejně jako".
+            elsif($self->is_deprel($d->deprel(), 'auxyz'))
             {
                 push(@coordinators, $d);
             }

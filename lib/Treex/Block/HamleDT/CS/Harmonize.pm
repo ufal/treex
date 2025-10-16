@@ -908,6 +908,23 @@ sub fix_jako_auxy
                 $node->set_deprel('AuxC');
             }
         }
+        ###!!! Another quick patch: If "jako" is attached to a preposition,
+        ###!!! attach it to the argument of the preposition. This way we
+        ###!!! prevent them from becoming a fixed expression in UD.
+        # dev/amw/vesm9212_009#12
+        # "K logice, stejně jako k tomu, co ..."
+        elsif($lcform eq 'jako' && $deprel eq 'AuxC')
+        {
+            my $parent = $node->parent();
+            if($parent->ord() > $node->ord() && $parent->deprel() eq 'AuxP')
+            {
+                my $rn = $node->get_right_neighbor();
+                if($rn)
+                {
+                    $node->set_parent($rn);
+                }
+            }
+        }
     }
 }
 
