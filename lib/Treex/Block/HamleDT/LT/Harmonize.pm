@@ -210,6 +210,11 @@ sub fix_morphology
         {
             $node->iset()->clear('definite');
         }
+        # A couple finite verbs lack the mood feature. Set them to indicative.
+        if($node->is_finite_verb() && $node->iset()->mood() eq '')
+        {
+            $node->iset()->set_mood('ind');
+        }
         # Fix Interset features of conjunctions.
         # The original Lithuanian Multext tagset does not distinguish coordinating and subordinating conjunctions.
         if($node->is_conjunction())
@@ -927,6 +932,15 @@ sub fix_annotation_errors
             my @subtree = $self->get_node_subtree($node);
             $subtree[2]->set_is_member(1);
             $subtree[5]->set_is_member(1);
+        }
+        # train/Parulskis-2-s29
+        # Ko jinai, kalė (rusiškai „suka “), ne į tą pusę važiuoja, klausia manęs vairuotoja.
+        # What is she, a bitch (in Russian "suka"), going the wrong way, the driver asks me.
+        if($spanstring =~ m/^ko jinai , kalė \( rusiškai „ suka “ \) , ne į tą pusę važiuoja/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_parent($subtree[15]);
+            $subtree[1]->set_parent($subtree[15]);
         }
     }
 }
