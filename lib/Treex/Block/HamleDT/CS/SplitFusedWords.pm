@@ -27,9 +27,7 @@ sub process_zone
 # Splits fused subordinating conjunction + conditional auxiliary to two nodes:
 # abych, abys, aby, abychom, abyste
 # kdybych, kdybys, kdyby, kdybychom, kdybyste
-# Note: In theory there are other fused words that should be split (udělals,
-# tos, sis, ses, cos, tys, žes, proň, oň, naň) but they do not appear in the
-# PDT 3.0 data.
+# ... and other types (see below).
 #------------------------------------------------------------------------------
 sub split_fused_words
 {

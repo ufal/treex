@@ -19,6 +19,11 @@ sub process_atree
     # Do not call syntactic fixes from the previous loop. First make sure that
     # all nodes have correct morphology, then do syntax (so that you can rely
     # on the morphology you see at the parent node).
+    # Some depictives in accusative with the conjunction "ako" slipped through
+    # the cracks as "objects" while they should be xcomp or advcl:pred.
+    ###!!! Perhaps this should be fixed already when harmonizing the Prague
+    ###!!! style (AtvV instead of Obj) but for now we do it here, it is simpler.
+    $self->relabel_depictive_objects($root);
     $self->fix_constructions($root);
     $self->fix_fixed_expressions($root);
     foreach my $node (@nodes)
@@ -160,6 +165,78 @@ sub fix_morphology
     }
     # Make sure that the UPOS tag still matches Interset features.
     $node->set_tag($node->iset()->get_upos());
+}
+
+
+
+#------------------------------------------------------------------------------
+# Some depictives in accusative with the conjunction "ako" slipped through
+# the cracks as "objects" while they should be xcomp or advcl:pred.
+###!!! Perhaps this should be fixed already when harmonizing the Prague
+###!!! style (AtvV instead of Obj) but for now we do it here, it is simpler.
+#------------------------------------------------------------------------------
+sub relabel_depictive_objects
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() =~ m/^obj(:|$)/)
+        {
+            my $jako = any {$_->lemma() eq 'ako'} ($node->children());
+            if($jako)
+            {
+                $node->set_deprel('advcl:pred');
+            }
+            else
+            {
+            }
+        }
+    }
+    # Do this only after all "ako" nominals have been resolved. Otherwise we
+    # would count them when looking for possible other objects, although they
+    # no longer pose a problem.
+    foreach my $node (@nodes)
+    {
+        # In "činilo jeho samotu docela zábavnou", the noun "samotu"
+        # is a direct object but the adjective "zábavnou" should be
+        # annotated as a resultative (xcomp). However, we cannot
+        # distinguish resultatives from depictives, as the decision
+        # depends on the semantics of the verb. Therefore, we make them
+        # all optional depictives for the time being. ###!!!
+        if($node->deprel() =~ m/^obj(:|$)/ && $node->is_adjective() && !$node->is_pronominal())
+        {
+            my $other_objects = any {$_->deprel() =~ m/^obj(:|$)/} ($node->get_siblings());
+            if($other_objects)
+            {
+                $node->set_deprel('advcl:pred'); ###!!! or xcomp
+            }
+        }
+    }
+    ###!!! The rest also serves the goal of removing superfluous objects but it
+    ###!!! is no longer about secondary predication, so it should ultimately
+    ###!!! end up in a separate function and maybe block. But then we would
+    ###!!! also have to make sure that it does not interfere with the things we
+    ###!!! do above with depictives.
+    foreach my $node (@nodes)
+    {
+        # A few Czech verbs allow two accusative objects: "naučiť", "pýtať".
+        # One of the objects should be 'iobj', the other 'obj'. We want to make
+        # the "recipient" (or beneficiary, or simply the participant closest to
+        # such roles) the indirect object, but we cannot identify them automatically
+        # and reliably. Picking personal pronouns (especially 1st and 2nd person)
+        # as the recipient should work but it would not resolve everything.
+        ###!!! For now, simply keep the last one as 'obj', make the others 'iobj'.
+        my @objects = grep {$_->deprel() =~ m/^obj(:|$)/} ($node->children({'ordered' => 1}));
+        if(scalar(@objects) > 1)
+        {
+            for(my $i = 0; $i < $#objects; $i++)
+            {
+                $objects[$i]->set_deprel('iobj');
+            }
+        }
+    }
 }
 
 
@@ -587,7 +664,7 @@ BEGIN
         ['ani keby',           'always',  'ani keby',           'CCONJ SCONJ',         'O OY',            'pos=conj|conjtype=coor pos=conj|conjtype=sub|mood=cnd',     '0:cc 0:mark'],
         ['až keď',             'fixed',   'až keď',             'PART SCONJ',          'T O',             'pos=part pos=conj|conjtype=sub',                            '0:advmod:emph 0:mark'],
         ['až kým',             'fixed',   'až kým',             'PART SCONJ',          'T O',             'pos=part pos=conj|conjtype=sub',                            '0:advmod:emph 0:mark'],
-        ['len aby',            'always',  'len aby',            'CCONJ SCONJ',         'O OY',            'pos=conj|conjtype=coor pos=conj|conjtype=sub|mood=cnd',     '0:cc 0:mark'],
+        ['len aby',            'always',  'len aby',            'CCONJ SCONJ',         'O O',             'pos=conj|conjtype=coor pos=conj|conjtype=sub',              '0:cc 0:mark'],
         ['len čo',             'always',  'len čo',             'CCONJ SCONJ',         'O O',             'pos=conj|conjtype=coor pos=conj|conjtype=sub',              '0:advmod 0:mark'],
         ['prv ako',            'always',  'prv ako',            'CCONJ SCONJ',         'O O',             'pos=conj|conjtype=coor pos=conj|conjtype=sub',              '0:cc 0:mark'],
         ['v duchu',            'always',  'v duch',             'ADP NOUN',            'Eu6 SSis6',       'pos=adp|adpostype=prep|case=loc pos=noun|nountype=com|gender=masc|animacy=inan|number=sing|case=loc', '2:case -1:obl'],
