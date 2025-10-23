@@ -192,6 +192,37 @@ sub fix_morphology
     # Part-of-speech categories.
     foreach my $node (@nodes)
     {
+        # Make sure that pronouns and determiners have prontype.
+        # من = man = who
+        # مَن = man = who
+        # ما = mā = what
+        # ماذا = māḏā = what
+        # كم = kam = how much
+        # أين = ʾayna = where
+        # اين = ʾayna = where
+        # اين = ditto
+        # متى = matā = when
+        # كيف = kayfa = how
+        # لماذا = limāḏā = why
+        if($node->is_pronominal() && $node->form() =~ m/^(من|مَن|ما|ماذا|كم|أين|اين|اين|متى|كيف|لماذا)$/)
+        {
+            $node->iset()->set_prontype('int');
+        }
+        # هٰكذا = hākaḏā = thus
+        # هكذا = hākaḏā = thus
+        elsif($node->is_pronominal() && $node->form() =~ m/^(هٰكذا|هكذا)$/)
+        {
+            $node->iset()->set_prontype('dem');
+        }
+        # ه = hi = it?
+        # ها = hā = it?
+        # ه = hu = it?
+        # ي = iy = ?
+        # نا = nā = us
+        elsif($node->is_pronominal() && $node->form() =~ m/^(ه|ها|نا|ي)$/)
+        {
+            $node->iset()->set_prontype('prs');
+        }
         # The original tagset does not distinguish between coordinating and
         # subordinating conjunctions. All conjunctions will come out as coordinating
         # unless we try to distinguish them based on their lemmas.
