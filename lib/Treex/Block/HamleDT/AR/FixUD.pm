@@ -41,6 +41,10 @@ sub process_atree
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
     #$root->get_zone()->set_sentence($root->collect_sentence_text());
+    # Because of the changes made above, we may have created new instances where
+    # an "obl" is attached under something that is clearly a nominal, therefore
+    # the relation should be "nmod".
+    $self->check_obl_under_nominal($root);
 }
 
 
@@ -324,6 +328,19 @@ sub fix_constructions
     {
         $deprel = 'dislocated';
         $node->set_deprel($deprel);
+        # However, this could mean that we have created another case where
+        # an 'obl' is attached to a 'dislocated' nominal. Let's check the
+        # children.
+        if($node->is_noun())
+        {
+            foreach my $c ($node->children())
+            {
+                if($c->deprel() =~ m/^obl(:|$)/)
+                {
+                    $c->set_deprel('nmod');
+                }
+            }
+        }
     }
     $self->fix_auxiliary_verb($node);
 }
@@ -799,6 +816,52 @@ sub decide_obl_or_nmod
         return 'nmod';
     }
     return $suggested_deprel;
+}
+
+
+
+#------------------------------------------------------------------------------
+###!!! This is a copy of a function from HamleDT::Udep. We need to check it
+###!!! again after changes of the tree here. But the whole organization is
+###!!! becoming quite messy. Maybe this should be a separate block.
+# Checks whether a node is the head of a nominal that is not at the same time
+# the head of a clause (nominal predicate). Looks at upos and deprel (its main
+# / universal part). If it cannot be sure that the answer is 1, it will return
+# 0 (for example, if the deprel is 'appos', the node is probably not clausal,
+# but we cannot completely exclude it, therefore we will return 0).
+#------------------------------------------------------------------------------
+sub is_nominal_not_predicate
+{
+    my $self = shift;
+    my $node = shift;
+    if(($node->is_noun() || $node->is_pronominal() || $node->is_numeral()) && $node->deprel() =~ m/^(nsubj|obj|iobj|obl|vocative|dislocated|expl|nmod|nummod)(:|$)/)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+
+
+#------------------------------------------------------------------------------
+###!!! This is a copy of a function from HamleDT::Udep. We need to check it
+###!!! again after changes of the tree here. But the whole organization is
+###!!! becoming quite messy. Maybe this should be a separate block.
+# If a nominal modifies another nominal and the parent is not a nominal
+# predicate of a clause, their relation cannot be 'obl' and must be 'nmod'.
+#------------------------------------------------------------------------------
+sub check_obl_under_nominal
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() =~ m/^obl(:|$)/ && $self->is_nominal_not_predicate($node->parent()))
+        {
+            $node->set_deprel('nmod');
+        }
+    }
 }
 
 
