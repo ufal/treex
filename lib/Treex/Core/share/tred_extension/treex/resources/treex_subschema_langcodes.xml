@@ -68,6 +68,7 @@
       <value>it</value> <!-- Italian -->
       <value>lij</value> <!-- Ligurian -->
       <value>nap</value> <!-- Neapolitan -->
+      <value>scn</value> <!-- Sicilian -->
       <value>es</value> <!-- Spanish -->
       <value>lad</value> <!-- Ladino -->
       <value>pt</value> <!-- Portuguese -->
@@ -75,6 +76,7 @@
       <value>an</value> <!-- Aragonese -->
       <value>ca</value> <!-- Catalan -->
       <value>oc</value> <!-- Occitan -->
+      <value>pro</value> <!-- Old Occitan -->
       <value>fr</value> <!-- French -->
       <value>frm</value> <!-- Middle French -->
       <value>fro</value> <!-- Old French -->
@@ -108,6 +110,7 @@
       <value>xpg</value> <!-- Phrygian -->
       <value>grc</value> <!-- Ancient Greek -->
       <value>xcl</value> <!-- Classical Armenian -->
+      <value>axm</value> <!-- Middle Armenian -->
       <value>hy</value> <!-- Armenian -->
       <value>hyw</value> <!-- Western Armenian -->
       <value>hit</value> <!-- Hittite -->
@@ -115,6 +118,9 @@
       <value>ku</value> <!-- Kurdish -->
       <value>kmr</value> <!-- Kurmanji (Northern Kurdish) -->
       <value>ckb</value> <!-- Sorani (Central Kurdish) -->
+      <value>sdh</value> <!-- Southern Kurdish -->
+      <value>zza</value> <!-- Zazaki -->
+      <value>glk</value> <!-- Gilaki -->
       <value>kfm</value> <!-- Khunsari -->
       <value>nyq</value> <!-- Nayini -->
       <value>soj</value> <!-- Soi -->
@@ -235,7 +241,9 @@
       <value>yrk</value> <!-- Nenets -->
       <!-- other European and Caucasian languages -->
       <value>eu</value> <!-- Basque -->
+      <value>oge</value> <!-- Old Georgian -->
       <value>ka</value> <!-- Georgian -->
+      <value>xmf</value> <!-- Megrelian -->
       <value>lzz</value> <!-- Laz -->
       <value>ab</value> <!-- Abkhaz -->
       <value>abq</value> <!-- Abaza -->
@@ -268,6 +276,7 @@
       <value>ojp</value> <!-- Old Japanese -->
       <value>sux</value> <!-- Sumerian -->
       <!-- Dravidian languages -->
+      <value>brh</value> <!-- Brahui -->
       <value>te</value> <!-- Telugu -->
       <value>kn</value> <!-- Kannada -->
       <value>ml</value> <!-- Malayalam -->
@@ -286,6 +295,7 @@
       <value>ii</value> <!-- Yi -->
       <value>bo</value> <!-- Tibetan -->
       <value>dz</value> <!-- Dzongkha -->
+      <value>ctn</value> <!-- Chintang -->
       <value>prx</value> <!-- Purki -->
       <value>lus</value> <!-- Mizo -->
       <value>nmf</value> <!-- Naga -->
@@ -347,7 +357,9 @@
       <value>bzd</value> <!-- Bribri -->
       <value>arh</value> <!-- Ika -->
       <value>sab</value> <!-- Bokota -->
+      <value>apy</value> <!-- Apalai -->
       <value>apu</value> <!-- Apurinã -->
+      <value>unk</value> <!-- Enawene Nawe -->
       <value>pad</value> <!-- Paumari -->
       <value>qu</value> <!-- Quechua -->
       <value>quz</value> <!-- Cusco Quechua -->
