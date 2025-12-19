@@ -11,6 +11,7 @@ use namespace::autoclean;
 use experimental qw( signatures );
 
 extends 'Treex::Core::Block';
+with 'Treex::Tool::UMR::RelationSetter';
 
 has '+language' => ( required => 1 );
 
@@ -36,6 +37,14 @@ sub process_unode($self, $unode, $) {
             $self->translate_forn($unode, 'name', 1);
         } else {
             $self->translate_forn($unode, 'foreign-phrase', 0);
+        }
+    }
+
+    if ('%AsMuch' eq $unode->concept) {
+        $unode->set_concept('have-degree-91');
+        for my $resl (grep 'result' eq $_->functor, $unode->get_children) {
+            warn "AsMuch: $resl->{id}";
+            $self->set_relation($resl, 'ARG6', $resl->get_tnode);
         }
     }
 

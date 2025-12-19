@@ -6,7 +6,7 @@ use Treex::Tool::UMR::Common qw{ entity2person is_possesive };
 use namespace::autoclean;
 
 extends 'Treex::Core::Block';
-with 'Treex::Tool::UMR::PDTV2PB';
+with 'Treex::Tool::UMR::PDTV2PB', 'Treex::Tool::UMR::RelationSetter';
 
 has '+language' => ( required => 1 );
 
@@ -76,12 +76,12 @@ sub translate_val_frame
     }
     my $was_successful;
     if (1 == keys %functor) {
-        $unode->set_functor((keys %functor)[0]);
+        $self->set_relation($unode, (keys %functor)[0], $tnode);
         $was_successful = 1;
     } else {
         log_warn("More than one functor: " . join ' ', keys %functor)
             if keys %functor > 1;
-        $unode->set_functor('!!' . $tnode->functor);
+        $self->set_relation($unode, '!!' . $tnode->functor, $tnode);
     }
     if (my $valframe_id = $tnode->val_frame_rf) {
         $valframe_id =~ s/^.*#//;
@@ -179,8 +179,11 @@ sub translate_val_frame
     sub translate_non_valency_functor
     {
         my ($self, $tnode, $unode) = @_;
-        $unode->set_functor($FUNCTOR_MAPPING{ $tnode->functor }
-                            // ('!!' . $tnode->functor));
+        $self->set_relation(
+            $unode,
+            $FUNCTOR_MAPPING{ $tnode->functor } // ('!!' . $tnode->functor),
+            $tnode
+        );
     }
 
     sub adjust_coap
@@ -203,7 +206,7 @@ sub translate_val_frame
             if @relations > 1;
         my $relation = $relations[0];
         $unode->set_concept($unode->functor);
-        $unode->set_functor($relation // 'EMPTY');
+        $self->set_relation($unode, $relation // '!!EMPTY', $tnode);
         my $prefix = $unode->concept =~ /-91/ ? 'ARG' : 'op';
 
         my @members = $tnode->get_coap_members({direct_only => 1});
@@ -214,7 +217,7 @@ sub translate_val_frame
             my ($umember) = $member->get_referencing_nodes('t.rf');
             log_warn("ARG$i under " . $unode->concept)
                 if 'ARG' eq $prefix && $i > 2;
-            $umember->set_functor($prefix . $i++);
+            $self->set_relation($umember, $prefix . $i++, $member);
         }
     }
 }
@@ -254,17 +257,22 @@ sub should_reverse {
     my %T_LEMMA2CONCEPT = (
         '#PersPron' => 'entity',
         '#Gen'      => 'entity',
-        '#Unsp'     => 'entity',
+        '#Unsp'     => 'person',
         '#Oblfm'    => 'entity',
-        '#Benef'    => 'entity',
-        '#EmpNoun'  => 'entity',
+        '#Benef'    => 'person',
+        '#EmpNoun'  => 'thing',
         '#EmpVerb'  => 'event',
+        '#Oblfm'    => 'concept',
+        '#Copula'   => 'copula-91',
+        '#Dash'     => 'copula-91',
+        '#AsMuch'   => '%AsMuch',
     );
     sub set_concept
     {
         my ($self, $unode, $tnode) = @_;
         my $tlemma = $tnode->t_lemma;
         $unode->set_concept($T_LEMMA2CONCEPT{$tlemma} // $tlemma);
+        $self->set_relation($unode, 'ARG1-of', $tnode) if '#AsMuch' eq $tlemma;
         return
     }
 }
