@@ -102,7 +102,7 @@ sub translate_forn($self, $unode, $concept, $threshold) {
 
 sub translate_percnt($self, $unode, $tnode) {
     my @quants = grep +($_->gram_sempos // "") =~ /quant/
-                      || $_->t_lemma =~ /^[0-9]+\.[0-9]+/,
+                      || $_->t_lemma =~ /^[0-9]+(?:\.[0-9]+)?$/,
                  $tnode->get_echildren;
     for my $quant (@quants) {
         push @quants, $quant->parent
