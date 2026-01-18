@@ -52,6 +52,8 @@ sub process_unode($self, $unode, $) {
     $self->translate_compl($unode, $tnode)
         if 'COMPL' eq $tnode->functor;
     $self->adjust_coap($unode, $tnode) if 'coap' eq $tnode->nodetype;
+    $self->translate_percnt($unode, $tnode)
+        if 'percentage-entity' eq $unode->concept;
     $self->remove_double_edge($unode, $1, $tnode)
         if $unode->functor =~ /^(.+)-of$/;
     $self->negate_sibling($unode, $tnode)
@@ -96,6 +98,35 @@ sub translate_forn($self, $unode, $concept, $threshold) {
     } else {
         log_warn("#Forn without FPHR children: $unode->{id}");
     }
+}
+
+sub translate_percnt($self, $unode, $tnode) {
+    my @quants = grep +($_->gram_sempos // "") =~ /quant/
+                      || $_->t_lemma =~ /^[0-9]+\.[0-9]+/,
+                 $tnode->get_echildren;
+    for my $quant (@quants) {
+        push @quants, $quant->parent
+            if $quant->is_member && ! grep $quant->parent == $_, @quants;
+    }
+    my @aquants = sort { $a->ord <=> $b->ord } map $_->get_lex_anode, @quants;
+    $unode->set_value(join ' ', map $_->form, @aquants);
+    for my $quant (@quants) {
+        warn "QUANT: No unode for $_->{id}"
+            if ! $quant->get_referencing_nodes('t.rf');
+    }
+    my @uquants = map $_->[0],
+                  sort { $b->[1] <=> $a->[1] }
+                  map [$_, $self->_depth($_)],
+                  map $_->get_referencing_nodes('t.rf'),
+                  @quants;
+    $self->safe_remove($_, $unode) for @uquants;
+}
+
+sub _depth($self, $unode) {
+    my $depth = 0;
+    my $node = $unode;
+    ++$depth, $node = $node->parent while $node->parent;
+    return $depth
 }
 
 sub translate_compl($self, $unode, $tnode) {
@@ -182,8 +213,8 @@ sub safe_remove($self, $node, $parent) {
                                     @$coref]);
     }
     $self->coref2fix->{ $node->id } = $parent->id;
-    if ($node->children) {
-        log_warn('Removing with children ', $node->id);
+    if (grep ! exists $self->remove_later->{ $_->id }, $node->children) {
+        log_warn('Removing with children ' . $node->id);
     } else {
         # We can't remove the node now, as it would remove all
         # references to it, including same_as.rf.

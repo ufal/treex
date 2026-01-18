@@ -192,6 +192,11 @@ sub _get_sent_subtree($self, $unode) {
                     @{ $unode->ops };
     }
 
+    if ($unode->value) {
+        $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
+        $umr_str .= ':value "' . $self->_printable($unode->value) . '"';
+    }
+
     $umr_str .= ')';
     return $umr_str
 }

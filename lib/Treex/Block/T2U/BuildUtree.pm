@@ -266,6 +266,7 @@ sub should_reverse {
         '#Copula'   => 'copula-91',
         '#Dash'     => 'copula-91',
         '#AsMuch'   => '%AsMuch',
+        '#Percnt'   => 'percentage-entity',
     );
     sub set_concept
     {
