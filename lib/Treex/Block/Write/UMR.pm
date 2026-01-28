@@ -153,10 +153,19 @@ sub _get_sent_subtree($self, $unode) {
     }
     $umr_str .= "($var / " . $self->_printable($concept);
 
-    for my $uchild ($unode->get_children({ordered => 1})) {
-        $umr_str .= "\n" . $self->_get_node_indent($uchild);
-        $umr_str .= ':' . $uchild->functor . ' ';
-        $umr_str .= $self->_get_sent_subtree($uchild);
+    if ($unode->aspect) {
+        $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
+        $umr_str .= ':aspect ' . $unode->aspect;
+    }
+
+    if ($unode->modal_strength) {
+        $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
+        $umr_str .= ':modal-strength ' . $unode->modal_strength;
+    }
+
+    if ($unode->get_attr('polarity')) {
+        $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
+        $umr_str .= ':polarity -';
     }
 
     if ($unode->entity_refnumber) {
@@ -167,21 +176,6 @@ sub _get_sent_subtree($self, $unode) {
     if ($unode->entity_refperson) {
         $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
         $umr_str .= ':refer-person ' . $unode->entity_refperson;
-    }
-
-    if ($unode->aspect) {
-        $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
-        $umr_str .= ':aspect ' . $unode->aspect;
-    }
-
-    if ($unode->get_attr('polarity')) {
-        $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
-        $umr_str .= ':polarity -';
-    }
-
-    if ($unode->modal_strength) {
-        $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
-        $umr_str .= ':modal-strength ' . $unode->modal_strength;
     }
 
     if ($unode->ops) {
@@ -195,6 +189,12 @@ sub _get_sent_subtree($self, $unode) {
     if ($unode->value) {
         $umr_str .= "\n" . $self->_get_node_indent($unode) . ' ' x 4;
         $umr_str .= ':value "' . $self->_printable($unode->value) . '"';
+    }
+
+    for my $uchild ($unode->get_children({ordered => 1})) {
+        $umr_str .= "\n" . $self->_get_node_indent($uchild);
+        $umr_str .= ':' . $uchild->functor . ' ';
+        $umr_str .= $self->_get_sent_subtree($uchild);
     }
 
     $umr_str .= ')';
