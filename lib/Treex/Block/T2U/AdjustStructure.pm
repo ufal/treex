@@ -119,6 +119,19 @@ sub translate_percnt($self, $unode, $tnode) {
                   map [$_, $self->_depth($_)],
                   map $_->get_referencing_nodes('t.rf'),
                   @quants;
+    my @rest = grep { my $d = $_;
+                      ! grep $d == $_, @uquants
+               } map $_->children, @uquants;
+    for my $r (@rest) {
+        $r->set_parent($unode);
+        if ('extent' eq $r->functor) {
+            if (my $t = $r->get_tnode) {
+                warn('COAP PERCNT ' . $r->{id}),
+                $t = ($t->get_coap_members)[0] if 'coap' eq $t->nodetype;
+                $r->set_functor('degree') if 'EXT' eq $t->functor;
+            }
+        }
+    }
     $self->safe_remove($_, $unode) for @uquants;
 }
 
