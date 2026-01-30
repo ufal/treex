@@ -94,6 +94,7 @@ requires 'Readonly';
 requires 'Scalar::Util';
 requires 'String::Diff';
 requires 'String::Util';
+requires 'Sub::Override';
 requires 'Term::ANSIColor';
 requires 'Test::Command';
 requires 'Test::Deep';
