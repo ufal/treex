@@ -199,6 +199,7 @@ sub negate_sibling($self, $unode, $tnode) {
     my $tparent = $tnode->parent;
     my @tsiblings
         = ('RHEM' eq $tnode->functor) ? ('f' eq ($tnode->tfa // "")
+                                             && ! $tnode->rbrother
                                          ? $tnode->parent
                                          : $tnode->rbrother)
         : 'GRAD' eq $tparent->functor ? $self->_negate_grad($tnode)
