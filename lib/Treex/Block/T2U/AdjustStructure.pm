@@ -132,7 +132,10 @@ sub translate_percnt($self, $unode, $tnode) {
             }
         }
     }
-    $self->safe_remove($_, $unode) for @uquants;
+    for my $uquant (@uquants) {
+        $unode->add_to_alignment($uquant->get_alignment);
+        $self->safe_remove($uquant, $unode);
+    }
 }
 
 sub _depth($self, $unode) {
