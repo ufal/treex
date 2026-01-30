@@ -82,7 +82,7 @@ sub _build_mapping($self) {
             my $relation = $row->[4];
             $relation = $row->[3] if ! defined $relation
                                   || $relation !~ /^\??(?:ARG(?:\d|m-\w{3}))$/;
-            chomp $relation;
+            chomp $relation if $relation;
             if ($relation) {
                 my ($functor) = $row->[1] =~ /^(?:\?|ALT-)?([^:]+)/;
                 log_warn("Ambiguous mapping $mapping{$current_id}{umr_id}"
