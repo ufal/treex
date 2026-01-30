@@ -56,7 +56,8 @@ sub process_unode($self, $unode, $) {
     $self->adjust_coap($unode, $tnode) if 'coap' eq $tnode->nodetype;
     $self->translate_percnt($unode, $tnode)
         if 'percentage-entity' eq ($unode->concept // "");
-    $self->remove_double_edge($unode, $1, $tnode)
+    $self->simplify_double_edges($unode);
+    $self->remove_backwards_edge($unode, $1, $tnode)
         if $unode->functor =~ /^(.+)-of$/;
     $self->negate_sibling($unode, $tnode)
         if 'RHEM' eq $tnode->functor && $tnode->t_lemma =~ /^$negation$/
@@ -173,9 +174,7 @@ sub translate_compl($self, $unode, $tnode) {
             my $ref = $arrow_src->create_child;
             $ref->{ord} = 0;
             $ref->set_functor('mod-of');
-            $ref->make_referential(('ref' eq ($u_target->nodetype // ""))
-                               ? $self->_solve_ref($u_target)
-                               : $u_target);
+            $ref->make_referential($self->_solve_ref($u_target));
         } else {
             log_warn("$tnode->{id}: COMPL target in other tree.");
         }
@@ -199,7 +198,9 @@ sub translate_compl($self, $unode, $tnode) {
 sub negate_sibling($self, $unode, $tnode) {
     my $tparent = $tnode->parent;
     my @tsiblings
-        = ('RHEM' eq $tnode->functor) ? $tnode->rbrother
+        = ('RHEM' eq $tnode->functor) ? ('f' eq ($tnode->tfa // "")
+                                         ? $tnode->parent
+                                         : $tnode->rbrother)
         : 'GRAD' eq $tparent->functor ? $self->_negate_grad($tnode)
         :                               $self->_parent_side($tnode, $tparent);
     log_warn("0 siblings $tnode->{id}"),
@@ -343,16 +344,24 @@ sub adjust_coap($self, $unode, $tnode) {
             my $ref = $other_member->create_child;
             $ref->{ord} = 0;
             $ref->set_functor($ucommon->functor);
-            $ref->make_referential(('ref' eq ($ucommon->nodetype // ""))
-                                   ? $self->_solve_ref($ucommon)
-                                   : $ucommon);
+            $ref->make_referential($self->_solve_ref($ucommon));
+        }
+    }
+
+    for my $ref (grep 'ref' eq $_->nodetype, $unode->children) {
+        $ref->set_parent($first_member);
+        for my $member (@u_members) {
+            my $ref2 = $member->create_child;
+            $ref2->{ord} = 0;
+            $ref2->set_functor($ref->functor);
+            $ref2->make_referential($self->_solve_ref($ref));
         }
     }
     return
 }
 
 # TODO: tnode not needed?
-sub remove_double_edge($self, $unode, $functor, $tnode) {
+sub remove_backwards_edge($self, $unode, $functor, $tnode) {
     my @unodes = expand_coord($unode);
     warn "Expand: ", join ' ', map $_->concept, @unodes;
     for my $uexp (map $_->children, @unodes) {
@@ -367,6 +376,19 @@ sub remove_double_edge($self, $unode, $functor, $tnode) {
     }
     return
 }
+
+sub simplify_double_edges($self, $unode) {
+    my %ref;
+    for my $child (grep 'ref' ne $_->nodetype, $unode->children) {
+        ++$ref{ $child->{functor} }{ $child->id };
+    }
+    for my $child (grep 'ref' eq $_->nodetype, $unode->children) {
+        if ($ref{ $child->{functor} }{ $child->{'same_as.rf'} }++) {
+            $child->remove;
+        }
+    }
+}
+
 
 sub _solve_ref($self, $unode) {
     while ('ref' eq ($unode->nodetype // "")) {
@@ -399,10 +421,14 @@ Common dependents in a coordination are rehung to the first coordination
 member. Arrows are created from all other members to the common dependents to
 express their relation.
 
-=item remove_double_edge
+=item remove_backwards_edge
 
 When a C<*-of> relation is created from a coordination, the node sometimes
 still have arrows with the inverted relation, too. Remove this surplus arrows.
+
+=item simplify_double_edges
+
+Sometimes, a node has several arrows to the same target with the same relation. Keep only a single arrow. Similarly, remove arrows that duplicate edges.
 
 =item negate_sibling
 
