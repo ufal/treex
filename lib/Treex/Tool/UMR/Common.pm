@@ -53,8 +53,8 @@ sub expand_coord {
 sub entity2person {
     my ($unode) = @_;
     $unode->set_concept('person')
-        if 'entity' eq $unode->concept
-        && $unode->entity_refperson =~ /^(?:1st|2nd)/;
+        if 'entity' eq ($unode->concept // "")
+        && ($unode->entity_refperson // "") =~ /^(?:1st|2nd)/;
     return
 }
 

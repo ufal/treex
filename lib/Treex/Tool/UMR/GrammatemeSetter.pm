@@ -30,8 +30,9 @@ requires qw{ tag_regex translate is_valid_tag };
                 ($value) = $anode->tag =~ $tag;
                 $value = $self->translate($gram, $value) if $value;
             }
-            return unless $value;
         }
+        return unless $value;
+
         $value = $T2U{$gram}{$value};
         my $set_attr = "set_$IMPLEMENTATION{$gram}{attr}";
         $unode->$set_attr($value) if $value;

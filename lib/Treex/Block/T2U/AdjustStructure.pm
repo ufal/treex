@@ -22,6 +22,8 @@ has _coord_members_already_sub2coorded => (is => 'ro', isa => 'HashRef',
                                            default => sub { +{} });
 
 sub process_unode($self, $unode, $) {
+    return if $unode->is_root;
+
     my $negation = $self->negation;
 
     # Not yet removed INTF (not part of coreference).
@@ -32,7 +34,7 @@ sub process_unode($self, $unode, $) {
         return
     }
 
-    if ('#Forn' eq $unode->concept) {
+    if ('#Forn' eq ($unode->concept // "")) {
         if ('name' eq $unode->functor) {
             $self->translate_forn($unode, 'name', 1);
         } else {
@@ -40,7 +42,7 @@ sub process_unode($self, $unode, $) {
         }
     }
 
-    if ('%AsMuch' eq $unode->concept) {
+    if ('%AsMuch' eq ($unode->concept // "")) {
         $unode->set_concept('have-degree-91');
         for my $resl (grep 'result' eq $_->functor, $unode->get_children) {
             warn "AsMuch: $resl->{id}";
@@ -53,7 +55,7 @@ sub process_unode($self, $unode, $) {
         if 'COMPL' eq $tnode->functor;
     $self->adjust_coap($unode, $tnode) if 'coap' eq $tnode->nodetype;
     $self->translate_percnt($unode, $tnode)
-        if 'percentage-entity' eq $unode->concept;
+        if 'percentage-entity' eq ($unode->concept // "");
     $self->remove_double_edge($unode, $1, $tnode)
         if $unode->functor =~ /^(.+)-of$/;
     $self->negate_sibling($unode, $tnode)
@@ -247,7 +249,8 @@ after process_document => sub($self, $document) {
 sub rename_octothorpes($self, $document) {
     for my $tree ($document->trees) {
         for my $node ($tree->descendants) {
-            next unless $node->isa('Treex::Core::Node::U');
+            next unless $node->isa('Treex::Core::Node::U')
+                 && defined $node->concept;
             $node->set_concept($node->concept =~ s/^#/%/r)
                 if $node->concept =~ /^#/;
         }

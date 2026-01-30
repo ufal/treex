@@ -11,7 +11,7 @@ sub set_relation {
     ) {
         warn "CHANGING FUNCTOR $unode->{functor} TO $relation: $tnode->{id}.$tnode->{functor}";
     }
-    return if $unode->functor =~ /[[:lower:]]/ && $relation =~ /^!!/;
+    return if ($unode->functor // "") =~ /[[:lower:]]/ && $relation =~ /^!!/;
 
     $unode->set_functor($relation);
     return

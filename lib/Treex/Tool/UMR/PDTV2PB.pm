@@ -68,6 +68,8 @@ sub _build_mapping($self) {
 
         if ($row->[0]) {
             my ($verb, $frame_id) = $row->[1] =~ /(.*) \((.*)\)/;
+            next unless $frame_id;
+
             ($self->_by_id->{$frame_id}{word} // "") eq $verb
                 or log_warn("$frame_id: $verb != "
                             . ($self->_by_id->{$frame_id}{word} // '-'));

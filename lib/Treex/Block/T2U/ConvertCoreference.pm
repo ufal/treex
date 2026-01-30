@@ -85,7 +85,7 @@ after 'process_document' => sub {
                           $unode, $uante;
 
             $unode->set_concept('entity')
-                if $tante->gram_sempos =~ /^n\.denot/
+                if ($tante->gram_sempos // "") =~ /^n\.denot/
                 && $tnode->functor ne 'RSTR'
                 && $self->can_become_entity($tnode->t_lemma);
 
@@ -128,7 +128,7 @@ after 'process_document' => sub {
 
 sub propagate_number_person {
     my ($self, $unode, $tnode, $uante, $tante) = @_;
-    if (($tnode->gram_sempos =~ /^n(?!\.quant)/
+    if ((($tnode->gram_sempos // "") =~ /^n(?!\.quant)/
          || 'entity' eq $unode->concept)
         && ('RSTR' ne $tnode->functor || is_possesive($tnode))
     ) {
@@ -142,8 +142,8 @@ sub propagate_number_person {
             }
         }
     }
-    if (($tnode->gram_sempos =~ /^n \. pron \. (?: def \. (?: pers | demon)
-                                                 | indef )$/x
+    if ((($tnode->gram_sempos // "")
+         =~ /^n \. pron \. (?: def \. (?: pers | demon) | indef )$/x
          || 'entity' eq $unode->concept)
         && ('RSTR' ne $tnode->functor || is_possesive($tnode))
     ) {
@@ -153,7 +153,7 @@ sub propagate_number_person {
                 entity2person($unode);
                 return
             }
-            if ('entity' eq $unode->concept) {
+            if ('entity' eq ($unode->concept // "")) {
                 if ($tante->gram_sempos =~ /^n\.denot/) {
                     $unode->set_entity_refperson('3rd');
                     return
