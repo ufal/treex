@@ -24,10 +24,9 @@ requires qw{ tag_regex translate is_valid_tag };
             && ! grep $_->tfa, $orig_node->root->descendants # Not in PDT.
         ) {
             if (my $anode = $orig_node->get_lex_anode) {
-                my $tag = $self->tag_regex($gram);
-                return unless $self->is_valid_tag($tag);
+                return unless $self->is_valid_tag($anode->tag);
 
-                ($value) = $anode->tag =~ $tag;
+                ($value) = $anode->tag =~ $self->tag_regex($gram);
                 $value = $self->translate($gram, $value) if $value;
             }
         }
