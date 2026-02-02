@@ -109,7 +109,7 @@ sub translate_percnt($self, $unode, $tnode) {
             if $quant->is_member && ! grep $quant->parent == $_, @quants;
     }
     my @aquants = sort { $a->ord <=> $b->ord } map $_->get_lex_anode, @quants;
-    $unode->set_value(join ' ', map $_->form, @aquants);
+    $unode->set_value(join '_', map $_->form, @aquants);
     for my $quant (@quants) {
         warn "QUANT: No unode for $_->{id}"
             if ! $quant->get_referencing_nodes('t.rf');
