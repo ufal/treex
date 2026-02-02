@@ -42,4 +42,36 @@ sub is_morpho_negated {
     return 0
 }
 
+sub fix_errors {
+    my ($self, $tnode) = @_;
+
+    # More than one top node.
+    if (! $tnode->parent && 1 < $tnode->children) {
+        my @children = $tnode->children;
+        my $separ = $tnode->create_child;
+        $separ->set_t_lemma('#Separ');
+        $separ->set_nodetype('coap');
+        $separ->set_functor('CONJ');
+        $separ->_set_ord(0);
+        $_->set_is_member(1), $_->set_parent($separ) for @children;
+    }
+
+    # is_member is often missing.
+    if ('coap' eq $tnode->nodetype) {
+        $tnode->set_functor('CONJ') if 'RSTR' eq $tnode->functor;
+        if (! (grep $_->is_member, $tnode->children)
+            || grep 'PRED' eq $_->functor, $tnode->children
+        ) {
+            my %functor;
+            ++$functor{ $_->functor } for $tnode->children;
+            my $replace = exists $functor{PRED}
+                        ? 'PRED'
+                        : (sort { $functor{$b} <=> $functor{$b} }
+                        keys %functor)[0];
+            $_->set_is_member(1) for grep $replace eq $_->functor,
+                                     $tnode->children;
+        }
+    }
+}
+
 __PACKAGE__->meta->make_immutable

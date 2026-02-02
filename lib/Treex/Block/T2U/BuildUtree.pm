@@ -30,6 +30,8 @@ sub process_zone
 
 sub build_subtree {
     my ($self, $tparent, $uparent) = @_;
+    $self->fix_errors($tparent);
+
     for my $tnode ($tparent->get_children({ordered => 1})) {
         if ('#Neg' eq $tnode->t_lemma && 'RHEM' eq $tnode->functor) {
             log_warn("Skipping " . $tnode->t_lemma . " children "
@@ -357,6 +359,8 @@ sub negated_with_missing_gram {
         if $self->is_morpho_negated($alex);
     return
 }
+
+sub fix_errors { return }  # Language specific fixes of the input data.
 
 sub maybe_set { die 'Not implemented, language dependent!' }
 
