@@ -638,7 +638,26 @@ sub convert_deprels
             ###!!! This is specific to Czech!
             elsif(defined($parent->lemma()) && $parent->lemma() =~ m/^(jako|než)$/)
             {
-                $deprel = 'advcl';
+                if($node->is_noun())
+                {
+                    ###!!! We should use nmod if the parent is nominal, and obl otherwise.
+                    ###!!! But we cannot access the UD parent easily, as the tree structure
+                    ###!!! is not converted yet. We will attempt it anyway: It could be
+                    ###!!! the grandparent in the Prague tree, unless there are complications
+                    ###!!! such as coordination.
+                    if(defined($parent->parent()) && ($parent->parent()->is_verb() || $parent->parent()->is_adjective() || $parent->parent()->is_adverb()))
+                    {
+                        $deprel = 'obl';
+                    }
+                    else
+                    {
+                        $deprel = 'nmod';
+                    }
+                }
+                else
+                {
+                    $deprel = 'advcl';
+                }
             }
             else
             {
