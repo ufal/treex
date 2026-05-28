@@ -113,6 +113,17 @@ sub fix_morphology
             }
         }
     }
+    # Fractions (denominators) ending in "-ina" (polovina, desetina...) are
+    # annotated inconsistently in the source treebanks. Unify them as feminine
+    # nouns (not numerals), which is also the solution in PDT-C.
+    if(($iset->contains('numtype', 'card') || $iset->contains('numtype', 'frac')) && $node->lemma() =~ m/ina$/)
+    {
+        $iset->clear('numtype');
+        $iset->clear('numform');
+        $iset->set('pos', 'noun');
+        $iset->set('gender', 'fem');
+        # We must hope that number and case is already set correctly for the form.
+    }
     # A small set of less common numerals may be tagged ambiguously as
     # numtype=mult|sets. Members: jedny (sets); dvojí, obojí, obé, trojí (mult).
     if($iset->contains('numtype', 'mult') && $iset->contains('numtype', 'sets'))
