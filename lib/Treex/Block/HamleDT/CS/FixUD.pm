@@ -238,6 +238,16 @@ sub fix_morphology
             $node->set_deprel('advmod');
         }
     }
+    # It is similar for "jak" ("how"), except that here we allow SCONJ
+    # (and also PROPN, for "JAK" the plane).
+    if($lform eq 'jak' && $iset->is_coordinator())
+    {
+        $iset->set_hash({'pos' => 'adv', 'prontype' => ['int', 'rel']});
+        if($node->deprel() =~ m/^mark(:|$)/)
+        {
+            $node->set_deprel('advmod');
+        }
+    }
     # If attached as 'advmod', "vlastně" ("actually") is an adverb and not a
     # converb of "vlastnit" ("to own").
     elsif($lform eq 'vlastně' && $deprel =~ m/^(cc|advmod)(:|$)/)
