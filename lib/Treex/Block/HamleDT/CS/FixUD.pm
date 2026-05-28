@@ -226,6 +226,18 @@ sub fix_morphology
             $node->set_deprel('advmod');
         }
     }
+    # The word "tak" ("so") is originally a demonstrative adverb but it is often
+    # used as a discourse connective. The source data tag it as ADV, CCONJ or PART;
+    # we will settle at ADV (and allow deprel "cc" but not "mark"). See also
+    # https://github.com/UniversalDependencies/docs/issues/471
+    if($lform eq 'tak')
+    {
+        $iset->set_hash({'pos' => 'adv', 'prontype' => 'dem'});
+        if($node->deprel() =~ m/^mark(:|$)/)
+        {
+            $node->set_deprel('advmod');
+        }
+    }
     # If attached as 'advmod', "vlastně" ("actually") is an adverb and not a
     # converb of "vlastnit" ("to own").
     elsif($lform eq 'vlastně' && $deprel =~ m/^(cc|advmod)(:|$)/)
