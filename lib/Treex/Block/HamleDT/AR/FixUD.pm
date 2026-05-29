@@ -16,12 +16,16 @@ sub process_atree
     {
         $self->fix_morphology($node);
     }
+    $self->fix_pronominal_copula($root);
     # Do not call syntactic fixes from the previous loop. First make sure that
     # all nodes have correct morphology, then do syntax (so that you can rely
     # on the morphology you see at the parent node).
     foreach my $node (@nodes)
     {
         $self->fix_constructions($node);
+    }
+    foreach my $node (@nodes)
+    {
         $self->fix_annotation_errors($node);
     }
     $self->fix_fixed_expressions($root);
@@ -65,6 +69,42 @@ sub fix_morphology
     {
         $iset->set_hash({'pos' => 'sym', 'conjtype' => 'oper'});
     }
+    # The word "هَل" (hal) is sometimes tagged as an auxiliary but it is the question particle inserted at the beginning of yes/no questions.
+    # Same for "أَ" (ʔa).
+    if(($lemma eq 'هَل' || $lemma eq 'أَ') && $iset->is_auxiliary())
+    {
+        $iset->set_hash({'pos' => 'part'});
+        if($deprel =~ m/^aux(:|$)/)
+        {
+            $deprel = 'discourse';
+            $node->set_deprel($deprel);
+        }
+    }
+    # Even as a copula, "هُوَ" (huwa) should be tagged PRON, not AUX.
+    if($lemma eq 'هُوَ' && $iset->is_auxiliary())
+    {
+        $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => '3'});
+        if($deprel =~ m/^aux(:|$)/)
+        {
+            $deprel = 'cop';
+            $node->set_deprel($deprel);
+        }
+    }
+    # This may be a lemmatization problem.
+    if($lemma eq 'لسنا' && $iset->is_auxiliary())
+    {
+        # The original "lemma" is in fact first person plural past active form of "laysa"
+        # (https://en.wiktionary.org/wiki/%D9%84%D8%B3%D9%86%D8%A7).
+        $lemma = 'لَيس';
+        $node->set_lemma($lemma);
+    }
+    # The verb "عَاد" (ʿād) = "go back, stop" is not auxiliary.
+    if($lemma eq 'عَاد' && $iset->is_auxiliary())
+    {
+        $iset->clear('verbtype');
+        $deprel = 'advcl';
+        $node->set_deprel($deprel);
+    }
     # Make sure that the UPOS tag still matches Interset features.
     $node->set_tag($node->iset()->get_upos());
 }
@@ -103,6 +143,37 @@ sub identify_acl_relcl
     # PADT currently contains only forms of one relative pronoun: اَلَّذِي allaḏī "that, which"
     return if($depth > 0 && $subordinator->lemma() =~ m/^(اَلَّذِي)$/ && $subordinator->deprel() !~ m/^(nsubj|obj|iobj|obl|nmod|det)(:|$)/);
     $node->set_deprel('acl:relcl');
+}
+
+
+
+#------------------------------------------------------------------------------
+# In present tense, nominal predicates occur either without copula, or with the
+# third-person pronoun huwa acting as the copula. However, these pronominal
+# copulas often go unrecognized during conversion (in PADT they may be attached
+# to the nominal predicate as AuxY, which could make them cc in UD). Try to
+# recognize them now.
+#------------------------------------------------------------------------------
+sub fix_pronominal_copula
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    foreach my $node (@nodes)
+    {
+        if($node->lemma() eq 'هُوَ' && $node->iset()->is_third_person() && $node->iset()->is_nominative() && $node->is_leaf() && $node->deprel() !~ m/^(cop|nsubj)(:|$)/)
+        {
+            my $parent = $node->parent();
+            if($parent->is_noun())
+            {
+                my @siblings = $node->get_siblings({'ordered' => 1});
+                if(any {$_->deprel() =~ m/subj/} (@siblings))
+                {
+                    $node->set_deprel('cop');
+                }
+            }
+        }
+    }
 }
 
 
