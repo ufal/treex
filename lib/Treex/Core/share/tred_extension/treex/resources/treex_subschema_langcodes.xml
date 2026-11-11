@@ -121,6 +121,7 @@
       <value>sdh</value> <!-- Southern Kurdish -->
       <value>zza</value> <!-- Zazaki -->
       <value>glk</value> <!-- Gilaki -->
+      <value>hac</value> <!-- Gorani -->
       <value>kfm</value> <!-- Khunsari -->
       <value>nyq</value> <!-- Nayini -->
       <value>lrc</value> <!-- Northern Luri -->
@@ -147,6 +148,7 @@
       <value>bho</value> <!-- Bhojpuri -->
       <value>mag</value> <!-- Magahi -->
       <value>xnr</value> <!-- Kangri -->
+      <value>kfx</value> <!-- Kullvi -->
       <value>mjl</value> <!-- Mandyali -->
       <value>ne</value> <!-- Nepali -->
       <value>or</value> <!-- Oriya -->
@@ -193,6 +195,7 @@
       <value>ee</value> <!-- Ewe -->
       <value>yo</value> <!-- Yoruba -->
       <value>ig</value> <!-- Igbo -->
+      <value>ndi</value> <!-- Samba Leko -->
       <value>sg</value> <!-- Sango -->
       <value>kfz</value> <!-- Koromfe -->
       <!-- Bantu languages -->
@@ -206,6 +209,7 @@
       <value>kg</value> <!-- Kongo H10 -->
       <value>lu</value> <!-- Luba-Katanga L33 -->
       <value>ny</value> <!-- Chichewa (Nyanja) N31 -->
+      <value>kdn</value> <!-- Chikunda N42 -->
       <value>ndg</value> <!-- Ndengeleko P11 -->
       <value>kj</value> <!-- Kuanyama R21 -->
       <value>ng</value> <!-- Ndonga (Owambo) R22 -->
@@ -271,8 +275,21 @@
       <value>sah</value> <!-- Yakut -->
       <!-- other Altay languages -->
       <value>xal</value> <!-- Kalmyk -->
+      <value>peh</value> <!-- Bonan -->
+      <value>mvf</value> <!-- Peripheral Mongolian -->
+      <value>mjg</value> <!-- Tu -->
+      <value>dta</value> <!-- Daur -->
+      <value>sce</value> <!-- Dongxiang -->
       <value>bxr</value> <!-- Buryat -->
       <value>mn</value> <!-- Mongol -->
+      <value>neg</value> <!-- Negidal -->
+      <value>ude</value> <!-- Udihe -->
+      <value>ulc</value> <!-- Ulch -->
+      <value>evn</value> <!-- Evenki -->
+      <value>oac</value> <!-- Oroch -->
+      <value>eve</value> <!-- Even -->
+      <value>gld</value> <!-- Nanai -->
+      <value>mnc</value> <!-- Manchu -->
       <value>sjo</value> <!-- Xibe -->
       <value>ko</value> <!-- Korean -->
       <value>ja</value> <!-- Japanese -->
@@ -285,6 +302,7 @@
       <value>ml</value> <!-- Malayalam -->
       <value>ta</value> <!-- Tamil -->
       <!-- Sino-Tibetan and Tai-Kadai languages -->
+      <value>txg</value> <!-- Tangut -->
       <value>lzh</value> <!-- Classical Chinese -->
       <value>zh</value> <!-- Chinese -->
       <value>wuu</value> <!-- Shanghainese -->
@@ -319,6 +337,7 @@
       <value>ifb</value> <!-- Batad Ifugao -->
       <value>gor</value> <!-- Gorontalo -->
       <value>bgs</value> <!-- Tagabawa -->
+      <value>mbt</value> <!-- Matigsalug -->
       <value>tdt</value> <!-- Tetun -->
       <value>na</value> <!-- Nauruan -->
       <value>mh</value> <!-- Marshallese -->
