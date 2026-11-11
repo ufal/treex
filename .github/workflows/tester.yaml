@@ -16,12 +16,13 @@ jobs:
             - "5.26.0"
             - "5.34.0"
             - "5.40.1"
+            - "5.42.0"
     name: Perl ${{ matrix.perl-version }}
     steps:
       - uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl-version }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install dependencies
         run: |
